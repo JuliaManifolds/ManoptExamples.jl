@@ -2,7 +2,7 @@
 
 This package provides examples of optimizations problems on Riemannian manifolds.
 
-It uses the manifolds from [Manifolds.jl]https://juliamanifolds.github.io/Manifolds.jl/) and the structures provided by [Manopt.jl](https://manoptjl.org/).
+It uses the manifolds from [Manifolds.jl](https://juliamanifolds.github.io/Manifolds.jl/) and the structures provided by [Manopt.jl](https://manoptjl.org/).
 to state the problems.
 Furthermore the problems are illustrated in their usage in [Quarto]() Markdown files, that
 are pre-rendered into the documentation. This way, the package also provides examples of
