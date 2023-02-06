@@ -1,0 +1,30 @@
+---
+references:
+- id: Bergmann:2022
+  author:
+    - family: Bergmann
+      given: Ronny
+  citation-key: Bergmann:2022
+  container-title: Journal of Open Source Software
+  DOI: 10.21105/joss.03866
+  issue: '70'
+  issued:
+    - year: 2022
+  page: '3866'
+  publisher: The Open Journal
+  title: 'Manopt.jl: Optimization on manifolds in Julia'
+  type: article-journal
+  volume: '7'
+
+- id: Bergmann:2022m
+  author:
+    - family: Bergmann
+      given: Ronny
+  citation-key: Bergmann:2022m
+  DOI: 10.5281/zenodo.4290905
+  issued:
+    - year: 2022
+  publisher: Zenodo
+  title: Manopt.jl
+  type: software
+...
