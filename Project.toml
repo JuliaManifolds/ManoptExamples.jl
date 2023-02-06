@@ -1,0 +1,4 @@
+name = "ManoptExamples"
+uuid = "5b8d5e80-5788-45cb-83d6-5e8f1484217d"
+authors = ["Ronny Bergmann <manopt@ronnybergmann.net>"]
+version = "0.1.0"

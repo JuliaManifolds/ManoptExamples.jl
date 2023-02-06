@@ -1,0 +1,3 @@
+module ManoptExamples
+
+end

@@ -1,0 +1,17 @@
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+/docs/build/
+Tutorials/.ipynb_checkpoints
+examples/**/*.asy
+examples/**/*.png
+examples/**/*.csv
+examples/**/*.tex
+examples/**/*.pdf
+examples/**/*.mp4
+examples/**/*.jld2
+.vscode
+Manifest.toml
+*.DS_Store
+docs/src/contributing.md
+coverage
