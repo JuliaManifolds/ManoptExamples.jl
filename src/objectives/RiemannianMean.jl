@@ -16,6 +16,10 @@ where ``d_{\mathcal M}`` is the [`distance`]() on a Riemannian manifold.
     RiemannianMeanCost(data::AbstractVector{<:P}) where {P}
 
 Initialize the cost function to a data set `data` of points on a manfiold of type `P`.
+
+# See also
+[`RiemannianMeanGradient!!`](@ref), [`riemannian_mean_objective`](@ref)
+
 """
 struct RiemannianMeanCost{P,V<:AbstractVector{<:P}}
     data::V
@@ -57,6 +61,9 @@ you can only use the allocating variant.
 
 Initialize the Riemannian mean gradient, where the internal storage for tangent vectors can
 be created automatically, since the Riemannian manifold `M` is provideed.
+
+# See also
+[`RiemannianMeanCost`](@ref), [`riemannian_mean_objective`](@ref)
 """
 struct RiemannianMeanGradient!!{P,T,V<:AbstractVector{<:P}}
     X::T
@@ -84,4 +91,43 @@ function (rmg::RiemannianMeanGradient!!{T})(M, X::T, p) where {T}
     return X
 end
 
-function Riemannian_mean_objective() end
+@doc raw"""
+    Riemannian_mean_objective(data, initial_vector=nothing, evaluation=AllocatingEvaluation())
+    Riemannian_mean_objective(M, data;
+    initial_vector=zero_vector(M, first(data)),
+    evaluation=AllocatingEvaluton()
+    )
+
+Generate the objective for the Riemannian mean task for some given vector of
+`data` points on the Riemannian manifold `M`.
+
+# See also
+[`RiemannianMeanCost`](@ref), [`RiemannianMeanGradient!!`](@ref)
+
+!!! note
+    The first constructor should only be used if an additional storage of the vector is not
+    feasible, since initialising the `initial_vector` to `nothing` disables the in-place variant.
+    Hence the evaluation is a positional argument, since it only can be changed,
+    if a vector is provided.
+"""
+function Riemannian_mean_objective(
+    data::AbstractVector, initial_vector=nothing, evaluation=Manopt.AllocatingEvaluation()
+)
+    return Manopt.ManifoldGradientObjective(
+        RiemannianMeanCost(data),
+        RiemannianMeanGradient!!(data, initial_vector);
+        evaluation=evaluation,
+    )
+end
+function Riemannian_mean_objective(
+    M::AbstractManifold,
+    data;
+    initial_vector=zero_vector(M, first(data)),
+    evaluation=Manopt.AllocatingEvaluation(),
+)
+    return Manopt.ManifoldGradientObjective(
+        RiemannianMeanCost(data),
+        RiemannianMeanGradient!!(M, data; initial_vector=initial_vector);
+        evaluation=evaluation,
+    )
+end

@@ -12,7 +12,7 @@ The following is a set of guidelines to [`ManoptExamples.jl`](https://juliamanif
   - [I just have a question](#I-just-have-a-question)
   - [How can I file an issue?](#How-can-I-file-an-issue)
   - [How can I contribute?](#How-can-I-contribute)
-    - [Add a problem](#Add-a-problem)
+    - [Add an objective](#Add-an-objective)
   - [Code style](#Code-style)
 
 ## I just have a question
@@ -27,19 +27,24 @@ If you found a bug or want to propose a feature, we track our issues within the 
 
 ## How can I contribute?
 
-### Add a problem
+### Add an objective
 
-If you have a sprecific problem you would like to provide here, feel free to start a new
-file in the `src/problems/` folder in your own fork and propose it later as a [Pull Request](https://github.com/JuliaManifolds/ManoptExamples.jl/pulls).
+The [objective](https://manoptjl.org/stable/plans/objective/) in `Manopt.jl`
+represents the task to be optimised, usually phrased on an arbitrary manifold.
+The manifold is later specified when wrapping the objective inside a
+[Problem](https://manoptjl.org/stable/plans/problem/).
 
-If you problem works without reusing any other problems functions, then they can all just be placed in this one file.
-If you notice, that you are reusing for example another problems gradient as part of your problem,
+If you have a specific objective you would like to provide here, feel free to start a new
+file in the `src/objectives/` folder in your own fork and propose it later as a [Pull Request](https://github.com/JuliaManifolds/ManoptExamples.jl/pulls).
+
+If you objective works without reusing any other objective functions, then they can all just be placed in this one file.
+If you notice, that you are reusing for example another objectives gradient as part of your objective,
 please refactor the code, such that the gradient, or other function is in the corresponding file in
 `src/functions/` and follows the naming scheme:
 
 * cost functions are always of the form `cost_` and a fitting name
 * gradient functions are always of the the `gradient_` and a fitting name, followed by an `!`
-for in-place gradients and by `!!` if it is a struct that can provide both.
+for in-place gradients and by `!!` if it is a `struct` that can provide both.
 
 It would be great if you could also add a small test for the functions and the problem you
 defined in the `test/` section.
@@ -47,10 +52,10 @@ defined in the `test/` section.
 ### Add an example
 
 If you have used one of the problems from here in an example or you are providing a problem
-together with an example, please add a correspoinding [Quarto]() Markdown file to the `examples/`
+together with an example, please add a corresponding [Quarto](https://quarto.org) Markdown file to the `examples/`
 folder. The Markdown file should provide a short introduction to the problem and provide links
 to further details, maybe a paper or a preprint. Use the `bib/literature.yaml` file to add
-references (in [CSL_YAML](), which can for example be exported from [Zotero]()).
+references (in `CSL_YAML`, which can for example be exported e.g. from Zotero).
 
 Add any packages you need to the `examples/` environment (see the containting `Project.toml`).
 The examples will not be run on CI, but their rendered `CommonMark` outpout should be included
@@ -73,7 +78,7 @@ We also follow a few internal conventions:
 - The above implies that the mutating variant of a function follows the non-mutating variant.
 - There should be no dangling `=` signs.
 - Always add a newline between things of different types (struct/method/const).
-- Always add a newline between methods for different functions (including mutating/nonmutating variants).
+- Always add a newline between methods for different functions (including in-place/non-mutating variants).
 - Prefer to have no newline between methods for the same function; when reasonable,
   merge the docstrings into a generic function signature.
 - All `import`/`using`/`include` should be in the main module file.

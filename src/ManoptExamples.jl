@@ -3,6 +3,6 @@ using Manopt, Manifolds, ManifoldDiff
 # Common ollection of functions useful for several problems
 include("functions/gradients.jl")
 
-# Problems
-include("problems/RiemannianMean.jl")
+# Objetives
+include("objectives/RiemannianMean.jl")
 end
