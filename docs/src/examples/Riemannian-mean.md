@@ -1,8 +1,9 @@
 The Riemannian Center of Mass (mean)
 ================
+Ronny Bergmann
 7/2/23
 
-## Introductionar Notes
+## Preliminary Notes
 
 Each of the example objectives or problems stated in this package should be accompanied by a [Quarto](https://quarto.org) notebook that illustrates their usage, like this one.
 
@@ -35,7 +36,7 @@ data = [exp(M, p,  σ * rand(M; vector_at=p)) for i in 1:n];
 
 ## Variant 1: Using the functions
 
-We can defined both the cost and gradient, [`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost) and [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!), respectively. For their mathematical derivation and further explanations, we again refer to [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
+We can define both the cost and gradient, [`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost) and [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!), respectively. For their mathematical derivation and further explanations, we again refer to [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
 
 ``` julia
 f = ManoptExamples.RiemannianMeanCost(data)
