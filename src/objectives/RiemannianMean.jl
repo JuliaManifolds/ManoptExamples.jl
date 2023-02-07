@@ -84,9 +84,9 @@ function (rmg::RiemannianMeanGradient!!)(M, p)
 end
 function (rmg::RiemannianMeanGradient!!{T})(M, X::T, p) where {T}
     zero_vector!(M, X, p)
-    for di in rng.data
+    for di in rmg.data
         grad_distance!(M, rmg.X, di, p)
-        X .+= rmd.X
+        X .+= rmg.X
     end
     return X
 end

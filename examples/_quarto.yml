@@ -1,0 +1,26 @@
+
+project:
+  title: "ManoptExamples.jl"
+  output-dir: ../docs/src/examples
+
+crossref:
+  fig-prefix: Figure
+  tbl-prefix: Table
+bibliography:
+  - ../CITATION.bib
+  - ../bib/literature.yaml
+csl: ../bib/harvard1.csl
+fig-format: png
+
+execute:
+  freeze: auto
+  eval: true
+  echo: true
+  output: true
+
+format:
+  commonmark:
+    variant: -raw_html
+    wrap: none
+
+jupyter: julia-1.8

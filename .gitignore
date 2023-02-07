@@ -2,7 +2,8 @@
 *.jl.*.cov
 *.jl.mem
 /docs/build/
-Tutorials/.ipynb_checkpoints
+examples/_freeze
+examples/.quarto
 examples/**/*.asy
 examples/**/*.png
 examples/**/*.csv
