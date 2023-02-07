@@ -35,14 +35,14 @@ data = [exp(M, p,  σ * rand(M; vector_at=p)) for i in 1:n];
 
 ## Variant 1: Using the functions
 
-We can defined both the cost and gradient, [`RiemannianMeanCost`](@ref) and [`RiemannianMeanGradient!!`](@ref), respectively. For their mathematical derivation and further explanations, we again refer to [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
+We can defined both the cost and gradient, [`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost) and [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!), respectively. For their mathematical derivation and further explanations, we again refer to [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
 
 ``` julia
 f = ManoptExamples.RiemannianMeanCost(data)
 grad_f = ManoptExamples.RiemannianMeanGradient!!(M, data)
 ```
 
-Then we can for example directly call a [gradient descent]() as
+Then we can for example directly call a [gradient descent](https://manoptjl.org/stable/solvers/gradient_descent/) as
 
 ``` julia
 x1 = gradient_descent(M, f, grad_f, first(data))
@@ -55,7 +55,7 @@ x1 = gradient_descent(M, f, grad_f, first(data))
 
 ## Variant 2: Using the objective
 
-A shorter way to directly obtain the [Manifold objective](https://manoptjl.org/stable/plans/objective/) including these two functions. Here, we want to specify that the objective can do inplace-evaluations using the `evaluation=`-keyword.
+A shorter way to directly obtain the [Manifold objective](https://manoptjl.org/stable/plans/objective/) including these two functions. Here, we want to specify that the objective can do inplace-evaluations using the `evaluation=`-keyword. The objective can be obtained calling [`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective) as
 
 ``` julia
 rmo = ManoptExamples.Riemannian_mean_objective(

@@ -29,8 +29,9 @@ makedocs(;
         "Home" => "index.md",
         "Examples" => [
             "Overview" => "examples/index.md",
-            "The Riemannian Center of Mass" => "examples/Riemannian-mean.md",
-        ],
+            "Riemannian Mean" => "examples/Riemannian-mean.md",
+            ],
+        "Objectives" => "objectives/index.md",
         "Functions" => ["Gradients" => "functions/gradients.md"],
         "Contributing to ManoptExamples.jl" => "contributing.md",
     ],

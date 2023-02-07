@@ -12,12 +12,13 @@ the provided examples “in action”.
 
 This package is still in a little preliminary state. We still need
 
-* [ ] to setup the documentation and its CI
-* [ ] to setup the test suite and its CI
-* [ ] to setup the formatter CI test run.
-* [ ] to setup the quarto environment
-* [ ] to write a first example problem, probably just the mean to illustrate how this package is intended
-* [ ] to write a first Quarto example (on how to write examples)
+* [x] to setup the documentation
+* [ ] to setup the test suite
+* [x] to setup the formatter
+* [ ] to setup CI (documenter, tests, formatter)
+* [x] to setup the quarto environment
+* [x] to write a first example objective, probably just the mean to illustrate how this package is intended
+* [x] to write a first Quarto example (on how to write examples)
 * [ ] to setup zenodo for this repo as well to keep the version persistently archived.
 
 ## Citation

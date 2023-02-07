@@ -9,7 +9,7 @@ For a given set of points ``d_1,\ldots,d_N`` this cost function is defined as
 f(p) = \sum_{j=i}^N d_{mathcal M}^2(d_i, p),
 ```
 
-where ``d_{\mathcal M}`` is the [`distance`]() on a Riemannian manifold.
+where ``d_{\mathcal M}`` is the [`distance`](https://juliamanifolds.github.io/ManifoldsBase.jl/stable/functions.html#ManifoldsBase.distance-Tuple{AbstractManifold,%20Any,%20Any}) on a Riemannian manifold.
 
 # Constructor
 
@@ -18,7 +18,7 @@ where ``d_{\mathcal M}`` is the [`distance`]() on a Riemannian manifold.
 Initialize the cost function to a data set `data` of points on a manfiold of type `P`.
 
 # See also
-[`RiemannianMeanGradient!!`](@ref), [`riemannian_mean_objective`](@ref)
+[`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!), [`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective)
 
 """
 struct RiemannianMeanCost{P,V<:AbstractVector{<:P}}
@@ -63,7 +63,7 @@ Initialize the Riemannian mean gradient, where the internal storage for tangent 
 be created automatically, since the Riemannian manifold `M` is provideed.
 
 # See also
-[`RiemannianMeanCost`](@ref), [`riemannian_mean_objective`](@ref)
+[`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost), [`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective)
 """
 struct RiemannianMeanGradient!!{P,T,V<:AbstractVector{<:P}}
     X::T
@@ -102,7 +102,7 @@ Generate the objective for the Riemannian mean task for some given vector of
 `data` points on the Riemannian manifold `M`.
 
 # See also
-[`RiemannianMeanCost`](@ref), [`RiemannianMeanGradient!!`](@ref)
+[`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost), [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!)
 
 !!! note
     The first constructor should only be used if an additional storage of the vector is not
