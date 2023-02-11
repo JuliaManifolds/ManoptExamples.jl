@@ -1,25 +1,17 @@
 # ManoptExamples.jl
 
+[![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
+[![CI](https://github.com/JuliaManifolds/ManoptExamples.jl/workflows/CI/badge.svg)](https://github.com/JuliaManifolds/ManoptExamples.jl/actions?query=workflow%3ACI+branch%3Amaster)
+[![codecov](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl)
+
+
 This package provides examples of optimizations problems on Riemannian manifolds.
 
 It uses the manifolds from [Manifolds.jl](https://juliamanifolds.github.io/Manifolds.jl/) and the structures provided by [Manopt.jl](https://manoptjl.org/).
 to state the problems.
-Furthermore the problems are illustrated in their usage in [Quarto]() Markdown files, that
+Furthermore the problems are illustrated in their usage in [Quarto](https://quarto.org) Markdown files, that
 are pre-rendered into the documentation. This way, the package also provides examples of
 the provided examples “in action”.
-
-## Roadmap
-
-This package is still in a little preliminary state. We still need
-
-* [x] to setup the documentation
-* [ ] to setup the test suite
-* [x] to setup the formatter
-* [ ] to setup CI (documenter, tests, formatter)
-* [x] to setup the quarto environment
-* [x] to write a first example objective, probably just the mean to illustrate how this package is intended
-* [x] to write a first Quarto example (on how to write examples)
-* [ ] to setup zenodo for this repo as well to keep the version persistently archived.
 
 ## Citation
 
