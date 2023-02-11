@@ -13,9 +13,10 @@ where ``d_{\mathcal M}`` is the [`distance`](https://juliamanifolds.github.io/Ma
 
 # Constructor
 
-    RiemannianMeanCost(data::AbstractVector{<:P}) where {P}
+    RiemannianMeanCost(M::AbstractManifold, data::AbstractVector{<:P}) where {P}
 
-Initialize the cost function to a data set `data` of points on a manfiold of type `P`.
+Initialize the cost function to a data set `data` of points on a manfiold `M`,
+where each point is of type `P`.
 
 # See also
 [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!), [`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective)
@@ -24,6 +25,7 @@ Initialize the cost function to a data set `data` of points on a manfiold of typ
 struct RiemannianMeanCost{P,V<:AbstractVector{<:P}}
     data::V
 end
+RiemannianMeanCost(M::AbstractManifold, data) = RiemannianMeanCost(data)
 function (rmc::RiemannianMeanCost)(M, p)
     return sum(distance(M, p, di)^2 for di in rmc.data)
 end
@@ -66,18 +68,13 @@ be created automatically, since the Riemannian manifold `M` is provideed.
 [`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost), [`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective)
 """
 struct RiemannianMeanGradient!!{P,T,V<:AbstractVector{<:P}}
-    X::T
     data::V
-end
-function RiemannianMeanGradient!!(
-    data::V, initial_vector::T
-) where {P,T,V<:AbstractVector{<:P}}
-    return RiemannianMeanGradient!!{P,T,V}(initial_vector, data)
+    X::T
 end
 function RiemannianMeanGradient!!(
     M::AbstractManifold, data::V; initial_vector::T=zero_vector(M, first(data))
 ) where {P,T,V<:AbstractVector{<:P}}
-    return RiemannianMeanGradient!!{P,T,V}(initial_vector, data)
+    return RiemannianMeanGradient!!{P,T,V}(data, initial_vector)
 end
 function (rmg::RiemannianMeanGradient!!)(M, p)
     return sum(grad_distance(M, di, p) for di in rmg.data)

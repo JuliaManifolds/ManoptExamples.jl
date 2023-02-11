@@ -1,8 +1,0 @@
-# Gradient functions
-
-```@autodocs
-Modules = [ManoptExamples]
-Pages = ["functions/gradients.jl"]
-Order = [:type, :function]
-Private = true
-```

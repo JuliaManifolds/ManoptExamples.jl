@@ -30,9 +30,8 @@ makedocs(;
         "Examples" => [
             "Overview" => "examples/index.md",
             "Riemannian Mean" => "examples/Riemannian-mean.md",
-            ],
+        ],
         "Objectives" => "objectives/index.md",
-        "Functions" => ["Gradients" => "functions/gradients.md"],
         "Contributing to ManoptExamples.jl" => "contributing.md",
     ],
 )
