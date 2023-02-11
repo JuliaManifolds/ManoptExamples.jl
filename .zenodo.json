@@ -1,0 +1,20 @@
+{
+    "creators": [
+        {
+            "affiliation": "NTNU Trondheim",
+            "name": "Bergmann, Ronny",
+            "orcid": "0000-0001-8342-7218"
+        }
+    ],
+    "description": "ManoptExamples.jl is a Julia package collecting optimization tasks for Manopt.jl",
+    "keywords": [
+        "Riemannian manifolds",
+        "optimization",
+        "manifolds",
+        "Julia",
+        "Programming"
+    ],
+    "license": "MIT",
+    "title": "ManoptExamples.jl",
+    "upload_type": "software"
+}
