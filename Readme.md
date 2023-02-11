@@ -1,8 +1,8 @@
 # ManoptExamples.jl
 
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
-[![CI](https://github.com/JuliaManifolds/ManoptExamples.jl/workflows/CI/badge.svg)](https://github.com/JuliaManifolds/ManoptExamples.jl/actions?query=workflow%3ACI+branch%3Amaster)
-[![codecov](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl)
+[![CI](https://github.com/JuliaManifolds/ManoptExamples.jl/workflows/CI/badge.svg)](https://github.com/JuliaManifolds/ManoptExamples.jl/actions?query=workflow%3ACI+branch%3Amain)
+[![codecov](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl)
 
 
 This package provides examples of optimizations problems on Riemannian manifolds.
