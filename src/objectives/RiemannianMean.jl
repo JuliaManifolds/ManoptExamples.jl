@@ -77,12 +77,12 @@ function RiemannianMeanGradient!!(
     return RiemannianMeanGradient!!{P,T,V}(data, initial_vector)
 end
 function (rmg::RiemannianMeanGradient!!)(M, p)
-    return sum(grad_distance(M, di, p) for di in rmg.data)
+    return sum(ManifoldDiff.grad_distance(M, di, p) for di in rmg.data)
 end
 function (rmg::RiemannianMeanGradient!!{T})(M, X::T, p) where {T}
     zero_vector!(M, X, p)
     for di in rmg.data
-        grad_distance!(M, rmg.X, di, p)
+        ManifoldDiff.grad_distance!(M, rmg.X, di, p)
         X .+= rmg.X
     end
     return X

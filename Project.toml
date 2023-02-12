@@ -10,11 +10,11 @@ ManifoldsBase = "3362f125-f0bb-47a3-aa74-596ffd7ef2fb"
 Manopt = "0fc0a36d-df90-57f3-8f93-d78a9fc72bb5"
 
 [compat]
-ManifoldDiff = "0.2"
+ManifoldDiff = "0.2.2"
 Manifolds = "0.8.46"
 ManifoldsBase = "0.13.30"
 Manopt = "0.4.6"
-julia = "1.8"
+julia = "1.6"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

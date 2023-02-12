@@ -3,3 +3,10 @@ ManifoldDiff = "af67fdf4-a580-4b9f-bbec-742ef357defd"
 Manifolds = "1cead3c2-87b3-11e9-0ccd-23c62b72b94e"
 Manopt = "0fc0a36d-df90-57f3-8f93-d78a9fc72bb5"
 ManoptExamples = "5b8d5e80-5788-45cb-83d6-5e8f1484217d"
+
+[compat]
+ManifoldDiff = "0.2.2"
+Manifolds = "0.8.46"
+ManifoldsBase = "0.13.30"
+Manopt = "0.4.6"
+julia = "1.6"
