@@ -10,8 +10,8 @@ ManifoldsBase = "3362f125-f0bb-47a3-aa74-596ffd7ef2fb"
 Manopt = "0fc0a36d-df90-57f3-8f93-d78a9fc72bb5"
 
 [compat]
-ManifoldDiff = "0.2.2"
-Manifolds = "0.8.46"
+ManifoldDiff = "0.3"
+Manifolds = "0.8.43"
 ManifoldsBase = "0.13.30"
 Manopt = "0.4.6"
 julia = "1.6"
