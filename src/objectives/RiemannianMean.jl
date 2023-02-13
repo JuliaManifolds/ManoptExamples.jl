@@ -42,7 +42,7 @@ For a given set of points ``d_1,\ldots,d_N`` this cost function is defined as
 ```
 
 where ``d_{\mathcal M}`` is the [`distance`](https://juliamanifolds.github.io/ManifoldsBase.jl/stable/functions.html#ManifoldsBase.distance-Tuple{AbstractManifold,%20Any,%20Any})
-on a Riemannian manifold and we employ [`grad_distance`](@ref) to compute the single summands.
+on a Riemannian manifold and we employ [`grad_distance`](https://juliamanifolds.github.io/ManifoldDiff.jl/stable/library.html#ManifoldDiff.grad_distance) to compute the single summands.
 
 This functor provides both the allocating variant `grad_f(M,p)` as well as
 the in-place variant `grad_f!(M, X, p)` which computes the gradient in-place of `X`.
