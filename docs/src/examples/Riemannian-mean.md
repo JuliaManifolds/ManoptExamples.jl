@@ -5,13 +5,16 @@ Ronny Bergmann
 
 ## Preliminary Notes
 
-Each of the example objectives or problems stated in this package should be accompanied by a [Quarto](https://quarto.org) notebook that illustrates their usage, like this one.
+Each of the example objectives or problems stated in this package should
+be accompanied by a [Quarto](https://quarto.org) notebook that illustrates their usage, like this one.
 
 For this first example, the objective is a very common one, for example also used in the [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/) tutorial of [Manopt.jl](https://manoptjl.org/).
 
 The second goal of this tutorial is to also illustrate how this package provides these examples, namely in both an easy-to-use and a performant way.
 
-There are two recommended ways to activate a reproducible environment. For most cases the recommended environment is the one in `examples/`. If you are programming a new, relatively short example, consider using the packages main environment, which is the same as having `ManoptExamples.jl` in development mode. this requires that your example does not have any (additional) dependencies beyond the ones `ManoptExamples.jl` has anyways.
+There are two recommended ways to activate a reproducible environment.
+For most cases the recommended environment is the one in `examples/`.
+If you are programming a new, relatively short example, consider using the packages main environment, which is the same as having `ManoptExamples.jl` in development mode. this requires that your example does not have any (additional) dependencies beyond the ones `ManoptExamples.jl` has anyways.
 
 For registered versions of `ManoptExamples.jl` use the environment of `examples/` and – under development – add `ManoptExamples.jl` in development mode from the parent folder. This should be changed after a new example is within a registered version to just use the `examples/` environment again.
 
@@ -36,7 +39,9 @@ data = [exp(M, p,  σ * rand(M; vector_at=p)) for i in 1:n];
 
 ## Variant 1: Using the functions
 
-We can define both the cost and gradient, [`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost) and [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!), respectively. For their mathematical derivation and further explanations, we again refer to [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
+We can define both the cost and gradient, [`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost) and [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!), respectively.
+For their mathematical derivation and further explanations,
+we again refer to [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
 
 ``` julia
 f = ManoptExamples.RiemannianMeanCost(data)
@@ -56,7 +61,9 @@ x1 = gradient_descent(M, f, grad_f, first(data))
 
 ## Variant 2: Using the objective
 
-A shorter way to directly obtain the [Manifold objective](https://manoptjl.org/stable/plans/objective/) including these two functions. Here, we want to specify that the objective can do inplace-evaluations using the `evaluation=`-keyword. The objective can be obtained calling [`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective) as
+A shorter way to directly obtain the [Manifold objective](https://manoptjl.org/stable/plans/objective/) including these two functions.
+Here, we want to specify that the objective can do inplace-evaluations using the `evaluation=`-keyword. The objective can be obtained calling
+[`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective) as
 
 ``` julia
 rmo = ManoptExamples.Riemannian_mean_objective(

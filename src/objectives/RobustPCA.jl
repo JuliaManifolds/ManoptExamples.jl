@@ -58,8 +58,8 @@ Note that this is a mutable struct so you can adapt the ``ε`` later on.
 
 # Constructor
 
-    RobustPCAGrad(data, ε=1.0)
-    RobustPCAGrad(M::Grassmannian{d,m}, data, ε=1.0; evaluation=AllocatingEvaluation())
+    RobustPCAGrad!!(data, ε=1.0)
+    RobustPCAGrad!!(M::Grassmannian{d,m}, data, ε=1.0; evaluation=AllocatingEvaluation())
 
 Initialize the robust PCA cost to some `data` ``D``, and some regularization ``ε``.
 The manifold is optional to comply with all examples, but it is not needed here to construct the cost.
@@ -72,14 +72,15 @@ mutable struct RobustPCAGrad!!{D,F}
     temp::D
 end
 function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0)
-    RobustPCAGrad(data, ε, zero(data))
+    RobustPCAGrad!!(data, ε, zero(data))
 end
 function RobustPCAGrad!!(::Grassmann, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
-    RobustPCAGrad(data, ε, zero(data))
+    RobustPCAGrad!!(data, ε, zero(data))
 end
 function (f::RobustPCAGrad!!)(M::Grassmann, p)
     return f(M, zero_vector(M, p), p)
 end
+
 function (f::RobustPCAGrad!!)(M::Grassmann, X, p)
     n = size(f.data,2)
     f.temp .= p * p' * f.data .- f.data # vecs

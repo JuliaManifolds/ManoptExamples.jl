@@ -1,5 +1,5 @@
 ---
-title: "The Riemannian Center of Mass (mean)"
+title: "The Robust PCA computed on the Grassmann manifold"
 author:
   - "Ronny Bergmann"
   - "Laura Weigl"
@@ -89,7 +89,7 @@ p0 = U[:, 1:m]
 Let's generate the cost and gradient we aim to use here
 ```{julia}
 f = ManoptExamples.RobustPCACost(M, data, ε)
-grad_f = ManoptExamples.RobustPCAGrad(M, data, ε)
+grad_f = ManoptExamples.RobustPCAGrad!!(M, data, ε)
 ```
 
 Now we iterate the opimization with reduced ``ε``,
@@ -128,6 +128,8 @@ f(M, q)
 Finally, the results are presented graphically. The data points are visualized in a scatter plot. The result of the robust PCA and (for comparison) the standard SVD solution are plotted as straight lines.
 
 ```{julia}
+#| label: fig-pca
+#| fig-cap: "The result of the robust PCA vs. SVD"
 fig = plot(data[1, :], data[2, :]; seriestype=:scatter, label="Data points");
 plot!(
     fig,
@@ -147,3 +149,4 @@ plot!(
     linecolor=:black,
     label="Standard SVD",
 )
+```

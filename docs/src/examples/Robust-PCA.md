@@ -1,6 +1,6 @@
-The Riemannian Center of Mass (mean)
+The Robust PCA computed on the Grassmann manifold
 ================
-Ronny BergmannLaura Weigl
+Ronny Bergmann, Laura Weigl
 7/2/23
 
 ``` julia
@@ -88,10 +88,10 @@ Let’s generate the cost and gradient we aim to use here
 
 ``` julia
 f = ManoptExamples.RobustPCACost(M, data, ε)
-grad_f = ManoptExamples.RobustPCAGrad(M, data, ε)
+grad_f = ManoptExamples.RobustPCAGrad!!(M, data, ε)
 ```
 
-    ManoptExamples.RobustPCAGrad{Matrix{Float64}, Float64}([9.537606557855465 1.6583418797018163 … 30.833523701909474 30.512999245062304; -45.34339972619071 -1.7120433539256108 … -35.85943792458936 -32.93976007215313], 1.0, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0])
+    ManoptExamples.RobustPCAGrad!!{Matrix{Float64}, Float64}([9.537606557855465 1.6583418797018163 … 30.833523701909474 30.512999245062304; -45.34339972619071 -1.7120433539256108 … -35.85943792458936 -32.93976007215313], 1.0, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0])
 
 Now we iterate the opimization with reduced `ε`,
 which we update in `f` and `grad_f`.
@@ -130,22 +130,26 @@ f(M, q)
 
 Finally, the results are presented graphically. The data points are visualized in a scatter plot. The result of the robust PCA and (for comparison) the standard SVD solution are plotted as straight lines.
 
-fig = plot(data\[1, :\], data\[2, :\]; seriestype=:scatter, label=“Data points”);
+``` julia
+fig = plot(data[1, :], data[2, :]; seriestype=:scatter, label="Data points");
 plot!(
-fig,
-q\[1\] \* \[-1, 1\] \* 100,
-q\[2\] \* \[-1, 1\] \* 100;
-linecolor=:red,
-linewidth=2,
-label=“Robust PCA”,
+    fig,
+    q[1] * [-1, 1] * 100,
+    q[2] * [-1, 1] * 100;
+    linecolor=:red,
+    linewidth=2,
+    label="Robust PCA",
 );
 plot!(
-fig,
-p0\[1\] \* \[-1, 1\] \* 100,
-p0\[2\] \* \[-1, 1\] \* 100;
-xlims=1.1 \* \[minimum(data\[1, :\]), maximum(data\[1, :\])\],
-ylims=1.1 \* \[minimum(data\[2, :\]), maximum(data\[2, :\])\],
-linewidth=2,
-linecolor=:black,
-label=“Standard SVD”,
+    fig,
+    p0[1] * [-1, 1] * 100,
+    p0[2] * [-1, 1] * 100;
+    xlims=1.1 * [minimum(data[1, :]), maximum(data[1, :])],
+    ylims=1.1 * [minimum(data[2, :]), maximum(data[2, :])],
+    linewidth=2,
+    linecolor=:black,
+    label="Standard SVD",
 )
+```
+
+![Figure 1: The result of the robust PCA vs. SVD](Robust-PCA_files/figure-commonmark/fig-pca-output-1.png)
