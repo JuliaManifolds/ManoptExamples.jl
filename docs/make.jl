@@ -30,6 +30,7 @@ makedocs(;
         "Examples" => [
             "Overview" => "examples/index.md",
             "Riemannian Mean" => "examples/Riemannian-mean.md",
+            "Robust PCA" => "examples/Robust-PCA.md",
         ],
         "Objectives" => "objectives/index.md",
         "Contributing to ManoptExamples.jl" => "contributing.md",

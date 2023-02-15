@@ -3,78 +3,130 @@
 
 A functor representing the Riemannian robust PCA function on the [Grassmann](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/grassmann.html)
 manifold.
-For some given (column) data ``X∈\mathbb R^{p\times n}`` the cost function is defined
-on some ``\operatorname{Gr}(p,d)``, ``d<n`` as the sum of the distances
-of the columns ``X_i`` to the subspace spanned by ``U\in\operatorname{Gr}(p,b)``
+For some given (column) data ``D∈\mathbb R^{d\times n}`` the cost function is defined
+on some ``\operatorname{Gr}(d,m)``, ``m<n`` as the sum of the distances
+of the columns ``D_i`` to the subspace spanned by ``p\in\operatorname{Gr}(d,m)``
 (represented as a point on the Stiefel manifold). The function reads
 
 ```math
-f(U) = \frac{1}{n}\sum_{i=1}^n \lVert UU^{\mathrm{T}}X_i - X_i\rVert
+f(U) = \frac{1}{n}\sum_{i=1}^n \lVert pp^{\mathrm{T}}D_i - D_i\rVert
 ```
 
-This cost additionally provides a [Huber regularisation]() of the cost, that is
+This cost additionally provides a [Huber regularisation](https://en.wikipedia.org/wiki/Huber_loss) of the cost, that is
 for some ``ε>0`` one use ``ℓ_ε(x) = \sqrt{x^2+ε^2} - ε`` in
 
 ```math
-  f_{ε}(U) = \frac{1}{n}\sum_{i=1}^n ℓ_ε\bigl(\lVert UU^{\mathrm{T}}X_i - X_i\rVert\bigr)
+f_{ε}(p) = \frac{1}{n}\sum_{i=1}^n ℓ_ε\bigl(\lVert pp^{\mathrm{T}}D_i - D_i\rVert\bigr)
 ```
+
+Note that this is a mutable struct so you can adapt the ``ε`` later on.
 
 # Constructor
 
-    RobustPCACost(data::D, ε::F=1.0)
+    RobustPCACost(data::AbstractMatrix, ε=1.0)
+    RobustPCACost(M::Grassmann, data::AbstractMatrix, ε=1.0)
 
-Initialize the robust PCA to some `data` ``X``
+Initialize the robust PCA cost to some `data` ``D``, and some regularization ``ε``.
+The manifold is optional to comply with all examples, but it is not needed here to construct the cost.
 """
-struct RobustPCACost{D,F}
+mutable struct RobustPCACost{D,F}
     data::D
     ε::F
     tmp::D
 end
-RobustPCACost(data::AbstractArray; ε=1.0) = RobustPCACost(data,ε,zero(data))
-function (f::RobustPCACost)(M::Grassmann, U)
-    f.temp .= U * U' * f.data .- f.data
-    return mean(sqrt(sum(f.tmp .^ 2; dims=1) .+ f.ε^2) .- f.ε)
+function RobustPCACost(data::AbstractMatrix, ε=1.0)
+    RobustPCACost(data,ε,zero(data))
+end
+function RobustPCACost(::Grassmann{m,n}, data::AbstractMatrix, ε=1.0) where {m,n}
+    RobustPCACost(data,ε,zero(data))
+end
+function (f::RobustPCACost)(::Grassmann, p)
+    f.tmp .= p * p' * f.data .- f.data
+    return mean(sqrt.(sum(f.tmp .^ 2; dims=1) .+ f.ε^2) .- f.ε)
 end
 
 @doc raw"""
-    RobustPCAGrad{D,V,F}
+    RobustPCAGrad!!{D,F}
 
-A functor representing the Riemannian robust PCA gradient on the  [Grassmann](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/grassmann.html)
+A functor representing the Riemannian robust PCA gradient on the [Grassmann](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/grassmann.html)
 manifold.
 For some given (column) data ``X∈\mathbb R^{p\times n}`` the gradient of the
-[`RobustPCACost`](@ref)
-the cost function is defined
-on some ``\operatorname{Gr}(p,d)``, ``d<n`` as the sum of the distances
-of the columns ``X_i`` to the subspace spanned by ``U\in\operatorname{Gr}(p,b)``
-(represented as a point on the Stiefel manifold). The function reads
+[`RobustPCACost`](@ref) can be computed by projecting the Euclidean gradient onto
+the corresponding tangent space.
 
-```math
-f(U) = \frac{1}{n}\sum_{i=1}^n \lVert UU^{\mathrm{T}}X_i - X_i\rVert
-```
-
-This cost additionally provides a [Huber regularisation]() of the cost, that is
-for some ``ε>0`` one use ``ℓ_ε(x) = \sqrt{x^2+ε^2} - ε`` in
-
-```math
-  f_{ε}(U) = \frac{1}{n}\sum_{i=1}^n ℓ_ε\bigl(\lVert UU^{\mathrm{T}}X_i - X_i\rVert\bigr)
-```
+Note that this is a mutable struct so you can adapt the ``ε`` later on.
 
 # Constructor
 
-    RobustPCACost(data, ε=1.0)
+    RobustPCAGrad(data, ε=1.0)
+    RobustPCAGrad(M::Grassmannian{d,m}, data, ε=1.0; evaluation=AllocatingEvaluation())
 
-Initialize the robust PCA to some `data` ``X``
+Initialize the robust PCA cost to some `data` ``D``, and some regularization ``ε``.
+The manifold is optional to comply with all examples, but it is not needed here to construct the cost.
+Also the `evaluation=` keyword is present only for unification of the interfaces.
+Indeed, independent of that keyword the functor always works in both variants.
 """
-
-function grad_pca_cost(M, U, ϵ)
-    UtX = U' * X
-    vecs = U * UtX - X
-    sqnrms = sum(vecs .^ 2; dims=1)
-    G = zeros(p, d)
+mutable struct RobustPCAGrad!!{D,F}
+    data::D
+    ε::F
+    temp::D
+end
+function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0)
+    RobustPCAGrad(data, ε, zero(data))
+end
+function RobustPCAGrad!!(::Grassmann, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
+    RobustPCAGrad(data, ε, zero(data))
+end
+function (f::RobustPCAGrad!!)(M::Grassmann, p)
+    return f(M, zero_vector(M, p), p)
+end
+function (f::RobustPCAGrad!!)(M::Grassmann, X, p)
+    n = size(f.data,2)
+    f.temp .= p * p' * f.data .- f.data # vecs
+    zero_vector!(M, X, p)
     for i in 1:n
-        G = G + (1 / (sqrt(sqnrms[i] + ϵ^2))) * vecs[:, i] * UtX[:, i]'
+        X .+= (1 / (sqrt( sum(f.temp[:,i].^2) + f.ε^2))) .* (f.temp[:, i] * (p'*f.data[:,i])')
     end
-    G = 1 / n * G
-    # Convert to Riemannian gradient
-    return (I - U * U') * G
+    X ./= size(f.data,2)
+    project!(M, X, p, X) # Convert to Riemannian gradient
+    return X
+end
+
+
+@doc raw"""
+    robust_PCA(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
+    robust_PCA(M, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluton())
+
+Generate the objective for the robust PCA task for some given `data` ``D`` and Huber regularization
+parameter ``ε``.
+
+
+# See also
+[`RobustPCACost`](@ref ManoptExamples.RobustPCACost), [`RobustPCAGrad!!`](@ref ManoptExamples.RobustPCAGrad!!)
+
+!!! note
+    Since the construction is independent of the manifold, that argument is optional and
+    mainly provided to comply with other objectives. Similarly, independent of the `evaluation`,
+    indeed the gradient always allows for both the allocating and the inplace variant to be used,
+    though that keyword is used to setup the objective.
+"""
+function robust_PCA(
+    data::AbstractMatrix, ε=1.0; evaluation=Manopt.AllocatingEvaluation()
+)
+    return Manopt.ManifoldGradientObjective(
+        RobustPCACost(data, ε),
+        RobustPCAGrad!!(data, ε=1.0; evaluation=evaluation),
+    )
+end
+function robust_PCA(
+    M::AbstractManifold,
+    data::AbstractMatrix,
+    ε=1.0;
+    evaluation=Manopt.AllocatingEvaluation(),
+)
+    return Manopt.ManifoldGradientObjective(
+        RobustPCACost(M, data, ε),
+        RobustPCAGrad!!(M, data, ε; evaluation=evaluation);
+        evaluation=evaluation,
+    )
 end

@@ -1,5 +1,5 @@
 @doc raw"""
-    RiemannianMeanCost{P} where P
+    RiemannianMeanCost{P}
 
 A functor representing the Riemannian center of mass (or Riemannian mean) cost function.
 
@@ -108,7 +108,7 @@ Generate the objective for the Riemannian mean task for some given vector of
     if a vector is provided.
 """
 function Riemannian_mean_objective(
-    data::AbstractVector, initial_vector=nothing, evaluation=Manopt.AllocatingEvaluation()
+    data::AbstractVector; initial_vector=nothing, evaluation=Manopt.AllocatingEvaluation()
 )
     return Manopt.ManifoldGradientObjective(
         RiemannianMeanCost(data),

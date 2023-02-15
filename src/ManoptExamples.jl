@@ -4,4 +4,5 @@ using Manopt, Manifolds, ManifoldDiff
 
 # Objetives
 include("objectives/RiemannianMean.jl")
+include("objectives/RobustPCA.jl")
 end

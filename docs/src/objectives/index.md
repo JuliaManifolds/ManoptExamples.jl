@@ -2,11 +2,22 @@
 
 # [Riemannian Mean](@id RiemannianMean)
 
-See [Riemannian mean example](../examples/Riemannian-mean.md) to see these in use.
+See the [Riemannian mean example](../examples/Riemannian-mean.md) to see these in use.
 
 ```@autodocs
 Modules = [ManoptExamples]
 Pages = ["objectives/RiemannianMean.jl"]
+Order = [:type, :function]
+Private = true
+```
+
+# [Robust PCA](@id RobustPCA)
+
+See the [Robust PCA example](../examples/Robust-PCA.md) to see these in use.
+
+```@autodocs
+Modules = [ManoptExamples]
+Pages = ["objectives/RobustPCA.jl"]
 Order = [:type, :function]
 Private = true
 ```

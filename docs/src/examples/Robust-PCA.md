@@ -1,19 +1,14 @@
----
-title: "The Riemannian Center of Mass (mean)"
-author:
-  - "Ronny Bergmann"
-  - "Laura Weigl"
-date: 07/02/2023
----
+The Riemannian Center of Mass (mean)
+================
+Ronny BergmannLaura Weigl
+7/2/23
 
-```{julia}
-#| output: false
+``` julia
 using Pkg;
 Pkg.activate("."); # use the example environment,
 ```
 
-```{julia}
-#| output: false
+``` julia
 using LinearAlgebra, Random, Statistics
 using Manifolds, Manopt, ManoptExamples
 using Plots
@@ -27,7 +22,7 @@ $U$ represents an ONB of $ℝ^{p× d}$ such that the column space of $U$ approxi
 
 We compute $U$ as a minimizer over the Grassmann manifold of the cost function:
 
-```math
+``` math
 \begin{split}
 f(U) & = \frac{1}{n}\sum_{i=1}^{n}{\operatorname{dist}(X_i, \operatorname{span}(U))}\\
 & = \frac{1}{n} \sum_{i=1}^{n}\lVert UU^TX_i - X_i\rVert
@@ -36,7 +31,7 @@ f(U) & = \frac{1}{n}\sum_{i=1}^{n}{\operatorname{dist}(X_i, \operatorname{span}(
 
 The output cost represents the average distance achieved with the returned $U$, an orthonormal basis (or a point on the Stiefel manifold) representing the subspace (a point on the Grassmann manifold). Notice that norms are not squared, so we have a robust cost function. This means that $f$ is nonsmooth, therefore we regularize with a pseudo-Huber loss function of smoothing parameter $ϵ$.
 
-```math
+``` math
 f_ϵ(U) = \frac{1}{n} \sum_{i=1}^n{ℓ_ϵ(\lVert UU^{\mathrm{T}}X_i - X_i\rVert)},
 ```
 
@@ -46,8 +41,7 @@ The smoothing parameter is iteratively reduced (with warm starts).
 
 First, we generate random data for illustration purposes:
 
-```{julia}
-#| output: false
+``` julia
 n = 40
 d = 2
 outliers = 15
@@ -63,7 +57,7 @@ We use the Manopt toolbox to optimize the regularized cost function over the Gra
 
 To do this, we first need to define the problem structure.
 
-```{julia}
+``` julia
 M = Grassmann(d,m);
 ```
 
@@ -78,7 +72,7 @@ The trust-region method also requires the Hessian Matrix. By using `ApproxHessia
 
 We run the procedure several times, where the smoothing parameter $ϵ$ is reduced iteratively.
 
-```{julia}
+``` julia
 ε = 1.0
 iterations = 6
 reduction = 0.5
@@ -86,16 +80,23 @@ U, S, V = svd(data);
 p0 = U[:, 1:m]
 ```
 
-Let's generate the cost and gradient we aim to use here
-```{julia}
+    2×1 Matrix{Float64}:
+     -0.7494248652139394
+      0.6620893983436593
+
+Let’s generate the cost and gradient we aim to use here
+
+``` julia
 f = ManoptExamples.RobustPCACost(M, data, ε)
 grad_f = ManoptExamples.RobustPCAGrad(M, data, ε)
 ```
 
-Now we iterate the opimization with reduced ``ε``,
+    ManoptExamples.RobustPCAGrad{Matrix{Float64}, Float64}([9.537606557855465 1.6583418797018163 … 30.833523701909474 30.512999245062304; -45.34339972619071 -1.7120433539256108 … -35.85943792458936 -32.93976007215313], 1.0, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0])
+
+Now we iterate the opimization with reduced `ε`,
 which we update in `f` and `grad_f`.
 
-```{julia}
+``` julia
 q = copy(M, p0)
 εi = ε
 for i in 1:iterations
@@ -119,31 +120,32 @@ for i in 1:iterations
 end
 ```
 
-```{julia}
+``` julia
 f.ε = 0.0
 q
 f(M, q)
 ```
 
+    9.412965075156471
+
 Finally, the results are presented graphically. The data points are visualized in a scatter plot. The result of the robust PCA and (for comparison) the standard SVD solution are plotted as straight lines.
 
-```{julia}
-fig = plot(data[1, :], data[2, :]; seriestype=:scatter, label="Data points");
+fig = plot(data\[1, :\], data\[2, :\]; seriestype=:scatter, label=“Data points”);
 plot!(
-    fig,
-    q[1] * [-1, 1] * 100,
-    q[2] * [-1, 1] * 100;
-    linecolor=:red,
-    linewidth=2,
-    label="Robust PCA",
+fig,
+q\[1\] \* \[-1, 1\] \* 100,
+q\[2\] \* \[-1, 1\] \* 100;
+linecolor=:red,
+linewidth=2,
+label=“Robust PCA”,
 );
 plot!(
-    fig,
-    p0[1] * [-1, 1] * 100,
-    p0[2] * [-1, 1] * 100;
-    xlims=1.1 * [minimum(data[1, :]), maximum(data[1, :])],
-    ylims=1.1 * [minimum(data[2, :]), maximum(data[2, :])],
-    linewidth=2,
-    linecolor=:black,
-    label="Standard SVD",
+fig,
+p0\[1\] \* \[-1, 1\] \* 100,
+p0\[2\] \* \[-1, 1\] \* 100;
+xlims=1.1 \* \[minimum(data\[1, :\]), maximum(data\[1, :\])\],
+ylims=1.1 \* \[minimum(data\[2, :\]), maximum(data\[2, :\])\],
+linewidth=2,
+linecolor=:black,
+label=“Standard SVD”,
 )
