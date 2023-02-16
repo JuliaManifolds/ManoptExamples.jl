@@ -3,6 +3,8 @@ The Robust PCA computed on the Grassmann manifold
 Ronny Bergmann, Laura Weigl
 7/2/23
 
+For this example we first load the necessary packages.
+
 ``` julia
 using Pkg;
 Pkg.activate("."); # use the example environment,
@@ -17,29 +19,31 @@ Random.seed!(42)
 
 # Computing a Robust PCA
 
-For a given matrix $X ∈ ℝ^{p×n}$ whose columns represent points in $ℝ^p$, a matrix $U ∈ ℝ^{p×d}$ is computed for a given dimension $d < n$:
-$U$ represents an ONB of $ℝ^{p× d}$ such that the column space of $U$ approximates the points (columns of $X$) $X_i$ as well as possible.
+For a given matrix $D ∈ ℝ^{d×n}$ whose columns represent points in $ℝ^d$, a matrix $p ∈ ℝ^{d×m}$ is computed for a given dimension $m < n$:
+$p$ represents an ONB of $ℝ^{d×m}$ such that the column space of $p$ approximates the points (columns of $D$), i.e. the vectors $D_i$ as well as possible.
 
-We compute $U$ as a minimizer over the Grassmann manifold of the cost function:
+We compute $p$ as a minimizer over the Grassmann manifold of the cost function:
 
 ``` math
 \begin{split}
-f(U) & = \frac{1}{n}\sum_{i=1}^{n}{\operatorname{dist}(X_i, \operatorname{span}(U))}\\
-& = \frac{1}{n} \sum_{i=1}^{n}\lVert UU^TX_i - X_i\rVert
+f(p)
+& = \frac{1}{n}\sum_{i=1}^{n}{\operatorname{dist}(D_i, \operatorname{span}(p))}
+\\
+& = \frac{1}{n} \sum_{i=1}^{n}\lVert pp^TD_i - D_i\rVert
 \end{split}
 ```
 
-The output cost represents the average distance achieved with the returned $U$, an orthonormal basis (or a point on the Stiefel manifold) representing the subspace (a point on the Grassmann manifold). Notice that norms are not squared, so we have a robust cost function. This means that $f$ is nonsmooth, therefore we regularize with a pseudo-Huber loss function of smoothing parameter $ϵ$.
+The output cost represents the average distance achieved with the returned $p$, an orthonormal basis (or a point on the Stiefel manifold) representing the subspace (a point on the Grassmann manifold). Notice that norms are not squared, so we have a robust cost function. This means that $f$ is nonsmooth, therefore we regularize with a pseudo-Huber loss function of smoothing parameter $ε$.
 
 ``` math
-f_ϵ(U) = \frac{1}{n} \sum_{i=1}^n{ℓ_ϵ(\lVert UU^{\mathrm{T}}X_i - X_i\rVert)},
+f_ϵ(p) = \frac{1}{n} \sum_{i=1}^n{ℓ_ϵ(\lVert pp^{\mathrm{T}}D_i - D_i\rVert)},
 ```
 
-Where $ℓ_ϵ(x) = \sqrt{x^2 + ϵ^2} - ϵ$.
+where $ℓ_ϵ(x) = \sqrt{x^2 + ϵ^2} - ϵ$.
 
-The smoothing parameter is iteratively reduced (with warm starts).
+The smoothing parameter is iteratively reduced in the final optimisation runs(with warm starts).
 
-First, we generate random data for illustration purposes:
+First, we generate random data. For illustration purposes we take points in $\mathbb R^2$ and $m=1$, that is we aim to find a robust regression line.
 
 ``` julia
 n = 40
@@ -53,24 +57,24 @@ data[:, permute[1:outliers]] = 30 * randn(2, outliers)
 m = 1
 ```
 
-We use the Manopt toolbox to optimize the regularized cost function over the Grassmann manifold.
-
-To do this, we first need to define the problem structure.
+We use the Manopt toolbox to optimize the regularized cost function over the Grassmann manifold. To do this, we first need to define the problem structure.
 
 ``` julia
 M = Grassmann(d,m);
 ```
 
-For the initial matrix $U_0$ we use classical PCA via singular value decomposition. Thus, we use the first $d$ left singular vectors.
+For the initial matrix $p_0$ we use classical PCA via singular value decomposition. Thus, we use the first $d$ left singular vectors.
 
 Then, we compute an optimum of the cost function over the Grassmann manifold.
 We use a trust-region method which is implemented in `Manopt.jl`.
 
-For this, the objective function `robustpca_cost` and the Riemannian gradient `grad_pca_cost` must first be implemented as functions. Since we Huber regularize them, the functions also have the `ϵ` as a parameter. To obtain the Riemannian gradient we first compute the Euclidian gradient. Afterwards it is projected onto the tangent space by using the orthogonal projection $I-U*U^T$.
+Furthermore the cost and gradient are implemented in `ManoptExamples.jl`.
+Since these are Huber regularized, both functors have the `ϵ` as a parameter.
+To compute the Riemannian gradient we first compute the Euclidian gradient. Afterwards it is projected onto the tangent space by using the orthogonal projection $pp^T - I$, which converts the Euclidean to the Riemannian gradient.
 
-The trust-region method also requires the Hessian Matrix. By using `ApproxHessianFiniteDifference` we get an approximation of the Hessian Matrix.
+The trust-region method also requires the Hessian Matrix. By using [`ApproxHessianFiniteDifference`](https://manoptjl.org/stable/solvers/trust_regions/#Manopt.ApproxHessianFiniteDifference) using a finite difference scheme we get an approximation of the Hessian Matrix.
 
-We run the procedure several times, where the smoothing parameter $ϵ$ is reduced iteratively.
+We run the procedure several times, where the smoothing parameter $ε$ is reduced iteratively.
 
 ``` julia
 ε = 1.0
@@ -93,7 +97,15 @@ grad_f = ManoptExamples.RobustPCAGrad!!(M, data, ε)
 
     ManoptExamples.RobustPCAGrad!!{Matrix{Float64}, Float64}([9.537606557855465 1.6583418797018163 … 30.833523701909474 30.512999245062304; -45.34339972619071 -1.7120433539256108 … -35.85943792458936 -32.93976007215313], 1.0, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0])
 
-Now we iterate the opimization with reduced `ε`,
+and check the initial cost
+
+``` julia
+f(M, p0)
+```
+
+    9.43069094790552
+
+Now we iterate the opimization with reducing `ε` after every iteration,
 which we update in `f` and `grad_f`.
 
 ``` julia
@@ -107,9 +119,7 @@ for i in 1:iterations
         f,
         grad_f,
         ApproxHessianFiniteDifference(
-            M,
-            q,
-            f;
+            M, q, f;
             vector_transport_method=ProjectionTransport(),
             retraction_method=PolarRetraction(),
         ),
@@ -120,15 +130,16 @@ for i in 1:iterations
 end
 ```
 
+When finally setting `ε` we can investigate the final cost
+
 ``` julia
 f.ε = 0.0
-q
 f(M, q)
 ```
 
     9.412965075156471
 
-Finally, the results are presented graphically. The data points are visualized in a scatter plot. The result of the robust PCA and (for comparison) the standard SVD solution are plotted as straight lines.
+Finally, the results are presented visually. The data points are visualized in a scatter plot. The result of the robust PCA and (for comparison) the standard SVD solution are plotted as straight lines.
 
 ``` julia
 fig = plot(data[1, :], data[2, :]; seriestype=:scatter, label="Data points");

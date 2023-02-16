@@ -35,10 +35,10 @@ mutable struct RobustPCACost{D,F}
     tmp::D
 end
 function RobustPCACost(data::AbstractMatrix, ε=1.0)
-    RobustPCACost(data,ε,zero(data))
+    return RobustPCACost(data, ε, zero(data))
 end
 function RobustPCACost(::Grassmann{m,n}, data::AbstractMatrix, ε=1.0) where {m,n}
-    RobustPCACost(data,ε,zero(data))
+    return RobustPCACost(data, ε, zero(data))
 end
 function (f::RobustPCACost)(::Grassmann, p)
     f.tmp .= p * p' * f.data .- f.data
@@ -72,27 +72,30 @@ mutable struct RobustPCAGrad!!{D,F}
     temp::D
 end
 function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0)
-    RobustPCAGrad!!(data, ε, zero(data))
+    return RobustPCAGrad!!(data, ε, zero(data))
 end
-function RobustPCAGrad!!(::Grassmann, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
-    RobustPCAGrad!!(data, ε, zero(data))
+function RobustPCAGrad!!(
+    ::Grassmann, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation()
+)
+    return RobustPCAGrad!!(data, ε, zero(data))
 end
 function (f::RobustPCAGrad!!)(M::Grassmann, p)
     return f(M, zero_vector(M, p), p)
 end
 
 function (f::RobustPCAGrad!!)(M::Grassmann, X, p)
-    n = size(f.data,2)
+    n = size(f.data, 2)
     f.temp .= p * p' * f.data .- f.data # vecs
     zero_vector!(M, X, p)
     for i in 1:n
-        X .+= (1 / (sqrt( sum(f.temp[:,i].^2) + f.ε^2))) .* (f.temp[:, i] * (p'*f.data[:,i])')
+        X .+=
+            (1 / (sqrt(sum(f.temp[:, i] .^ 2) + f.ε^2))) .*
+            (f.temp[:, i] * (p' * f.data[:, i])')
     end
-    X ./= size(f.data,2)
+    X ./= size(f.data, 2)
     project!(M, X, p, X) # Convert to Riemannian gradient
     return X
 end
-
 
 @doc raw"""
     robust_PCA(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
@@ -111,12 +114,9 @@ parameter ``ε``.
     indeed the gradient always allows for both the allocating and the inplace variant to be used,
     though that keyword is used to setup the objective.
 """
-function robust_PCA(
-    data::AbstractMatrix, ε=1.0; evaluation=Manopt.AllocatingEvaluation()
-)
+function robust_PCA(data::AbstractMatrix, ε=1.0; evaluation=Manopt.AllocatingEvaluation())
     return Manopt.ManifoldGradientObjective(
-        RobustPCACost(data, ε),
-        RobustPCAGrad!!(data, ε=1.0; evaluation=evaluation),
+        RobustPCACost(data, ε), RobustPCAGrad!!(data; ε=1.0, evaluation=evaluation)
     )
 end
 function robust_PCA(
