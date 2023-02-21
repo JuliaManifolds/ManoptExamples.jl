@@ -5,6 +5,7 @@
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 [![CI](https://github.com/JuliaManifolds/ManoptExamples.jl/workflows/CI/badge.svg)](https://github.com/JuliaManifolds/ManoptExamples.jl/actions?query=workflow%3ACI+branch%3Amain)
 [![codecov](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl)
+[![DOI](https://zenodo.org/badge/598065559.svg)](https://zenodo.org/badge/latestdoi/598065559)
 
 
 This package provides examples of optimizations problems on Riemannian manifolds.
@@ -42,9 +43,22 @@ To refer to a certain version or the source code in general we recommend to cite
     Doi = {10.5281/zenodo.4290905},
     Publisher = {Zenodo},
     Title = {Manopt.jl},
-    Year = {2022},
+    Year = {2023},
 }
 ```
 
 for the most recent version or a corresponding version specific DOI, see [the list of all versions](https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224290905%22&sort=-version&all_versions=True).
 Note that both citations are in [BibLaTeX](https://ctan.org/pkg/biblatex) format.
+
+Similarly this package has a zenodo DOI, for example
+
+```biblatex
+@software{manoptjl-zenodo-mostrecent,
+    Author = {Ronny Bergmann},
+    Copyright = {MIT License},
+    Doi = {10.5281/zenodo.7662431},
+    Publisher = {Zenodo},
+    Title = {ManoptExamples.jl},
+    Year = {2023},
+}
+```
