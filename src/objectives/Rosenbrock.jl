@@ -14,6 +14,8 @@ See also [Rosenbrock (Wikipedia)](https://en.wikipedia.org/wiki/Rosenbrock_funct
 # Constructor
 
 f = Rosenbrock(a,b)
+
+generates the struct/function of the Rosenbrock cost.
 """
 struct RosenbrockCost{T}
     a::T
@@ -47,6 +49,17 @@ Provide Eclidean GRadient fo the Rosenbrock function in 2D, i.e. for some ``a,b 
 ```
 
 i.e. also here the manifold is ignored.
+
+# Constructor
+
+    RosenbrockGradient(a,b)
+
+# Functors
+
+    \operatorname{grad} f(M,p)
+    \operatorname{grad} f(M, X, p)
+
+evaluate the gradient at ``p`` the manifold``\mathcal M`` is ignored.
 """
 struct RosenbrockGradient{T}
     a::T

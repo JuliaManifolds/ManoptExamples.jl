@@ -71,7 +71,7 @@ mutable struct RobustPCAGrad!!{D,F}
     ε::F
     temp::D
 end
-function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0)
+function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
     return RobustPCAGrad!!(data, ε, zero(data))
 end
 function RobustPCAGrad!!(
@@ -98,8 +98,8 @@ function (f::RobustPCAGrad!!)(M::Grassmann, X, p)
 end
 
 @doc raw"""
-    robust_PCA(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
-    robust_PCA(M, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluton())
+    robust_PCA_objective(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
+    robust_PCA_objective(M, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluton())
 
 Generate the objective for the robust PCA task for some given `data` ``D`` and Huber regularization
 parameter ``ε``.
@@ -114,12 +114,14 @@ parameter ``ε``.
     indeed the gradient always allows for both the allocating and the inplace variant to be used,
     though that keyword is used to setup the objective.
 """
-function robust_PCA(data::AbstractMatrix, ε=1.0; evaluation=Manopt.AllocatingEvaluation())
+function robust_PCA_objective(
+    data::AbstractMatrix, ε=1.0; evaluation=Manopt.AllocatingEvaluation()
+)
     return Manopt.ManifoldGradientObjective(
-        RobustPCACost(data, ε), RobustPCAGrad!!(data; ε=1.0, evaluation=evaluation)
+        RobustPCACost(data, ε), RobustPCAGrad!!(data, 1.0; evaluation=evaluation)
     )
 end
-function robust_PCA(
+function robust_PCA_objective(
     M::AbstractManifold,
     data::AbstractMatrix,
     ε=1.0;
