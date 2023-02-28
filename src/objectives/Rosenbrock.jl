@@ -78,8 +78,8 @@ function (f::RosenbrockGradient!!)(M, p)
     return [4 * f.a * (p[1]^2 - p[2]) * p[1] + 2 * (p[1] - f.b), 2 * f.a * (p[1]^2 - p[2])]
 end
 function (f::RosenbrockGradient!!)(M, X, p)
-    X[1] = 4 * f.a * (p[1]^2 - p[2]) * p[1] + 2 * (p_1 - f.b)
-    X[2] = 2 * f.a * (p[1]^2 - p[2])
+    X[1] = 4 * f.a * (p[1]^2 - p[2]) * p[1] + 2 * (p[1] - f.b)
+    X[2] = -2 * f.a * (p[1]^2 - p[2])
     return X
 end
 
@@ -98,6 +98,7 @@ function Rosenbrock_objective(
 )
     return Manopt.ManifoldGradientObjective(
         RosenbrockCost(M; a=a, b=b),
-        RosenbrockGradient!!(M; a=a, b=b, evaluation=evaluation),
+        RosenbrockGradient!!(M; a=a, b=b, evaluation=evaluation);
+        evaluation=evaluation,
     )
 end

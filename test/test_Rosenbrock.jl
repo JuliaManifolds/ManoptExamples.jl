@@ -11,6 +11,6 @@ using Manopt, ManoptExamples, Manifolds, Test
     @test isapprox(M, p_star, get_gradient(M, o1, p_star), zero_vector(M, p_star))
     o2 = ManoptExamples.Rosenbrock_objective(; a=a, b=b, evaluation=InplaceEvaluation())
     X = zero_vector(M, p_star)
-    get_gradient!(M, X, o1, p_star)
+    get_gradient!(M, X, o2, p_star)
     @test isapprox(M, p_star, X, zero_vector(M, p_star))
 end
