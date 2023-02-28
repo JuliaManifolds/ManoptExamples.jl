@@ -21,7 +21,10 @@ struct RosenbrockCost{T}
     a::T
     b::T
 end
-function (f::RosenrbockCost)(M, p)
+function RosenbrockCost(::AbstractManifold=ManifoldsBase.DefaultManifold(); a=100.0, b=1.0)
+    return RosenbrockCost{typeof(a + b)}(a, b)
+end
+function (f::RosenbrockCost)(M, p)
     return f.a * (p[1]^2 - p[2])^2 + (p[1] - f.b)^2
 end
 
@@ -61,15 +64,40 @@ i.e. also here the manifold is ignored.
 
 evaluate the gradient at ``p`` the manifold``\mathcal M`` is ignored.
 """
-struct RosenbrockGradient{T}
+struct RosenbrockGradient!!{T}
     a::T
     b::T
 end
-function (f::RosenrbockGradient)(M, p)
-    return [4 * f.a * (p[1]^2 - p[2]) * p[1] + 2 * (p_1 - f.b), 2 * f.a * (p[1]^2 - p[2])]
+function RosenbrockGradient!!(
+    ::AbstractManifold=ManifoldsBase.DefaultManifold(); a=100.0, b=1.0, kwargs...
+)
+    T = typeof(a + b)
+    return RosenbrockGradient!!{T}(a, b)
 end
-function (f::RosenrbockGradient)(M, X, p)
+function (f::RosenbrockGradient!!)(M, p)
+    return [4 * f.a * (p[1]^2 - p[2]) * p[1] + 2 * (p[1] - f.b), 2 * f.a * (p[1]^2 - p[2])]
+end
+function (f::RosenbrockGradient!!)(M, X, p)
     X[1] = 4 * f.a * (p[1]^2 - p[2]) * p[1] + 2 * (p_1 - f.b)
     X[2] = 2 * f.a * (p[1]^2 - p[2])
     return X
+end
+
+"""
+Rosenbrock_objective(M::AbstractManifold=DefaultManifold(), a=100.0, b=1.0, evaluation=AllocatingEvaluation())
+
+Return the gradient objective of the Rosenbrock example.
+
+See also [`RosenbrockCost`](@ref), [`RosenbrockGradient`](@ref)
+"""
+function Rosenbrock_objective(
+    M::AbstractManifold=ManifoldsBase.DefaultManifold();
+    a=100.0,
+    b=1.0,
+    evaluation=AllocatingEvaluation(),
+)
+    return Manopt.ManifoldGradientObjective(
+        RosenbrockCost(M; a=a, b=b),
+        RosenbrockGradient!!(M; a=a, b=b, evaluation=evaluation),
+    )
 end
