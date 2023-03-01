@@ -31,7 +31,7 @@ end
 @doc raw"""
     minimizer(::RosenbrockCost)
 
-Return the minimizer of the [RosenbrockCost](@ref), which is given by
+Return the minimizer of the [`RosenbrockCost`](@ref), which is given by
 
 ```math
 p^* = \begin{pmatrix} b\\b^2 \end{pmatrix}
@@ -75,20 +75,22 @@ function RosenbrockGradient!!(
     return RosenbrockGradient!!{T}(a, b)
 end
 function (f::RosenbrockGradient!!)(M, p)
-    return [4 * f.a * (p[1]^2 - p[2]) * p[1] + 2 * (p[1] - f.b), 2 * f.a * (p[1]^2 - p[2])]
+    X = zero_vector(M,p)
+    f(M, X, p)
+    return X
 end
 function (f::RosenbrockGradient!!)(M, X, p)
-    X[1] = 4 * f.a * (p[1]^2 - p[2]) * p[1] + 2 * (p[1] - f.b)
-    X[2] = -2 * f.a * (p[1]^2 - p[2])
-    return X
+	X[1] = 4*f.a*p[1]*(p[1]^2-p[2]) + 2*(p[1]-f.b)
+	X[2] = -2*f.a*(p[1]^2-p[2])
+	return X
 end
 
 """
-Rosenbrock_objective(M::AbstractManifold=DefaultManifold(), a=100.0, b=1.0, evaluation=AllocatingEvaluation())
+    Rosenbrock_objective(M::AbstractManifold=DefaultManifold(), a=100.0, b=1.0, evaluation=AllocatingEvaluation())
 
 Return the gradient objective of the Rosenbrock example.
 
-See also [`RosenbrockCost`](@ref), [`RosenbrockGradient`](@ref)
+See also [`RosenbrockCost`](@ref), [`RosenbrockGradient!!`](@ref)
 """
 function Rosenbrock_objective(
     M::AbstractManifold=ManifoldsBase.DefaultManifold();
