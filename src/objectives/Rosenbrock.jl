@@ -75,14 +75,14 @@ function RosenbrockGradient!!(
     return RosenbrockGradient!!{T}(a, b)
 end
 function (f::RosenbrockGradient!!)(M, p)
-    X = zero_vector(M,p)
+    X = zero_vector(M, p)
     f(M, X, p)
     return X
 end
 function (f::RosenbrockGradient!!)(M, X, p)
-	X[1] = 4*f.a*p[1]*(p[1]^2-p[2]) + 2*(p[1]-f.b)
-	X[2] = -2*f.a*(p[1]^2-p[2])
-	return X
+    X[1] = 4 * f.a * p[1] * (p[1]^2 - p[2]) + 2 * (p[1] - f.b)
+    X[2] = -2 * f.a * (p[1]^2 - p[2])
+    return X
 end
 
 """
