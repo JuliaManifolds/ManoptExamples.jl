@@ -17,4 +17,8 @@ using Manifolds, Manopt, ManoptExamples, Test
     o2 = ManoptExamples.Riemannian_mean_objective(M, data)
     @test get_cost(M, o2, p) == f(M, p)
     @test get_gradient(M, o2, p) == grad_f(M, p)
+    # no manifold given
+    o = ManoptExamples.Riemannian_mean_objective(data)
+    @test get_cost(M, o, p) == 2.0
+    @test isapprox(M, p, get_gradient(M, o, p), zero_vector(M, p))
 end

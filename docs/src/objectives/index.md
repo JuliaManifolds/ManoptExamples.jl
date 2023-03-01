@@ -21,3 +21,14 @@ Pages = ["objectives/RobustPCA.jl"]
 Order = [:type, :function]
 Private = true
 ```
+
+# [Rosenbrock Function](@id Rosenbrock)
+
+See the [Rosenbrock example](../examples/Rosenbrock.md) to see these in use.
+
+```@autodocs
+Modules = [ManoptExamples]
+Pages = ["objectives/Rosenbrock.jl"]
+Order = [:type, :function]
+Private = true
+```

@@ -31,6 +31,7 @@ makedocs(;
             "Overview" => "examples/index.md",
             "Riemannian Mean" => "examples/Riemannian-mean.md",
             "Robust PCA" => "examples/Robust-PCA.md",
+            "Rosenbrock" => "examples/Rosenbrock.md",
         ],
         "Objectives" => "objectives/index.md",
         "Contributing to ManoptExamples.jl" => "contributing.md",
