@@ -1,0 +1,136 @@
+---
+title: "The Difference of Convex Algorithm on SPDs"
+author: "Ronny Bergmann"
+date: 11/05/2023
+---
+
+## Introduction
+
+In this small note we consider the Difference of Convex Algprithm (DCA) [@BergmannFerreiraSantosSouza:2023]
+and the Difference of Convex Proximal Point Algorithm (DCPPA) [@SouzaOliveira:2015] which solve
+Difference of Convex (DC) problems of the form
+
+```math
+\operatorname{arg\,min}_{p\in\mathcal M} g(p) - h(p)
+```
+
+where $g,h\colon \mathcal M \to \mathbb R$ are geodesically convex function on the Riemannian manifold $\mathcal M$.
+
+```{julia}
+#| output: false
+using Pkg;
+Pkg.activate("."); # use the example environment,
+```
+
+```{julia}
+#| output: false
+using LinearAlgebra, Random, Statistics
+using Manifolds, Manopt, ManoptExamples
+using Plots
+Random.seed!(42)
+```
+
+## The DC Problem
+
+```{julia}
+n = 6
+M = SymmetricPositiveDefinite(n)
+p0 = log(n) * Matrix{Float64}(I, n, n);
+```
+
+```{julia}
+g(M, p) = log(det(p))^4
+h(M, p) = log(det(p))^2
+f(M, p) = g(M, p) - h(M, p)
+```
+
+and hence their gradient – here already the in-place variants, read
+
+```{julia}
+function grad_g!(M, X, p)
+    copyto!(M, X, p)
+    X .*= 4 * (log(det(p)))^3
+    return X
+end
+function grad_h!(M, X, p)
+    copyto!(M, X, p)
+    X .*= 2 * (log(det(p)))
+    return X
+end
+function grad_f!(M, X, p)
+    grad_g!(M, X, p)
+    Y = copy(M, p, X)
+    grad_h!(M, Y, p)
+    X .+= Y
+    return X
+end
+```
+
+For the second algorithm we also require the proximal
+
+```{julia}
+@time p_min_dca = difference_of_convex_algorithm(
+    M,
+    f,
+    g,
+    grad_h!,
+    p0;
+    grad_g=grad_g!,
+    gradient=grad_f!,
+    evaluation=InplaceEvaluation(),
+    debug=[
+        :Iteration,
+        (:Cost, "f(p): %1.10f"),
+        " ",
+        (:GradientNorm, "|grad_f(p)|: %1.10f"),
+        (:Change, "|δp|: %1.10f"),
+        :Stop,
+        20,
+        "\n",
+    ],
+    stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
+    sub_state=TrustRegionsState(M, copy(M, p0)),
+    sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
+)
+```
+
+```{julia}
+f(M, p_min_dca)
+```
+
+```{julia}
+@time p_min_dcppa = difference_of_convex_proximal_point(
+    M,
+    grad_h!,
+    p0;
+    g=g,
+    grad_g=grad_g!,
+    λ=i -> 1 / (2 * n),
+    cost=f,
+    gradient=grad_f!,
+    debug=[
+        :Iteration,
+        (:Cost, "f(p): %1.10f"),
+        " ",
+        (:GradientNorm, "|grad_f(p)|: %1.10f"),
+        (:Change, "|δp|: %1.10f"),
+        :Stop,
+        20,
+        "\n",
+    ],
+    evaluation=InplaceEvaluation(),
+    stepsize=ConstantStepsize(1.0),
+    stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
+    sub_state=TrustRegionsState(M, copy(M, p0)),
+    sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
+);
+```
+
+```{julia}
+f(M, p_min_dcppa)
+```
+
+## Literature
+
+::: {#refs}
+:::

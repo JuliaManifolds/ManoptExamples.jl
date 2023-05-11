@@ -29,6 +29,7 @@ makedocs(;
         "Home" => "index.md",
         "Examples" => [
             "Overview" => "examples/index.md",
+            "Difference of Convex" => "examples/DC1.md",
             "Riemannian Mean" => "examples/Riemannian-mean.md",
             "Robust PCA" => "examples/Robust-PCA.md",
             "Rosenbrock" => "examples/Rosenbrock.md",
