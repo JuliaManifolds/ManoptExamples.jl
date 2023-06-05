@@ -10,6 +10,7 @@ After loading the necessary packages
 ```{julia}
 #| output: false
 using Pkg;
+cd(@__DIR__)
 Pkg.activate("."); # use the example environment,
 ```
 
@@ -19,7 +20,8 @@ using Manifolds, Manopt, ManoptExamples
 using Plots
 ```
 
-We fix the parameters for the [Rosenbock example](@ref Rosenbrock).
+We fix the parameters for the
+[📖 Rosenbrock](https://en.wikipedia.org/wiki/Rosenbrock_function) (where the wikipedia page has a slightly different parameter naming).
 
 ```{julia}
 #| output: false

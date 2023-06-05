@@ -1,0 +1,369 @@
+---
+title: "The Difference of Convex Algorithm on SPDs"
+author: "Ronny Bergmann"
+date: 11/05/2023
+---
+
+## Introduction
+
+In this small note we consider the Difference of Convex Algprithm (DCA) [@BergmannFerreiraSantosSouza:2023]
+and the Difference of Convex Proximal Point Algorithm (DCPPA) [@SouzaOliveira:2015] which solve
+Difference of Convex (DC) problems of the form
+
+```math
+\operatorname{arg\,min}_{p\in\mathcal M} g(p) - h(p)
+```
+
+where $g,h\colon \mathcal M \to \mathbb R$ are geodesically convex function on the Riemannian manifold $\mathcal M$.
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(path="../") # a trick to work on the local dev version
+```
+
+```{julia}
+#| output: false
+using LinearAlgebra, Random, Statistics, BenchmarkTools
+using Manifolds, Manopt, ManoptExamples
+using NamedColors, Plots
+Random.seed!(42)
+```
+
+and we load a few nice colors
+
+```{julia}
+#| output: false
+paul_tol = load_paul_tol()
+blue = paul_tol["vibrantblue"]
+cyan = paul_tol["vibrantcyan"]
+orange = paul_tol["vibrantorange"]
+magenta = paul_tol["vibrantmagenta"]
+teal = paul_tol["vibrantteal"]
+red = paul_tol["vibrantred"]
+```
+
+## The DC Problem
+
+This Example is part of [BergmannFerreiraSantosSouza:2023](@ref), Section 7.1.
+We want to compare how the two algorithms [Difference of Convex Algorithm (DCA)](https://manoptjl.org/stable/solvers/difference_of_convex/#Manopt.difference_of_convex_algorithm)
+and [Difference of Convex Proximal Point Algorithm (DCPPA)](https://manoptjl.org/stable/solvers/difference_of_convex/#Manopt.difference_of_convex_proximal_point), cf. [SouzaOliveira:2015](@ref) scale with manifold dimension.
+
+We start with defining the two convex functions $g,h$ and their gradients as well as the DC problem $f$ and its gradient for the problem
+
+```math
+    \argmin_{p\in\mathcal M}  \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
+```
+
+where the critical points obtain a functional value of $-\frac{1}{4}$.
+
+where ``\mathcal M`` is the manifold of [symmetric positive definite (SPD) matrices](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/symmetricpositivedefinite.html) with the [affine invariant metric](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/symmetricpositivedefinite.html#Default-metric:-the-affine-invariant-metric), which is the default.
+
+We first define the corresponding functions
+
+```{julia}
+#| output: false
+g(M, p) = log(det(p))^4
+h(M, p) = log(det(p))^2
+f(M, p) = g(M, p) - h(M, p)
+```
+
+and their gradients
+
+```{julia}
+#| output: false
+grad_g(M, p) = 4 * (log(det(p)))^3 * p
+grad_h(M, p) = 2 * log(det(p)) * p
+grad_f(M, p) = grad_g(M, p) - grad_h(M, p)
+```
+
+which we can use to verify that the gradients of $g$ and $h$ are correct.
+We use for that
+
+```{julia}
+#| output: false
+n = 6
+M = SymmetricPositiveDefinite(n)
+p0 = log(n) * Matrix{Float64}(I, n, n);
+X0 = 1 / n * Matrix{Float64}(I, n, n);
+```
+
+to tall both checks
+
+```{julia}
+check_gradient(M, g, grad_g, p0, X0; plot=true)
+```
+
+and
+
+```{julia}
+check_gradient(M, h, grad_h, p0, X0; plot=true)
+```
+
+which both pass the test.
+We continue to define their inplace variants
+
+```{julia}
+#| output: false
+function grad_g!(M, X, p)
+    copyto!(M, X, p)
+    X .*= 4 * (log(det(p)))^3
+    return X
+end
+function grad_h!(M, X, p)
+    copyto!(M, X, p)
+    X .*= 2 * (log(det(p)))
+    return X
+end
+function grad_f!(M, X, p)
+    grad_g!(M, X, p)
+    Y = copy(M, p, X)
+    grad_h!(M, Y, p)
+    X .-= Y
+    return X
+end
+```
+
+And compare times for both algorithms, with a bit of debug output.
+
+```{julia}
+@time p_min_dca = difference_of_convex_algorithm(
+    M,
+    f,
+    g,
+    grad_h!,
+    p0;
+    grad_g=grad_g!,
+    gradient=grad_f!,
+    evaluation=InplaceEvaluation(),
+    debug=[
+        :Iteration,
+        (:Cost, "f(p): %1.9f"),
+        (:GradientNorm, " |grad_f(p)|: %1.9f"),
+        (:Change, " |δp|: %1.9f"),
+        :Stop,
+        5,
+        "\n",
+    ],
+    stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
+    sub_state=TrustRegionsState(M, copy(M, p0)),
+    sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
+);
+```
+
+The cost is
+
+```{julia}
+f(M, p_min_dca)
+```
+
+Similarly the DCPPA performs
+
+```{julia}
+@time p_min_dcppa = difference_of_convex_proximal_point(
+    M,
+    grad_h!,
+    p0;
+    g=g,
+    grad_g=grad_g!,
+    λ=i -> 1 / (2 * n),
+    cost=f,
+    gradient=grad_f!,
+    debug=[
+        :Iteration,
+        (:Cost, "f(p): %1.9f"),
+        " ",
+        (:GradientNorm, "|grad_f(p)|: %1.10f"),
+        (:Change, "|δp|: %1.10f"),
+        :Stop,
+        5,
+        "\n",
+    ],
+    evaluation=InplaceEvaluation(),
+    stepsize=ConstantStepsize(1.0),
+    stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
+    sub_state=TrustRegionsState(M, copy(M, p0)),
+    sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
+);
+```
+
+It needs a few more iterations and is hence slighlty slower. But it obtains the same cost
+
+```{julia}
+f(M, p_min_dcppa)
+```
+
+## Benchmark I: Time comparison
+
+We compare both solvers first with respect to time. We initialise two vectors to collect
+the results and a range of natrix sizes to test
+
+```{julia}
+#| output: false
+dca_benchmarks = Dict{Int,BenchmarkTools.Trial}()
+dcppa_benchmarks = Dict{Int, BenchmarkTools.Trial}()
+N_max=14
+N = 2:N_max
+```
+
+and run a benchmark for both algorithms
+
+```{julia}
+#| output: false
+for n in N
+    Mn = SymmetricPositiveDefinite(n)
+    pn = log(n) * Matrix{Float64}(I, n, n)
+    bdca = @benchmark difference_of_convex_algorithm(
+        $Mn,
+        $f,
+        $g,
+        $grad_h!,
+        $pn;
+        grad_g=$grad_g!,
+        gradient=$grad_f!,
+        evaluation=InplaceEvaluation(),
+        stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
+        sub_state=TrustRegionsState($Mn, copy($Mn, $pn)),
+        sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
+    )
+    dca_benchmarks[n] = bdca
+    bdcppa = @benchmark difference_of_convex_proximal_point(
+        $Mn,
+        $grad_h!,
+        $pn;
+        g=$g,
+        grad_g=$grad_g!,
+        λ=i -> 1 / (2 * n),
+        cost=f,
+        gradient=grad_f!,
+        evaluation=InplaceEvaluation(),
+        stepsize=ConstantStepsize(1.0),
+        stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
+        sub_state=TrustRegionsState($Mn, copy($Mn, $pn)),
+        sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
+    )
+    dcppa_benchmarks[n] = bdcppa
+end
+```
+
+Since we want to plot this versus the manifold dimension, we also create a vector for those and convert the times to seconds
+
+```{julia}
+#| output: false
+dims = [manifold_dimension(SymmetricPositiveDefinite(n)) for n in N]
+dca_times = [mean(dca_benchmarks[n]).time / 1e9 for n in N]
+dcppa_times = [mean(dcppa_benchmarks[n]).time / 1e9 for n in N]
+```
+
+```{julia}
+plot(; legend=:bottomright, xlabel="manifold dimension", ylabel="Time (sec.)")
+plot!(dims, dca_times; label="DCA",
+    color=blue,
+)
+plot!(dims, dcppa_times; label="DCPPA", color=orange)
+```
+
+## Benchmark II: Iterations and cost.
+
+As a second benchmark, let's collect the number of iterations needed and the development of the cost over dimensions.
+
+```{julia}
+#| output: false
+N2 = [5,10,20,40,80]
+dims2 = [manifold_dimension(SymmetricPositiveDefinite(n)) for n in N2]
+dca_iterations = Dict{Int,Int}()
+dca_costs = Dict{Int,Vector{Float64}}()
+dcppa_iterations = Dict{Int,Int}()
+dcppa_costs = Dict{Int,Vector{Float64}}()
+```
+
+```{julia}
+#| output: false
+@time for n in N2
+	println(n)
+    Mn = SymmetricPositiveDefinite(n)
+	pn = log(n) * Matrix{Float64}(I,n,n);
+	@time dca_st = difference_of_convex_algorithm(
+		Mn, f, g, grad_h!, pn;
+		grad_g=grad_g!,
+		gradient=grad_f!,
+		evaluation = InplaceEvaluation(),
+		stopping_criterion = StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
+		sub_state = TrustRegionsState(Mn, copy(Mn, pn)),
+		sub_stopping_criterion = StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
+		record = [:Iteration, :Cost],
+		return_state = true,
+	);
+	dca_costs[n] = get_record(dca_st, :Iteration, :Cost)
+	dca_iterations[n] = length(dca_costs[n])
+	@time dcppa_st = difference_of_convex_proximal_point(
+		Mn, grad_h!, pn;
+		g=g,
+		grad_g=grad_g!,
+		λ = i -> 1/(2*n),
+		cost = f,
+		gradient= grad_f!,
+		evaluation = InplaceEvaluation(),
+		stepsize = ConstantStepsize(1.0),
+		stopping_criterion = StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
+		sub_state = TrustRegionsState(Mn, copy(Mn, pn)),
+		sub_stopping_criterion = StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
+		record = [:Iteration, :Cost],
+		return_state = true,
+	);
+	dcppa_costs[n] = get_record(dcppa_st, :Iteration, :Cost)
+	dcppa_iterations[n] = length(dcppa_costs[n])
+end
+```
+
+The iterations are like
+
+```{julia}
+plot(;
+    legend=:bottomright,
+    xlabel="manifold dimension", ylabel="Iterations"
+)
+plot!(dims2, [values(dca_iterations)...]; label="DCA",color=blue)
+plot!(dims2, [values(dcppa_iterations)...]; label="DCPPA", color=orange)
+```
+
+And for the developtment of the cost
+
+```{julia}
+fig = plot(;    legend=:topright, color=blue,
+    xlabel="Iterations", ylabel=raw"Cost $\vert f(x)-f(p^{\!*}\!\!)\vert$ (log. scale)",
+    yaxis=:log,
+    ylims=(1e-15, 1e3),
+    xlims=(0,28),
+)
+for (i,v) in enumerate(N2)
+    plot!(
+        fig,
+        1:length(dca_costs[v]),
+        abs.(dca_costs[v] .+ 1 / 4); # - f(p*)
+    color=HSLA(HSL(blue),i/length(N)),
+    label="DCA (d=$(dims2[i]))"
+    )
+end
+for (i, v) in enumerate(N2)
+    plot!(
+        fig,
+        1:length(dcppa_costs[v]),
+        abs.(dcppa_costs[v] .+ 1 / 4); # - f(p*)
+        color=HSLA(HSL(teal), i / length(N)),
+        label="DCPPA (d=$(dims2[i]))",
+    )
+end
+fig
+```
+
+where we can see that the DCA needs less iterations than the DCPPA.
+
+## Literature
+
+::: {#refs}
+:::

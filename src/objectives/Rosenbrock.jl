@@ -9,7 +9,7 @@ f(\mathcal M, p) = a(p_1^2-p_2)^2 + (p_1-b)^2
 
 which means that for the 2D case, the manifold ``\mathcal M`` is ignored.
 
-See also [Rosenbrock (Wikipedia)](https://en.wikipedia.org/wiki/Rosenbrock_function)
+See also [📖 Rosenbrock](https://en.wikipedia.org/wiki/Rosenbrock_function) (with slightly different parameter naming).
 
 # Constructor
 

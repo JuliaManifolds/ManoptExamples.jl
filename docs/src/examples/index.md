@@ -1,7 +1,8 @@
-# LIst of Examples
+# List of Examples
 
 | Name                                            | provides            | Documentation |
 |:------------------------------------------------|:--------------------|:---------------:|
+| [Difference of Convex (Benchmark)](Difference-of-Convex-Benchmark.md)   | contains a few simple functions | |
 | [Riemannian Mean](Riemannian-mean.md)   | ``f``, ``\operatorname{grad}f`` (A/I), objective | [📚](@ref RiemannianMean) |
 | [Robust PCA](Robust-PCA.md)   | ``f``, ``\operatorname{grad}f`` (A/I), objective | [📚](@ref RobustPCA) |
 | [Rosenbrock](Rosenbrock.md)   | ``f``, ``\operatorname{grad}f`` (A/I), objective, minimizer | [📚](@ref Rosenbrock) |
