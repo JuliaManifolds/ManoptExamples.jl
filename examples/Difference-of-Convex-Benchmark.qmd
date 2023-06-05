@@ -6,12 +6,12 @@ date: 11/05/2023
 
 ## Introduction
 
-In this small note we consider the Difference of Convex Algprithm (DCA) [@BergmannFerreiraSantosSouza:2023]
+In this small Benchmark comparing the Difference of Convex Algprithm (DCA) [@BergmannFerreiraSantosSouza:2023]
 and the Difference of Convex Proximal Point Algorithm (DCPPA) [@SouzaOliveira:2015] which solve
-Difference of Convex (DC) problems of the form
+Difference of Convex (DC) problems of the form. This Benchmark reproduces the results from [@BergmannFerreiraSantosSouza:2023], Section 7.1.
 
 ```math
-\operatorname{arg\,min}_{p\in\mathcal M} g(p) - h(p)
+\operatorname*{arg\,min}_{p\in\mathcal M} g(p) - h(p)
 ```
 
 where $g,h\colon \mathcal M \to \mathbb R$ are geodesically convex function on the Riemannian manifold $\mathcal M$.
@@ -24,6 +24,7 @@ using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version
+ENV["GKSwstype"] = "nul"
 ```
 
 ```{julia}
@@ -39,24 +40,16 @@ and we load a few nice colors
 ```{julia}
 #| output: false
 paul_tol = load_paul_tol()
-blue = paul_tol["vibrantblue"]
-cyan = paul_tol["vibrantcyan"]
-orange = paul_tol["vibrantorange"]
-magenta = paul_tol["vibrantmagenta"]
-teal = paul_tol["vibrantteal"]
-red = paul_tol["vibrantred"]
+indigo = paul_tol["mutedindigo"]
+teal = paul_tol["mutedteal"]
 ```
 
 ## The DC Problem
 
-This Example is part of [BergmannFerreiraSantosSouza:2023](@ref), Section 7.1.
-We want to compare how the two algorithms [Difference of Convex Algorithm (DCA)](https://manoptjl.org/stable/solvers/difference_of_convex/#Manopt.difference_of_convex_algorithm)
-and [Difference of Convex Proximal Point Algorithm (DCPPA)](https://manoptjl.org/stable/solvers/difference_of_convex/#Manopt.difference_of_convex_proximal_point), cf. [SouzaOliveira:2015](@ref) scale with manifold dimension.
-
 We start with defining the two convex functions $g,h$ and their gradients as well as the DC problem $f$ and its gradient for the problem
 
 ```math
-    \argmin_{p\in\mathcal M}  \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
+    \operatorname*{arg\,min}_{p\in\mathcal M}  \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
 ```
 
 where the critical points obtain a functional value of $-\frac{1}{4}$.
@@ -191,7 +184,8 @@ Similarly the DCPPA performs
 );
 ```
 
-It needs a few more iterations and is hence slighlty slower. But it obtains the same cost
+It needs a few more iterations, but the single iterations are slightly faster.
+Both obtain the same cost
 
 ```{julia}
 f(M, p_min_dcppa)
@@ -262,9 +256,9 @@ dcppa_times = [mean(dcppa_benchmarks[n]).time / 1e9 for n in N]
 ```{julia}
 plot(; legend=:bottomright, xlabel="manifold dimension", ylabel="Time (sec.)")
 plot!(dims, dca_times; label="DCA",
-    color=blue,
+    color=indigo,
 )
-plot!(dims, dcppa_times; label="DCPPA", color=orange)
+plot!(dims, dcppa_times; label="DCPPA", color=teal)
 ```
 
 ## Benchmark II: Iterations and cost.
@@ -327,14 +321,15 @@ plot(;
     legend=:bottomright,
     xlabel="manifold dimension", ylabel="Iterations"
 )
-plot!(dims2, [values(dca_iterations)...]; label="DCA",color=blue)
-plot!(dims2, [values(dcppa_iterations)...]; label="DCPPA", color=orange)
+plot!(dims2, [values(dca_iterations)...]; label="DCA",color=indigo)
+plot!(dims2, [values(dcppa_iterations)...]; label="DCPPA", color=teal)
 ```
 
 And for the developtment of the cost
 
 ```{julia}
-fig = plot(;    legend=:topright, color=blue,
+fig = plot(;
+    legend=:topright,
     xlabel="Iterations", ylabel=raw"Cost $\vert f(x)-f(p^{\!*}\!\!)\vert$ (log. scale)",
     yaxis=:log,
     ylims=(1e-15, 1e3),
@@ -345,7 +340,7 @@ for (i,v) in enumerate(N2)
         fig,
         1:length(dca_costs[v]),
         abs.(dca_costs[v] .+ 1 / 4); # - f(p*)
-    color=HSLA(HSL(blue),i/length(N)),
+    color=HSLA(HSL(indigo),i/length(N)),
     label="DCA (d=$(dims2[i]))"
     )
 end

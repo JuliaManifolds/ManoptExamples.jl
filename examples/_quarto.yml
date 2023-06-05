@@ -2,6 +2,8 @@
 project:
   title: "ManoptExamples.jl"
   output-dir: ../docs/src/examples
+  render:
+    - "*.qmd"
 
 crossref:
   fig-prefix: Figure
