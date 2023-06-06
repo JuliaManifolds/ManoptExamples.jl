@@ -1,11 +1,11 @@
 # Welcome to ManoptExample.jl
 
 ```@meta
-CurrentModule = Manopt
+CurrentModule = ManoptExamples
 ```
 
 ```@docs
-Manopt.Manopt
+ManoptExamples.ManoptExamples
 ```
 
 This package provides a set of example tasks for [Manopt.jl](https://manoptjl.org/) based on either generic

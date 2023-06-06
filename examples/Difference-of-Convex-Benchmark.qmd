@@ -335,12 +335,12 @@ fig = plot(;
 )
 for (i,v) in enumerate(N2)
     plot!(fig, 1:length(dca_costs[v]), abs.(dca_costs[v] .+ 1 / 4); # - f(p*)
-        color=HSLA(HSL(indigo), i / length(N)),
+        color=HSLA(HSL(indigo), i / length(N2)),
         label="DCA (d=$(dims2[i]))",
         linewidth=2,
     )
     plot!(fig, 1:length(dcppa_costs[v]), abs.(dcppa_costs[v] .+ 1 / 4); # - f(p*)
-        color=HSLA(HSL(teal), i / length(N)),
+        color=HSLA(HSL(teal), i / length(N2)),
         label="DCPPA (d=$(dims2[i]))",
         linewidth=2,
     )

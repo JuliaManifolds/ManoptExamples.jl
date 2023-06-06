@@ -74,14 +74,14 @@ function RosenbrockGradient!!(
     T = typeof(a + b)
     return RosenbrockGradient!!{T}(a, b)
 end
-function (f::RosenbrockGradient!!)(M, p)
+function (grad_f::RosenbrockGradient!!)(M, p)
     X = zero_vector(M, p)
-    f(M, X, p)
+    grad_f(M, X, p)
     return X
 end
-function (f::RosenbrockGradient!!)(M, X, p)
-    X[1] = 4 * f.a * p[1] * (p[1]^2 - p[2]) + 2 * (p[1] - f.b)
-    X[2] = -2 * f.a * (p[1]^2 - p[2])
+function (grad_f::RosenbrockGradient!!)(M, X, p)
+    X[1] = 4 * grad_f.a * p[1] * (p[1]^2 - p[2]) + 2 * (p[1] - grad_f.b)
+    X[2] = -2 * grad_f.a * (p[1]^2 - p[2])
     return X
 end
 
@@ -156,8 +156,11 @@ Compute the exponential map with respect to the [`RosenbrockMetric`](@ref).
 ```
 """
 exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
-function exp!(::EuclideanRMetric, q, p, X, t::Number)
-    q .= [p[1] + t*X[1], p[2] + t*X[2] + t*X[1]^2]
+function exp!(
+    ::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X, t::Number
+)
+    q[1] = p[1] + t * X[1]
+    q[2] = p[2] + t * (X[2] + X[1]^2)
     return q
 end
 

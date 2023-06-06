@@ -29,9 +29,9 @@ and also the (Euclidean) gradient
   \end{pmatrix}.
 ```
 
-They are even available already here in `ManifoldExamples.jl`, see [`RosenbrockCost`](@ref) and [`RosenbrockGradient`](@ref).
+They are even available already here in `ManifoldExamples.jl`, see ``[`RosenbrockCost`](@ref ManoptExamples.RosenbrockCost)``{=commonmark} and ``[`RosenbrockGradient!!`](@ref ManoptExamples.RosenbrockGradient!!)``{=commonmark}.
 
-Furthermore, the [`RosenbrockMetric`](@ref) can be used on $\mathbb R^2$, that is
+Furthermore, the ``[`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric)``{=commonmark} can be used on $\mathbb R^2$, that is
 
 ```math
 ⟨X,Y⟩_{\mathrm{Rb},p} = X^\mathrm{T}G_pY, \qquad
@@ -45,9 +45,9 @@ In this example we want to explore four different approaches to minimizing the R
 that are all based on first-order methods, i.e. using a gradient but not a Hessian.
 
 1. The Euclidean Gradient
-2. The Riemannian gradient descent with respect to the [`RosenbrockMetric`](@ref)
+2. The Riemannian gradient descent with respect to the ``[`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric)``{=commonmark}
 3. The Euclidean Difference of Convex Algorithm
-4. The Riemannian Difference of Convex Algorithm respect to the [`RosenbrockMetric`](@ref)
+4. The Riemannian Difference of Convex Algorithm respect to the ``[`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric)``{=commonmark}
 
 Where we obtain a difference of convex problem by writing
 
@@ -79,8 +79,172 @@ using NamedColors, Plots
 Random.seed!(42)
 ```
 
-##
+To emphasize the effect, we choose a quite large value of `a`.
 
+```{julia}
+#| output: false
+a = 2*10^5
+b = 1
+```
+
+and use the starting point
+
+```{julia}
+p0 = [0.1, 0.2];
+```
+
+## The Euclidean Gradient Descent.
+
+For the Euclidean gradient we can just use the same approach as in the [Rosenbrock example](Rosenbrock.md)
+
+```{julia}
+M = ℝ^2
+f = ManoptExamples.RosenbrockCost(M; a=a, b=b)
+∇f!! = ManoptExamples.RosenbrockGradient!!(M; a=a, b=b)
+```
+
+define a common debug vector
+
+```{julia}
+debug_vec = [
+        (:Iteration, "# %-8d "),
+        (:Cost, "F(x): %1.4e"),
+        " ",
+        (:Change, "|δp|: %1.4e | "),
+        (:GradientNorm, "|grad f|: %1.6e"),
+        :Stop,
+        "\n",
+    ]
+```
+
+and call
+
+```{julia}
+pEGD = gradient_descent(M, f, ∇f!!, p0;
+    evaluation=InplaceEvaluation(),
+    debug=[debug_vec...,10^7],
+    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    record=[:Iteration, :Cost],
+    return_state=true,
+)
+```
+
+## The Riemannian Gradient Descent.
+
+For the Riemannian case, we define
+
+```{julia}
+M_rb = MetricManifold(M, ManoptExamples.RosenbrockMetric())
+```
+
+and the gradient is now adopted to the new metric
+
+```{julia}
+function grad_f!(M, X, p)
+    ∇f!!(M, X, p)
+    riemannian_gradient!(M, X, p, X)
+    return X
+end
+function grad_f(M, p)
+    X = zero_vector(M, p)
+    return grad_f_rb!(M, X, p)
+end
+```
+
+and we can first check the gradient again
+
+```{julia}
+check_gradient(M_rb, f, grad_f, p0, [0.1, 0.1]; plot=true, io=stdout)
+```
+
+
+
+```{julia}
+pRGD = gradient_descent(M_rb, f, grad_f!, p0;
+    evaluation=InplaceEvaluation(),
+    debug=[debug_vec...,10^6],
+    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    record=[:Iteration, :Cost],
+    return_state=true,
+)
+```
+
+## The Euclidean Difference of Convex
+
+For the convex case, we have to first introduce the two parts of the cost.
+
+```{julia}
+f1(M, p; a=100, b=1) = a*(p[1]^2 - p[2])^2;
+f2(M, p; a=100, b=1) = (p[1] - b[1])^2;
+g(M, p; a=100, b=1) = f1(M, p; a=a, b=b) + 2 * f2(M, p; a=a, b=b)
+h(M, p; a=100, b=1) = f2(M, p; a=a, b=b)
+```
+
+and their (Euclidan) gradients
+
+```{julia}
+function ∇h!(M, X, p; a=100, b=1)
+    X[1] = 2*(p[1]-b)
+    X[2] = 0
+    return X
+end
+function ∇h(M, p; a=100, b=1)
+	X = zero(p)
+	∇h!(M, X, p; a=a, b=b)
+	return X
+end
+function ∇g!(M, X, p; a=100, b=1)
+    X[1] = 4*a*(p[1]^2-p[2])*p[1] + 2*2*(p[1]-b)
+    X[2] = -2*a*(p[1]^2-p[2])
+    return X
+end
+function ∇g(M, p; a=100, b=1)
+	X = zero(p)
+	∇g!(M, X, p; a=a, b=b)
+	return X
+end
+```
+
+
+```{julia}
+check_gradient(M, g, ∇g, p0, [0.1, 0.1]; plot=true)
+```
+
+
+```{julia}
+check_gradient(M, h, ∇h, p0, [0.1, 0.1]; plot=true)
+```
+
+and we define for convenience
+
+```{julia}
+docE_g(M,p) = g(M, p; a=a, b=b)
+docE_f(M,p) = docE_g(M,p) - h(M, p; a=a, b=b)
+docE_∇h!(M, X, p) = ∇h!(M, X, p; a=a, b=b)
+docE_∇g!(M, X, p) = ∇g!(M, X, p; a=a, b=b)
+function docE_∇f!(M, X, p)
+  Y = zero_vector(M, p)
+  docE_∇g!(M, X, p)
+  docE_∇h!(M, Y, p)
+  X .-= Y
+  return X
+end
+```
+
+```{julia}
+rec_Edoc = difference_of_convex_algorithm(
+	M, docE_f, docE_g, docE_∇h!, p0;
+    gradient=docE_∇f!,
+    g=docE_g,
+    grad_g = docE_∇g!,
+	evaluation=InplaceEvaluation(),
+	debug=[debug_vec..., 5000],
+	sub_stopping_criterion=StopAfterIteration(1000) | StopWhenGradientNormLess(1e-16),
+	stopping_criterion = StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    record = [:Iteration, :Cost],
+    return_state=true,
+)
+```
 
 ## Literature
 
