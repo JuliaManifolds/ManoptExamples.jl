@@ -1,4 +1,12 @@
-# ManoptExample.jl
+# Welcome to ManoptExample.jl
+
+```@meta
+CurrentModule = Manopt
+```
+
+```@docs
+Manopt.Manopt
+```
 
 This package provides a set of example tasks for [Manopt.jl](https://manoptjl.org/) based on either generic
 manifolds from the [ManifoldsBase.jl](https://juliamanifolds.github.io/ManifoldsBase.jl/) interface or specific manifolds from [Manifolds.jl](https://juliamanifolds.github.io/Manifolds.jl/).

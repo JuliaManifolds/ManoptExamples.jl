@@ -11,7 +11,7 @@ crossref:
 bibliography:
   - ../CITATION.bib
   - ../bib/literature.yaml
-csl: ../bib/harvard1.csl
+csl: ../bib/journal-of-the-royal-statistical-society.csl
 fig-format: png
 
 execute:

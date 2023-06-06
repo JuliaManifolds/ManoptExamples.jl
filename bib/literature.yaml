@@ -39,10 +39,6 @@ references:
     critical point of the objective DC function. Additionally, we establish some
     duality relations between the DC problem and its dual. To illustrate the
     effectiveness of the algorithm, we present some numerical experiments.
-  accessed:
-    - year: 2023
-      month: 5
-      day: 11
   author:
     - family: Bergmann
       given: Ronny
@@ -55,8 +51,6 @@ references:
   citation-key: BergmannFerreiraSantosSouza:2023
   issued:
     - year: 2023
-      month: 5
-      day: 2
   number: arXiv:2112.05250
   publisher: arXiv
   source: arXiv.org
@@ -78,7 +72,7 @@ references:
     - year: 2015
   page: 797–810
   publisher: Springer Science and Business Media LLC
-  title: A proximal point algorithm for DC functions on Hadamard manifolds
+  title: A proximal point algorithm for DC fuctions on Hadamard manifolds
   type: article-journal
   volume: '63'
 ...

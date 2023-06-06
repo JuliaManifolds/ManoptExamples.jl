@@ -1,17 +1,17 @@
 ---
-title: "The Difference of Convex Algorithm on SPDs"
+title: "Benchmark of the Difference of Convex Algorithms"
 author: "Ronny Bergmann"
-date: 11/05/2023
+date: 06/06/2023
 ---
 
 ## Introduction
 
-In this small Benchmark comparing the Difference of Convex Algprithm (DCA) [@BergmannFerreiraSantosSouza:2023]
+In this Benchmark we compare the Difference of Convex Algprithm (DCA) [@BergmannFerreiraSantosSouza:2023]
 and the Difference of Convex Proximal Point Algorithm (DCPPA) [@SouzaOliveira:2015] which solve
 Difference of Convex (DC) problems of the form. This Benchmark reproduces the results from [@BergmannFerreiraSantosSouza:2023], Section 7.1.
 
 ```math
-\operatorname*{arg\,min}_{p\in\mathcal M} g(p) - h(p)
+\operatorname*{arg\,min}_{p\in\mathcal M}\ \  g(p) - h(p)
 ```
 
 where $g,h\colon \mathcal M \to \mathbb R$ are geodesically convex function on the Riemannian manifold $\mathcal M$.
@@ -24,7 +24,7 @@ using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version
-ENV["GKSwstype"] = "nul"
+ENV["GKSwstype"] = "100"
 ```
 
 ```{julia}
@@ -49,12 +49,12 @@ teal = paul_tol["mutedteal"]
 We start with defining the two convex functions $g,h$ and their gradients as well as the DC problem $f$ and its gradient for the problem
 
 ```math
-    \operatorname*{arg\,min}_{p\in\mathcal M}  \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
+    \operatorname*{arg\,min}_{p\in\mathcal M}\ \ \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
 ```
 
 where the critical points obtain a functional value of $-\frac{1}{4}$.
 
-where ``\mathcal M`` is the manifold of [symmetric positive definite (SPD) matrices](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/symmetricpositivedefinite.html) with the [affine invariant metric](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/symmetricpositivedefinite.html#Default-metric:-the-affine-invariant-metric), which is the default.
+where $\mathcal M$ is the manifold of [symmetric positive definite (SPD) matrices](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/symmetricpositivedefinite.html) with the [affine invariant metric](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/symmetricpositivedefinite.html#Default-metric:-the-affine-invariant-metric), which is the default.
 
 We first define the corresponding functions
 
@@ -255,10 +255,8 @@ dcppa_times = [mean(dcppa_benchmarks[n]).time / 1e9 for n in N]
 
 ```{julia}
 plot(; legend=:bottomright, xlabel="manifold dimension", ylabel="Time (sec.)")
-plot!(dims, dca_times; label="DCA",
-    color=indigo,
-)
-plot!(dims, dcppa_times; label="DCPPA", color=teal)
+plot!(dims, dca_times; label="DCA", color=indigo, linewidth=2)
+plot!(dims, dcppa_times; label="DCPPA", color=teal, linewidth=2)
 ```
 
 ## Benchmark II: Iterations and cost.
@@ -317,40 +315,34 @@ end
 The iterations are like
 
 ```{julia}
-plot(;
-    legend=:bottomright,
-    xlabel="manifold dimension", ylabel="Iterations"
-)
-plot!(dims2, [values(dca_iterations)...]; label="DCA",color=indigo)
-plot!(dims2, [values(dcppa_iterations)...]; label="DCPPA", color=teal)
+plot(; legend=:bottomright, xlabel="manifold dimension", ylabel="Iterations")
+plot!(dims2, [values(dca_iterations)...]; label="DCA", color=indigo, linewidth=2)
+plot!(dims2, [values(dcppa_iterations)...]; label="DCPPA", color=teal, linewidth=2)
 ```
 
 And for the developtment of the cost
 
 ```{julia}
+#| echo: false
+#| warning: false
 fig = plot(;
     legend=:topright,
+    legend_columns=2,
     xlabel="Iterations", ylabel=raw"Cost $\vert f(x)-f(p^{\!*}\!\!)\vert$ (log. scale)",
     yaxis=:log,
     ylims=(1e-15, 1e3),
     xlims=(0,28),
 )
 for (i,v) in enumerate(N2)
-    plot!(
-        fig,
-        1:length(dca_costs[v]),
-        abs.(dca_costs[v] .+ 1 / 4); # - f(p*)
-    color=HSLA(HSL(indigo),i/length(N)),
-    label="DCA (d=$(dims2[i]))"
+    plot!(fig, 1:length(dca_costs[v]), abs.(dca_costs[v] .+ 1 / 4); # - f(p*)
+        color=HSLA(HSL(indigo), i / length(N)),
+        label="DCA (d=$(dims2[i]))",
+        linewidth=2,
     )
-end
-for (i, v) in enumerate(N2)
-    plot!(
-        fig,
-        1:length(dcppa_costs[v]),
-        abs.(dcppa_costs[v] .+ 1 / 4); # - f(p*)
+    plot!(fig, 1:length(dcppa_costs[v]), abs.(dcppa_costs[v] .+ 1 / 4); # - f(p*)
         color=HSLA(HSL(teal), i / length(N)),
         label="DCPPA (d=$(dims2[i]))",
+        linewidth=2,
     )
 end
 fig
