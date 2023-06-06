@@ -1,0 +1,88 @@
+---
+title: "Solving Rosenbrock with the Difference of Convex Algorithm"
+author: "Ronny Bergmann"
+date: 06/06/2023
+---
+
+## Introduction
+
+This example illustrates how the [📖 Rosenbrock](https://en.wikipedia.org/wiki/Rosenbrock_function)
+problem can be rephrased as a difference of convex problem and with a new metric on Euclidean space.
+This example is the code that produces the results in [@BergmannFerreiraSantosSouza:2023], Section 7.2.
+
+Both the Rosenbrock problem
+
+```math
+    \operatorname*{argmin}_{x\in\mathbb R^2} a\bigl( x_1^2-x_2\bigr)^2 + \bigl(x_1-b\bigr)^2,
+```
+where $a,b>0$ and usually $b=1$ and $a \gg b$,
+we know the minimizer $x^* = (b,b^2)^\mathrm{T}$,
+and also the (Euclidean) gradient
+```math
+\nabla f(x) =
+  \begin{pmatrix}
+  4a(x_1^2-x_2)\\ -2a(x_1^2-x_2)
+  \end{pmatrix}
+  +
+  \begin{pmatrix}
+  2(x_1-b)\\ 0
+  \end{pmatrix}.
+```
+
+They are even available already here in `ManifoldExamples.jl`, see [`RosenbrockCost`](@ref) and [`RosenbrockGradient`](@ref).
+
+Furthermore, the [`RosenbrockMetric`](@ref) can be used on $\mathbb R^2$, that is
+
+```math
+⟨X,Y⟩_{\mathrm{Rb},p} = X^\mathrm{T}G_pY, \qquad
+G_p \coloneqq \begin{pmatrix}
+  1+4p_1^2 & -2p_1 \\
+  -2p_1 & 1
+\end{pmatrix},
+```
+
+In this example we want to explore four different approaches to minimizing the Rosenbrock example,
+that are all based on first-order methods, i.e. using a gradient but not a Hessian.
+
+1. The Euclidean Gradient
+2. The Riemannian gradient descent with respect to the [`RosenbrockMetric`](@ref)
+3. The Euclidean Difference of Convex Algorithm
+4. The Riemannian Difference of Convex Algorithm respect to the [`RosenbrockMetric`](@ref)
+
+Where we obtain a difference of convex problem by writing
+
+```math
+f(x) = a\bigl( x_1^2-x_2\bigr)^2 + \bigl(x_1-b\bigr)^2
+ = a\bigl( x_1^2-x_2\bigr)^2 + 2\bigl(x_1-b\bigr)^2 - \bigl(x_1-b\bigr)^2
+```
+that is
+```math
+g(x) = a\bigl( x_1^2-x_2\bigr)^2 + 2\bigl(x_1-b\bigr)^2 \quad\text{ and }\quad h(x) = \bigl(x_1-b\bigr)^2
+```
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(path="../") # a trick to work on the local dev version
+ENV["GKSwstype"] = "100"
+```
+
+```{julia}
+#| output: false
+using LinearAlgebra, Random, Statistics
+using Manifolds, Manopt, ManoptExamples
+using NamedColors, Plots
+Random.seed!(42)
+```
+
+##
+
+
+## Literature
+
+::: {#refs}
+:::
