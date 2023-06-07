@@ -147,16 +147,13 @@ function grad_f!(M, X, p)
 end
 function grad_f(M, p)
     X = zero_vector(M, p)
-    return grad_f_rb!(M, X, p)
+    return grad_f!(M, X, p)
 end
 ```
 
-and we can first check the gradient again
-
 ```{julia}
-check_gradient(M_rb, f, grad_f, p0, [0.1, 0.1]; plot=true, io=stdout)
+check_gradient(M_rb, f, grad_f, p0, [0.0, 0.1]; plot=true)
 ```
-
 
 
 ```{julia}

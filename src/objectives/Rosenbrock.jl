@@ -155,12 +155,17 @@ Compute the exponential map with respect to the [`RosenbrockMetric`](@ref).
     q = \begin{pmatrix} p_1 + X_1 \\ p_2+X_2+X_1^2\end{pmatrix}
 ```
 """
-exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
+function exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X, t::Number)
+    return [p[1] + t*X[1], p[2] + t*(X[2] + X[1]^2)]
+end
+function exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
+    return [p[1] + X[1], p[2] + (X[2] + X[1]^2)]
+end
 function exp!(
     ::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X, t::Number
 )
-    q[1] = p[1] + t * X[1]
-    q[2] = p[2] + t * (X[2] + X[1]^2)
+    q[1] = p[1] + t*X[1]
+    q[2] = p[2] + t*(X[2] + X[1]^2)
     return q
 end
 

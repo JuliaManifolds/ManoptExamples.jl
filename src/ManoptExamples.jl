@@ -20,5 +20,4 @@ include("objectives/Rosenbrock.jl")
 
 export exp!, exp, inner, log, log!
 export change_representer, change_representer!, local_metric, inverse_local_metric
-
 end
