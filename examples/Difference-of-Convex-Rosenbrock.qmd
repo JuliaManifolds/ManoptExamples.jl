@@ -15,9 +15,11 @@ Both the Rosenbrock problem
 ```math
     \operatorname*{argmin}_{x\in\mathbb R^2} a\bigl( x_1^2-x_2\bigr)^2 + \bigl(x_1-b\bigr)^2,
 ```
+
 where $a,b>0$ and usually $b=1$ and $a \gg b$,
 we know the minimizer $x^* = (b,b^2)^\mathrm{T}$,
 and also the (Euclidean) gradient
+
 ```math
 \nabla f(x) =
   \begin{pmatrix}
@@ -35,7 +37,7 @@ Furthermore, the ``[`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric)``{
 
 ```math
 ⟨X,Y⟩_{\mathrm{Rb},p} = X^\mathrm{T}G_pY, \qquad
-G_p \coloneqq \begin{pmatrix}
+G_p = \begin{pmatrix}
   1+4p_1^2 & -2p_1 \\
   -2p_1 & 1
 \end{pmatrix},
@@ -68,6 +70,7 @@ using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version
+Pkg.develop(path="../../Manopt.jl/") # temporary
 ENV["GKSwstype"] = "100"
 ```
 
@@ -76,7 +79,18 @@ ENV["GKSwstype"] = "100"
 using LinearAlgebra, Random, Statistics
 using Manifolds, Manopt, ManoptExamples
 using NamedColors, Plots
+import Manopt: set_manopt_parameter!
 Random.seed!(42)
+```
+
+```{julia}
+#| output: false
+paul_tol = load_paul_tol()
+indigo = paul_tol["mutedindigo"]
+green = paul_tol["mutedgreen"]
+sand = paul_tol["mutedsand"]
+teal = paul_tol["mutedteal"]
+grey = paul_tol["mutedgrey"]
 ```
 
 To emphasize the effect, we choose a quite large value of `a`.
@@ -87,10 +101,11 @@ a = 2*10^5
 b = 1
 ```
 
-and use the starting point
+and use the starting point and a direction to check gradients
 
 ```{julia}
-p0 = [0.1, 0.2];
+#| output: false
+p0 = [0.1, 0.2]
 ```
 
 ## The Euclidean Gradient Descent.
@@ -98,6 +113,7 @@ p0 = [0.1, 0.2];
 For the Euclidean gradient we can just use the same approach as in the [Rosenbrock example](Rosenbrock.md)
 
 ```{julia}
+#| output: false
 M = ℝ^2
 f = ManoptExamples.RosenbrockCost(M; a=a, b=b)
 ∇f!! = ManoptExamples.RosenbrockGradient!!(M; a=a, b=b)
@@ -106,6 +122,7 @@ f = ManoptExamples.RosenbrockCost(M; a=a, b=b)
 define a common debug vector
 
 ```{julia}
+#| output: false
 debug_vec = [
         (:Iteration, "# %-8d "),
         (:Cost, "F(x): %1.4e"),
@@ -117,10 +134,10 @@ debug_vec = [
     ]
 ```
 
-and call
+and call the [gradient descent algorithm](https://manoptjl.org/stable/solvers/gradient_descent/#Manopt.gradient_descent)
 
 ```{julia}
-pEGD = gradient_descent(M, f, ∇f!!, p0;
+Eucl_GD_state = gradient_descent(M, f, ∇f!!, p0;
     evaluation=InplaceEvaluation(),
     debug=[debug_vec...,10^7],
     stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
@@ -140,6 +157,7 @@ M_rb = MetricManifold(M, ManoptExamples.RosenbrockMetric())
 and the gradient is now adopted to the new metric
 
 ```{julia}
+#| output: false
 function grad_f!(M, X, p)
     ∇f!!(M, X, p)
     riemannian_gradient!(M, X, p, X)
@@ -152,12 +170,7 @@ end
 ```
 
 ```{julia}
-check_gradient(M_rb, f, grad_f, p0, [0.0, 0.1]; plot=true)
-```
-
-
-```{julia}
-pRGD = gradient_descent(M_rb, f, grad_f!, p0;
+R_GD_state = gradient_descent(M_rb, f, grad_f!, p0;
     evaluation=InplaceEvaluation(),
     debug=[debug_vec...,10^6],
     stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
@@ -171,7 +184,8 @@ pRGD = gradient_descent(M_rb, f, grad_f!, p0;
 For the convex case, we have to first introduce the two parts of the cost.
 
 ```{julia}
-f1(M, p; a=100, b=1) = a*(p[1]^2 - p[2])^2;
+#| output: false
+f1(M, p; a=100, b=1) = a * (p[1]^2 - p[2])^2;
 f2(M, p; a=100, b=1) = (p[1] - b[1])^2;
 g(M, p; a=100, b=1) = f1(M, p; a=a, b=b) + 2 * f2(M, p; a=a, b=b)
 h(M, p; a=100, b=1) = f2(M, p; a=a, b=b)
@@ -180,6 +194,7 @@ h(M, p; a=100, b=1) = f2(M, p; a=a, b=b)
 and their (Euclidan) gradients
 
 ```{julia}
+#| output: false
 function ∇h!(M, X, p; a=100, b=1)
     X[1] = 2*(p[1]-b)
     X[2] = 0
@@ -202,20 +217,11 @@ function ∇g(M, p; a=100, b=1)
 end
 ```
 
-
-```{julia}
-check_gradient(M, g, ∇g, p0, [0.1, 0.1]; plot=true)
-```
-
-
-```{julia}
-check_gradient(M, h, ∇h, p0, [0.1, 0.1]; plot=true)
-```
-
 and we define for convenience
 
 ```{julia}
-docE_g(M,p) = g(M, p; a=a, b=b)
+#| output: false
+docE_g(M, p) = g(M, p; a=a, b=b)
 docE_f(M,p) = docE_g(M,p) - h(M, p; a=a, b=b)
 docE_∇h!(M, X, p) = ∇h!(M, X, p; a=a, b=b)
 docE_∇g!(M, X, p) = ∇g!(M, X, p; a=a, b=b)
@@ -228,20 +234,182 @@ function docE_∇f!(M, X, p)
 end
 ```
 
+Then we call the [difference of convex algorithm](https://manoptjl.org/stable/solvers/difference_of_convex/#Manopt.difference_of_convex_algorithm) on Eucldiean space $\mathbb R^2$.
+
 ```{julia}
-rec_Edoc = difference_of_convex_algorithm(
+E_doc_state = difference_of_convex_algorithm(
 	M, docE_f, docE_g, docE_∇h!, p0;
     gradient=docE_∇f!,
-    g=docE_g,
     grad_g = docE_∇g!,
-	evaluation=InplaceEvaluation(),
-	debug=[debug_vec..., 5000],
-	sub_stopping_criterion=StopAfterIteration(1000) | StopWhenGradientNormLess(1e-16),
-	stopping_criterion = StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
-    record = [:Iteration, :Cost],
+    debug=[debug_vec..., 10^4],
+    evaluation=InplaceEvaluation(),
+    record=[:Iteration, :Cost],
+    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    sub_hess=nothing, # Use gradient descent
+    sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
     return_state=true,
 )
 ```
+
+## The Riemannian Difference of Convex
+
+We first have to again defined the gradients with respect to the new metric
+
+```{julia}
+#| output: false
+function grad_h!(M, X, p; a=100, b=1)
+    ∇h!(M, X, p; a=a, b=b)
+    riemannian_gradient!(M, X, p, X)
+    return X
+end
+function grad_h(M, p; a=100, b=1)
+	X = zero(p)
+	grad_h!(M, X, p; a=a, b=b)
+	return X
+end
+function grad_g!(M, X, p; a=100, b=1)
+    ∇g!(M, X, p; a=a,b=b)
+    riemannian_gradient!(M, X, p, X)
+    return X
+end
+function grad_g(M, p; a=100, b=1)
+	X = zero(p)
+	grad_g!(M, X, p; a=a, b=b)
+	return X
+end
+```
+
+While the cost of the subgradient can be infered automaticallty, we also have to provide the gradient of the sub problem.
+For $X \in \partial h(p^{(k)})$ the sunproblem top determine $p^{(k+1)}$ reads
+
+```math
+\operatorname*{argmin}_{p\in\mathcal M} g(p) - \langle X, \log_{p^{(k)}}p\rangle
+```
+
+for which usually the cost and gradient functions are computed automatically in the
+difference of convex algorithm. However, in our case first the closed form solution for the
+adjoint differential of the logaithmic map is complicated to compute and second
+the gradint can even be given in a nicer form. We can first simplify in our case
+with $X = \operatorname{grad} h(p^{(k)})$ that
+
+```math
+\phi(p) = g(p) - \langle X, \log_{p^{(k)}}p\rangle
+= a\bigl( p_{1}^2-p_{2}\bigr)^2
+        + 2\bigl(p_{1}-b\bigr)^2 - 2(p^{(k)}_1-b)p_1 + 2(p^{(k)}_1-b)p^{(k)}_1,
+```
+
+its Euclidean gradient reads
+
+```math
+\operatorname{grad}\phi(p) =
+    \nabla \varphi(p)
+    = \begin{pmatrix}
+        4a p_1(p_1^2-p_2) + 4(p_1-b) - 2(p^{(k)}_1-b)\\
+        -2a(p_1^2-p_2)
+    \end{pmatrix}
+```
+
+where we can again employ the gradient conversion from before to obtain the Riemannian gradient.
+
+```{julia}
+#| output: false
+mutable struct SubGrad{P,T,V}
+    pk::P
+    Xk::T
+    a::V
+    b::V
+end
+function (ϕ::SubGrad)(M, p)
+    X = zero_vector(M, p)
+    ϕ(M, X, p)
+    return X
+end
+function (ϕ::SubGrad)(M, X, p)
+    X .= [
+        4 * ϕ.a * p[1] * (p[1]^2 - p[2]) + 4 * (p[1] - ϕ.b) - 2 * (ϕ.pk[1] - ϕ.b),
+        -2 * ϕ.a * (p[1]^2 - p[2]),
+    ]
+    riemannian_gradient!(M, X, p, X) # convert
+    return X
+end
+```
+
+And in orer to update the subsolvers gradient correctly, we have to overwrite
+
+```{julia}
+#| output: false
+set_manopt_parameter!(ϕ::SubGrad, ::Val{:p}, p) = (ϕ.pk .= p)
+set_manopt_parameter!(ϕ::SubGrad, ::Val{:X}, X) = (ϕ.Xk .= X)
+```
+
+And we again introduce for ease of use
+
+```{julia}
+#| output: false
+docR_g(M, p) = g(M, p; a=a, b=b)
+docR_f(M, p) = docR_g(M, p) - h(M, p; a=a, b=b)
+docR_grad_h!(M, X, p) = grad_h!(M, X, p; a=a, b=b)
+docR_grad_g!(M, X, p) = grad_g!(M, X, p; a=a, b=b)
+function docR_grad_f!(M, X, p)
+    Y = zero_vector(M, p)
+    docR_grad_g!(M, X, p)
+    docR_grad_h!(M, Y, p)
+    X .-= Y
+    return X
+end
+docR_sub_grad = SubGrad(copy(M, p0), zero_vector(M, p0), a, b)
+```
+
+Then we can finally call the last of our four algorithms to compare, the
+difference of convex algorithm with the Riemannian metric.
+
+```{julia}
+R_doc_state = difference_of_convex_algorithm(
+    M_rb, docR_f, docR_g, docR_grad_h!, p0;
+    gradient=docR_grad_f!,
+    grad_g = docR_grad_g!,
+    debug=[debug_vec..., 10^6],
+    evaluation=InplaceEvaluation(),
+    record=[:Iteration, :Cost],
+    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    sub_grad=docR_sub_grad,
+    sub_hess = nothing, # Use gradient descent
+    sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
+    return_state=true,
+)
+```
+
+## Comparison in Iterations
+
+```{julia}
+fig = plot(;
+    legend=:topright,
+    xlabel="Iterations (log. scale)", ylabel=raw"Cost $f(x)$ (log. scale)",
+    yaxis=:log,
+    ylims=(1e-16, 5*1e5),
+    xaxis=:log,
+    xlims=(1,10^8),
+)
+scatter!(fig, [1,], [f(M,p0),], label=raw"$f(p_0)$", markercolor=grey)
+egi = get_record(Eucl_GD_state, :Iteration, :Iteration)[1:10000:end] #5308 entries
+egc = get_record(Eucl_GD_state, :Iteration, :Cost)[1:10000:end] #5308 entries
+plot!(fig, egi, egc, color=teal, label="Euclidean GD")
+#
+rgi = get_record(R_GD_state, :Iteration, :Iteration)[1:1000:end] # 2444 entries
+rgc = get_record(R_GD_state, :Iteration, :Cost)[1:1000:end] # 2444 entries
+plot!(fig, rgi, rgc, color=indigo, label="Riemannian GD")
+#
+edi = get_record(E_doc_state, :Iteration, :Iteration) #26549 entries
+edc = get_record(E_doc_state, :Iteration, :Cost) #26549 entries
+plot!(fig, edi, edc, color=sand, label="Euclidean DoC")
+#
+rdi = get_record(R_doc_state, :Iteration, :Iteration) # 1235 entries
+rdc = get_record(R_doc_state, :Iteration, :Cost) # 1235 entries
+plot!(fig, rdi, rdc, color=green, label="Riemannian DoC")
+```
+
+And we can see that using difference of convex outperforms gradient descent,
+and using the Riemannian approach required less iterations than their Euclidean counterparts.
 
 ## Literature
 

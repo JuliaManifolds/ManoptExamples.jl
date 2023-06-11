@@ -59,8 +59,8 @@ i.e. also here the manifold is ignored.
 
 # Functors
 
-    \operatorname{grad} f(M,p)
-    \operatorname{grad} f(M, X, p)
+    grad_f!!(M,p)
+    grad_f!!(M, X, p)
 
 evaluate the gradient at ``p`` the manifold``\mathcal M`` is ignored.
 """
@@ -117,7 +117,7 @@ is given by
 
 ```math
 ⟨X,Y⟩_{\mathrm{Rb},p} = X^\mathrm{T}G_pY, \qquad
-G_p \coloneqq \begin{pmatrix}
+G_p = \begin{pmatrix}
   1+4p_{1}^2 & -2p_{1} \\
   -2p_{1} & 1
 \end{pmatrix},
@@ -149,14 +149,14 @@ end
     q = exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
     exp!(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X)
 
-Compute the exponential map with respect to the [`RosenbrockMetric`](@ref).
+Compute the exponential map with respect to the [`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric).
 
 ```math
     q = \begin{pmatrix} p_1 + X_1 \\ p_2+X_2+X_1^2\end{pmatrix}
 ```
 """
 function exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X, t::Number)
-    return [p[1] + t*X[1], p[2] + t*(X[2] + X[1]^2)]
+    return [p[1] + t * X[1], p[2] + t * (X[2] + X[1]^2)]
 end
 function exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
     return [p[1] + X[1], p[2] + (X[2] + X[1]^2)]
@@ -164,16 +164,16 @@ end
 function exp!(
     ::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X, t::Number
 )
-    q[1] = p[1] + t*X[1]
-    q[2] = p[2] + t*(X[2] + X[1]^2)
+    q[1] = p[1] + t * X[1]
+    q[2] = p[2] + t * (X[2] + X[1]^2)
     return q
 end
 
 @doc raw"""
 
-    local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
+    inverse_local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
 
-Return the onverse of the local metric matrix of the [`RosenbrockMetric`](@ref)
+Return the inverse of the local metric matrix of the [`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric)
 in the canonical unit vector basis of the tangent space ``T_p\mathbb R^2`` given as
 
 ```math
@@ -185,18 +185,18 @@ G^{-1}_p =
 ```
 """
 function inverse_local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
-    return [1.0 2*p[1]; 2*p[1] 4 * p[1]^2+1]
+    return [(one(p[1])) (2*p[1]); (2*p[1]) (1+4 * p[1]^2)]
 end
 
 @doc raw"""
     inner(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X, Y)
 
-Compute the inner product on ``\mathbb R^2`` with respect to the [RosenbrockMetric](@ref), i.e.
+Compute the inner product on ``\mathbb R^2`` with respect to the [`RosenbrockMetric`](@ref RosenbrockMetric), i.e.
 for ``X,Y \in T_p\mathcal M`` we have
 
 ```math
 ⟨X,Y⟩_{\mathrm{Rb},p} = X^\mathrm{T}G_pY, \qquad
-G_p \coloneqq \begin{pmatrix}
+G_p = \begin{pmatrix}
   1+4p_1^2 & -2p_1\\
   -2p_1 & 1
 \end{pmatrix},
@@ -209,26 +209,26 @@ end
 @doc raw"""
     local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
 
-Return the local metric matrix of the [`RosenbrockMetric`](@ref) in the canonical unit vector basis of the tangent space ``T_p\mathbb R^2``
+Return the local metric matrix of the [`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric) in the canonical unit vector basis of the tangent space ``T_p\mathbb R^2``
 given as
 
 ```math
-G_p \coloneqq \begin{pmatrix}
+G_p = \begin{pmatrix}
   1+4p_1^2 & -2p_1 \\
   -2p_1 & 1
 \end{pmatrix}
-````
+```
 """
 function local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
-    return [1+4 * p[1]^2 -2*p[1]; -2*p[1] 1.0]
+    return [(1+4 * p[1]^2) (-2*p[1]); (-2*p[1]) (one(p[1]))]
 end
 
 @doc raw"""
     X = log(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, q)
     log!(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, X, p, q)
 
-Compute the logarithmic map with respect to the [`RosenbrockMetric`](@ref).
-The formula reads for any ``j ∈ \{1,…,m}``
+Compute the logarithmic map with respect to the [`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric).
+The formula reads for any ``j ∈ \{1,…,m\}``
 
 ```math
 X = \begin{pmatrix}
