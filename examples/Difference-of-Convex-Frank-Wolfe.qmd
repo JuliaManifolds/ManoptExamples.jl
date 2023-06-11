@@ -384,7 +384,7 @@ And let's plot the result, where we measure the cost versus the minimum the diff
 ```{julia}
 fig = plot(;
     legend=:topright,
-    xlabel="Iterations $k$ (log. scale)", ylabel=raw"Cost $f(x_k)-f^*$ (log. scale)",
+    xlabel=raw"Iterations $k$ (log. scale)", ylabel=raw"Cost $f(x_k)-f^*$ (log. scale)",
     yaxis=:log,
     ylims=(1e-8, 10^-2),
     xaxis=:log,

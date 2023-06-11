@@ -383,7 +383,7 @@ R_doc_state = difference_of_convex_algorithm(
 ```{julia}
 fig = plot(;
     legend=:topright,
-    xlabel="Iterations (log. scale)", ylabel=raw"Cost $f(x)$ (log. scale)",
+    xlabel=raw"Iterations $k$ (log. scale)", ylabel=raw"Cost $f(x)$ (log. scale)",
     yaxis=:log,
     ylims=(1e-16, 5*1e5),
     xaxis=:log,
