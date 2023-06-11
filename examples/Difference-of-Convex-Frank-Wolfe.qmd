@@ -1,0 +1,399 @@
+---
+title: "A comparison of the Difference of Convex and Frank Wolfe Algorithm"
+author: "Ronny Bergmann"
+date: 11/06/2023
+---
+
+## Introduction
+
+In this example we compare the Difference of Convex Algprithm (DCA) [@BergmannFerreiraSantosSouza:2023]
+with the Frank-Wolfe Algorithm, which was introduced in [@WeberSra:2022].
+This example reproduces the results from [@BergmannFerreiraSantosSouza:2023], Section 7.3.
+
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(path="../") # a trick to work on the local dev version
+ENV["GKSwstype"] = "100"
+```
+
+```{julia}
+#| output: false
+using LinearAlgebra, Random, Statistics, BenchmarkTools
+using ManifoldsBase, Manifolds, Manopt, ManoptExamples
+using NamedColors, Plots
+```
+
+and we load a few nice colors
+
+```{julia}
+#| output: false
+paul_tol = load_paul_tol()
+indigo = paul_tol["mutedindigo"]
+teal = paul_tol["mutedteal"]
+```
+
+We consider the collowing constraint maximimization problem of the Fréchet mean
+on the [symmetric positive definite matrices](https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html) $\mathcal P(n) with the [affine invariant metric](https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html#Default-metric:-the-affine-invariant-metric).
+Let $q_1,\ldots,q_m \in \mathcal P(n)$ be a set of points and $\mu_1,\ldots,\mu_m$ be a set of weights,
+such that they sum to one. We consider then
+
+```math
+\operatorname*{arg\,max}_{p\in\mathcal C}\ \ h(p)
+```
+
+with
+
+```math
+h(p) =
+\sum_{j=1}^m \mu_j d^2(p,q_i),
+\quad \text{where}
+d^2(p,q_i) = \operatorname{tr}\bigl(
+        \log^2(p^{-\frac{1}{2}}q_jp^{-\frac{1}{2}})
+\big)
+\qquad\text{and}\qquad
+\mathcal C = \{ p\in {\mathcal M}\ |\ \bar L\preceq p \preceq \bar U \},
+```
+
+for a lower bount $L$ and an upper bound $U$ for the matrices in the positive definite sense
+$ A \preceq B \Leftrightarrow (B-A)$ is positive semi-definite
+
+When every one of the weights  ${\mu}_1, \ldots {\mu}_m$ are equal,
+this function $h$ is known as the \emph{Fréchet variance}
+of the set $\{q_1, \dots, q_m\}$.
+
+And for our example we set
+
+```{julia}
+#| output: false
+Random.seed!(42)
+n = 20
+m = 100
+M = SymmetricPositiveDefinite(n)
+q = [rand(M) for _ in 1:m];
+w = rand(m)
+w ./=sum(w)
+```
+
+We use as lower and upper bound $q_{\pm}$ the arithmetic and geometric mean $L$ and $U$,
+respectively.
+
+```{julia}
+#| output: false
+L = inv( sum( wi * inv(qi) for (wi, qi) in zip(w,q) ) );
+U = sum( wi * qi for (wi, qi) in zip(w,q) );
+```
+
+As a starting point, the Frank-Wolfe algorithm requires a feasible point. We use
+
+```{julia}
+#| output: false
+p0 = (L+U)/2;
+```
+
+
+
+And we can check that it is feasible
+
+## Common Functions
+
+Given $p \in \mathcal M$, $X \in T_p\mathcal M$ on the symmetric positive definite matrices `M`,
+this method computes the closed form solution to
+
+```math
+    \operatorname*{arg\,min}_{q\in  {\mathcal C}} \langle X, \log_p q\rangle.
+    = \operatorname*{arg\,min}_{q\in  {\mathcal C}} \operatorname{tr}(S\log(YqY))
+```
+
+where $\mathcal C = \{ q | L \preceq q \preceq U \}$, $S = p^{-1/2}Xp^{-1/2}$, and $Y=p^{-1/2}$.
+
+The solution is given by
+$Z=X^{-1}Q\bigl( P^{\mathrm{T}}[-\operatorname{sgn}(D)]_{+}P+\hat{L}\bigr)Q^{\mathrm{T}}X^{-1}$,@
+where $S=QDQ^{\mathrm{T}}$ is a diagonalization of $S$,
+$\hat{U}-\hat{L}=P^{\mathrm{T}}P$ with $\hat{L}=Q^{\mathrm{T}}XLXQ$ and
+$\hat{U}=Q^{\mathrm{T}}XUXQ$, where $[-\mbox{sgn}(D)]_{+}$ is
+the diagonal matrix
+
+```math
+\operatorname{diag}\bigl(
+  [-\operatorname{sgn}(d_{11})]_{+}, \ldots, [-\operatorname{sgn}(d_{nn})]_{+}
+\bigr)
+```
+
+and $D=(d_{ij})$.
+
+```{julia}
+#| output: false
+@doc raw"""
+    closed_form_solution!(M, q, L, U, p X)
+
+Compute the closeed form solution of the constraint sub problem in place of ``q``.
+"""
+function closed_form_solution!(M::SymmetricPositiveDefinite, q, L, U, p, X)
+    # extract p^1/2 and p^{-1/2}
+    (p_sqrt_inv, p_sqrt) = Manifolds.spd_sqrt_and_sqrt_inv(p)
+    # Compute D & Q
+    e2 = eigen(p_sqrt_inv * X * p_sqrt_inv) # decompose Sk  = QDQ'
+    D = Diagonal(1.0 .* (e2.values .< 0))
+    Q = e2.vectors
+    #println(p)
+    Uprime = Q' * p_sqrt_inv * U * p_sqrt_inv * Q
+    Lprime = Q' * p_sqrt_inv * L * p_sqrt_inv * Q
+    P = cholesky(Hermitian(Uprime - Lprime))
+    z = P.U' * D * P.U + Lprime
+    copyto!(M, q, p_sqrt * Q * z * Q' * p_sqrt)
+    return q
+end
+```
+
+## The Difference of Convex Formulation
+
+We use $g(p) = \iota_{\mathcal C}(p)$ as the indicator funtion of the set $\mathcal C$. We use
+
+```{julia}
+#| output: false
+function is_pos_def(p; atol=5e-13)
+    e = eigen(Symmetric(p))
+    return all((e.values .+ atol) .> 0)
+end
+function g(p, L, U)
+    return (is_pos_def(p-L) && is_pos_def(U-p)) ? 0.0 : Inf
+end
+h(M, p, w, q) = sum(wi * distance(M, p, qi)^2 for (wi, qi) in zip(w,q) )
+```
+
+So we can first check that `p0` is feasible
+
+```{julia}
+g(p0,L,U) == 0.0
+```
+
+Now setting
+
+```{math}
+\operatorname{arg\,min}_{p\in\mathcal M}
+g(p) - h(p)
+```
+
+We look for a maximum of $h$, where $g$ is minimal, i.e. $g(p)$ is zero or in other words $p \in \mathcal C$.
+
+The gradient of $h$ can also be implemented in closed form as
+
+```{julia}
+#| output: false
+grad_h(M, p, w, q) = -2.0 * sum(wi * log(M, p, qi) for (wi, qi) in zip(w, q))
+function grad_h!(M, X, p, w, q)
+    Y = copy(M, p, X)
+    zero_vector!(M, X, p)
+    for (wi, qi) in zip(w,q)
+        log!(M, Y, p, qi)
+        Y .*= - 2.0*wi
+        X .+= Y
+    end
+    return X
+end
+```
+
+And we can further define the cost, which will
+just be $+\infty$ outside of $\mathcal C$
+
+We define
+
+```{julia}
+#| output: false
+f_dc(M, p) = g(p, L, U) - h(M, p, w, q)
+grad_h!(M, X, p) = grad_h!(M, X, p, w, q)
+function grad_f_dc!(M,X, p)
+    grad_h!(M, X, p, w, q)
+    X .*= -1.0
+    return X
+end
+```
+
+Here we can omit the gradient of $g$ in the definition of $\operatorname{grad} f$, since the gradient is zero at the points there it is defined,
+that is on any point that is not on the boundary of $\mathcal C$.
+
+As the last step, we can provide the closed form
+solver for the DC sub problem given at iteration $k$ by
+
+```{math}
+ \argmin_{p\in  {\mathcal C}}
+    \big\langle -\grad h(p^{(k)}), \exp^{-1}_{p^{(k)}}p\big\rangle.
+```
+
+Which we con compute
+
+```{julia}
+#| output: false
+function dc_sub_solution!(M, q, p, X)
+    closed_form_solution!(M, q, L, U, p, -X)
+    return q
+end
+```
+
+For safety, we might want to avoid ending up at the boundary of $\mathcal C$. That is we reduce the
+distance we walk towards the solution $q$ a bit.
+
+```{julia}
+#| output: false
+function dc_sub_solution_safe!(M, q, p, X)
+    p_last = copy(M,p) # since p=q might be in place
+    closed_form_solution!(M, q, L, U, p, -X)
+    q_orig = copy(M,q) # since we do the following in place of q
+    a = minimum(real.(eigen(q-L).values))
+    b = minimum(real.(eigen(U-q).values))
+    s = 1.0
+    d = distance(M, p_last, q_orig);
+    # if we are close to zero, we reduce faster.
+    α = d < 1/(n^2) ? 0.66 : 0.9995;
+    i=0
+    while (a < 0) || (b < 0)
+        s *= α
+        shortest_geodesic!(M, q, p_last, q_orig, s)
+        a = minimum(real.(eigen(q-L).values))
+        b = minimum(real.(eigen(U-q).values))
+        #println("$i a: $a, b = $b with s=$s")
+        i=i+1
+        if (i>100) # safety fallback
+            #@warn " $i steps where not enough $s ($α)\n$a $b\n $(distance(M, p_last, q_orig)). Fixing by shifting EVs"
+            qe = eigen(q)
+            if a < 0
+                qe.values .+= min(1e-8, n*abs(min(a,b)))
+            else
+                qe.values .-= min(1e-8, n*abs(min(a,b)))
+            end
+            q .= qe.vectors * Diagonal(qe.values) * (qe.vectors)'
+            a = minimum(real.(eigen(q-L).values))
+            b = minimum(real.(eigen(U-q).values))
+            return q
+        end
+    end
+    return q
+end
+```
+
+## The DoC solver run
+
+Let's compare both methods when they have the same stopping criteria
+
+```{julia}
+@time state1_dc = difference_of_convex_algorithm(M, f_dc, g, grad_h!, p0;
+    gradient=grad_f_dc!,
+    sub_problem=dc_sub_solution_safe!,
+    evaluation=InplaceEvaluation(),
+    stopping_criterion = StopAfterIteration(300) |
+        StopWhenChangeLess(1e-14) | StopWhenGradientChangeLess(M, 1e-9),
+    debug = [
+        (:Iteration, "# %-8d "), (:Cost, "F(p): %0.14f"), (:Change, " |Δp|: %0.14f "),
+        (:GradientNorm, " |grad f(p)|: %0.8f "),
+        (:GradientChange, " |Δgrad f(p)|: %0.8f"),
+        30, :Stop, "\n"],
+    record = [:Iteration, :Iterate, :Cost, RecordGradientNorm(), :Change],
+    return_state=true,
+)
+```
+
+Let's extract the final point and look at its cost
+
+```{julia}
+p1_dc = get_solver_result(state1_dc);
+f_dc(M, p1_dc)
+```
+
+As well as whether (and how well) it is feasible, that is the following
+values should all be larger than zero.
+
+```{julia}
+[ extrema(eigen(p1_dc-L).values), extrema(eigen(U-p1_dc).values)]
+```
+
+For the statistics we extract the recordings from the state
+
+
+## Define the Frank-Wolfe functions
+
+For Frank wolfe, the cost is just defined as $-h(p)$ but the minimisation is constraint to $\mathcal C$, which is enfored by the oracle.
+
+```{julia}
+#| output: false
+f_fw(M, p) = -h(M, p, w, q)
+function grad_f_fw!(M,X, p)
+    grad_h!(M, X, p, w, q)
+    X .*= -1.0
+    return X
+end
+oracle_fw!(M, q, p, X) = closed_form_solution!(M, q, L, U, p, X)
+```
+## The FW Solver Run
+
+Similarly we can run the Frank-Wolfe algorithm with
+
+```{julia}
+@time state1_fw = Frank_Wolfe_method(M, f_fw, grad_f_fw!, p0;
+    sub_problem=oracle_fw!,
+    evaluation=InplaceEvaluation(),
+    stopping_criterion = StopAfterIteration(10^4) |
+        StopWhenChangeLess(1e-14) | StopWhenGradientChangeLess(M, 1e-9),
+    debug = [
+        (:Iteration, "# %-8d "), :Cost, (:Change, " |Δp|: %0.14f "),
+        (:GradientNorm, " |grad f(p)|: %0.8f "),
+        (:GradientChange, " |Δgrad f(p)|: %0.8f"),
+        2*10^3, :Stop, "\n"],
+    record = [:Iteration, :Iterate, :Cost, RecordGradientNorm(), :Change],
+    return_state=true,
+)
+```
+
+And we take a look at this result as well
+
+```{julia}
+p1_fw = get_solver_result(state1_fw);
+f_dc(M, p1_fw)
+```
+
+And its feasibility
+
+```{julia}
+[extrema(eigen(p1_fw-L).values), extrema(eigen(U-p1_fw).values)]
+```
+
+## Statistics
+
+We extract the recorded values
+
+```{julia}
+#| output: false
+# DoC
+iter1_dc = get_record(state1_dc, :Iteration, :Iteration);
+pk_dc = get_record(state1_dc,:Iteration,:Iterate);
+costs1_dc = -h.(Ref(M), pk_dc, Ref(w), Ref(q));
+dc_min = minimum(costs1_dc)
+# FW
+iter1_fw = get_record(state1_fw,:Iteration,:Iteration)[1:5:end];
+pk_fw = get_record(state1_fw,:Iteration,:Iterate)[1:5:end];
+costs1_fw = -h.(Ref(M), pk_fw, Ref(w), Ref(q));
+```
+
+And let's plot the result, where we measure the cost versus the minimum the difference of convex algorithm attains.
+
+```{julia}
+fig = plot(;
+    legend=:topright,
+    xlabel="Iterations $k$ (log. scale)", ylabel=raw"Cost $f(x_k)-f^*$ (log. scale)",
+    yaxis=:log,
+    ylims=(1e-8, 10^-2),
+    xaxis=:log,
+    xlims=(1,10^4),
+)
+plot!(fig, iter1_dc, costs1_dc .- dc_min, color=teal, label="Difference of Convex")
+plot!(fig, iter1_fw, costs1_fw .- dc_min, color=teal, label="Frank-Wolfe")
+```
+
+This indicates, that the difference off convex algorithm could even stop earlier with a proper stopping criterion, since after that the cost increases a bit again.
+
+On the other hand, Frank-Wolfe still has not reached this level function value after `10^4` iterations.

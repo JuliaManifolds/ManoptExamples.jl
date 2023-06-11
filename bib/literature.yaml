@@ -75,4 +75,20 @@ references:
   title: A proximal point algorithm for DC fuctions on Hadamard manifolds
   type: article-journal
   volume: '63'
+
+- id: WeberSra:2022
+  author:
+    - family: Weber
+      given: Melanie
+    - family: Sra
+      given: Suvrit
+  citation-key: WeberSra:2022
+  container-title: Mathematical Programming
+  DOI: 10.1007/s10107-022-01840-5
+  issued:
+    - year: 2022
+      month: 7
+  publisher: Springer Science and Business Media LLC
+  title: Riemannian optimization via frank-wolfe methods
+  type: article-journal
 ...

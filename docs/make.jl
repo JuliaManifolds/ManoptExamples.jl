@@ -64,6 +64,7 @@ makedocs(;
             "Difference of Convex" => [
                 "A Benchmark" => "examples/Difference-of-Convex-Benchmark.md",
                 "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
+                "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md"
             ],
             "Riemannian Mean" => "examples/Riemannian-mean.md",
             "Robust PCA" => "examples/Robust-PCA.md",
