@@ -22,21 +22,37 @@ jobs:
       - name: Cache Quarto
         id: cache-quarto
         uses: actions/cache@v3
+        env:
+          cache-name: cache-quarto
         with:
           path: examples/_freeze
-          key: ${{ runner.os }}-quarto-freeze
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('examples/*.qmd') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+            ${{ runner.os }}-
+
       - name: Cache Documenter
         id: cache-documenter
         uses: actions/cache@v3
+        env:
+          cache-name: cache-documenter
         with:
-          path: docs/src/tutorials
-          key: ${{ runner.os }}-documenter-tutorials
+          path: docs/src/examples
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('examples/*.qmd') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+            ${{ runner.os }}-
       - name: Cache CondaPkg
         id: cache-condaPkg
         uses: actions/cache@v3
+        env:
+          cache-name: cache-condapkg
         with:
           path: docs/.CondaPkg
-          key: ${{ runner.os }}-condapkg
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('docs/CondaPkg.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+            ${{ runner.os }}-
       - name: "Documenter rendering (including Quarto)"
         run: "docs/make.jl --quarto"
         env:
