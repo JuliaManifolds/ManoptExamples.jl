@@ -30,5 +30,7 @@ using Manopt, ManoptExamples, Manifolds, Test
         exp!(Mrb, p1, p, X)
         @test p1 == q(1.0)
         @test isapprox(Mrb, p, log(Mrb, p, p1), X)
+        Y = [0.4, 0.5]
+        @test inner(Mrb, p, X, Y) == X' * local_metric(Mrb, p) * Y
     end
 end
