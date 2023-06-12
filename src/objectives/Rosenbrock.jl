@@ -158,14 +158,19 @@ Compute the exponential map with respect to the [`RosenbrockMetric`](@ref Manopt
 function exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X, t::Number)
     return [p[1] + t * X[1], p[2] + t * (X[2] + X[1]^2)]
 end
-function exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
-    return [p[1] + X[1], p[2] + (X[2] + X[1]^2)]
+function exp(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
+    return exp(M, p, X, 1.0)
 end
 function exp!(
     ::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X, t::Number
 )
     q[1] = p[1] + t * X[1]
     q[2] = p[2] + t * (X[2] + X[1]^2)
+    return q
+end
+# Overwrite default to not dispatch on ODESolver
+function exp!(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X)
+    exp!(M, q, p, X, 1.0)
     return q
 end
 

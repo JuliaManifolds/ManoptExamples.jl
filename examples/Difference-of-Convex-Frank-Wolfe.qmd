@@ -39,7 +39,7 @@ teal = paul_tol["mutedteal"]
 ```
 
 We consider the collowing constraint maximimization problem of the Fréchet mean
-on the [symmetric positive definite matrices](https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html) $\mathcal P(n) with the [affine invariant metric](https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html#Default-metric:-the-affine-invariant-metric).
+on the [symmetric positive definite matrices](https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html) $\mathcal P(n)$ with the [affine invariant metric](https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html#Default-metric:-the-affine-invariant-metric).
 Let $q_1,\ldots,q_m \in \mathcal P(n)$ be a set of points and $\mu_1,\ldots,\mu_m$ be a set of weights,
 such that they sum to one. We consider then
 
@@ -52,16 +52,16 @@ with
 ```math
 h(p) =
 \sum_{j=1}^m \mu_j d^2(p,q_i),
-\quad \text{where}
+\quad \text{ where }
 d^2(p,q_i) = \operatorname{tr}\bigl(
-        \log^2(p^{-\frac{1}{2}}q_jp^{-\frac{1}{2}})
+  \log^2(p^{-\frac{1}{2}}q_jp^{-\frac{1}{2}})
 \big)
 \qquad\text{and}\qquad
 \mathcal C = \{ p\in {\mathcal M}\ |\ \bar L\preceq p \preceq \bar U \},
 ```
 
-for a lower bount $L$ and an upper bound $U$ for the matrices in the positive definite sense
-$ A \preceq B \Leftrightarrow (B-A)$ is positive semi-definite
+for a lower bound $L$ and an upper bound $U$ for the matrices in the positive definite sense
+$A \preceq B \Leftrightarrow (B-A)$ is positive semi-definite
 
 When every one of the weights  ${\mu}_1, \ldots {\mu}_m$ are equal,
 this function $h$ is known as the \emph{Fréchet variance}
@@ -80,7 +80,7 @@ w = rand(m)
 w ./=sum(w)
 ```
 
-We use as lower and upper bound $q_{\pm}$ the arithmetic and geometric mean $L$ and $U$,
+We use as lower and upper bound the arithmetic and geometric mean $L$ and $U$,
 respectively.
 
 ```{julia}
@@ -106,8 +106,8 @@ Given $p \in \mathcal M$, $X \in T_p\mathcal M$ on the symmetric positive defini
 this method computes the closed form solution to
 
 ```math
-    \operatorname*{arg\,min}_{q\in  {\mathcal C}} \langle X, \log_p q\rangle.
-    = \operatorname*{arg\,min}_{q\in  {\mathcal C}} \operatorname{tr}(S\log(YqY))
+\operatorname*{arg\,min}_{q\in  {\mathcal C}}\ \langle X, \log_p q\rangle
+  = \operatorname*{arg\,min}_{q\in  {\mathcal C}}\ \operatorname{tr}(S\log(YqY))
 ```
 
 where $\mathcal C = \{ q | L \preceq q \preceq U \}$, $S = p^{-1/2}Xp^{-1/2}$, and $Y=p^{-1/2}$.
@@ -175,9 +175,8 @@ g(p0,L,U) == 0.0
 
 Now setting
 
-```{math}
-\operatorname{arg\,min}_{p\in\mathcal M}
-g(p) - h(p)
+```math
+\operatorname*{arg\,min}_{p\in\mathcal M}\ g(p) - h(p)
 ```
 
 We look for a maximum of $h$, where $g$ is minimal, i.e. $g(p)$ is zero or in other words $p \in \mathcal C$.
@@ -200,8 +199,7 @@ end
 ```
 
 And we can further define the cost, which will
-just be $+\infty$ outside of $\mathcal C$
-
+just be $+\infty$ outside of $\mathcal C$.
 We define
 
 ```{julia}
@@ -221,9 +219,9 @@ that is on any point that is not on the boundary of $\mathcal C$.
 As the last step, we can provide the closed form
 solver for the DC sub problem given at iteration $k$ by
 
-```{math}
- \argmin_{p\in  {\mathcal C}}
-    \big\langle -\grad h(p^{(k)}), \exp^{-1}_{p^{(k)}}p\big\rangle.
+```math
+\operatorname*{arg\,min}_{p\in \mathcal C}\
+  \big\langle -\operatorname{grad} h(p^{(k)}), \exp^{-1}_{p^{(k)}}p\big\rangle.
 ```
 
 Which we con compute
