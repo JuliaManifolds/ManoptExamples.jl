@@ -384,11 +384,11 @@ fig = plot(;
     legend=:topright,
     xlabel=raw"Iterations $k$ (log. scale)", ylabel=raw"Cost $f(x_k)-f^*$ (log. scale)",
     yaxis=:log,
-    ylims=(1e-10, 10^-2),
+    ylims=(1e-8, 10^-2),
     xaxis=:log,
     xlims=(1,10^4),
 )
-plot!(fig, iter1_dc, costs1_dc .- dc_min, color=teal, label="Difference of Convex")
+plot!(fig, iter1_dc, costs1_dc .- dc_min, color=indigo, label="Difference of Convex")
 plot!(fig, iter1_fw, costs1_fw .- dc_min, color=teal, label="Frank-Wolfe")
 ```
 
