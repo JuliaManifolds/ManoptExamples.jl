@@ -85,15 +85,15 @@ respectively.
 
 ```{julia}
 #| output: false
-L = inv( sum( wi * inv(qi) for (wi, qi) in zip(w,q) ) );
-U = sum( wi * qi for (wi, qi) in zip(w,q) );
+L = inv( sum( wi * inv(qi) for (wi, qi) in zip(w,q) ) )
+U = sum( wi * qi for (wi, qi) in zip(w,q) )
 ```
 
 As a starting point, the Frank-Wolfe algorithm requires a feasible point. We use
 
 ```{julia}
 #| output: false
-p0 = (L+U)/2;
+p0 = (L+U)/2
 ```
 
 
@@ -367,14 +367,14 @@ We extract the recorded values
 ```{julia}
 #| output: false
 # DoC
-iter1_dc = get_record(state1_dc, :Iteration, :Iteration);
-pk_dc = get_record(state1_dc,:Iteration,:Iterate);
-costs1_dc = -h.(Ref(M), pk_dc, Ref(w), Ref(q));
+iter1_dc = get_record(state1_dc, :Iteration, :Iteration)
+pk_dc = get_record(state1_dc,:Iteration,:Iterate)
+costs1_dc = -h.(Ref(M), pk_dc, Ref(w), Ref(q))
 dc_min = minimum(costs1_dc)
 # FW
-iter1_fw = get_record(state1_fw,:Iteration,:Iteration)[1:5:end];
-pk_fw = get_record(state1_fw,:Iteration,:Iterate)[1:5:end];
-costs1_fw = -h.(Ref(M), pk_fw, Ref(w), Ref(q));
+iter1_fw = get_record(state1_fw,:Iteration,:Iteration)[1:5:end]
+pk_fw = get_record(state1_fw,:Iteration,:Iterate)[1:5:end]
+costs1_fw = -h.(Ref(M), pk_fw, Ref(w), Ref(q))
 ```
 
 And let's plot the result, where we measure the cost versus the minimum the difference of convex algorithm attains.
