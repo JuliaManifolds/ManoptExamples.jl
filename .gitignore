@@ -16,3 +16,9 @@ Manifest.toml
 *.DS_Store
 docs/src/contributing.md
 coverage
+docs/.CondaPkg
+docs/src/examples/*_files/*
+docs/src/examples/*.md
+!docs/src/examples/index.md
+examples/*.ipynb
+examples/*_files/*

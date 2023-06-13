@@ -1,4 +1,4 @@
-# List of Examples
+# List of Objectives defined for the Examples
 
 # [Riemannian Mean](@id RiemannianMean)
 
@@ -24,7 +24,7 @@ Private = true
 
 # [Rosenbrock Function](@id Rosenbrock)
 
-See the [Rosenbrock example](../examples/Rosenbrock.md) to see these in use.
+See the [Rosenbrock example](../examples/Rosenbrock.md)  and [The Difference of Convex Rosenbrock Example](../examples/Difference-of-Convex-Rosenbrock.md) to see these in use.
 
 ```@autodocs
 Modules = [ManoptExamples]

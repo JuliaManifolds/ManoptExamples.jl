@@ -11,6 +11,7 @@ For this example we first load the necessary packages.
 ```{julia}
 #| output: false
 using Pkg;
+cd(@__DIR__)
 Pkg.activate("."); # use the example environment,
 ```
 
