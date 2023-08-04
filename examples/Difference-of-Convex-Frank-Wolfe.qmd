@@ -18,7 +18,6 @@ This example reproduces the results from [@BergmannFerreiraSantosSouza:2023], Se
 using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
-Pkg.develop(path="../") # a trick to work on the local dev version
 ENV["GKSwstype"] = "100"
 ```
 

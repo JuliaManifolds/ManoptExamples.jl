@@ -1,0 +1,108 @@
+---
+title: "Dominant Invariant Subspace"
+author:
+    - Ronny Bergmann
+    - Mathias Ravn Munkvold
+date: 08/04/2023
+---
+
+In this example we want to illustrate different variants, how to use the adaptive regularized Cubics (ARC) solver from [Manopt.jl](https://manoptjl.org/). For a given symmetric matrix $A \in \mathbb R^{n\times n}$, where $n \in \mathbb N$ is large, we aim to ind the dominant invariant subspace, that is, given a size $k \in \mathbb N$ that is less than $n$, we want to find the subspace $V$ span by the eigenvectors corresponding to the larges eigenvalues of $A$. This can be formulated as an optimization problem on the [Grassmann manifold](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/grassmann.html) $\operatorname{Gr}(n,k)$.
+
+```math
+\operatorname{arg\,min}_{p \in \operatorname{Gr}(n,k)}
+\frac{1}{2}\operatorname{tr}(p^{\mathrm{T}}Ap),
+```
+
+where $\operatorname{tr}$ denotes the trace of the resulting $k\times k$ matrix.
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # use the example environment,
+Pkg.develop(; path="../../Manopt.jl") # locally to test
+```
+
+```{julia}
+#| output: false
+using LinearAlgebra, Random, Statistics
+using Manifolds, Manopt, ManoptExamples
+using Plots, LRUCache
+Random.seed!(42)
+```
+
+For our example we generate the data as
+
+```{julia}
+#| output: false
+n = 512
+k = 12
+A_init = randn(n, n)
+A = (A_init + A_init') / 2
+```
+
+And hence we are on the manifold
+
+```{julia}
+M = Grassmann(n, k)
+```
+
+## Cost, Gradient and Hessian
+
+```{julia}
+#| output: false
+f(M, p) = -0.5*tr(p'*A*p)
+grad_f(M, p) = -A*p+p*(p'*A*p)
+Hess_f(M, p, X) = -A*X +p*p'*A*X+X*p'*A*p
+```
+
+And we use the first $k$ columns of the unit matrix as a starting point
+
+```{julia}
+#| output: false
+p0 = Matrix{Float64}(I, n, n)[:, 1:k]
+```
+
+## A Lanczos Subsolver Variant
+
+For the first call to ARC, we want to use the default sub solver, which is a Lanczos iteration based subsolver.
+
+We also activate the [LRU cache](), print the cost and the norm of the gradient in every iteration and record these as well.
+
+In the following cell, both the objective and the state are returned in a tuple to `r1`.
+We then only print the objective to check for cache and count statistics.
+
+```{julia}
+r1 = adaptive_regularization_with_cubics!(
+    M, f, grad_f, Hess_f, copy(M, p0);
+    θ=0.5,
+    σ = 100.0,
+    retraction_method=PolarRetraction(),
+    debug=[:Iteration, :Cost," ", DebugGradientNorm(),"\n", :Stop],
+    count=[:Cost,:Gradient, :Hessian],
+    cache=(:LRU, [:Cost, :Gradient, :Hessian], 25),
+    return_objective=true,
+    return_state=true
+)
+r1[1]
+```
+
+We can also check the solver state, to see
+
+```{julia}
+r1[2]
+```
+
+that the last sub solver run stopped due to a small enough gradient and that overall (as also seen in the stopping criterion) the gradient of $f$ was small enough.
+
+## A Conjugate Gradient Subsolver Variant
+
+## Technical Details
+
+This quarto notebook was generated with the following package versions installed.
+
+```{julia}
+Pkg.status()
+```

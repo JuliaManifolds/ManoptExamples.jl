@@ -69,7 +69,6 @@ g(x) = a\bigl( x_1^2-x_2\bigr)^2 + 2\bigl(x_1-b\bigr)^2 \quad\text{ and }\quad h
 using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
-Pkg.develop(path="../") # a trick to work on the local dev version
 ENV["GKSwstype"] = "100"
 ```
 

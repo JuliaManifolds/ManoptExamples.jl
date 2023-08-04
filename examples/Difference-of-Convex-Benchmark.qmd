@@ -23,7 +23,6 @@ where $g,h\colon \mathcal M \to \mathbb R$ are geodesically convex function on t
 using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
-Pkg.develop(path="../") # a trick to work on the local dev version
 ENV["GKSwstype"] = "100"
 ```
 
