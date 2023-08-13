@@ -8,6 +8,7 @@ date: 08/04/2023
 
 In this example we want to illustrate different variants, how to use the adaptive regularized Cubics (ARC) solver from [Manopt.jl](https://manoptjl.org/). For a given symmetric matrix $A \in \mathbb R^{n\times n}$, where $n \in \mathbb N$ is large, we aim to ind the dominant invariant subspace, that is, given a size $k \in \mathbb N$ that is less than $n$, we want to find the subspace $V$ span by the eigenvectors corresponding to the larges eigenvalues of $A$. This can be formulated as an optimization problem on the [Grassmann manifold](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/grassmann.html) $\operatorname{Gr}(n,k)$.
 
+
 ```math
 \operatorname{arg\,min}_{p \in \operatorname{Gr}(n,k)}
 \frac{1}{2}\operatorname{tr}(p^{\mathrm{T}}Ap),
@@ -39,8 +40,7 @@ For our example we generate the data as
 #| output: false
 n = 512
 k = 12
-A_init = randn(n, n)
-A = (A_init + A_init') / 2
+A = Symmetric(randn(n, n))
 ```
 
 And hence we are on the manifold
@@ -75,12 +75,16 @@ In the following cell, both the objective and the state are returned in a tuple 
 We then only print the objective to check for cache and count statistics.
 
 ```{julia}
+p1 = copy(M, p0) # we compute in-place of this variable
 r1 = adaptive_regularization_with_cubics!(
-    M, f, grad_f, Hess_f, copy(M, p0);
+    M, f, grad_f, Hess_f, p1;
     θ=0.5,
     σ = 100.0,
     retraction_method=PolarRetraction(),
-    debug=[:Iteration, :Cost," ", DebugGradientNorm(),"\n", :Stop],
+    debug= [
+        :Iteration, :Cost, (:GradientNorm, "  |  |grad f(p)|:%e"), "\n",
+        :Stop
+    ],
     count=[:Cost,:Gradient, :Hessian],
     cache=(:LRU, [:Cost, :Gradient, :Hessian], 25),
     return_objective=true,
@@ -97,7 +101,65 @@ r1[2]
 
 that the last sub solver run stopped due to a small enough gradient and that overall (as also seen in the stopping criterion) the gradient of $f$ was small enough.
 
-## A Conjugate Gradient Subsolver Variant
+## A Gradient Descent Subsolver Variant
+
+A second possibility is, to use a gradient descent instead for the sub problem that has to be solved in every iteration. There are helpers for the sub-problem available.
+Since the sub problem will need the original hessian objective `mho`, we build it beforehand – even in a cached variant again.
+
+```{julia}
+#| output: false
+mho = ManifoldHessianObjective(f, grad_f, Hess_f)
+mho2 = ManifoldCountObjective(M, mho, [:Cost, :Gradient, :Hessian])
+mho3 = ManifoldCachedObjective(M, mho2, [:Cost, :Gradient, :Hessian], cache_size=25)
+```
+
+Now the sub problem is defined on the tangent space at the current point (which is later dynamically updated), but we can then use
+[`AdaptiveRegularizationCubicCost`](@ref) and [`AdaptiveRegularizationCubicGrad`](@ref), which are generic implementations of the sub problems cost and gradient. These then form the `sub_problem` as in
+
+```{julia}
+#| output: false
+M2 = TangentSpaceAtPoint(M, p0)
+g = AdaptiveRegularizationCubicCost(M2, mho3)
+grad_g = AdaptiveRegularizationCubicGrad(M2, mho3)
+sub_problem = DefaultManoptProblem(M2, ManifoldGradientObjective(g, grad_g))
+sub_state = GradientDescentState(M2, zero_vector(M, p0);
+    stopping_criterion=StopAfterIteration(500) |
+                       StopWhenGradientNormLess(1e-11) |
+                       StopWhenFirstOrderProgress(0.5),
+)
+```
+
+where we extend the stopping criterion, such that when enough progress is observed, we also stop, see [`StopWhenFirstOrderProgress`](@ref) for details.
+
+THen we can similarly call the solver but now provide a new `sub_problem` and `sub_solver`.
+
+```{julia}
+p2 = copy(M, p0) # we compute in-place of this variable
+r2 = adaptive_regularization_with_cubics!(
+    M, mho3, p2;
+    θ=0.5,
+    σ = 100.0,
+    retraction_method=PolarRetraction(),
+    debug= [
+        :Iteration, :Cost, (:GradientNorm, "  |  |grad f(p)|:%e"), "\n",
+        :Stop
+    ],
+    sub_problem = sub_problem,
+    sub_state = sub_state,
+    return_objective=true,
+    return_state=true
+)
+r2[1]
+```
+
+Note that here, since we run the sub solver so many times and it might take a few hundred iterations in each run, the gradient of the subprolem is evaluated quite often. This involves evaluating the Hessian, hence that count is a bit high.
+
+We can again check the solver state as well
+```{julia}
+r2[2]
+```
+
+where we can conclude, that herre probably Armijo linesearch is not the best chouce for a step size computation and is probably both the reason for so many iterations in each sub solver as well as the few more iterations in ARC itself.
 
 ## Technical Details
 
