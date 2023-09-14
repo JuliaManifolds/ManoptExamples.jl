@@ -32,6 +32,7 @@ end
 # (c) load necessary packages for the docs
 using Documenter: DocMeta, HTML, MathJax3, deploydocs, makedocs
 using ManoptExamples
+using DocumenterCitations
 
 generated_path = joinpath(@__DIR__, "src")
 base_url = "https://github.com/JuliaManifolds/ManoptExamples.jl/blob/master/"
@@ -52,7 +53,10 @@ open(joinpath(generated_path, "contributing.md"), "w") do io
     end
 end
 
-makedocs(;
+# (e) ...finally! make docs
+bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:alpha)
+makedocs(
+    bib;
     format=HTML(; mathengine=MathJax3(), prettyurls=get(ENV, "CI", nothing) == "true"),
     #modules=[ManoptExamples],
     sitename="ManoptExamples.jl",
