@@ -7,13 +7,13 @@ Let ``A ∈ ℝ^{n×n}`` be a symmetric matrix.
 Then we can specify the [Rayleigh Quotient](https://en.wikipedia.org/wiki/Rayleigh_quotient) in two forms.
 Either
 
-```
-f(p) = \frac{1}{2} p^{\mathrm{T}}Ap,\qquad p ∈ 𝕊^{n-1}.
+```math
+f(p) = \frac{1}{2} p^{\mathrm{T}}Ap,\qquad p ∈ 𝕊^{n-1},
 ```
 
 or extended into the embedding as
 
-```
+```math
 f(x) = \frac{1}{2} x^{\mathrm{T}}Ax, \qquad x ∈ ℝ^n,
 ```
 
@@ -48,17 +48,17 @@ Let ``A ∈ ℝ^{n×n}`` be a symmetric matrix.
 Then we can specify the gradient of the [Rayleigh Quotient](https://en.wikipedia.org/wiki/Rayleigh_quotient)
 in two forms. Either
 
-```
-\operatorname{grad} f(p) = Ap - (p^{\mathrm{T}}Ap)*p
+```math
+\operatorname{grad} f(p) = Ap - (p^{\mathrm{T}}Ap)*p,\qquad p ∈ 𝕊^{n-1},
 ```
 
 or taking the Euclidean gradient of the Rayleigh quotient on the sphere as
 
-```
+```math
 ∇f(x) = Ax, \qquad x ∈ ℝ^n.
 ```
 
-For details, see Example 3.62 of [@Boumal:2023].
+For details, see Example 3.62 of [Boumal:2023](@cite).
 
 # Fields
 
@@ -97,17 +97,17 @@ Let ``A ∈ ℝ^{n×n}`` be a symmetric matrix.
 Then we can specify the Hessian of the [Rayleigh Quotient](https://en.wikipedia.org/wiki/Rayleigh_quotient)
 in two forms. Either
 
-```
-\operatorname{Hess} f(p)[X] =  AX - (p^{mathr{T}}AX)p - (p^{\mathrm{T}}Ap)X
+```math
+\operatorname{Hess} f(p)[X] =  AX - (p^{mathr{T}}AX)p - (p^{\mathrm{T}}Ap)X,\qquad p ∈ 𝕊^{n-1}, X \in T_p𝕊^{n-1}
 ```
 
 or taking the Euclidean Hessian of the Rayleigh quotient on the sphere as
 
-```
-∇^2f(x)[V] = AV, \qquad x ∈ ℝ^n.
+```math
+∇^2f(x)[V] = AV, \qquad x, V ∈ ℝ^n.
 ```
 
-For details, see Example 5.27 of [@Boumal:2023].
+For details, see Example 5.27 of [Boumal:2023](@cite).
 
 
 # Fields
