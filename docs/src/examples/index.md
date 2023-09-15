@@ -8,6 +8,7 @@
 | [Riemannian Mean](Riemannian-mean.md)   | ``f``, ``\operatorname{grad}f`` (A/I), objective | [📚](@ref RiemannianMean) |
 | [Robust PCA](Robust-PCA.md)   | ``f``, ``\operatorname{grad}f`` (A/I), objective | [📚](@ref RobustPCA) |
 | [Rosenbrock](Rosenbrock.md)   | ``f``, ``\operatorname{grad}f`` (A/I), objective, minimizer | [📚](@ref Rosenbrock) |
+| [The Rayleigh Quotient](RayleighQuotient.md) | ``f``, ``\operatorname{grad}f`` (A/I), ``\operatorname{Hess}f`` (A/I), objective [📚](@ref Rayleigh) |
 
 Symbols:
 * _A_ Allocating variant

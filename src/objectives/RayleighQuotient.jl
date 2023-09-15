@@ -8,13 +8,13 @@ Then we can specify the [Rayleigh Quotient](https://en.wikipedia.org/wiki/Raylei
 Either
 
 ```math
-f(p) = \frac{1}{2} p^{\mathrm{T}}Ap,\qquad p ∈ 𝕊^{n-1},
+f(p) = p^{\mathrm{T}}Ap,\qquad p ∈ 𝕊^{n-1},
 ```
 
 or extended into the embedding as
 
 ```math
-f(x) = \frac{1}{2} x^{\mathrm{T}}Ax, \qquad x ∈ ℝ^n,
+f(x) = x^{\mathrm{T}}Ax, \qquad x ∈ ℝ^n,
 ```
 
 which is not the orignal Rayleigh quotient for performance reasons, but
@@ -28,15 +28,19 @@ useful if you want to use this as the Euclidean cost in the emedding of ``𝕊^{
     RayleighQuotientCost(A)
 
 Create the Rayleigh cost function.
+
+# See also
+
+[`RayleighQuotientGrad!!`](@ref), [`RayleighQuotientHess!!`](@ref)
 """
 struct RayleighQuotientCost{AMT}
     A::AMT
 end
 function (f::RayleighQuotientCost)(::Euclidean, x)
-    return 0.5 * x' * A * x
+    return x' * f.A * x
 end
 function (f::RayleighQuotientCost)(::Sphere, p)
-    return 0.5 * p' * A * p
+    return p' * f.A * p
 end
 
 @doc raw"""
@@ -49,13 +53,13 @@ Then we can specify the gradient of the [Rayleigh Quotient](https://en.wikipedia
 in two forms. Either
 
 ```math
-\operatorname{grad} f(p) = Ap - (p^{\mathrm{T}}Ap)*p,\qquad p ∈ 𝕊^{n-1},
+\operatorname{grad} f(p) = 2 Ap - 2 (p^{\mathrm{T}}Ap)*p,\qquad p ∈ 𝕊^{n-1},
 ```
 
 or taking the Euclidean gradient of the Rayleigh quotient on the sphere as
 
 ```math
-∇f(x) = Ax, \qquad x ∈ ℝ^n.
+∇f(x) = 2Ax, \qquad x ∈ ℝ^n.
 ```
 
 For details, see Example 3.62 of [Boumal:2023](@cite).
@@ -69,22 +73,26 @@ For details, see Example 3.62 of [Boumal:2023](@cite).
     RayleighQuotientGrad!!(A)
 
 Create the Rayleigh quotient gradient function.
+
+# See also
+
+[`RayleighQuotientCost`](@ref), [`RayleighQuotientHess!!`](@ref)
 """
 struct RayleighQuotientGrad!!{AMT}
     A::AMT
 end
 function (f::RayleighQuotientGrad!!)(::Euclidean, x)
-    return A * x
+    return 2 .* f.A * x
 end
 function (f::RayleighQuotientGrad!!)(::Euclidean, X, x)
-    X .= A * x
+    X .= 2 .* f.A * x
     return X
 end
 function (f::RayleighQuotientGrad!!)(::Sphere, p)
-    return A * p - (p' * A * p) * p
+    return 2 .* (f.A * p .- (p' * f.A * p) .* p)
 end
 function (f::RayleighQuotientGrad!!)(::Sphere, X, p)
-    X .= A * p .- (p' * A * p) * p
+    X .= 2 .* (f.A * p .- (p' * f.A * p) .* p)
     return X
 end
 
@@ -98,13 +106,13 @@ Then we can specify the Hessian of the [Rayleigh Quotient](https://en.wikipedia.
 in two forms. Either
 
 ```math
-\operatorname{Hess} f(p)[X] =  AX - (p^{mathr{T}}AX)p - (p^{\mathrm{T}}Ap)X,\qquad p ∈ 𝕊^{n-1}, X \in T_p𝕊^{n-1}
+\operatorname{Hess} f(p)[X] = 2 \bigl(AX - (p^{mathrm{T}}AX)p - (p^{\mathrm{T}}Ap)X\bigr),\qquad p ∈ 𝕊^{n-1}, X \in T_p𝕊^{n-1}
 ```
 
 or taking the Euclidean Hessian of the Rayleigh quotient on the sphere as
 
 ```math
-∇^2f(x)[V] = AV, \qquad x, V ∈ ℝ^n.
+∇^2f(x)[V] = 2AV, \qquad x, V ∈ ℝ^n.
 ```
 
 For details, see Example 5.27 of [Boumal:2023](@cite).
@@ -118,21 +126,25 @@ For details, see Example 5.27 of [Boumal:2023](@cite).
     RayleighQuotientHess!!(A)
 
 Create the Rayleigh quotient Hessian function.
+
+# See also
+
+[`RayleighQuotientCost`](@ref), [`RayleighQuotientGrad!!`](@ref)
 """
 struct RayleighQuotientHess!!{AMT}
     A::AMT
 end
 function (f::RayleighQuotientHess!!)(::Euclidean, x, V)
-    return A * V
+    return 2 .* f.A * V
 end
 function (f::RayleighQuotientHess!!)(::Euclidean, W, x, V)
-    W .= A * V
+    W .= 2 .* f.A * V
     return W
 end
-function (f::RayleighQuotientHess!!)(::Sphere, p)
-    return A * X - (p' * A * X) .* p - (p' * A * p) .* X
+function (f::RayleighQuotientHess!!)(::Sphere, p, X)
+    return 2 .* (f.A * X - (p' * f.A * X) .* p - (p' * f.A * p) .* X)
 end
 function (f::RayleighQuotientHess!!)(::Sphere, Y, p, X)
-    Y .= A * X - (p' * A * X) .* p - (p' * A * p) .* X
+    Y .= 2 .* (f.A * X - (p' * f.A * X) .* p - (p' * f.A * p) .* X)
     return Y
 end

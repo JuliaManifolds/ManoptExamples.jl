@@ -70,6 +70,7 @@ makedocs(
                 "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
                 "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md",
             ],
+            "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
             "Riemannian Mean" => "examples/Riemannian-mean.md",
             "Robust PCA" => "examples/Robust-PCA.md",
             "Rosenbrock" => "examples/Rosenbrock.md",
