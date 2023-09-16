@@ -14,6 +14,7 @@ import Manifolds:
 # Common ollection of functions useful for several problems
 
 # Objetives
+include("objectives/RayleighQuotient.jl")
 include("objectives/RiemannianMean.jl")
 include("objectives/RobustPCA.jl")
 include("objectives/Rosenbrock.jl")

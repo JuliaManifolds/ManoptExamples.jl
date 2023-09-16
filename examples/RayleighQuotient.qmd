@@ -1,0 +1,250 @@
+---
+title: "The Rayleigh Quotient"
+author: "Ronny Bergmann"
+date: 15/09/2023
+---
+
+## Introduction
+
+This example reproduces a few conceptual ideas of Optimization on Manifolds that are used throughout [Boumal:2023](@cite) using the Rayleigh quotient and explores several different ways to use the algorithms from [`Manopt.jl`](https://manoptjl.org).
+
+For a symmetric matrix $A \in \mathbb R^{n\times n}$ we consider the [📖 Rayleigh Quotient](https://en.wikipedia.org/wiki/Rayleigh_quotient)
+
+```math
+\operatorname*{arg\,min}_{x \in \mathbb R^n \backslash \{0\}}
+\frac{x^{\mathrm{T}}Ax}{\lVert x \rVert^2}.
+```
+
+On the sphere we can omit the denominator and obtain
+
+```math
+f(p) = p^{\mathrm{T}}Ap,\qquad p ∈ 𝕊^{n-1},
+```
+
+which by itself we can again continue in the embedding as
+
+```math
+\tilde f(x) = x^{\mathrm{T}}Ax,\qquad x \in \mathbb R^n.
+```
+
+This cost has the nice feature that at the minimizer $p^*\in\mathbb S^{n-1}$ the function
+falue $f(p^*)$ is the smalles eigenvalue of $A$.
+
+For the embedded function $\tilde f$ the gradient and Hessian can be computed with classical
+methods as
+
+```math
+\begin{align*}
+∇\tilde f(x) &= 2Ax, \qquad x ∈ ℝ^n,
+\\
+∇^2\tilde f(x)[V] &= 2AV, \qquad x, V ∈ ℝ^n.
+\end{align*}
+```
+
+Similarly, cf. Examples 3.62 and 5.27 of [Boumal:2023](@cite),
+the Riemannian gradient and Hessian on the manifold $\mathcal M = \mathbb S^{n-1}$ are given by
+
+```math
+\begin{align*}
+\operatorname{grad} f(p) &= 2Ap - 2(p^{\mathrm{T}}Ap)*p,\qquad p ∈ 𝕊^{n-1},
+\\
+\operatorname{Hess} f(p)[X] &=  2AX - 2(p^{\mathrm{T}}AX)p - 2(p^{\mathrm{T}}Ap)X,\qquad p ∈ 𝕊^{n-1}, X \in T_p𝕊^{n-1}
+\end{align*}
+```
+
+Let's first generate an example martrx $A$.
+
+```{julia}
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # use the example environment,
+```
+
+```{julia}
+#| output: false
+using LRUCache, BenchmarkTools, LinearAlgebra, Manifolds, ManoptExamples, Manopt, Random
+Random.seed!(42)
+n = 500
+A = Symmetric(randn(n,n))
+```
+
+And the manifolds
+
+```{julia}
+M = Sphere(n-1)
+```
+```{julia}
+E = get_embedding(M)
+```
+
+### Setup the corresponding functions
+
+Since ``[`RayleighQuotientCost`](@ref ManoptExamples.RayleighQuotientCost)``{=commonmark}, ``[`RayleighQuotientGrad!!`](@ref ManoptExamples.RayleighQuotientGrad!!)``{=commonmark}, and ``[`RayleighQuotientHess!!`](@ref ManoptExamples.RayleighQuotientHess!!)``{=commonmark} are themselves manifold agnostic we only need to initialize them once. Agnostic here means that they would compute $f$ is called with `M` as their first argument and $\tilde f$ if called with `E`.
+
+We instantiate
+
+```{julia}
+#| output: false
+f = ManoptExamples.RayleighQuotientCost(A)
+grad_f = ManoptExamples.RayleighQuotientGrad!!(A)
+Hess_f = ManoptExamples.RayleighQuotientHess!!(A)
+```
+
+the suffix `!!` also indicates that these functions both work as allocating and in-place variants. Given a starting point and some memory
+
+```{julia}
+#| output: false
+p0 = [1.0, zeros(n-1)...]
+X = zero_vector(M, p0)
+```
+
+we can both call
+
+```{julia}
+Y = grad_f(M,p0)  # Allocates memory
+grad_f(M,X,p0)    # Computes in place of X and returns the result in X.
+norm(M, p0, X-Y)
+```
+
+
+Now we can use a few different variants of solvers to approaach this and this tutorial will walk you through a few of them.
+
+First of all let's construct the actual result – since Rayleigh quotient minimization is not necessarily the best way to compute the smallest Eigenvalue. We can also compute
+
+```{julia}
+λ = min(eigvals(A)...)
+```
+
+### A Solver based on gradient information
+
+Let's first just use first-order information
+and since we are just starting, maybe we only derived the Euclidean
+gradient $\nabla \tilde f$.
+We can “tell” the solver, that the provided function and the gradient
+are defined as the Euclidean variants in the embedding.
+internally, `Manopt.jl` then issues the conversion for Euclidean gradients
+to the corresponding Riemannian one, cf. e.g. [this tutorial section](https://manoptjl.org/stable/tutorials/AutomaticDifferentiation/#EmbeddedGradient) or Section 3.8 or more precisely Example 3.62 in [Boumal:2023](@cite).
+
+But instead of diving into all the tecnical details, we can just specify `objective_type=:Euclidean` to trigger the conversion.
+We start with a simple [gradient descent](https://manoptjl.org/stable/solvers/gradient_descent/)
+
+```{julia}
+s = gradient_descent(M, f, grad_f, p0; objective_type=:Euclidean,
+    debug = [:Iteration, :Cost, :GradientNorm, 50, "\n"],
+    return_state=true,
+)
+q1 = get_solver_result(s)
+s
+```
+
+From the final cost we can already see that `q1` is an eigenvector to the smallest eigenvalue we obtaines above.
+
+And we can compare this to running with the Riemannian gradient,
+since the ``[`RayleighQuotientGrad!!`](@ref ManoptExamples.RayleighQuotientGrad!!)``{=commonmark} returns this one as well,
+when just called with the sphere as first Argument, we just have to remove the `objective_type`.
+
+```{julia}
+q2 = gradient_descent(M, f, grad_f, p0;
+    debug = [:Iteration, :Cost, :GradientNorm, 50, "\n"],
+)
+#Test that both are the same
+isapprox(M, q1,q2)
+```
+
+We can also benchmark both
+
+```{julia}
+@benchmark gradient_descent($M, $f, $grad_f, $p0; objective_type=:Euclidean)
+```
+
+```{julia}
+@benchmark gradient_descent($M, $f, $grad_f, $p0)
+```
+
+We see, that the conversion costs a bit of performance, but if the Euclidean gradient is easier to compute, this might still be ok.
+
+### A Solver based (also) on (approximate) Hessian information
+To also involve the Hessian, we consider the [trust regions](https://manoptjl.org/stable/solvers/trust_regions/) solver with three cases:
+
+1. Euclidean, approximating the Hessian
+2. Euclidean, providing the Hessian
+3. Riemannian, providing the Hessian but also using in-place evaluations.
+
+```{julia}
+q3 = trust_regions(M, f, grad_f, p0; objective_type=:Euclidean,
+    debug = [:Iteration, :Cost, :GradientNorm, 10, "\n"],
+);
+```
+
+To provide the Hessian in the high-level interface we need to prodive it as an
+anonymous function, since any `struct` is considered to (eventually) be the also optional starting point.
+For space reasons, let's also shorten the debug print to only iterations 7 and 14.
+
+```{julia}
+q4 = trust_regions(M, f, grad_f, (E, p, X) -> Hess_f(E, p, X), p0; objective_type=:Euclidean,
+    debug = [:Iteration, :Cost, :GradientNorm, 10, "\n"],
+);
+```
+
+```{julia}
+q5 = trust_regions(M, f, grad_f, (M, Y, p, X) -> Hess_f(M, Y, p, X), p0;
+    evaluation=InplaceEvaluation(),
+    debug = [:Iteration, :Cost, :GradientNorm, 10, "\n"],
+);
+```
+
+Let's also here compare them in benchmarks. Let's here compare all variants in their (more performant) in-place versions.
+
+
+```{julia}
+@benchmark trust_regions($M, $f, $grad_f, $p0;
+  objective_type=:Euclidean,
+  evaluation=InplaceEvaluation(),
+)
+```
+
+```{julia}
+@benchmark trust_regions($M, $f, $grad_f, $((E, Y, p, X) -> Hess_f(E, Y, p, X)), $p0;
+  evaluation=InplaceEvaluation(),
+  objective_type=:Euclidean
+)
+```
+
+```{julia}
+@benchmark trust_regions($M, $f, $grad_f, $((M, Y, p, X) -> Hess_f(M, Y, p, X)), $p0;
+    evaluation=InplaceEvaluation(),
+)
+```
+
+We see that Hessian approximation is quite costly, and Gradient and Hessian conversion somewhat costly; still, they also might serve as a good starting point, before deciding to delve into computing Riemannian gradients and Hessians.
+
+Of course all 5 runs obtained solutions close by; one might consider the gradient based runs to not have fully converged.
+```{julia}
+[distance(M, q1, q) for q ∈ [q2,q3] ]
+```
+```{julia}
+[distance(M, q3, q) for q ∈ [q4,q5] ]
+```
+
+Which we can also see in the final cost, comparing it to the Eigenvalue
+```{julia}
+[f(M, q) - λ for q ∈ [q1, q2, q3, q4, q5] ]
+```
+
+## Summary
+
+We illustrated several possibilities to call solvers, with
+both Euclidean gradient and Hessian and Riemannian gradient and Hessian,
+allocating and in-place function.
+While the performance is better for the Riemannian case, the Euclidean one is a worthy alternative, when those are easier to compute.
+
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["examples/RayleighQuotient.md"]
+Canonical=false
+```
+````

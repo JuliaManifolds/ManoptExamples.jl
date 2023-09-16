@@ -8,10 +8,6 @@ project:
 crossref:
   fig-prefix: Figure
   tbl-prefix: Table
-bibliography:
-  - ../CITATION.bib
-  - ../bib/literature.yaml
-csl: ../bib/journal-of-the-royal-statistical-society.csl
 fig-format: png
 
 execute:
