@@ -12,7 +12,7 @@ For a symmetric matrix $A \in \mathbb R^{n\times n}$ we consider the [📖 Rayle
 
 ```math
 \operatorname*{arg\,min}_{x \in \mathbb R^n \backslash \{0\}}
-\frac{x^{\mathrm{T}}Ax}{\lvert x \rVert^2}.
+\frac{x^{\mathrm{T}}Ax}{\lVert x \rVert^2}.
 ```
 
 On the sphere we can omit the denominator and obtain
