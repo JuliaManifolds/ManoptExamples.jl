@@ -8,7 +8,7 @@ date: 06/06/2023
 
 This example illustrates how the [📖 Rosenbrock](https://en.wikipedia.org/wiki/Rosenbrock_function)
 problem can be rephrased as a difference of convex problem and with a new metric on Euclidean space.
-This example is the code that produces the results in [@BergmannFerreiraSantosSouza:2023], Section 7.2.
+This example is the code that produces the results in [BergmannFerreiraSantosSouza:2023](@cite), Section 7.2.
 
 Both the Rosenbrock problem
 
@@ -412,5 +412,9 @@ and using the Riemannian approach required less iterations than their Euclidean 
 
 ## Literature
 
-::: {#refs}
-:::
+````{=commonmark}
+```@bibliography
+Pages = ["examples/Difference-of-Convex-Rosenbrock.md"]
+Canonical=false
+```
+````

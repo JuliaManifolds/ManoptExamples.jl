@@ -77,6 +77,7 @@ makedocs(
         ],
         "Objectives" => "objectives/index.md",
         "Contributing to ManoptExamples.jl" => "contributing.md",
+        "References" => "references.md"
     ],
 )
 deploydocs(; repo="github.com/JuliaManifolds/ManoptExamples.jl", push_preview=true)
