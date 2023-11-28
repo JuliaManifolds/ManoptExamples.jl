@@ -11,13 +11,25 @@ using ManifoldsBase, Manopt, Manifolds, ManifoldDiff
 import ManifoldsBase: exp!, exp, inner, log, log!
 import Manifolds:
     change_representer, change_representer!, local_metric, inverse_local_metric
+import Manifolds: Euclidean, Circle, PositiveNumbers
+import Manifolds: Sphere, SymmetricPositiveDefinite
+using Markdown: @doc_str
+const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
+
 # Common ollection of functions useful for several problems
 
 # Objetives
+include("objectives/BezierCurves.jl")
 include("objectives/RayleighQuotient.jl")
 include("objectives/RiemannianMean.jl")
 include("objectives/RobustPCA.jl")
 include("objectives/Rosenbrock.jl")
+include("objectives/TotalVariation.jl")
+
+include("data/artifical_signals.jl")
+include("data/artificial_images.jl")
+
+include("ErrorMeasures.jl")
 
 export exp!, exp, inner, log, log!
 export change_representer, change_representer!, local_metric, inverse_local_metric

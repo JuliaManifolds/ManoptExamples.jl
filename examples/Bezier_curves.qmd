@@ -1,0 +1,24 @@
+---
+title: "Minimizing the Acceleration of Bézier Curves on the Sphere"
+author: "Ronny Bergmann"
+date: 06/06/2023
+---
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(path="../") # a trick to work on the local dev version
+ENV["GKSwstype"] = "100"
+```
+
+
+## Introduction
+
+Bézier Curves can be generalized to manifolds by generalizing the [de Casteljau algorithm]() to work with geodesics instead of straight lines.
+An implementation in just a few lines
+
+[BergmannGousenbourger:2018](@cite)
