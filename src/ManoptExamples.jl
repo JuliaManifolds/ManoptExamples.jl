@@ -8,12 +8,23 @@
 """
 module ManoptExamples
 using ManifoldsBase, Manopt, Manifolds, ManifoldDiff
+using ManifoldsBase: TypeParameter
 import ManifoldsBase: exp!, exp, inner, log, log!
 import Manifolds:
     change_representer, change_representer!, local_metric, inverse_local_metric
 import Manifolds: Euclidean, Circle, PositiveNumbers
 import Manifolds: Sphere, SymmetricPositiveDefinite
 using Markdown: @doc_str
+using ManifoldDiff:
+    adjoint_differential_log_basepoint,
+    adjoint_differential_log_basepoint!,
+    adjoint_differential_log_argument,
+    adjoint_differential_log_argument!,
+    differential_log_argument,
+    differential_log_argument!,
+    differential_log_basepoint,
+    differential_log_basepoint!
+
 const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
 
 # Common ollection of functions useful for several problems

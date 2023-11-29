@@ -4,11 +4,11 @@
 
 # == Cost functions ==
 @doc raw"""
-    costIntrICTV12(M, f, u, v, α, β)
+    Intrinsic_infimal_convolution_TV12(M, f, u, v, α, β)
 
 Compute the intrinsic infimal convolution model, where the addition is replaced
-by a mid point approach and the two functions involved are [`costTV2`](@ref)
-and [`costTV`](@ref). The model reads
+by a mid point approach and the two functions involved are [`second_order_Total_Variation`](@ref)
+and [`Total_Variation`](@ref). The model reads
 
 ```math
 E(u,v) =
@@ -21,34 +21,34 @@ for more details see [BergmannFitschenPerschSteidl:2017, BergmannFitschenPerschS
 
 # See also
 
-[`costTV`](@ref), [`costTV2`](@ref)
+[`Total_Variation`](@ref), [`second_order_Total_Variation`](@ref)
 
 """
 function Intrinsic_infimal_convolution_TV12(M::AbstractManifold, f, u, v, α, β)
     IC = 1 / 2 * distance(M, shortest_geodesic(M, u, v, 0.5), f)^2
-    TV12 = β * costTV(M, u) + (1 - β) * costTV2(M, v)
+    TV12 = β * Total_Variation(M, u) + (1 - β) * second_order_Total_Variation(M, v)
     return IC + α * TV12
 end
 
 @doc raw"""
-    L2_Totl_Variation(M, f, α, x)
+    L2_Total_Variation(M, f, α, p)
 
 compute the ``ℓ^2``-TV functional on the `PowerManifold manifold `M` for given
-(fixed) data `f` (on `M`), a nonnegative weight `α`, and evaluated at `x` (on `M`),
+(fixed) data `f` (on `M`), a nonnegative weight `α`, and evaluated at `p` (on `M`),
 i.e.
 
 ```math
-E(x) = d_{\mathcal M}^2(f,x) + \alpha \operatorname{TV}(x)
+E(p) = d_{\mathcal M}^2(f,p) + \alpha \operatorname{TV}(p)
 ```
 
 # See also
 
 [`Total_Variation`](@ref)
 """
-L2_Totl_Variation(M, f, α, x) = 1 / 2 * distance(M, f, x)^2 + α * costTV(M, x)
+L2_Total_Variation(M, f, α, p) = 1 / 2 * distance(M, f, p)^2 + α * Total_Variation(M, p)
 
 @doc raw"""
-    costL2TVTV2(M, f, α, β, x)
+    L2_Total_Variation_1_2(M, f, α, β, x)
 
 compute the ``ℓ^2``-TV-TV2 functional on the `PowerManifold` manifold `M` for
 given (fixed) data `f` (on `M`), nonnegative weight `α`, `β`, and evaluated
@@ -61,14 +61,14 @@ E(x) = d_{\mathcal M}^2(f,x) + \alpha\operatorname{TV}(x)
 
 # See also
 
-[`costTV`](@ref), [`costTV2`](@ref)
+[`Total_Variation`](@ref), [`second_order_Total_Variation`](@ref)
 """
-function costL2TVTV2(M::PowerManifold, f, α, β, x)
-    return 1 / 2 * distance(M, f, x)^2 + α * costTV(M, x) + β * costTV2(M, x)
+function L2_Total_Variation_1_2(M::PowerManifold, f, α, β, x)
+    return 1 / 2 * distance(M, f, x)^2 + α * Total_Variation(M, x) + β * second_order_Total_Variation(M, x)
 end
 
 @doc raw"""
-    costL2TV2(M, f, β, x)
+    L2_second_order_Total_Varitaion(M, f, β, x)
 
 compute the ``ℓ^2``-TV2 functional on the `PowerManifold` manifold `M`
 for given data `f`, nonnegative parameter `β`, and evaluated at `x`, i.e.
@@ -77,16 +77,18 @@ for given data `f`, nonnegative parameter `β`, and evaluated at `x`, i.e.
 E(x) = d_{\mathcal M}^2(f,x) + β\operatorname{TV}_2(x)
 ```
 
+as used in [BacakBergmannSteidlWeinmann:2016](@cite).
+
 # See also
 
-[`costTV2`](@ref)
+[`second_order_Total_Varitaion`](@ref)
 """
-function costL2TV2(M::PowerManifold, f, β, x)
-    return 1 / 2 * distance(M, f, x)^2 + β * costTV2(M, x)
+function L2_second_order_Total_Varitaion(M::PowerManifold, f, β, x)
+    return 1 / 2 * distance(M, f, x)^2 + β * second_order_Total_Variation(M, x)
 end
 
 @doc raw"""
-    costTV(M,x [,p=2,q=1])
+    Total_Variation(M,x [,p=2,q=1])
 
 Compute the ``\operatorname{TV}^p`` functional for data `x`on the `PowerManifold`
 manifold `M`, i.e. ``\mathcal M = \mathcal N^n``, where ``n ∈ \mathbb N^k`` denotes
@@ -98,14 +100,16 @@ The formula reads
 
 ```math
 E^q(x) = \sum_{i ∈ \mathcal G}
-  \bigl( \sum_{j ∈  \mathcal I_i} d^p_{\mathcal M}(x_i,x_j) \bigr)^{q/p}.
+  \bigl( \sum_{j ∈  \mathcal I_i} d^p_{\mathcal M}(x_i,x_j) \bigr)^{q/p},
 ```
+
+see [WeinmannDemaretStorath:2014](@cite) for more details.
 
 # See also
 
 [`grad_TV`](@ref), [`prox_TV`](@ref)
 """
-function costTV(M::PowerManifold, x, p=1, q=1)
+function Total_Variation(M::PowerManifold, x, p=1, q=1)
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
@@ -116,7 +120,7 @@ function costTV(M::PowerManifold, x, p=1, q=1)
         for i in R # iterate over all pixel
             j = i + ek # compute neighbor
             if all(map(<=, j.I, maxInd.I)) # is this neighbor in range?
-                cost[i] += distance(M.manifold, (x[M, Tuple(i)...], x[M, Tuple(j)...]))^p
+                cost[i] += distance(M.manifold, x[M, Tuple(i)...], x[M, Tuple(j)...])^p
             end
         end
     end
@@ -127,8 +131,9 @@ function costTV(M::PowerManifold, x, p=1, q=1)
         return cost
     end
 end
+
 @doc raw"""
-    costTV2(M,(x1,x2,x3) [,p=1])
+    second_order_Total_Variation(M,(x1,x2,x3) [,p=1])
 
 Compute the ``\operatorname{TV}_2^p`` functional for the 3-tuple of points
 `(x1,x2,x3)`on the manifold `M`. Denote by
@@ -140,19 +145,21 @@ Compute the ``\operatorname{TV}_2^p`` functional for the 3-tuple of points
 the set of mid points between ``x_1`` and ``x_3``. Then the function reads
 
 ```math
-d_2^p(x_1,x_2,x_3) = \min_{c ∈ \mathcal C} d_{\mathcal M}(c,x_2).
+d_2^p(x_1,x_2,x_3) = \min_{c ∈ \mathcal C} d_{\mathcal M}(c,x_2),
 ```
+
+see [BacakBergmannSteidlWeinmann:2016](@cite) for a derivation.
 
 # See also
 
 [`grad_TV2`](@ref), [`prox_TV2`](@ref)
 """
-function costTV2(M::MT, x::Tuple{T,T,T}, p=1) where {MT<:AbstractManifold,T}
+function second_order_Total_Variation(M::MT, x::Tuple{T,T,T}, p=1) where {MT<:AbstractManifold,T}
     # note that here mid_point returns the closest to x2 from the e midpoints between x1 x3
     return 1 / p * distance(M, mid_point(M, x[1], x[3]), x[2])^p
 end
 @doc raw"""
-    costTV2(M,x [,p=1])
+    second_order_Total_Variation(M,x [,p=1])
 
 compute the ``\operatorname{TV}_2^p`` functional for data `x` on the
 `PowerManifold` manifoldmanifold `M`, i.e. ``\mathcal M = \mathcal N^n``,
@@ -168,13 +175,14 @@ d^p_{\mathcal M}(c_i(x_{j_1},x_{j_2}), x_i),
 ```
 
 where ``c_i(⋅,⋅)`` denotes the mid point between its two arguments that is
-nearest to ``x_i``.
+nearest to ``x_i``, see [BacakBergmannSteidlWeinmann:2016](@cite) for a derivation.
+
 
 # See also
 
 [`grad_TV2`](@ref), [`prox_TV2`](@ref)
 """
-function costTV2(M::PowerManifold, x, p::Int=1, Sum::Bool=true)
+function second_order_Total_Variation(M::PowerManifold, x, p::Int=1, Sum::Bool=true)
     Tt = Tuple(power_dimensions(M))
     R = CartesianIndices(Tt)
     d = length(Tt)
@@ -186,7 +194,7 @@ function costTV2(M::PowerManifold, x, p::Int=1, Sum::Bool=true)
             jF = i + ek # compute forward neighbor
             jB = i - ek # compute backward neighbor
             if all(map(<=, jF.I, maxInd.I)) && all(map(>=, jB.I, minInd.I)) # are neighbors in range?
-                cost[i] += costTV2(
+                cost[i] += second_order_Total_Variation(
                     M.manifold,
                     (x[M, Tuple(jB)...], x[M, Tuple(i)...], x[M, Tuple(jF)...]),
                     p,
@@ -209,7 +217,7 @@ end
     grad_u, grad_v = grad_intrinsic_infimal_convolution_TV12(M, f, u, v, α, β)
 
 compute (sub)gradient of the intrinsic infimal convolution model using the mid point
-model of second order differences, see [`costTV2`](@ref), i.e. for some ``f ∈ \mathcal M``
+model of second order differences, see [`second_order_Total_Variation`](@ref), i.e. for some ``f ∈ \mathcal M``
 on a `PowerManifold` manifold ``\mathcal M`` this function computes the (sub)gradient of
 
 ```math
@@ -296,7 +304,7 @@ function grad_TV(M::PowerManifold, x, p::Int=1)
     d = length(power_size)
     maxInd = last(R)
     X = zero_vector(M, x)
-    c = costTV(M, x, p, 0)
+    c = Total_Variation(M, x, p, 0)
     for i in R # iterate over all pixel
         di = 0.0
         for k in 1:d # for all direction combinations
@@ -321,7 +329,7 @@ function grad_TV!(M::PowerManifold, X, x, p::Int=1)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
     maxInd = last(R)
-    c = costTV(M, x, p, 0)
+    c = Total_Variation(M, x, p, 0)
     g = [zero_vector(M.manifold, x[first(R)]), zero_vector(M.manifold, x[first(R)])]
     for i in R # iterate over all pixel
         di = 0.0
@@ -414,7 +422,7 @@ function grad_TV2!(M::PowerManifold, X, q, p::Int=1)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
     minInd, maxInd = first(R), last(R)
-    c = costTV2(M, q, p, false)
+    c = second_order_Total_Variation(M, q, p, false)
     for i in R # iterate over all pixel
         di = 0.0
         for k in 1:d # for all direction combinations
@@ -709,7 +717,7 @@ function prox_TV2(
     PowX = [x...]
     PowM = PowerManifold(M, NestedPowerRepresentation(), 3)
     xR = PowX
-    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * costTV2(M, x)
+    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * second_order_Total_Variation(M, x)
     ∂F(PowM, x) = log(PowM, x, PowX) + λ * grad_TV2(PowM, x)
     subgradient_method!(PowM, F, ∂F, xR; stopping_criterion=stopping_criterion, kwargs...)
     return (xR...,)
@@ -731,7 +739,7 @@ function prox_TV2!(
     PowX = [x...]
     PowM = PowerManifold(M, NestedPowerRepresentation(), 3)
     copyto!(M, y, PowX)
-    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * costTV2(M, x)
+    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * second_order_Total_Variation(M, x)
     ∂F!(M, y, x) = log!(M, y, x, PowX) + λ * grad_TV2!(M, y, x)
     subgradient_method!(
         PowM,

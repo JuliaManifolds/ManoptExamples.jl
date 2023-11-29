@@ -136,10 +136,19 @@ such that ``⟨X,Z⟩ = ⟨ Y, Z ⟩_{\mathrm{Rb},p}`` holds for all ``Z``, in o
 this function is used in `riemannian_gradient` to convert a Euclidean into a Riemannian gradient.
 """
 change_representer(
-    M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, ::EuclideanMetric, p, X
+    ::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    ::EuclideanMetric, p, X
 )
 function change_representer!(
-    M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, Y, ::EuclideanMetric, p, X
+    M::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    Y,
+    ::EuclideanMetric,
+    p,
+    X,
 )
     Y .= inverse_local_metric(M, p) * X
     return Y
@@ -155,21 +164,47 @@ Compute the exponential map with respect to the [`RosenbrockMetric`](@ref Manopt
     q = \begin{pmatrix} p_1 + X_1 \\ p_2+X_2+X_1^2\end{pmatrix}
 ```
 """
-function exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X, t::Number)
+function exp(
+    ::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    p,
+    X,
+    t::Number,
+)
     return [p[1] + t * X[1], p[2] + t * (X[2] + X[1]^2)]
 end
-function exp(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
+function exp(
+    M::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    p,
+    X,
+)
     return exp(M, p, X, 1.0)
 end
 function exp!(
-    ::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X, t::Number
+    ::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    q,
+    p,
+    X,
+    t::Number,
 )
     q[1] = p[1] + t * X[1]
     q[2] = p[2] + t * (X[2] + X[1]^2)
     return q
 end
 # Overwrite default to not dispatch on ODESolver
-function exp!(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X)
+function exp!(
+    M::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    q,
+    p,
+    X,
+)
     exp!(M, q, p, X, 1.0)
     return q
 end
@@ -189,7 +224,12 @@ G^{-1}_p =
 \end{pmatrix}.
 ```
 """
-function inverse_local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
+function inverse_local_metric(
+    ::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    p,
+)
     return [(one(p[1])) (2*p[1]); (2*p[1]) (1+4 * p[1]^2)]
 end
 
@@ -207,7 +247,14 @@ G_p = \begin{pmatrix}
 \end{pmatrix},
 ```
 """
-function inner(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X, Y)
+function inner(
+    M::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    p,
+    X,
+    Y,
+)
     return transpose(X) * local_metric(M, p) * Y
 end
 
@@ -224,7 +271,12 @@ G_p = \begin{pmatrix}
 \end{pmatrix}
 ```
 """
-function local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
+function local_metric(
+    ::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    p,
+)
     return [(1+4 * p[1]^2) (-2*p[1]); (-2*p[1]) (one(p[1]))]
 end
 
@@ -242,9 +294,22 @@ X = \begin{pmatrix}
 \end{pmatrix}
 ```
 """
-log(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, q)
+log(
+    ::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    p,
+    q,
+)
 # note that the paper seems to have a typo here mixing up p and q
-function log!(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, X, p, q)
+function log!(
+    ::MetricManifold{
+        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+    },
+    X,
+    p,
+    q,
+)
     X[1] = q[1] - p[1]
     X[2] = q[2] - p[2] - X[1]^2
     return X
