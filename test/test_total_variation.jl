@@ -1,6 +1,7 @@
 using Manifolds
 using ManoptExamples: Intrinsic_infimal_convolution_TV12
-using ManoptExamples: L2_Total_Variation, L2_second_order_Total_Variation, L2_Total_Variation_1_2
+using ManoptExamples:
+    L2_Total_Variation, L2_second_order_Total_Variation, L2_Total_Variation_1_2
 
 @testset "Test TV Costs" begin
     M = Sphere(2)

@@ -139,7 +139,9 @@ change_representer(
     ::MetricManifold{
         ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
     },
-    ::EuclideanMetric, p, X
+    ::EuclideanMetric,
+    p,
+    X,
 )
 function change_representer!(
     M::MetricManifold{

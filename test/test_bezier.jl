@@ -1,5 +1,9 @@
 using Manifolds
-using ManoptExamples: BezierSegment, de_casteljau, adjoint_differential_bezier_control, grad_acceleration_bezier
+using ManoptExamples:
+    BezierSegment,
+    de_casteljau,
+    adjoint_differential_bezier_control,
+    grad_acceleration_bezier
 
 @testset "Bezier Tests" begin
     @testset "General Bezier Tests" begin

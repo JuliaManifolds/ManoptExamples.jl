@@ -64,7 +64,9 @@ E(x) = d_{\mathcal M}^2(f,x) + \alpha\operatorname{TV}(x)
 [`Total_Variation`](@ref), [`second_order_Total_Variation`](@ref)
 """
 function L2_Total_Variation_1_2(M::PowerManifold, f, α, β, x)
-    return 1 / 2 * distance(M, f, x)^2 + α * Total_Variation(M, x) + β * second_order_Total_Variation(M, x)
+    return 1 / 2 * distance(M, f, x)^2 +
+           α * Total_Variation(M, x) +
+           β * second_order_Total_Variation(M, x)
 end
 
 @doc raw"""
@@ -154,7 +156,9 @@ see [BacakBergmannSteidlWeinmann:2016](@cite) for a derivation.
 
 [`grad_TV2`](@ref), [`prox_TV2`](@ref)
 """
-function second_order_Total_Variation(M::MT, x::Tuple{T,T,T}, p=1) where {MT<:AbstractManifold,T}
+function second_order_Total_Variation(
+    M::MT, x::Tuple{T,T,T}, p=1
+) where {MT<:AbstractManifold,T}
     # note that here mid_point returns the closest to x2 from the e midpoints between x1 x3
     return 1 / p * distance(M, mid_point(M, x[1], x[3]), x[2])^p
 end
