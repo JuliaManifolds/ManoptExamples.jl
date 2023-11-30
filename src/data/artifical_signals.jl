@@ -1,4 +1,4 @@
-function Manopt.artificial_S2_composite_bezier_curve()
+function artificial_S2_composite_bezier_curve()
     M = Sphere(2)
     d0 = [0.0, 0.0, 1.0]
     d1 = [0.0, -1.0, 0.0]
@@ -36,7 +36,7 @@ function Manopt.artificial_S2_composite_bezier_curve()
     ]
 end
 
-function Manopt.artificial_S2_lemniscate(p, t::Float64, a::Float64=π / 2.0)
+function artificial_S2_lemniscate(p, t::Float64, a::Float64=π / 2.0)
     M = Sphere(2)
     tP = 2.0 * Float64(p[1] >= 0.0) - 1.0 # Take north or south pole
     base = [0.0, 0.0, tP]

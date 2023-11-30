@@ -1,5 +1,5 @@
 
-function Manopt.artificial_S2_whirl_image(pts::Int=64)
+function artificial_S2_whirl_image(pts::Int=64)
     M = Sphere(2)
     img = artificial_S2_rotation_image(pts, (0.5, 0.5))
     # Set WhirlPatches
@@ -32,7 +32,7 @@ function Manopt.artificial_S2_whirl_image(pts::Int=64)
     return img
 end
 
-function Manopt.artificial_SPD_image2(pts=64, fraction=0.66)
+function artificial_SPD_image2(pts=64, fraction=0.66)
     Zl = 4.0 * Matrix{Float64}(I, 3, 3)
     # create a first matrix
     α = 2.0 * π / 3
@@ -76,7 +76,7 @@ function Manopt.artificial_SPD_image2(pts=64, fraction=0.66)
     return data
 end
 
-function Manopt.artificial_S2_rotation_image(
+function artificial_S2_rotation_image(
     pts::Int=64, rotations::Tuple{Float64,Float64}=(0.5, 0.5)
 )
     M = Sphere(2)

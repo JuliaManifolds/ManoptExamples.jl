@@ -22,7 +22,6 @@ for more details see [BergmannFitschenPerschSteidl:2017, BergmannFitschenPerschS
 # See also
 
 [`Total_Variation`](@ref), [`second_order_Total_Variation`](@ref)
-
 """
 function Intrinsic_infimal_convolution_TV12(M::AbstractManifold, f, u, v, α, β)
     IC = 1 / 2 * distance(M, shortest_geodesic(M, u, v, 0.5), f)^2
@@ -106,10 +105,12 @@ E^q(x) = \sum_{i ∈ \mathcal G}
 ```
 
 see [WeinmannDemaretStorath:2014](@cite) for more details.
+In long function names, this might be shortened to `TV1` and the `1` might be ommitted if
+only total variation is present.
 
 # See also
 
-[`grad_TV`](@ref), [`prox_TV`](@ref)
+[`grad_Total_Variation`](@ref), [`prox_Total_Variation`](@ref), [`second_order_Total_Variation`](@ref)
 """
 function Total_Variation(M::PowerManifold, x, p=1, q=1)
     power_size = power_dimensions(M)
@@ -151,10 +152,12 @@ d_2^p(x_1,x_2,x_3) = \min_{c ∈ \mathcal C} d_{\mathcal M}(c,x_2),
 ```
 
 see [BacakBergmannSteidlWeinmann:2016](@cite) for a derivation.
+In long function names, this might be shortened to `TV2`.
+
 
 # See also
 
-[`grad_TV2`](@ref), [`prox_TV2`](@ref)
+[`grad_second_order_Total_Variation`](@ref), [`prox_second_order_Total_Variation`](@ref), [`Total_Variation`](@ref)
 """
 function second_order_Total_Variation(
     M::MT, x::Tuple{T,T,T}, p=1
@@ -181,10 +184,11 @@ d^p_{\mathcal M}(c_i(x_{j_1},x_{j_2}), x_i),
 where ``c_i(⋅,⋅)`` denotes the mid point between its two arguments that is
 nearest to ``x_i``, see [BacakBergmannSteidlWeinmann:2016](@cite) for a derivation.
 
+In long function names, this might be shortened to `TV2`.
 
 # See also
 
-[`grad_TV2`](@ref), [`prox_TV2`](@ref)
+[`grad_second_order_Total_Variation`](@ref), [`prox_second_order_Total_Variation`](@ref)
 """
 function second_order_Total_Variation(M::PowerManifold, x, p::Int=1, Sum::Bool=true)
     Tt = Tuple(power_dimensions(M))
@@ -232,25 +236,27 @@ E(u,v) =
 β\mathrm{TV}(v) + (1-β)\mathrm{TV}_2(w)
 \bigr),
 ```
-where both total variations refer to the intrinsic ones, [`grad_TV`](@ref) and
-[`grad_TV2`](@ref), respectively.
+
+where both total variations refer to the intrinsic ones, [`grad_Total_Variation`](@ref) and
+[`grad_second_order_Total_Variation`](@ref), respectively.
 """
 function grad_intrinsic_infimal_convolution_TV12(M::AbstractManifold, f, u, v, α, β)
     c = mid_point(M, u, v, f)
     iL = log(M, c, f)
     return adjoint_differential_shortest_geodesic_startpoint(M, u, v, 1 / 2, iL) +
-           α * β * grad_TV(M, u),
+           α * β * grad_Total_Variation(M, u),
     adjoint_differential_shortest_geodesic_endpoint(M, u, v, 1 / 2, iL) +
-    α * (1 - β) * grad_TV2(M, v)
+    α * (1 - β) * grad_second_order_Total_Variation(M, v)
 end
+
 @doc raw"""
-    X = grad_TV(M, (x,y)[, p=1])
-    grad_TV!(M, X, (x,y)[, p=1])
+    X = grad_Total_Variation(M, (x,y)[, p=1])
+    grad_Total_Variation!(M, X, (x,y)[, p=1])
 
 compute the (sub) gradient of ``\frac{1}{p}d^p_{\mathcal M}(x,y)`` with respect
 to both ``x`` and ``y`` (in place of `X` and `Y`).
 """
-function grad_TV(M::AbstractManifold, q::Tuple{T,T}, p=1) where {T}
+function grad_Total_Variation(M::AbstractManifold, q::Tuple{T,T}, p=1) where {T}
     if p == 2
         return (-log(M, q[1], q[2]), -log(M, q[2], q[1]))
     else
@@ -262,7 +268,7 @@ function grad_TV(M::AbstractManifold, q::Tuple{T,T}, p=1) where {T}
         end
     end
 end
-function grad_TV!(M::AbstractManifold, X, q::Tuple{T,T}, p=1) where {T}
+function grad_Total_Variation!(M::AbstractManifold, X, q::Tuple{T,T}, p=1) where {T}
     d = distance(M, q[1], q[2])
     if d == 0 # subdifferential containing zero
         zero_vector!(M, X[1], q[1])
@@ -281,8 +287,8 @@ function grad_TV!(M::AbstractManifold, X, q::Tuple{T,T}, p=1) where {T}
     return X
 end
 @doc raw"""
-    X = grad_TV(M, λ, x[, p=1])
-    grad_TV!(M, X, λ, x[, p=1])
+    X = grad_Total_Variation(M, λ, x[, p=1])
+    grad_Total_Variation!(M, X, λ, x[, p=1])
 
 Compute the (sub)gradient ``\partial F`` of all forward differences occurring,
 in the power manifold array, i.e. of the function
@@ -301,7 +307,7 @@ and ``\mathcal I_i`` denotes the forward neighbors of ``i``.
 # Output
 * X – resulting tangent vector in ``T_x\mathcal M``. The computation can also be done in place.
 """
-function grad_TV(M::PowerManifold, x, p::Int=1)
+function grad_Total_Variation(M::PowerManifold, x, p::Int=1)
     power_size = power_dimensions(M)
     rep_size = representation_size(M.manifold)
     R = CartesianIndices(Tuple(power_size))
@@ -316,9 +322,11 @@ function grad_TV(M::PowerManifold, x, p::Int=1)
             j = i + ek # compute neighbor
             if all(map(<=, j.I, maxInd.I)) # is this neighbor in range?
                 if p != 1
-                    g = (c[i] == 0 ? 1 : 1 / c[i]) .* grad_TV(M.manifold, (x[i], x[j]), p) # Compute TV on these
+                    g =
+                        (c[i] == 0 ? 1 : 1 / c[i]) .*
+                        grad_Total_Variation(M.manifold, (x[i], x[j]), p) # Compute TV on these
                 else
-                    g = grad_TV(M.manifold, (x[i], x[j]), p) # Compute TV on these
+                    g = grad_Total_Variation(M.manifold, (x[i], x[j]), p) # Compute TV on these
                 end
                 X[i] += g[1]
                 X[j] += g[2]
@@ -327,7 +335,7 @@ function grad_TV(M::PowerManifold, x, p::Int=1)
     end # i in R
     return X
 end
-function grad_TV!(M::PowerManifold, X, x, p::Int=1)
+function grad_Total_Variation!(M::PowerManifold, X, x, p::Int=1)
     power_size = power_dimensions(M)
     rep_size = representation_size(M.manifold)
     R = CartesianIndices(Tuple(power_size))
@@ -341,7 +349,7 @@ function grad_TV!(M::PowerManifold, X, x, p::Int=1)
             ek = CartesianIndex(ntuple(i -> (i == k) ? 1 : 0, d)) #k th unit vector
             j = i + ek # compute neighbor
             if all(map(<=, j.I, maxInd.I)) # is this neighbor in range?
-                grad_TV!(M.manifold, g, (x[i], x[j]), p) # Compute TV on these
+                grad_Total_Variation!(M.manifold, g, (x[i], x[j]), p) # Compute TV on these
                 if p != 1
                     (c[i] != 0) && (g[1] .*= 1 / c[i])
                     (c[i] != 0) && (g[2] .*= 1 / c[i])
@@ -354,8 +362,8 @@ function grad_TV!(M::PowerManifold, X, x, p::Int=1)
     return X
 end
 @doc raw"""
-    Y = grad_TV2(M, q[, p=1])
-    grad_TV2!(M, Y, q[, p=1])
+    Y = grad_second_order_Total_Variation(M, q[, p=1])
+    grad_second_order_Total_Variation!(M, Y, q[, p=1])
 
 computes the (sub) gradient of ``\frac{1}{p}d_2^p(q_1, q_2, q_3)`` with respect
 to all three components of ``q∈\mathcal M^3``, where ``d_2`` denotes the second order
@@ -373,12 +381,14 @@ d_2(q_1,q_2,q_3) = \min_{c ∈ \mathcal C_{q_1,q_3}} d(c, q_2).
 
 While the (sub)gradient with respect to ``q_2`` is easy, the other two require
 the evaluation of an `adjoint_Jacobi_field`.
+
+The derivation of this gradient can be found in [BacakBergmannSteidlWeinmann:2016](@cite).
 """
-function grad_TV2(M::AbstractManifold, q, p::Int=1)
+function grad_second_order_Total_Variation(M::AbstractManifold, q, p::Int=1)
     X = [zero_vector(M, x) for x in q]
-    return grad_TV2!(M, X, q, p)
+    return grad_second_order_Total_Variation!(M, X, q, p)
 end
-function grad_TV2!(M::AbstractManifold, X, q, p::Int=1)
+function grad_second_order_Total_Variation!(M::AbstractManifold, X, q, p::Int=1)
     c = mid_point(M, q[1], q[3], q[2]) # nearest mid point of x and z to y
     d = distance(M, q[2], c)
     innerLog = -log(M, c, q[2])
@@ -410,17 +420,17 @@ function grad_TV2!(M::AbstractManifold, X, q, p::Int=1)
     return X
 end
 @doc raw"""
-    grad_TV2(M::PowerManifold, q[, p=1])
+    grad_second_order_Total_Variation(M::PowerManifold, q[, p=1])
 
 computes the (sub) gradient of ``\frac{1}{p}d_2^p(q_1,q_2,q_3)``
 with respect to all ``q_1,q_2,q_3`` occurring along any array dimension in the
 point `q`, where `M` is the corresponding `PowerManifold`.
 """
-function grad_TV2(M::PowerManifold, q, p::Int=1)
+function grad_second_order_Total_Variation(M::PowerManifold, q, p::Int=1)
     X = zero_vector(M, q)
-    return grad_TV2!(M, X, q, p)
+    return grad_second_order_Total_Variation!(M, X, q, p)
 end
-function grad_TV2!(M::PowerManifold, X, q, p::Int=1)
+function grad_second_order_Total_Variation!(M::PowerManifold, X, q, p::Int=1)
     power_size = power_dimensions(M)
     rep_size = representation_size(M.manifold)
     R = CartesianIndices(Tuple(power_size))
@@ -436,10 +446,13 @@ function grad_TV2!(M::PowerManifold, X, q, p::Int=1)
             if all(map(<=, jF.I, maxInd.I)) && all(map(>=, jB.I, minInd.I)) # are neighbors in range?
                 if p != 1
                     g =
-                        (c[i] == 0 ? 1 : 1 / c[i]) .*
-                        grad_TV2(M.manifold, (q[jB], q[i], q[jF]), p) # Compute TV2 on these
+                        (c[i] == 0 ? 1 : 1 / c[i]) .* grad_second_order_Total_Variation(
+                            M.manifold, (q[jB], q[i], q[jF]), p
+                        ) # Compute TV2 on these
                 else
-                    g = grad_TV2(M.manifold, (q[jB], q[i], q[jF]), p) # Compute TV2 on these
+                    g = grad_second_order_Total_Variation(
+                        M.manifold, (q[jB], q[i], q[jF]), p
+                    ) # Compute TV2 on these
                 end
                 X[M, jB.I...] = g[1]
                 X[M, i.I...] = g[2]
@@ -452,12 +465,13 @@ end
 
 # (c) proxial maps
 @doc raw"""
-    [y1,y2] = prox_TV(M, λ, [x1,x2] [,p=1])
-    prox_TV!(M, [y1,y2] λ, [x1,x2] [,p=1])
+    [y1,y2] = prox_Total_Variation(M, λ, [x1,x2] [,p=1])
+    prox_Total_Variation!(M, [y1,y2] λ, [x1,x2] [,p=1])
 
 Compute the proximal map ``\operatorname{prox}_{λ\varphi}`` of
 ``φ(x,y) = d_{\mathcal M}^p(x,y)`` with
 parameter `λ`.
+A derivation of this closed form solution is given in see [WeinmannDemaretStorath:2014](@cite).
 
 # Input
 
@@ -475,7 +489,9 @@ parameter `λ`.
 * `(y1,y2)` – resulting tuple of points of the ``\operatorname{prox}_{λφ}(```(x1,x2)```)``.
   The result can also be computed in place.
 """
-function prox_TV(M::AbstractManifold, λ::Number, x::Tuple{T,T}, p::Int=1) where {T}
+function prox_Total_Variation(
+    M::AbstractManifold, λ::Number, x::Tuple{T,T}, p::Int=1
+) where {T}
     d = distance(M, x[1], x[2])
     if p == 1
         t = min(0.5, λ / d)
@@ -490,7 +506,9 @@ function prox_TV(M::AbstractManifold, λ::Number, x::Tuple{T,T}, p::Int=1) where
     end
     return (exp(M, x[1], log(M, x[1], x[2]), t), exp(M, x[2], log(M, x[2], x[1]), t))
 end
-function prox_TV!(M::AbstractManifold, y, λ::Number, x::Tuple{T,T}, p::Int=1) where {T}
+function prox_Total_Variation!(
+    M::AbstractManifold, y, λ::Number, x::Tuple{T,T}, p::Int=1
+) where {T}
     d = distance(M, x[1], x[2])
     if p == 1
         t = min(0.5, λ / d)
@@ -510,7 +528,7 @@ function prox_TV!(M::AbstractManifold, y, λ::Number, x::Tuple{T,T}, p::Int=1) w
     return y
 end
 @doc raw"""
-    ξ = prox_TV(M,λ,x [,p=1])
+    ξ = prox_Total_Variation(M,λ,x [,p=1])
 
 compute the proximal maps ``\operatorname{prox}_{λ\varphi}`` of
 all forward differences occurring in the power manifold array, i.e.
@@ -531,7 +549,7 @@ The parameter `λ` is the prox parameter.
 * `y` – resulting  point containing with all mentioned proximal
   points evaluated (in a cyclic order). The computation can also be done in place
 """
-function prox_TV(M::PowerManifold, λ, x, p::Int=1)
+function prox_Total_Variation(M::PowerManifold, λ, x, p::Int=1)
     y = deepcopy(x)
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
@@ -545,7 +563,7 @@ function prox_TV(M::PowerManifold, λ, x, p::Int=1)
                     J = i.I .+ ek.I #i + e_k is j
                     if all(J .<= maxInd) # is this neighbor in range?
                         j = CartesianIndex(J...) # neighbour index as Cartesian Index
-                        (y[i], y[j]) = prox_TV(M.manifold, λ, (y[i], y[j]), p) # Compute TV on these
+                        (y[i], y[j]) = prox_Total_Variation(M.manifold, λ, (y[i], y[j]), p) # Compute TV on these
                     end
                 end
             end # i in R
@@ -553,7 +571,7 @@ function prox_TV(M::PowerManifold, λ, x, p::Int=1)
     end # directions
     return y
 end
-function prox_TV!(M::PowerManifold, y, λ, x, p::Int=1)
+function prox_Total_Variation!(M::PowerManifold, y, λ, x, p::Int=1)
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
@@ -567,7 +585,7 @@ function prox_TV!(M::PowerManifold, y, λ, x, p::Int=1)
                     J = i.I .+ ek.I #i + e_k is j
                     if all(J .<= maxInd) # is this neighbor in range?
                         j = CartesianIndex(J...) # neighbour index as Cartesian Index
-                        prox_TV!(M.manifold, [y[i], y[j]], λ, (y[i], y[j]), p) # Compute TV on these
+                        prox_Total_Variation!(M.manifold, [y[i], y[j]], λ, (y[i], y[j]), p) # Compute TV on these
                     end
                 end
             end # i in R
@@ -575,6 +593,7 @@ function prox_TV!(M::PowerManifold, y, λ, x, p::Int=1)
     end # directions
     return y
 end
+
 @doc raw"""
     y = prox_parallel_TV(M, λ, x [,p=1])
     prox_parallel_TV!(M, y, λ, x [,p=1])
@@ -599,7 +618,7 @@ The parameter `λ` is the prox parameter.
   points evaluated (in a parallel within the arrays elements).
   The computation can also be done in place.
 
-*See also* [`prox_TV`](@ref)
+*See also* [`prox_Total_Variation`](@ref)
 """
 function prox_parallel_TV(M::PowerManifold, λ, x::AbstractVector, p::Int=1)
     R = CartesianIndices(x[1])
@@ -625,7 +644,7 @@ function prox_parallel_TV(M::PowerManifold, λ, x::AbstractVector, p::Int=1)
                     if all(J .<= maxInd) # is this neighbor in range?
                         j = CartesianIndex(J...) # neighbour index as Cartesian Index
                         # parallel means we apply each (direction even/odd) to a separate copy of the data.
-                        (yV[k, l + 1][i], yV[k, l + 1][j]) = prox_TV(
+                        (yV[k, l + 1][i], yV[k, l + 1][j]) = prox_Total_Variation(
                             M.manifold, λ, (xV[k, l + 1][i], xV[k, l + 1][j]), p
                         ) # Compute TV on these
                     end
@@ -663,7 +682,7 @@ function prox_parallel_TV!(
                     if all(J .<= maxInd) # is this neighbor in range?
                         j = CartesianIndex(J...) # neighbour index as Cartesian Index
                         # parallel means we apply each (direction even/odd) to a separate copy of the data.
-                        prox_TV!(
+                        prox_Total_Variation!(
                             M.manifold,
                             [yV[k, l + 1][i], yV[k, l + 1][j]],
                             λ,
@@ -679,14 +698,18 @@ function prox_parallel_TV!(
 end
 
 @doc raw"""
-    (y1,y2,y3) = prox_TV2(M,λ,(x1,x2,x3),[p=1], kwargs...)
-    prox_TV2!(M, y, λ,(x1,x2,x3),[p=1], kwargs...)
+    (y1,y2,y3) = prox_second_order_Total_Variation(M,λ,(x1,x2,x3),[p=1], kwargs...)
+    prox_second_order_Total_Variation!(M, y, λ,(x1,x2,x3),[p=1], kwargs...)
 
 Compute the proximal map ``\operatorname{prox}_{λ\varphi}`` of
 ``\varphi(x_1,x_2,x_3) = d_{\mathcal M}^p(c(x_1,x_3),x_2)`` with
 parameter `λ`>0, where ``c(x,z)`` denotes the mid point of a shortest
 geodesic from `x1` to `x3` that is closest to `x2`.
 The result can be computed in place of `y`.
+
+Note that this function does not have a closed form solution but is solbed by
+a few steps of the [subgradient mehtod](https://manoptjl.org/stable/solvers/subgradient/) from [manopt.jl]() by default.
+See [BacakBergmannSteidlWeinmann:2016](@cite) for a derivation.
 
 # Input
 
@@ -697,7 +720,7 @@ The result can be computed in place of `y`.
 * `p` – (`1`) exponent of the distance of the TV term
 
 # Optional
-`kwargs...` – parameters for the internal [`subgradient_method`](@ref)
+`kwargs...` – parameters for the internal [`subgradient_method`](https://manoptjl.org/stable/solvers/subgradient/#Manopt.subgradient_method)
     (if `M` is neither `Euclidean` nor `Circle`, since for these a closed form
     is given)
 
@@ -705,7 +728,7 @@ The result can be computed in place of `y`.
 * `(y1,y2,y3)` – resulting tuple of points of the proximal map.
   The computation can also be done in place.
 """
-function prox_TV2(
+function prox_second_order_Total_Variation(
     M::AbstractManifold,
     λ,
     x::Tuple{T,T,T},
@@ -722,11 +745,11 @@ function prox_TV2(
     PowM = PowerManifold(M, NestedPowerRepresentation(), 3)
     xR = PowX
     F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * second_order_Total_Variation(M, x)
-    ∂F(PowM, x) = log(PowM, x, PowX) + λ * grad_TV2(PowM, x)
+    ∂F(PowM, x) = log(PowM, x, PowX) + λ * grad_second_order_Total_Variation(PowM, x)
     subgradient_method!(PowM, F, ∂F, xR; stopping_criterion=stopping_criterion, kwargs...)
     return (xR...,)
 end
-function prox_TV2!(
+function prox_second_order_Total_Variation!(
     M::AbstractManifold,
     y,
     λ,
@@ -744,7 +767,7 @@ function prox_TV2!(
     PowM = PowerManifold(M, NestedPowerRepresentation(), 3)
     copyto!(M, y, PowX)
     F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * second_order_Total_Variation(M, x)
-    ∂F!(M, y, x) = log!(M, y, x, PowX) + λ * grad_TV2!(M, y, x)
+    ∂F!(M, y, x) = log!(M, y, x, PowX) + λ * grad_second_order_Total_Variation!(M, y, x)
     subgradient_method!(
         PowM,
         F,
@@ -757,8 +780,8 @@ function prox_TV2!(
     return y
 end
 @doc raw"""
-    y = prox_TV2(M, λ, x[, p=1])
-    prox_TV2!(M, y, λ, x[, p=1])
+    y = prox_second_order_Total_Variation(M, λ, x[, p=1])
+    prox_second_order_Total_Variation!(M, y, λ, x[, p=1])
 
 compute the proximal maps ``\operatorname{prox}_{λ\varphi}`` of
 all centered second order differences occurring in the power manifold array, i.e.
@@ -779,11 +802,15 @@ The parameter `λ` is the prox parameter.
 * `y` – resulting point with all mentioned proximal points evaluated (in a cyclic order).
   The computation can also be done in place.
 """
-function prox_TV2(M::PowerManifold{N,T}, λ, x, p::Int=1) where {N,T}
+function prox_second_order_Total_Variation(
+    M::PowerManifold{N,T}, λ, x, p::Int=1
+) where {N,T}
     y = deepcopy(x)
-    return prox_TV2!(M, y, λ, x, p)
+    return prox_second_order_Total_Variation!(M, y, λ, x, p)
 end
-function prox_TV2!(M::PowerManifold{N,T}, y, λ, x, p::Int=1) where {N,T}
+function prox_second_order_Total_Variation!(
+    M::PowerManifold{N,T}, y, λ, x, p::Int=1
+) where {N,T}
     power_size = power_dimensions(M)
     R = CartesianIndices(power_size)
     d = length(size(x))
@@ -799,7 +826,7 @@ function prox_TV2!(M::PowerManifold{N,T}, y, λ, x, p::Int=1) where {N,T}
                     JBackward = i.I .- ek.I # i - e_k
                     all(JForward .<= maxInd) &&
                         all(JBackward .>= minInd) &&
-                        prox_TV2!(
+                        prox_second_order_Total_Variation!(
                             M.manifold,
                             [y[M, JBackward...], y[M, i.I...], y[M, JForward...]],
                             λ,
@@ -812,7 +839,9 @@ function prox_TV2!(M::PowerManifold{N,T}, y, λ, x, p::Int=1) where {N,T}
     end # directions
     return y
 end
-function prox_TV2(::Euclidean, λ, pointTuple::Tuple{T,T,T}, p::Int=1) where {T}
+function prox_second_order_Total_Variation(
+    ::Euclidean, λ, pointTuple::Tuple{T,T,T}, p::Int=1
+) where {T}
     w = [1.0, -2.0, 1.0]
     x = [pointTuple...]
     if p == 1 # Example 3.2 in Bergmann, Laus, Steidl, Weinmann, 2014.
@@ -830,7 +859,7 @@ function prox_TV2(::Euclidean, λ, pointTuple::Tuple{T,T,T}, p::Int=1) where {T}
         )
     end
 end
-function grad_TV2(M::NONMUTATINGMANIFOLDS, q, p::Int=1)
+function grad_second_order_Total_Variation(M::NONMUTATINGMANIFOLDS, q, p::Int=1)
     c = mid_point(M, q[1], q[3], q[2]) # nearest mid point of x and z to y
     d = distance(M, q[2], c)
     innerLog = -log(M, c, q[2])
@@ -856,7 +885,9 @@ function grad_TV2(M::NONMUTATINGMANIFOLDS, q, p::Int=1)
     end
     return X
 end
-function prox_TV2(::NONMUTATINGMANIFOLDS, λ, pointTuple::Tuple{T,T,T}, p::Int=1) where {T}
+function prox_second_order_Total_Variation(
+    ::NONMUTATINGMANIFOLDS, λ, pointTuple::Tuple{T,T,T}, p::Int=1
+) where {T}
     w = [1.0, -2.0, 1.0]
     x = [pointTuple...]
     if p == 1 # Theorem 3.5 in Bergmann, Laus, Steidl, Weinmann, 2014.
@@ -875,7 +906,9 @@ function prox_TV2(::NONMUTATINGMANIFOLDS, λ, pointTuple::Tuple{T,T,T}, p::Int=1
         )
     end
 end
-function prox_TV2(M::PowerManifold{𝔽,N}, λ, x, p::Int=1) where {𝔽,N<:NONMUTATINGMANIFOLDS}
+function prox_second_order_Total_Variation(
+    M::PowerManifold{𝔽,N}, λ, x, p::Int=1
+) where {𝔽,N<:NONMUTATINGMANIFOLDS}
     power_size = power_dimensions(M)
     R = CartesianIndices(power_size)
     d = length(size(x))
@@ -890,7 +923,7 @@ function prox_TV2(M::PowerManifold{𝔽,N}, λ, x, p::Int=1) where {𝔽,N<:NONM
                     JForward = i.I .+ ek.I #i + e_k
                     JBackward = i.I .- ek.I # i - e_k
                     if all(JForward .<= maxInd) && all(JBackward .>= minInd)
-                        (y[M, JBackward...], y[M, i.I...], y[M, JForward...]) = prox_TV2(
+                        (y[M, JBackward...], y[M, i.I...], y[M, JForward...]) = prox_second_order_Total_Variation(
                             M.manifold,
                             λ,
                             (y[M, JBackward...], y[M, i.I...], y[M, JForward...]),

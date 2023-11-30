@@ -20,10 +20,13 @@ using ManifoldDiff:
     adjoint_differential_log_basepoint!,
     adjoint_differential_log_argument,
     adjoint_differential_log_argument!,
+    adjoint_differential_shortest_geodesic_startpoint,
+    adjoint_differential_shortest_geodesic_endpoint,
     differential_log_argument,
     differential_log_argument!,
     differential_log_basepoint,
     differential_log_basepoint!
+using Manopt: subgradient_method
 
 const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
 
