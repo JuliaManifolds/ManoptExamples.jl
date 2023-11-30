@@ -13,7 +13,7 @@ be a nested array on a `PowerManifold` already.
 
 Not that this can also be used to represent tangent vectors on the control points of a segment.
 
-See also: [`de_casteljau`](@ref).
+See also: [`de_Casteljau`](@ref).
 
 # Constructor
     BezierSegment(pts::AbstractVector)
@@ -27,7 +27,7 @@ end
 Base.show(io::IO, b::BezierSegment) = print(io, "BezierSegment($(b.pts))")
 
 @doc raw"""
-    de_casteljau(M::AbstractManifold, b::BezierSegment NTuple{N,P}) -> Function
+    de_Casteljau(M::AbstractManifold, b::BezierSegment NTuple{N,P}) -> Function
 
 return the [Bézier curve](https://en.wikipedia.org/wiki/Bézier_curve)
 ``β(⋅;b_0,…,b_n): [0,1] → \mathcal M`` defined by the control points
@@ -45,7 +45,7 @@ shortest geodesic connecting ``a,b∈\mathcal M``. Then the curve is defined by 
 
 and `P` is the type of a point on the `Manifold` `M`.
 
-    de_casteljau(M::AbstractManifold, B::AbstractVector{<:BezierSegment}) -> Function
+    de_Casteljau(M::AbstractManifold, B::AbstractVector{<:BezierSegment}) -> Function
 
 Given a vector of Bézier segments, i.e. a vector of control points
 ``B=\bigl( (b_{0,0},…,b_{n_0,0}),…,(b_{0,m},… b_{n_m,m}) \bigr)``,
@@ -63,10 +63,10 @@ c_B(t) :=
 ````
 
 ````julia
-de_casteljau(M::AbstractManifold, b::BezierSegment, t::Real)
-de_casteljau(M::AbstractManifold, B::AbstractVector{<:BezierSegment}, t::Real)
-de_casteljau(M::AbstractManifold, b::BezierSegment, T::AbstractVector) -> AbstractVector
-de_casteljau(
+de_Casteljau(M::AbstractManifold, b::BezierSegment, t::Real)
+de_Casteljau(M::AbstractManifold, B::AbstractVector{<:BezierSegment}, t::Real)
+de_Casteljau(M::AbstractManifold, b::BezierSegment, T::AbstractVector) -> AbstractVector
+de_Casteljau(
     M::AbstractManifold,
     B::AbstractVector{<:BezierSegment},
     T::AbstractVector
@@ -75,34 +75,34 @@ de_casteljau(
 
 Evaluate the Bézier curve at time `t` or at times `t` in `T`.
 """
-de_casteljau(M::AbstractManifold, ::Any...)
-function de_casteljau(M::AbstractManifold, b::BezierSegment)
+de_Casteljau(M::AbstractManifold, ::Any...)
+function de_Casteljau(M::AbstractManifold, b::BezierSegment)
     if length(b.pts) == 2
         return t -> shortest_geodesic(M, b.pts[1], b.pts[2], t)
     else
         return t -> shortest_geodesic(
             M,
-            de_casteljau(M, BezierSegment(b.pts[1:(end - 1)]), t),
-            de_casteljau(M, BezierSegment(b.pts[2:end]), t),
+            de_Casteljau(M, BezierSegment(b.pts[1:(end - 1)]), t),
+            de_Casteljau(M, BezierSegment(b.pts[2:end]), t),
             t,
         )
     end
 end
-function de_casteljau(M::AbstractManifold, B::AbstractVector{<:BezierSegment})
-    length(B) == 1 && return de_casteljau(M, B[1])
+function de_Casteljau(M::AbstractManifold, B::AbstractVector{<:BezierSegment})
+    length(B) == 1 && return de_Casteljau(M, B[1])
     return function (t)
         ((0 > t) || (t > length(B))) && throw(
             DomainError(
                 "Parameter $(t) outside of domain of the composite Bézier curve [0,$(length(B))].",
             ),
         )
-        return de_casteljau(
+        return de_Casteljau(
             M, B[max(ceil(Int, t), 1)], ceil(Int, t) == 0 ? 0.0 : t - ceil(Int, t) + 1
         )
     end
 end
 # the direct evaluation can be done iteratively
-function de_casteljau(M::AbstractManifold, b::BezierSegment, t::Real)
+function de_Casteljau(M::AbstractManifold, b::BezierSegment, t::Real)
     if length(b.pts) == 2
         return shortest_geodesic(M, b.pts[1], b.pts[2], t)
     else
@@ -113,17 +113,17 @@ function de_casteljau(M::AbstractManifold, b::BezierSegment, t::Real)
     end
     return c[1]
 end
-function de_casteljau(M::AbstractManifold, B::AbstractVector{<:BezierSegment}, t::Real)
+function de_Casteljau(M::AbstractManifold, B::AbstractVector{<:BezierSegment}, t::Real)
     ((0 > t) || (t > length(B))) && throw(
         DomainError(
             "Parameter $(t) outside of domain of the composite Bézier curve [0,$(length(B))].",
         ),
     )
-    return de_casteljau(
+    return de_Casteljau(
         M, B[max(ceil(Int, t), 1)], ceil(Int, t) == 0 ? 0.0 : t - ceil(Int, t) + 1
     )
 end
-de_casteljau(M::AbstractManifold, b, T::AbstractVector) = de_casteljau.(Ref(M), Ref(b), T)
+de_Casteljau(M::AbstractManifold, b, T::AbstractVector) = de_Casteljau.(Ref(M), Ref(b), T)
 
 @doc raw"""
     get_bezier_junction_tangent_vectors(M::AbstractManifold, B::AbstractVector{<:BezierSegment})
@@ -369,7 +369,7 @@ function cost_acceleration_bezier(
     T::AbstractVector{<:AbstractFloat},
 ) where {P}
     Bt = get_bezier_segments(M, B, degrees, :differentiable)
-    p = de_casteljau(M, Bt, T)
+    p = de_Casteljau(M, Bt, T)
     n = length(T)
     f = p[[1, 3:n..., n]]
     b = p[[1, 1:(n - 2)..., n]]
@@ -432,7 +432,7 @@ evaluate the differential of the Bézier curve with respect to its control point
 `b` and tangent vectors `X` given in the tangent spaces of the control points. The result
 is the “change” of the curve at `t```∈[0,1]``. The computation can be done in place of `Y`.
 
-See [`de_casteljau`](@ref) for more details on the curve.
+See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function differential_bezier_control(
     M::AbstractManifold, b::BezierSegment, t, X::BezierSegment
@@ -479,7 +479,7 @@ evaluate the differential of the Bézier curve with respect to its control point
 is the “change” of the curve at the points `T`, elementwise in ``t∈[0,1]``.
 The computation can be done in place of `Y`.
 
-See [`de_casteljau`](@ref) for more details on the curve.
+See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function differential_bezier_control(
     M::AbstractManifold, b::BezierSegment, T::AbstractVector, X::BezierSegment
@@ -512,7 +512,7 @@ points. The result is the “change” of the curve at `t```∈[0,N]``, which de
 only on the corresponding segment. Here, ``N`` is the length of `B`.
 The computation can be done in place of `Y`.
 
-See [`de_casteljau`](@ref) for more details on the curve.
+See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function differential_bezier_control(
     M::AbstractManifold,
@@ -581,7 +581,7 @@ points. The result is the “change” of the curve at the points in `T`, which 
 in ``[0,N]``, and each depending the corresponding segment(s). Here, ``N`` is the
 length of `B`. For the mutating variant the result is computed in `Θ`.
 
-See [`de_casteljau`](@ref) for more details on the curve and [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018).
+See [`de_Casteljau`](@ref) for more details on the curve and [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018).
 """
 function differential_bezier_control(
     M::AbstractManifold,
@@ -617,7 +617,7 @@ with respect to its control points `b` based on a point `t```∈[0,1]`` on the
 curve and a tangent vector ``η∈T_{β(t)}\mathcal M``.
 This can be computed in place of `Y`.
 
-See [`de_casteljau`](@ref) for more details on the curve.
+See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function adjoint_differential_bezier_control(M::AbstractManifold, b::BezierSegment, t, η)
     n = length(b.pts)
@@ -703,7 +703,7 @@ are pointwise in `` t_i∈[0,1]`` on the curve and given corresponding tangentia
 vectors ``X = (η_i)_{i=1}^n``, ``η_i∈T_{β(t_i)}\mathcal M``
 This can be computed in place of `Y`.
 
-See [`de_casteljau`](@ref) for more details on the curve and [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018)
+See [`de_Casteljau`](@ref) for more details on the curve and [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018)
 """
 function adjoint_differential_bezier_control(
     M::AbstractManifold, b::BezierSegment, t::AbstractVector, X::AbstractVector
@@ -748,7 +748,7 @@ that are pointwise in ``t_i∈[0,1]`` on the curve and given corresponding tange
 vectors ``X = (η_i)_{i=1}^n``, ``η_i∈T_{β(t_i)}\mathcal M``
 This can be computed in place of `Y`.
 
-See [`de_casteljau`](@ref) for more details on the curve.
+See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function adjoint_differential_bezier_control(
     M::AbstractManifold, B::AbstractVector{<:BezierSegment}, t, X
@@ -797,7 +797,7 @@ end
 Evaluate the adjoint of the differential with respect to the controlpoints at several times `T`.
 This can be computed in place of `Y`.
 
-See [`de_casteljau`](@ref) for more details on the curve.
+See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function adjoint_differential_bezier_control(
     M::AbstractManifold,
@@ -842,7 +842,7 @@ number of segments of the Bézier curve). The [`get_bezier_junctions`](@ref) are
 this gradient (interpolation constraint). For the unconstrained gradient,
 see [`grad_L2_acceleration_bezier`](@ref) and set ``λ=0`` therein. This gradient is computed using
 `adjoint_Jacobi_field`s. For details, see [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018).
-See [`de_casteljau`](@ref) for more details on the curve.
+See [`de_Casteljau`](@ref) for more details on the curve.
 
 # See also
 
@@ -931,7 +931,7 @@ function _grad_acceleration_bezier(
     Bt = get_bezier_segments(M, B, degrees, :differentiable)
     n = length(T)
     m = length(Bt)
-    p = de_casteljau(M, Bt, T)
+    p = de_Casteljau(M, Bt, T)
     center = p
     forward = p[[1, 3:n..., n]]
     backward = p[[1, 1:(n - 2)..., n]]

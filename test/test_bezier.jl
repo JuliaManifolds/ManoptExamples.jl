@@ -1,7 +1,7 @@
 using Manifolds
 using ManoptExamples:
     BezierSegment,
-    de_casteljau,
+    de_Casteljau,
     adjoint_differential_bezier_control,
     grad_acceleration_bezier
 
@@ -22,7 +22,7 @@ using ManoptExamples:
         # this is equispaced, so the pure cost is zero and the gradient is a zero-vector
         t = collect(range(0.0, 1.0; length=5))
         pts = shortest_geodesic(M, pT, pB, t)
-        pts2 = de_casteljau(M, B, 2 .* t)
+        pts2 = de_Casteljau(M, B, 2 .* t)
         @test sum(distance.(Ref(M), pts, pts2)) < 10 * eps()
         aX = log(M, pT, pC)
         aT1 = adjoint_differential_bezier_control(M, BezierSegment([pT, pC]), 0.5, aX).pts
@@ -82,29 +82,29 @@ using ManoptExamples:
         b = B[2]
         b2s = BezierSegment([b.pts[1], b.pts[end]])
         # (a) 2 points -> geo special case
-        f1 = de_casteljau(M, b2s) # fct -> recursive
+        f1 = de_Casteljau(M, b2s) # fct -> recursive
         pts1 = f1.([0.0, 0.5, 1.0])
-        pts2 = de_casteljau(M, b2s, [0.0, 0.5, 1.0])
+        pts2 = de_Casteljau(M, b2s, [0.0, 0.5, 1.0])
         @test pts1 ≈ pts2
         # (b) one segment
-        f2 = de_casteljau(M, b) # fct -> recursive
+        f2 = de_Casteljau(M, b) # fct -> recursive
         pts3 = f2.([0.0, 0.5, 1.0])
-        pts4 = de_casteljau(M, b, [0.0, 0.5, 1.0])
+        pts4 = de_Casteljau(M, b, [0.0, 0.5, 1.0])
         @test pts3 ≈ pts4
         # (c) whole composites
-        f3 = de_casteljau(M, B) # fct -> recursive
+        f3 = de_Casteljau(M, B) # fct -> recursive
         pts5 = f3.([0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0])
-        pts6 = de_casteljau(M, B, [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0])
+        pts6 = de_Casteljau(M, B, [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0])
         @test pts5 ≈ pts6
         @test_throws DomainError f3(-0.1)
-        @test_throws DomainError de_casteljau(M, B, -0.1)
+        @test_throws DomainError de_Casteljau(M, B, -0.1)
         @test_throws DomainError f3(3.5)
-        @test_throws DomainError de_casteljau(M, B, 3.5)
+        @test_throws DomainError de_Casteljau(M, B, 3.5)
     end
     @testset "Spherical Data" begin
         M = Sphere(2)
         B = artificial_S2_composite_bezier_curve()
-        @test de_casteljau(M, B, [0.0, 1.0, 2.0, 3.0]) ≈
+        @test de_Casteljau(M, B, [0.0, 1.0, 2.0, 3.0]) ≈
             [B[1].pts[1], B[2].pts[1], B[3].pts[1], B[3].pts[4]]
         @test get_bezier_junction_tangent_vectors(M, B) ≈ [
             log(M, B[1].pts[1], B[1].pts[2]),
