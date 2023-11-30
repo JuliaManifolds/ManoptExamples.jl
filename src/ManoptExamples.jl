@@ -7,6 +7,7 @@
 * 🎯 Issues: [github.com/JuliaManifolds/ManoptExamples.jl/issues](https://github.com/JuliaManifolds/ManoptExamples.jl/issues)
 """
 module ManoptExamples
+using LinearAlgebra: dot
 using ManifoldsBase, Manopt, Manifolds, ManifoldDiff
 using ManifoldsBase: TypeParameter
 import ManifoldsBase: exp!, exp, inner, log, log!

@@ -62,14 +62,14 @@ E(x) = d_{\mathcal M}^2(f,x) + \alpha\operatorname{TV}(x)
 
 [`Total_Variation`](@ref), [`second_order_Total_Variation`](@ref)
 """
-function L2_Total_Variation_1_2(M::PowerManifold, f, α, β, x)
-    return 1 / 2 * distance(M, f, x)^2 +
-           α * Total_Variation(M, x) +
-           β * second_order_Total_Variation(M, x)
+function L2_Total_Variation_1_2(M::PowerManifold, f, α, β, p)
+    return 1 / 2 * distance(M, f, p)^2 +
+           α * Total_Variation(M, p) +
+           β * second_order_Total_Variation(M, p)
 end
 
 @doc raw"""
-    L2_second_order_Total_Varitaion(M, f, β, x)
+    L2_second_order_Total_Variation(M, f, β, x)
 
 compute the ``ℓ^2``-TV2 functional on the `PowerManifold` manifold `M`
 for given data `f`, nonnegative parameter `β`, and evaluated at `x`, i.e.
@@ -82,9 +82,9 @@ as used in [BacakBergmannSteidlWeinmann:2016](@cite).
 
 # See also
 
-[`second_order_Total_Varitaion`](@ref)
+[`second_order_Total_Variation`](@ref)
 """
-function L2_second_order_Total_Varitaion(M::PowerManifold, f, β, x)
+function L2_second_order_Total_Variation(M::PowerManifold, f, β, x)
     return 1 / 2 * distance(M, f, x)^2 + β * second_order_Total_Variation(M, x)
 end
 
