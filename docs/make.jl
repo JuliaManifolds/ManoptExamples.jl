@@ -98,15 +98,15 @@ examples_menu =
         "Difference of Convex" => [
             "A Benchmark" => "examples/Difference-of-Convex-Benchmark.md",
             "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
-            "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md"
+            "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md",
         ],
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",
         "Robust PCA" => "examples/Robust-PCA.md",
-        "Rosenbrock" => "examples/Rosenbrock.md"
+        "Rosenbrock" => "examples/Rosenbrock.md",
     ]
 # (e) ...finally! make docs
-    bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:alpha)
+bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:alpha)
 makedocs(;
     format=Documenter.HTML(;
         prettyurls=(get(ENV, "CI", nothing) == "true") || ("--prettyurls" ∈ ARGS),
@@ -125,6 +125,6 @@ makedocs(;
         "References" => "references.md",
     ],
     plugins=[bib],
-    warnonly = [:missing_docs],
+    warnonly=[:missing_docs],
 )
 deploydocs(; repo="github.com/JuliaManifolds/ManoptExamples.jl", push_preview=true)
