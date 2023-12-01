@@ -1,10 +1,26 @@
 using Manifolds, Test
 using ManoptExamples:
+    acceleration_Bezier,
+    adjoint_differential_Bezier_control_points!,
+    artificial_S2_composite_Bezier_curve,
     BezierSegment,
-    de_Casteljau,
     adjoint_differential_Bezier_control_points,
+    differential_Bezier_control_points,
+    differential_Bezier_control_points!,
+    de_Casteljau,
+    get_Bezier_degrees,
+    get_Bezier_inner_points,
+    get_Bezier_junction_tangent_vectors,
+    get_Bezier_junctions,
+    get_Bezier_points,
+    get_Bezier_segments,
     grad_acceleration_Bezier,
-    artificial_S2_composite_Bezier_curve
+    grad_L2_acceleration_Bezier,
+    L2_acceleration_Bezier
+using ManifoldDiff:
+    adjoint_differential_shortest_geodesic_startpoint,
+    adjoint_differential_shortest_geodesic_endpoint,
+    grad_distance
 
 @testset "Bezier Tests" begin
     @testset "General Bezier Tests" begin
@@ -36,8 +52,8 @@ using ManoptExamples:
         )
         @test aT1a.pts == aT1
         aT2 = [
-            Manopt.adjoint_differential_shortest_geodesic_startpoint(M, pT, pC, 0.5, aX),
-            Manopt.adjoint_differential_shortest_geodesic_endpoint(M, pT, pC, 0.5, aX),
+            adjoint_differential_shortest_geodesic_startpoint(M, pT, pC, 0.5, aX),
+            adjoint_differential_shortest_geodesic_endpoint(M, pT, pC, 0.5, aX),
         ]
         @test aT1 ≈ aT2
         #
@@ -55,7 +71,7 @@ using ManoptExamples:
         degrees = get_Bezier_degrees(M, B)
         Bvec = get_Bezier_points(M, B, :differentiable)
         Mp = PowerManifold(M, NestedPowerRepresentation(), length(Bvec))
-        @test cost_acceleration_Bezier(M, Bvec, degrees, T) ≈ 0 atol = 10^-10
+        @test acceleration_Bezier(M, Bvec, degrees, T) ≈ 0 atol = 10^-10
         z = zero_vector(Mp, Bvec)
         distance(Mp, grad_acceleration_Bezier(M, Bvec, degrees, T), z)
         @test norm(Mp, Bvec, grad_acceleration_Bezier(M, Bvec, degrees, T) - z) ≈ 0 atol =
@@ -65,9 +81,9 @@ using ManoptExamples:
         λ = 3.0
 
         # cost and gradient with data term
-        @test cost_L2_acceleration_Bezier(M, Bvec, degrees, T, λ, [pT, pC, pB]) ≈ 0 atol =
+        @test L2_acceleration_Bezier(M, Bvec, degrees, T, λ, [pT, pC, pB]) ≈ 0 atol =
             10^(-10)
-        @test cost_L2_acceleration_Bezier(M, Bvec, degrees, T, λ, d) ≈
+        @test L2_acceleration_Bezier(M, Bvec, degrees, T, λ, d) ≈
             λ / 2 * distance(M, d[2], pC) .^ 2
         # when the data are the junctions
         @test norm(
@@ -77,7 +93,7 @@ using ManoptExamples:
         @test norm(Mp, Bvec, grad_L2_acceleration_Bezier(M, Bvec, degrees, T, λ, d) - z) ≈ 0 atol =
             2e-12
         # when the data is weighted with zero
-        @test cost_L2_acceleration_Bezier(M, Bvec, degrees, T, 0.0, d) ≈ 0 atol = 10^(-10)
+        @test L2_acceleration_Bezier(M, Bvec, degrees, T, 0.0, d) ≈ 0 atol = 10^(-10)
         z[4][1] = 0.0
         @test norm(Mp, Bvec, grad_L2_acceleration_Bezier(M, Bvec, degrees, T, 0.0, d) - z) ≈
             0 atol = 2e-12

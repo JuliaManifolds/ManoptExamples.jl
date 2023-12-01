@@ -28,7 +28,12 @@ using ManifoldDiff:
     differential_log_argument,
     differential_log_argument!,
     differential_log_basepoint,
-    differential_log_basepoint!
+    differential_log_basepoint!,
+    differential_shortest_geodesic_startpoint,
+    differential_shortest_geodesic_startpoint!,
+    differential_shortest_geodesic_endpoint,
+    differential_shortest_geodesic_endpoint!,
+    grad_distance
 using Manopt: subgradient_method
 
 const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
