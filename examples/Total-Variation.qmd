@@ -1,0 +1,19 @@
+---
+title: "Total Variation Minimization"
+author: "Ronny Bergmann"
+date: 06/06/2023
+---
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(path="../") # a trick to work on the local dev version
+ENV["GKSwstype"] = "100"
+```
+
+
+## Introduction

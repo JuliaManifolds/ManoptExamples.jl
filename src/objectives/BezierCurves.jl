@@ -351,7 +351,7 @@ compute the value of the discrete Acceleration of the composite Bezier curve
 ```
 
 where for this formula the `pts` along the curve are equispaced and denoted by
-``t_i``, ``i=1,…,N``, and ``d_2`` refers to the second order absolute difference [`costTV2`](@ref)
+``t_i``, ``i=1,…,N``, and ``d_2`` refers to the second order absolute difference [`second_order_Total_Variation`](@ref)
 (squared). Note that the Bézier-curve is given in reduces form as a point on a `PowerManifold`,
 together with the `degrees` of the segments and assuming a differentiable curve, the segments
 can internally be reconstructed.
@@ -390,7 +390,7 @@ together with a data term, i.e.
 ````
 
 where for this formula the `pts` along the curve are equispaced and denoted by
-``t_i`` and ``d_2`` refers to the second order absolute difference [`costTV2`](@ref)
+``t_i`` and ``d_2`` refers to the second order absolute difference [`second_order_Total_Variation`](@ref)
 (squared), the junction points are denoted by ``p_i``, and to each ``p_i`` corresponds
 one data item in the manifold points given in `d`. For details on the acceleration
 approximation, see [`acceleration_Bezier`](@ref).
@@ -889,7 +889,7 @@ on the `Manifold` `M` with respect to its control points `B` together with a
 data term that relates the junction points `p_i` to the data `d` with a weight
 ``λ`` compared to the acceleration. The curve is evaluated at the points
 given in `pts` (elementwise in ``[0,N]``), where ``N`` is the number of segments of
-the Bézier curve. The summands are [`grad_distance`](@ref) for the data term
+the Bézier curve. The summands are [`grad_distance`]() for the data term
 and [`grad_acceleration_Bezier`](@ref) for the acceleration with interpolation constrains.
 Here the [`get_Bezier_junctions`](@ref) are included in the optimization, i.e. setting ``λ=0``
 yields the unconstrained acceleration minimization. Note that this is ill-posed, since

@@ -11,6 +11,17 @@ Order = [:type, :function]
 Private = true
 ```
 
+## [Bézier Curves](@id BezierCurves)
+
+See the [Bezier Curves example](../examples/Bezier-curves.md) to see these in use.
+
+```@autodocs
+Modules = [ManoptExamples]
+Pages = ["objectives/BezierCurves.jl"]
+Order = [:type, :function]
+Private = true
+```
+
 ## [Riemannian Mean](@id RiemannianMean)
 
 See the [Riemannian mean example](../examples/Riemannian-mean.md) to see these in use.
@@ -40,6 +51,17 @@ See the [Rosenbrock example](../examples/Rosenbrock.md)  and [The Difference of 
 ```@autodocs
 Modules = [ManoptExamples]
 Pages = ["objectives/Rosenbrock.jl"]
+Order = [:type, :function]
+Private = true
+```
+
+## [Total Variation](@id Total Variation)
+
+See the [Total Variation example](../examples/Total-Variation.md) to see these in use.
+
+```@autodocs
+Modules = [ManoptExamples]
+Pages = ["objectives/TotalVariation.jl"]
 Order = [:type, :function]
 Private = true
 ```

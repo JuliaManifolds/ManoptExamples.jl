@@ -125,5 +125,6 @@ makedocs(;
         "References" => "references.md",
     ],
     plugins=[bib],
+    warnonly = [:missing_docs],
 )
 deploydocs(; repo="github.com/JuliaManifolds/ManoptExamples.jl", push_preview=true)
