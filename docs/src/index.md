@@ -1,9 +1,5 @@
 # Welcome to ManoptExample.jl
 
-```@meta
-CurrentModule = ManoptExamples
-```
-
 ```@docs
 ManoptExamples.ManoptExamples
 ```

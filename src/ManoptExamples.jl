@@ -43,7 +43,7 @@ include("objectives/RobustPCA.jl")
 include("objectives/Rosenbrock.jl")
 include("objectives/TotalVariation.jl")
 
-include("data/artifical_signals.jl")
+include("data/artificial_signals.jl")
 include("data/artificial_images.jl")
 
 include("ErrorMeasures.jl")

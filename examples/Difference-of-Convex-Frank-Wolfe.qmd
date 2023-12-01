@@ -399,7 +399,7 @@ On the other hand, Frank-Wolfe still has not reached this level function value a
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["examples/Difference-of-Convex-Frank-Wolfe.md"]
+Pages = ["Difference-of-Convex-Frank-Wolfe.md"]
 Canonical=false
 ```
 ````

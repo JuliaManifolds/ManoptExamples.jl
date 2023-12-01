@@ -6,4 +6,4 @@ ManoptExamples = "5b8d5e80-5788-45cb-83d6-5e8f1484217d"
 
 [compat]
 CondaPkg = "0.2"
-Documenter = "0.27"
+Documenter = "1"

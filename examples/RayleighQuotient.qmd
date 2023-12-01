@@ -244,7 +244,7 @@ While the performance is better for the Riemannian case, the Euclidean one is a 
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["examples/RayleighQuotient.md"]
+Pages = ["RayleighQuotient.md"]
 Canonical=false
 ```
 ````

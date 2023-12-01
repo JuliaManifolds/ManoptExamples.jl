@@ -22,3 +22,4 @@ docs/src/examples/*.md
 !docs/src/examples/index.md
 examples/*.ipynb
 examples/*_files/*
+docs/src/changelog.md

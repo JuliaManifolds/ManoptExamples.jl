@@ -1,4 +1,18 @@
-function artificial_S2_composite_bezier_curve()
+@doc raw"""
+    artificial_S2_composite_Bezier_curve()
+
+Generate a composite Bézier curve on the [Sphere]() ``\mathbb S^2`` that was used in [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018).
+
+It consists of 4 egments connecting the points
+```math
+\mathbf d_0 = \begin{pmatrix} 0\\0\\1\end{pmatrix},\quad
+\mathbf d_1 = \begin{pmatrix} 0\\-1\\0\end{pmatrix},\quad
+\mathbf d_2 = \begin{pmatrix} -1\\0\\0\end{pmatrix},\text{ and }
+\mathbf d_3 = \begin{pmatrix} 0\\0\\1\end{pmatrix}.
+```
+
+"""
+function artificial_S2_composite_Bezier_curve()
     M = Sphere(2)
     d0 = [0.0, 0.0, 1.0]
     d1 = [0.0, -1.0, 0.0]

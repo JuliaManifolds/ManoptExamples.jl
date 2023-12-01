@@ -354,7 +354,7 @@ where we can see that the DCA needs less iterations than the DCPPA.
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["examples/Difference-of-Convex-Benchmark.md"]
+Pages = ["Difference-of-Convex-Benchmark.md"]
 Canonical=false
 ```
 ````
