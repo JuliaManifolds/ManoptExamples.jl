@@ -1,7 +1,7 @@
 using Manifolds, Manopt, ManoptExamples, Test
 
 @testset "ManoptExamples.jl" begin
-    include("test_Bezier.jl")
+    include("test_bezier.jl")
     #    include("test_data.jl")
     #    include("test_error_measures.jl")
     include("test_rayleigh.jl")
