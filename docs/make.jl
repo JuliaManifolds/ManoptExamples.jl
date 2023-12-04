@@ -44,6 +44,7 @@ if "--quarto" ∈ ARGS
         examples_folder = (@__DIR__) * "/../examples"
         # instantiate the tutorials environment if necessary
         Pkg.activate(examples_folder)
+        Pkg.develop(PackageSpec(; path=(@__DIR__) * "/../")) # Before resolving set ManoptExamples to dev
         Pkg.resolve()
         Pkg.instantiate()
         Pkg.build("IJulia") # build IJulia to the right version.
