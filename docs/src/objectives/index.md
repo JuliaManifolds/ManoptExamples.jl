@@ -69,6 +69,6 @@ Private = true
 ## Literature
 
 ```@bibliography
-Pages = ["objectives/index.md"]
+Pages = ["index.md"]
 Canonical=false
 ```

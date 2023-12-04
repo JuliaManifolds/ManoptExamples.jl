@@ -5,7 +5,7 @@
 if "--help" ∈ ARGS
     println(
         """
-docs/make.jl
+    docs/make.jl
 
 Render the `Manopt.jl` documenation with optinal arguments
 
@@ -111,6 +111,8 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=(get(ENV, "CI", nothing) == "true") || ("--prettyurls" ∈ ARGS),
         assets=["assets/favicon.ico", "assets/citations.css"],
+        size_threshold_warn=200 * 2^10, # raise slightly to 200 KiB
+        size_threshold=300 * 2^10,      # raise slightly to 300 KiB
     ),
     authors="Ronny Bergmann",
     sitename="ManoptExamples.jl",
@@ -125,6 +127,5 @@ makedocs(;
         "References" => "references.md",
     ],
     plugins=[bib],
-    warnonly=[:missing_docs],
 )
 deploydocs(; repo="github.com/JuliaManifolds/ManoptExamples.jl", push_preview=true)

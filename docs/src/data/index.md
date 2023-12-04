@@ -17,3 +17,10 @@ Pages = ["data/artificial_images.jl"]
 Order = [:type, :function]
 Private = true
 ```
+
+## Literature
+
+```@bibliography
+Pages = ["index.md"]
+Canonical=false
+```
