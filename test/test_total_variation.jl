@@ -1,5 +1,7 @@
-using Manifolds
+using Manifolds, Test, ManoptExamples
 using ManoptExamples:
+    adjoint_differential_forward_logs,
+    adjoint_differential_forward_logs!,
     differential_forward_logs,
     differential_forward_logs!,
     forward_logs,
@@ -95,6 +97,9 @@ end
         # prox_Total_Variation on Power
         T = prox_Total_Variation(N, π / 8, [p, q])
         @test distance(N, T, [t, u]) ≈ 0
+        S = similar.(T)
+        prox_Total_Variation!(N, S, π / 8, [p, q])
+        @test distance(N, T, S) ≈ 0
         # parallelprox_Total_Variation
         N2 = PowerManifold(M, NestedPowerRepresentation(), 3)
         r = geodesic(M, p, q, 0.5)
@@ -248,6 +253,9 @@ end
         x = [p, q, p]
         y = [p, p, q]
         V = [X, zero_vector(M, p), -X]
+        W = similar.(V)
+        forward_logs!(N, W, x)
+        @test isapprox(N, x, W, [X, log(M, q, p), zero_vector(M, p)])
         Y = Manopt.differential_log_argument(M, p, q, -X)
         W = similar.(V)
         @test norm(
@@ -300,6 +308,30 @@ end
         @test t2[2, 1, 2] ≈ zero_vector(S, p[2, 1]) atol = 1e-17
         @test t2[2, 2, 2] ≈ zero_vector(S, p[2, 2]) atol = 1e-17
     end
+end
+
+@testset "Adjoint Differentials" begin
+    # The Adjoint Differentials test using the same variables as the differentials
+    # test
+    p = [1.0, 0.0, 0.0]
+    q = [0.0, 1.0, 0.0]
+    M = Sphere(2)
+    X = log(M, p, q)
+    # Tept differentials (1) Dp of Log_pq
+    Y = similar(X)
+    Mp = PowerManifold(M, NestedPowerRepresentation(), 3)
+    pP = [p, q, p]
+    qP = [p, p, q]
+    XP = [X, zero_vector(M, p), -X]
+    YP = similar.(XP)
+    ZP = adjoint_differential_forward_logs(Mp, pP, XP)
+    @test norm(Mp, pP, ZP - [-X, X, zero_vector(M, p)]) ≈ 0 atol = 4 * 10.0^(-16)
+    adjoint_differential_forward_logs!(Mp, YP, pP, XP)
+    @test isapprox(Mp, pP, YP, ZP)
+    ZP = [[0.0, π / 2, 0.0], [0.0, 0.0, 0.0], [π / 2, 0.0, 0.0]]
+    @test Manopt.adjoint_differential_log_argument(Mp, pP, qP, XP) == ZP
+    Manopt.adjoint_differential_log_argument!(Mp, YP, pP, qP, XP)
+    @test ZP == YP
 end
 
 @testset "gradients" begin

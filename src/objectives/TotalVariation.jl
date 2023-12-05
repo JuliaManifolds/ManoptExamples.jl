@@ -1162,6 +1162,8 @@ function forward_logs!(M::PowerManifold{𝔽,TM,TSize,TPR}, X, p) where {𝔽,TM
             if all(J .<= maxInd) # is this neighbor in range?
                 j = CartesianIndex{d}(J...) # neighbour index as Cartesian Index
                 X[N, i.I..., k] = log(M.manifold, p[M, i.I...], p[M, j.I...])
+            else
+                X[N, i.I..., k] = zero_vector(M.manifold, p[M, i.I...])
             end
         end # directions
     end # i in R
