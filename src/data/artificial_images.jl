@@ -210,6 +210,17 @@ function artificial_SPD_image2(pts=64, fraction=0.66)
     return data
 end
 
+@doc raw"""
+    artificial_S2_rotation_image([pts=64, rotations=(.5,.5)])
+
+Create an image with a rotation on each axis as a parametrization.
+
+# Optional Parameters
+* `pts` – (`64`) number of pixels along one dimension
+* `rotations` – (`(.5,.5)`) number of total rotations performed on the axes.
+
+This dataset was used in the numerical example of Section 5.1 of [Bačák et al., SIAM J Sci Comput, 2016](@cite BacakBergmannSteidlWeinmann:2016).
+"""
 function artificial_S2_rotation_image(
     pts::Int=64, rotations::Tuple{Float64,Float64}=(0.5, 0.5)
 )
