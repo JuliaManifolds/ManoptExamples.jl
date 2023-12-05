@@ -13,32 +13,28 @@ using ManoptExamples, Test, Manifolds
         isapprox(M; q, q2) # 2π periodic
         isapprox(M; r, p) # 2π periodic
         @test ManoptExamples.artificial_S1_slope_signal(20, 0.0) == repeat([-π / 2], 20)
+        @test length(ManoptExamples.artificial_S1_signal(20)) == 20
         @test ismissing(ManoptExamples.artificial_S1_signal(-1.0))
         @test ismissing(ManoptExamples.artificial_S1_signal(2.0))
         @test ManoptExamples.artificial_S1_signal(2) == [-3 * π / 4, -3 * π / 4]
     end
 
-    #=
     @testset "Images" begin
-        @test artificialIn_SAR_image(2) == 2 * π * ones(2, 2)
-        # for the remainder check data types only
-        @test length(artificial_S1_signal(20)) == 20
+        @test ManoptExamples.artificialIn_SAR_image(2) == 2 * π * ones(2, 2)
+        @test size(ManoptExamples.artificial_S2_whirl_image(64)) == (64, 64)
+        @test length(ManoptExamples.artificial_S2_whirl_image(64)[1, 1]) == 3
 
-        @test size(artificial_S2_whirl_image(64)) == (64, 64)
-        @test length(artificial_S2_whirl_image(64)[1, 1]) == 3
+        @test size(ManoptExamples.artificial_S2_rotation_image(64)) == (64, 64)
+        @test length(ManoptExamples.artificial_S2_rotation_image(64)[1, 1]) == 3
 
-        @test size(artificial_S2_rotation_image(64)) == (64, 64)
-        @test length(artificial_S2_rotation_image(64)[1, 1]) == 3
+        @test size(ManoptExamples.artificial_S2_whirl_patch(8)) == (8, 8)
+        @test length(ManoptExamples.artificial_S2_whirl_patch(8)[1, 1]) == 3
 
-        @test size(artificial_S2_whirl_patch(8)) == (8, 8)
-        @test length(artificial_S2_whirl_patch(8)[1, 1]) == 3
+        @test size(ManoptExamples.artificial_SPD_image(8)) == (8, 8)
+        @test size(ManoptExamples.artificial_SPD_image(8)[1, 1]) == (3, 3)
 
-        @test size(artificial_SPD_image(8)) == (8, 8)
-        @test size(artificial_SPD_image(8)[1, 1]) == (3, 3)
-
-        @test size(artificial_SPD_image2(8)) == (8, 8)
-        @test size(artificial_SPD_image2(8)[1, 1]) == (3, 3)
-        @test eltype(artificial_SPD_image2(8)) == Array{Float64,2}
+        @test size(ManoptExamples.artificial_SPD_image2(8)) == (8, 8)
+        @test size(ManoptExamples.artificial_SPD_image2(8)[1, 1]) == (3, 3)
+        @test eltype(ManoptExamples.artificial_SPD_image2(8)) == Array{Float64,2}
     end
-    =#
 end
