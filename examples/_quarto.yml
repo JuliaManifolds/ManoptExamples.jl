@@ -4,6 +4,7 @@ project:
   output-dir: ../docs/src/examples
   render:
     - "*.qmd"
+    - "!Difference-of-Convex-Benchmark.qmd"
 
 crossref:
   fig-prefix: Figure

@@ -1,3 +1,87 @@
+
+@doc raw"""
+    artificial_S1_slope_signal([pts=500, slope=4.])
+
+Creates a Signal of (phase-valued) data represented on the
+[`Circle`](hhttps://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/circle.html) with increasing slope.
+
+# Optional
+* `pts` – (`500`) number of points to sample the function.
+* `slope` – (`4.0`) initial slope that gets increased afterwards
+
+This data set was introduced for the numerical examples in [Bergmann et. al., SIAM J Imag Sci, 2014](@cite BergmannLausSteidlWeinmann:2014:1)
+
+
+"""
+function artificial_S1_slope_signal(pts::Integer=500, slope::Float64=4.0)
+    t = range(0.0, 1.0; length=pts)
+    f = zero(t)
+    f[t .<= 1 / 6] .= -π / 2 .+ slope * π / 8 * t[t .<= 1 / 6]
+    # In the following terms, the first max
+    f[(1 / 6 .< t) .& (t .<= 1 / 3)] .=
+        max(f[f .!= 0]...) .- slope * π / 4 * 1 / 6 .+
+        slope * π / 4 .* t[(1 / 6 .< t) .& (t .<= 1 / 3)]
+    f[(1 / 3 .< t) .& (t .<= 1 / 2)] .=
+        max(f[f .!= 0]...) .- slope * π / 2 * 1 / 3 .+
+        slope * π / 2 * t[(1 / 3 .< t) .& (t .<= 1 / 2)]
+    f[(1 / 2 .< t) .& (t .<= 2 / 3)] .=
+        max(f[f .!= 0]...) .- slope * π * 1 / 2 .+
+        slope * π * t[(1 / 2 .< t) .& (t .<= 2 / 3)]
+    f[(2 / 3 .< t) .& (t .<= 5 / 6)] .=
+        max(f[f .!= 0]...) .- slope * 2 * π * 2 / 3 .+
+        slope * 2 * π * t[(2 / 3 .< t) .& (t .<= 5 / 6)]
+    f[5 / 6 .< t] .=
+        max(f[f .!= 0]...) .- slope * 4 * π * 5 / 6 .+ slope * 4 * π * t[5 / 6 .< t]
+    return mod.(f .+ Float64(π), Ref(2 * π)) .- Float64(π)
+end
+
+@doc raw"""
+    artificial_S1_signal([pts=500])
+
+generate a real-valued signal having piecewise constant, linear and quadratic
+intervals with jumps in between. If the resulting manifold the data lives on,
+is the [`Circle`](hhttps://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/circle.html)
+the data is also wrapped to ``[-\pi,\pi)``. This is data for an example from  [Bergmann et. al., SIAM J Imag Sci, 2014](@cite BergmannLausSteidlWeinmann:2014:1).
+
+# Optional
+* `pts` – (`500`) number of points to sample the function
+"""
+function artificial_S1_signal(pts::Integer=500)
+    t = range(0.0, 1.0; length=pts)
+    f = artificial_S1_signal.(t)
+    return mod.(f .+ Float64(π), Ref(2 * π)) .- Float64(π)
+end
+@doc raw"""
+    artificial_S1_signal(x)
+evaluate the example signal ``f(x), x ∈  [0,1]``,
+of phase-valued data introduces in Sec. 5.1 of  [Bergmann et. al., SIAM J Imag Sci, 2014](@cite BergmannLausSteidlWeinmann:2014:1)
+for values outside that interval, this Signal is `missing`.
+"""
+function artificial_S1_signal(x::Real)
+    if x < 0
+        y = missing
+    elseif x <= 1 / 4
+        y = -24 * π * (x - 1 / 4)^2 + 3 / 4 * π
+    elseif x <= 3 / 8
+        y = 4 * π * x - π / 4
+    elseif x <= 1 / 2
+        y = -π * x - 3 * π / 8
+    elseif x <= (3 * 0 + 19) / 32
+        y = -(0 + 7) / 8 * π
+    elseif x <= (3 * 1 + 19) / 32
+        y = -(1 + 7) / 8 * π
+    elseif x <= (3 * 2 + 19) / 32
+        y = -(2 + 7) / 8 * π
+    elseif x <= (3 * 3 + 19) / 32
+        y = -(3 + 7) / 8 * π
+    elseif x <= 1
+        y = 3 / 2 * π * exp(8 - 1 / (1 - x)) - 3 / 4 * π
+    else
+        y = missing
+    end
+    return y
+end
+
 @doc raw"""
     artificial_S2_composite_Bezier_curve()
 
@@ -70,12 +154,55 @@ function artificial_S2_composite_Bezier_curve()
     ]
 end
 
-function artificial_S2_lemniscate(p, t::Float64, a::Float64=π / 2.0)
-    M = Sphere(2)
-    tP = 2.0 * Float64(p[1] >= 0.0) - 1.0 # Take north or south pole
-    base = [0.0, 0.0, tP]
-    xc = a * (cos(t) / (sin(t)^2 + 1.0))
-    yc = a * (cos(t) * sin(t) / (sin(t)^2 + 1.0))
-    tV = vector_transport_to(M, base, [xc, yc, 0.0], p, ParallelTransport())
-    return exp(M, p, tV)
+@doc raw"""
+    Lemniscate(t::Float; kwargs...)
+    Lemniscate(n::integer; interval=[0.0, 2π], kwargs...)
+
+generate the [Lemniscate of Bernoulli](https://en.wikipedia.org/wiki/Lemniscate_of_Bernoulli)
+as a curve on a manifold, by generating the curve emplying the keyword arguments below.
+
+To be precise on the manifold `M` we use the tangent space at `p` and generate the curve
+
+```math
+γ(t) \frac{a}{}\sin^2(t) + 1 \begin{pmatrix} \cos(t) \\ \cos(t)\sin(t) \end{pmatrix}
+```
+in the plane spanned by `X` and `Y` in the tangent space. Note that this curve is ``2π``-periodic
+and `a` is the _half-width_ of the curve.
+
+To reproduce the first examples from [BacakBergmannSteidlWeinmann:2016](@cite) as a default,
+on the sphere `p` defaults to the North pole.
+
+THe second variant generates `n` points equispaced in ìnterval` and calls the first variant.
+
+# Keywords
+
+* `manifold` - ([`Sphere`]()`(2)`) the manifold to build the lemniscate on
+* `p`        - (`[0.0, 0.0, 1.0]` on the sphere, `rand(M) else) the center point of the Lemniscate
+* `a`        – (`π/2.0`) half-width of the Lemniscate
+* `X`        – (`[1.0, 0.0, 0.0]` for the 2-sphere with default p, the first [`DefaultOrthonormalBasis`]()`()` vector otherwise)
+  first direction for the plane to define the Lemniscate in, unit vector recommended.
+* `Y`        – (`[0.0, 1.0, 0.0]` if p is the default, the second [`DefaultOrthonormalBasis`]()`()` vector otherwise)
+  second direction for the plane to define the Lemniscate in, unit vector orthogonal to `X` recommended.
+"""
+function Lemniscate(
+    t::Number;
+    a=π / 2.0,
+    manifold=Sphere(2),
+    p=(manifold == Sphere(2)) ? [0.0, 0.0, 1.0] : rand(manifold),
+    X=if ((manifold == Sphere(2)) && (p == [0.0, 0.0, 1.0]))
+        [1.0, 0.0, 0.0]
+    else
+        get_vectors(manifold, p, get_basis(manifold, p, DefaultOrthonormalBasis()))[1]
+    end,
+    Y=if ((manifold == Sphere(2)) && (p == [0.0, 0.0, 1.0]))
+        [0.0, 1.0, 0.0]
+    else
+        get_vectors(manifold, p, get_basis(manifold, p, DefaultOrthonormalBasis()))[2]
+    end,
+)
+    Z = a * (cos(t) / (sin(t)^2 + 1.0)) * X + a * (cos(t) * sin(t) / (sin(t)^2 + 1.0)) * Y
+    return exp(manifold, p, Z)
+end
+function Lemniscate(n::Integer; interval=[0.0, 2 * π], kwargs...)
+    return map(t -> Lemniscate(t; kwargs...), range(interval[1], interval[2], n))
 end

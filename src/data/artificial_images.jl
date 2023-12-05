@@ -32,6 +32,14 @@ function artificial_S2_whirl_image(pts::Int=64)
     return img
 end
 
+@doc raw"""
+    artificial_SPD_image2([pts=64, fraction=.66])
+
+create an artificial image of symmetric positive definite matrices of size
+`pts`×`pts` pixel with right hand side `fraction` is moved upwards.
+
+This data set was introduced in the numerical examples of Section of [Bergmann, Presch, Steidl, SIAM J Imag Sci, 2016](@cite BergmannPerschSteidl:2016)
+"""
 function artificial_SPD_image2(pts=64, fraction=0.66)
     Zl = 4.0 * Matrix{Float64}(I, 3, 3)
     # create a first matrix

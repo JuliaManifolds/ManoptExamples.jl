@@ -1,4 +1,9 @@
-@testset "Manopt.jl Error Measures" begin
+using Manifolds, Test, ManoptExamples
+using ManoptExamples: mean_squared_error, mean_average_error
+using Random
+Random.seed!(42)
+
+@testset "Error Measures" begin
     M = Sphere(2)
     N = PowerManifold(M, NestedPowerRepresentation(), 2)
     using Random: seed!
@@ -10,8 +15,8 @@
     z = rand(d)
     a = [w, x]
     b = [y, z]
-    @test meanSquaredError(M, x, y) == distance(M, x, y)^2
-    @test meanSquaredError(N, a, b) == 1 / 2 * (distance(M, w, y)^2 + distance(M, x, z)^2)
-    @test meanAverageError(M, x, y) == distance(M, x, y)
-    @test meanAverageError(N, a, b) == 1 / 2 * sum(distance.(Ref(M), a, b))
+    @test mean_squared_error(M, x, y) == distance(M, x, y)^2
+    @test mean_squared_error(N, a, b) == 1 / 2 * (distance(M, w, y)^2 + distance(M, x, z)^2)
+    @test mean_average_error(M, x, y) == distance(M, x, y)
+    @test mean_average_error(N, a, b) == 1 / 2 * sum(distance.(Ref(M), a, b))
 end
