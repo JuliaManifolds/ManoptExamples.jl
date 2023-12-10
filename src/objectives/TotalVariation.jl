@@ -30,10 +30,10 @@ function Intrinsic_infimal_convolution_TV12(M::AbstractManifold, f, u, v, α, β
 end
 
 @doc raw"""
-    L2_Total_Variation(M, f, α, p)
+    L2_Total_Variation(M, p_data, α, p)
 
-compute the ``ℓ^2``-TV functional on the `PowerManifold manifold `M` for given
-(fixed) data `f` (on `M`), a nonnegative weight `α`, and evaluated at `p` (on `M`),
+compute the ``ℓ^2``-TV functional on the [PowerManifold](https://juliamanifolds.github.io/ManifoldsBase.jl/stable/metamanifolds/#sec-power-manifold) `M` for given
+(fixed) data `p_data` (on `M`), a nonnegative weight `α`, and evaluated at `p` (on `M`),
 i.e.
 
 ```math
@@ -44,7 +44,8 @@ E(p) = d_{\mathcal M}^2(f,p) + \alpha \operatorname{TV}(p)
 
 [`Total_Variation`](@ref)
 """
-L2_Total_Variation(M, f, α, p) = 1 / 2 * distance(M, f, p)^2 + α * Total_Variation(M, p)
+L2_Total_Variation(M, p_data, α, p) =
+    1 / 2 * distance(M, p_data, p)^2 + α * Total_Variation(M, p)
 
 @doc raw"""
     L2_Total_Variation_1_2(M, f, α, β, x)

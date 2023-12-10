@@ -17,3 +17,198 @@ ENV["GKSwstype"] = "100"
 
 
 ## Introduction
+
+[Total Variation denoising](https://en.wikipedia.org/wiki/Total_variation_denoising) is
+an optimization problem used to denoise signals and images. The corresponding (Euclidean)
+objective is often called Rudin-Osher-Fatemi (ROF) model based on the paper [RudinOsherFatemi:1992](@cite).
+
+This was generalized to manifolds in [WeinmannDemaretStorath:2014](@cite). In this short example we will
+look at the ROF model for manifold-valued data, its generalizations, and how they can be solved using [Manopt.jl](https://www.manoptjl.org).
+
+## The manifold-valued ROF model
+
+Generalizing the ROF model to manifolds can be phrased as follows: Given a (discrete) signal on a manifold $s = (s_i)_{i=1}^N \in \mathbb M^n$ of length $n \in \mathbb N$, we usually assume that this signal might be noisy. For the (Euclidean) ROF model we assume that the noise is Gaussian.
+ Then variational models for denoising usually consist of a data term $D(p,s)$ to “stay close to” $s$ and a regularizer $R(p)$. For TV regularization the data term is the squared distance and the regularizer models that without noise, neighboring values are close. We obtain
+
+ ```math
+\operatorname*{arg\,min}_{p\in\mathcal M^n}
+f(p),
+\qquad
+f(p) = D(p,s) + α R(p) = \sum_{i=1}^n d_{\mathcal M}^2(s_i,p_i) + α\sum_{i=1}^{n-1} d_{\mathcal M}(p_i,p_{i+1}),
+```
+
+where $α > 0$ is a weight parameter.
+
+The challenge here is that most classical algorithm, like gradient descent or Quasi Newton, assume the cost $f(p)$ to be smooth such that the gradient exists at every point. In our setting that is not the case since the distacen is not differentiable for any $p_i=p_{i+1}$. So we have to use another technique.
+
+## THe Cyclic Proximal Point algorithm
+
+If the cost consists of a sum of functions, where each of the proximal maps is “easy to evaluate”, for best of cases in closed form, we can “apply the proximal maps in a cyclic fashion” and optain the the [Cyclic Proximal Point Algorithm](https://manoptjl.org/stable/solvers/cyclic_proximal_point/) [Bacak:2014](@cite).
+
+Both for the distance and the squared distance, we have [generic implementations](https://juliamanifolds.github.io/ManifoldDiff.jl/stable/library/#Proximal-Maps); since this happens in a cyclic manner, there is also always one of the arguments involved in the prox and never both.
+We can improve the performance slightly by computing all proes in parallel that do not interfer. To be precise we can compute first all proxes of distances in the regularizer that start with an odd index in parallel. Afterwards all that start with an even index.
+
+## The Optimsation
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(; path="../") # a trick to work on the local dev version
+ENV["GKSwstype"] = "100"
+```
+
+```{julia}
+#| output: false
+using Manifolds, Manopt, ManoptExamples, ManifoldDiff
+using ManifoldDiff: prox_distance
+n = 500 #Signal length
+σ = 0.2 # amount of noise
+α = 0.5# in the TV model
+```
+
+We define a few colors
+
+```{julia}
+#| output: false
+using Colors, NamedColors, ColorSchemes, Plots, Random
+data_color = RGBA{Float64}(colorant"black")
+light_color = RGBA{Float64}(colorant"brightgrey")
+recon_color = RGBA{Float64}(colorant"vibrantorange")
+noisy_color = RGBA{Float64}(colorant"vibrantteal")
+```
+
+And we generate our data on the [Circle](https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/circle.html), since that is easy to plot and nice to compare to the Euclidean case of a real-valued signal.
+
+```{julia}
+Random.seed!(23)
+M = Circle()
+N = PowerManifold(M, n)
+data = ManoptExamples.artificial_S1_signal(n)
+s = [exp(M, d, rand(M; vector_at=d, σ=0.2)) for d in data]
+t = range(0.0, 1.0; length=n)
+scene = scatter(
+    t,
+    data;
+    markercolor=data_color,
+    markerstrokecolor=data_color,
+    markersize=2,
+    lab="original",
+)
+scatter!(
+    scene,
+    t,
+    s;
+    markersize=2,
+    markercolor=noisy_color,
+    markerstrokecolor=noisy_color,
+    lab="noisy",
+)
+yticks!(
+    [-π, -π / 2, 0, π / 2, π],
+    [raw"$-\pi$", raw"$-\frac{\pi}{2}$", raw"$0$", raw"$\frac{\pi}{2}$", raw"$\pi$"],
+)
+```
+
+As mentioned above, total variation now minimized different neighbors – while keeping jumps if the are large enough. One notable difference between Euclidean and Cyclic data is, that the y-axis is in our case periodic, hence the first jump is actually not a jump but a “linear increase” that “wraps around” and the second large jump –or third overall– is actually only as small as the second jump.
+
+Defining cost and the proximal maps, which are actually 3 proxes to be precise.
+
+```{julia}
+#| output: false
+f(N, p) = ManoptExamples.L2_Total_Variation(N, s, α, p)
+proxes_f = ((N, λ, p) -> prox_distance(N, λ, s, p, 2), (N, λ, p) -> prox_TV(N, α * λ, p))
+```
+
+We run the algorithm
+
+```{julia}
+o = cyclic_proximal_point(
+    N,
+    f,
+    proxes_f,
+    s;
+    λ=i -> π / (2 * i),
+    debug=[
+        :Iteration,
+        " | ",
+        DebugProximalParameter(),
+        " | ",
+        :Cost,
+        " | ",
+        :Change,
+        "\n",
+        1000,
+        :Stop,
+    ],
+    record=[:Iteration, :Cost, :Change, :Iterate],
+    return_state=true,
+);
+```
+
+We can see that the cost reduces nicely. Let's extract the result an the recorded values
+
+```{julia}
+#| output: false
+recon = get_solver_result(o)
+record = get_record(o)
+```
+
+We get
+
+```{julia}
+scene = scatter(
+    t,
+    data;
+    markercolor=data_color,
+    markerstrokecolor=data_color,
+    markersize=2,
+    lab="original",
+)
+scatter!(
+    scene,
+    t,
+    s;
+    markersize=2,
+    markercolor=light_color,
+    markerstrokecolor=light_color,
+    lab="noisy",
+)
+scatter!(
+    scene,
+    t,
+    recon;
+    markersize=2,
+    markercolor=recon_color,
+    markerstrokecolor=recon_color,
+    lab="reconstruction",
+)
+```
+
+Which contains the usual stair casing one expects for TV regularization, but here in a “cyclic manner”
+
+## Outlook
+
+We can generalize the total variation also to a second order total variation. Again intuitively, while TV prefers constant areas, the $\operatorname{TV}_2$ yields a cost 0 for anything linear, which on manifolds can be generalized to equidistant on a geodesic [BacakBergmannSteidlWeinmann:2016](@cite). Here we can again derive proximal maps, which for the circle again have a closed form solutoin [BergmannLausSteidlWeinmann:2014:1](@cite) but on general manifolds these have again to be approximated.
+
+Another extension for both first and second order TV is to apply this for manifold-valued images $S = (S_{i,j})_{i,j=1}^{m,n} \in \mathcal M^{m,n}$, where the distances in the regularizer are then used in both the first dimension $i$ and the second dimension $j$  in the data.
+
+## Technical Details
+
+This version of the example was generated with the following package versions.
+
+```{julia}
+Pkg.status()
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["Total-Variation.md"]
+Canonical=false
+```
+````

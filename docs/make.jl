@@ -105,6 +105,7 @@ examples_menu =
         "Riemannian Mean" => "examples/Riemannian-mean.md",
         "Robust PCA" => "examples/Robust-PCA.md",
         "Rosenbrock" => "examples/Rosenbrock.md",
+        "Total Variation" => "examples/Total-Variation.md",
     ]
 # (e) ...finally! make docs
 bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:alpha)

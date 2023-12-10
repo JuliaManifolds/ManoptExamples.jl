@@ -10,6 +10,7 @@
 | [Robust PCA](Robust-PCA.md)   | ``f``, ``\operatorname{grad}f`` (A/I), objective | [📚](@ref RobustPCA) | |
 | [Rosenbrock](Rosenbrock.md)   | ``f``, ``\operatorname{grad}f`` (A/I), objective, minimizer | [📚](@ref Rosenbrock) | |
 | [The Rayleigh Quotient](RayleighQuotient.md) | ``f``, ``\operatorname{grad}f`` (A/I), ``\operatorname{Hess}f`` (A/I), objective | [📚](@ref Rayleigh) | |
+| [Total Variation Minimization](Total-Variation.md) | ``f``, ``\operatorname{prox}f`` (A/I), objective | [📚](@ref Total-Variation) | |
 
 Symbols:
 * _A_ Allocating variant
