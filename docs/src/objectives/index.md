@@ -55,7 +55,7 @@ Order = [:type, :function]
 Private = true
 ```
 
-## [Total Variation](@id Total Variation)
+## [Total Variation](@id Total-Variation)
 
 See the [Total Variation example](../examples/Total-Variation.md) to see these in use.
 
