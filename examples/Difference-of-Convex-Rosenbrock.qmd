@@ -414,7 +414,7 @@ and using the Riemannian approach required less iterations than their Euclidean 
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["examples/Difference-of-Convex-Rosenbrock.md"]
+Pages = ["Difference-of-Convex-Rosenbrock.md"]
 Canonical=false
 ```
 ````
