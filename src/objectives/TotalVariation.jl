@@ -291,11 +291,11 @@ end
     X = grad_Total_Variation(M, λ, x[, p=1])
     grad_Total_Variation!(M, X, λ, x[, p=1])
 
-Compute the (sub)gradient ``\partial F`` of all forward differences occurring,
+Compute the (sub)gradient ``∂f`` of all forward differences occurring,
 in the power manifold array, i.e. of the function
 
 ```math
-F(x) = \sum_{i}\sum_{j ∈ \mathcal I_i} d^p(x_i,x_j)
+f(p) = \sum_{i}\sum_{j ∈ \mathcal I_i} d^p(x_i,x_j)
 ```
 
 where ``i`` runs over all indices of the `PowerManifold` manifold `M`
@@ -670,7 +670,7 @@ function prox_parallel_TV!(
     maxInd = Tuple(last(R))
     # init y
     for i in 1:length(x)
-        copyto!(M, y[i], x[i])
+        copyto!(M.manifold, y[i], x[i])
     end
     yV = reshape(y, d, 2)
     xV = reshape(x, d, 2)

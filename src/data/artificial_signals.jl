@@ -6,10 +6,10 @@ Creates a Signal of (phase-valued) data represented on the
 [`Circle`](hhttps://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/circle.html) with increasing slope.
 
 # Optional
-* `pts` – (`500`) number of points to sample the function.
-* `slope` – (`4.0`) initial slope that gets increased afterwards
+* `pts`:    (`500`) number of points to sample the function.
+* `slope`:  (`4.0`) initial slope that gets increased afterwards
 
-This data set was introduced for the numerical examples in [Bergmann et. al., SIAM J Imag Sci, 2014](@cite BergmannLausSteidlWeinmann:2014:1)
+This data set was introduced for the numerical examples in [BergmannLausSteidlWeinmann:2014:1](@cite)
 
 
 """
@@ -41,10 +41,11 @@ end
 generate a real-valued signal having piecewise constant, linear and quadratic
 intervals with jumps in between. If the resulting manifold the data lives on,
 is the [`Circle`](hhttps://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/circle.html)
-the data is also wrapped to ``[-\pi,\pi)``. This is data for an example from  [Bergmann et. al., SIAM J Imag Sci, 2014](@cite BergmannLausSteidlWeinmann:2014:1).
+the data is also wrapped to ``[BergmannLausSteidlWeinmann:2014:1](@cite).
 
 # Optional
-* `pts` – (`500`) number of points to sample the function
+
+* `pts`: (`500`) number of points to sample the function
 """
 function artificial_S1_signal(pts::Integer=500)
     t = range(0.0, 1.0; length=pts)
@@ -54,7 +55,7 @@ end
 @doc raw"""
     artificial_S1_signal(x)
 evaluate the example signal ``f(x), x ∈  [0,1]``,
-of phase-valued data introduces in Sec. 5.1 of  [Bergmann et. al., SIAM J Imag Sci, 2014](@cite BergmannLausSteidlWeinmann:2014:1)
+of phase-valued data introduces in Sec. 5.1 of  [BergmannLausSteidlWeinmann:2014:1](@cite)
 for values outside that interval, this Signal is `missing`.
 """
 function artificial_S1_signal(x::Real)
@@ -85,7 +86,7 @@ end
 @doc raw"""
     artificial_S2_composite_Bezier_curve()
 
-Generate a composite Bézier curve on the [Sphere]() ``\mathbb S^2`` that was used in [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018).
+Generate a composite Bézier curve on the [BergmannGousenbourger:2018](@cite).
 
 It consists of 4 egments connecting the points
 ```math

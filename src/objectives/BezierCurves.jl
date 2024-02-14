@@ -197,14 +197,14 @@ controlpoints or a.
 
 This method reduces the points depending on the optional `reduce` symbol
 
-* `:default` – no reduction is performed
-* `:continuous` – for a continuous function, the junction points are doubled at
+* `:default`:        no reduction is performed
+* `:continuous`:     for a continuous function, the junction points are doubled at
   ``b_{0,i}=b_{n_{i-1},i-1}``, so only ``b_{0,i}`` is in the vector.
-* `:differentiable` – for a differentiable function additionally
+* `:differentiable`: for a differentiable function additionally
   ``\log_{b_{0,i}}b_{1,i} = -\log_{b_{n_{i-1},i-1}}b_{n_{i-1}-1,i-1}`` holds.
   hence ``b_{n_{i-1}-1,i-1}`` is omitted.
 
-If only one segment is given, all points of `b` – i.e. `b.pts` is returned.
+If only one segment is given, all points of `b`, `b.pts`, is returned.
 """
 function get_Bezier_points(
     M::AbstractManifold, B::AbstractVector{<:BezierSegment}, reduce::Symbol=:default
@@ -259,12 +259,12 @@ see also [`get_Bezier_points`](@ref). For ease of the following, let ``c=(c_1,�
 and ``d=(d_1,…,d_m)``, where ``m`` denotes the number of components the composite Bézier
 curve consists of. Then
 
-* `:default` – ``k = m + \sum_{i=1}^m d_i`` since each component requires one point more than
+* `:default`: ``k = m + \sum_{i=1}^m d_i`` since each component requires one point more than
   its degree. The points are then ordered in tuples, i.e.
   ````math
   B = \bigl[ [c_1,…,c_{d_1+1}], (c_{d_1+2},…,c_{d_1+d_2+2}],…, [c_{k-m+1+d_m},…,c_{k}] \bigr]
   ````
-* `:continuous` – ``k = 1+ \sum_{i=1}{m} d_i``, since for a continuous curve start and end
+* `:continuous`: ``k = 1+ \sum_{i=1}{m} d_i``, since for a continuous curve start and end
   point of successive components are the same, so the very first start point and the end
   points are stored.
   ````math

@@ -3,7 +3,7 @@
 generate an artificial InSAR image, i.e. phase valued data, of size `pts` x
 `pts` points.
 
-This data set was introduced for the numerical examples in [Bergmann et. al., SIAM J Imag Sci, 2014](@cite BergmannLausSteidlWeinmann:2014:1).
+This data set was introduced for the numerical examples in [BergmannLausSteidlWeinmann:2014:1](@cite).
 """
 function artificialIn_SAR_image(pts::Integer)
     # variables
@@ -57,9 +57,9 @@ end
 Generate an artificial image of data on the 2 sphere,
 
 # Arguments
-* `pts` – (`64`) size of the image in `pts`×`pts` pixel.
+* `pts`: (`64`) size of the image in `pts`×`pts` pixel.
 
-This example dataset was used in the numerical example in Section 5.5 of [Laus et al., SIAM J Imag Sci., 2017](@cite LausNikolovaPerschSteidl:2017)
+This example dataset was used in the numerical example in Section 5.5 of [LausNikolovaPerschSteidl:2017](@cite)
 
 It is based on [`artificial_S2_rotation_image`](@ref) extended by small whirl patches.
 """
@@ -105,7 +105,7 @@ create a whirl within the `pts`×`pts` patch of
 These patches are used within [`artificial_S2_whirl_image`](@ref).
 
 # Optional Parameters
-* `pts` – (`5`) size of the patch. If the number is odd, the center is the north pole.
+* `pts`: (`5`) size of the patch. If the number is odd, the center is the north pole.
 """
 function artificial_S2_whirl_patch(pts::Int=5)
     patch = fill([0.0, 0.0, -1.0], pts, pts)
@@ -130,7 +130,7 @@ end
 create an artificial image of symmetric positive definite matrices of size
 `pts`×`pts` pixel with a jump of size `stepsize`.
 
-This dataset was used in the numerical example of Section 5.2 of [Bačák et al., SIAM J Sci Comput, 2016](@cite BacakBergmannSteidlWeinmann:2016).
+This dataset was used in the numerical example of Section 5.2 of [BacakBergmannSteidlWeinmann:2016](@cite).
 """
 function artificial_SPD_image(pts::Int=64, stepsize=1.5)
     r = range(0; stop=1 - 1 / pts, length=pts)
@@ -164,7 +164,7 @@ end
 create an artificial image of symmetric positive definite matrices of size
 `pts`×`pts` pixel with right hand side `fraction` is moved upwards.
 
-This data set was introduced in the numerical examples of Section of [Bergmann, Presch, Steidl, SIAM J Imag Sci, 2016](@cite BergmannPerschSteidl:2016)
+This data set was introduced in the numerical examples of Section of [BergmannPerschSteidl:2016](@cite)
 """
 function artificial_SPD_image2(pts=64, fraction=0.66)
     Zl = 4.0 * Matrix{Float64}(I, 3, 3)
@@ -216,10 +216,10 @@ end
 Create an image with a rotation on each axis as a parametrization.
 
 # Optional Parameters
-* `pts` – (`64`) number of pixels along one dimension
-* `rotations` – (`(.5,.5)`) number of total rotations performed on the axes.
+* `pts`:       (`64`) number of pixels along one dimension
+* `rotations`: (`(.5,.5)`) number of total rotations performed on the axes.
 
-This dataset was used in the numerical example of Section 5.1 of [Bačák et al., SIAM J Sci Comput, 2016](@cite BacakBergmannSteidlWeinmann:2016).
+This dataset was used in the numerical example of Section 5.1 of [BacakBergmannSteidlWeinmann:2016](@cite).
 """
 function artificial_S2_rotation_image(
     pts::Int=64, rotations::Tuple{Float64,Float64}=(0.5, 0.5)

@@ -111,7 +111,7 @@ parameter ``ε``.
 !!! note
     Since the construction is independent of the manifold, that argument is optional and
     mainly provided to comply with other objectives. Similarly, independent of the `evaluation`,
-    indeed the gradient always allows for both the allocating and the inplace variant to be used,
+    indeed the gradient always allows for both the allocating and the in-place variant to be used,
     though that keyword is used to setup the objective.
 """
 function robust_PCA_objective(

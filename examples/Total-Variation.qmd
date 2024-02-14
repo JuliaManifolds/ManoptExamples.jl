@@ -41,9 +41,9 @@ where $α > 0$ is a weight parameter.
 
 The challenge here is that most classical algorithm, like gradient descent or Quasi Newton, assume the cost $f(p)$ to be smooth such that the gradient exists at every point. In our setting that is not the case since the distacen is not differentiable for any $p_i=p_{i+1}$. So we have to use another technique.
 
-## THe Cyclic Proximal Point algorithm
+## The Cyclic Proximal Point algorithm
 
-If the cost consists of a sum of functions, where each of the proximal maps is “easy to evaluate”, for best of cases in closed form, we can “apply the proximal maps in a cyclic fashion” and optain the the [Cyclic Proximal Point Algorithm](https://manoptjl.org/stable/solvers/cyclic_proximal_point/) [Bacak:2014](@cite).
+If the cost consists of a sum of functions, where each of the proximal maps is “easy to evaluate”, for best of cases in closed form, we can “apply the proximal maps in a cyclic fashion” and optain the[Cyclic Proximal Point Algorithm](https://manoptjl.org/stable/solvers/cyclic_proximal_point/) [Bacak:2014](@cite).
 
 Both for the distance and the squared distance, we have [generic implementations](https://juliamanifolds.github.io/ManifoldDiff.jl/stable/library/#Proximal-Maps); since this happens in a cyclic manner, there is also always one of the arguments involved in the prox and never both.
 We can improve the performance slightly by computing all proes in parallel that do not interfer. To be precise we can compute first all proxes of distances in the regularizer that start with an odd index in parallel. Afterwards all that start with an even index.
@@ -196,7 +196,7 @@ We can generalize the total variation also to a second order total variation. Ag
 
 Another extension for both first and second order TV is to apply this for manifold-valued images $S = (S_{i,j})_{i,j=1}^{m,n} \in \mathcal M^{m,n}$, where the distances in the regularizer are then used in both the first dimension $i$ and the second dimension $j$  in the data.
 
-## Technical Details
+## Technical details
 
 This version of the example was generated with the following package versions.
 
