@@ -670,7 +670,7 @@ function prox_parallel_TV!(
     maxInd = Tuple(last(R))
     # init y
     for i in 1:length(x)
-        copyto!(M.manifold, y[i], x[i])
+        copyto!(M, y[i], x[i])
     end
     yV = reshape(y, d, 2)
     xV = reshape(x, d, 2)
