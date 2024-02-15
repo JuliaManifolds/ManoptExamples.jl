@@ -168,7 +168,7 @@ pB_opt = gradient_descent(
     f,
     grad_f,
     x0;
-    stepsize=ArmijoLinesearch(;
+    stepsize=ArmijoLinesearch(N;
         initial_stepsize=1.0,
         retraction_method=ExponentialRetraction(),
         contraction_factor=0.5,

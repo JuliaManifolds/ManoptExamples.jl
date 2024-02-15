@@ -9,7 +9,7 @@ date: 07/02/2023
 Each of the example objectives or problems stated in this package should
 be accompanied by a [Quarto](https://quarto.org) notebook that illustrates their usage, like this one.
 
-For this first example, the objective is a very common one, for example also used in the [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/) tutorial of [Manopt.jl](https://manoptjl.org/).
+For this first example, the objective is a very common one, for example also used in the [Get started: optimize!](https://manoptjl.org/stable/tutorials/Optimize!/) tutorial of [Manopt.jl](https://manoptjl.org/).
 
 The second goal of this tutorial is to also illustrate how this package provides these examples, namely in both an easy-to-use and a performant way.
 
@@ -44,7 +44,7 @@ data = [exp(M, p,  σ * rand(M; vector_at=p)) for i in 1:n];
 
 We can define both the cost and gradient, ``[`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost)``{=commonmark} and ``[`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!)``{=commonmark}, respectively.
 For their mathematical derivation and further explanations,
-we again refer to [Get Started: Optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
+we again refer to [Get started: optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
 
 ```{julia}
 #| output: false
@@ -62,7 +62,7 @@ x1 = gradient_descent(M, f, grad_f, first(data))
 ## Variant 2: Using the objective
 
 A shorter way to directly obtain the [Manifold objective](https://manoptjl.org/stable/plans/objective/) including these two functions.
-Here, we want to specify that the objective can do inplace-evaluations using the `evaluation=`-keyword. The objective can be obtained calling
+Here, we want to specify that the objective can do in-place-evaluations using the `evaluation=`-keyword. The objective can be obtained calling
 ``[`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective)``{=commonmark} as
 
 ```{julia}

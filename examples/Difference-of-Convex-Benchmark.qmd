@@ -11,10 +11,10 @@ and the Difference of Convex Proximal Point Algorithm (DCPPA) [SouzaOliveira:201
 Difference of Convex (DC) problems of the form. This Benchmark reproduces the results from [BergmannFerreiraSantosSouza:2023](@cite), Section 7.1.
 
 ```math
-\operatorname*{arg\,min}_{p\in\mathcal M}\ \  g(p) - h(p)
+\operatorname*{arg\,min}_{p∈\mathcal M}\ \  g(p) - h(p)
 ```
 
-where $g,h\colon \mathcal M \to \mathbb R$ are geodesically convex function on the Riemannian manifold $\mathcal M$.
+where $g,h\colon \mathcal M → \mathbb R$ are geodesically convex function on the Riemannian manifold $\mathcal M$.
 
 ```{julia}
 #| echo: false
@@ -49,7 +49,7 @@ teal = paul_tol["mutedteal"]
 We start with defining the two convex functions $g,h$ and their gradients as well as the DC problem $f$ and its gradient for the problem
 
 ```math
-    \operatorname*{arg\,min}_{p\in\mathcal M}\ \ \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
+    \operatorname*{arg\,min}_{p∈\mathcal M}\ \ \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
 ```
 
 where the critical points obtain a functional value of $-\frac{1}{4}$.
@@ -98,7 +98,7 @@ check_gradient(M, h, grad_h, p0, X0; plot=true)
 ```
 
 which both pass the test.
-We continue to define their inplace variants
+We continue to define their in-place variants
 
 ```{julia}
 #| output: false

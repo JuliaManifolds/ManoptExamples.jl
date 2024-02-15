@@ -43,7 +43,7 @@ please refactor the code, such that the gradient, or other function is in the co
 `src/functions/` and follows the naming scheme:
 
 * cost functions are always of the form `cost_` and a fitting name
-* gradient functions are always of the the `gradient_` and a fitting name, followed by an `!`
+* gradient functions are always of the `gradient_` and a fitting name, followed by an `!`
 for in-place gradients and by `!!` if it is a `struct` that can provide both.
 
 It would be great if you could also add a small test for the functions and the problem you

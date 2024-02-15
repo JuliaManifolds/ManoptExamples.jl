@@ -13,7 +13,7 @@ This example is the code that produces the results in [BergmannFerreiraSantosSou
 Both the Rosenbrock problem
 
 ```math
-    \operatorname*{argmin}_{x\in\mathbb R^2} a\bigl( x_1^2-x_2\bigr)^2 + \bigl(x_1-b\bigr)^2,
+    \operatorname*{argmin}_{x\in ℝ^2} a\bigl( x_1^2-x_2\bigr)^2 + \bigl(x_1-b\bigr)^2,
 ```
 
 where $a,b>0$ and usually $b=1$ and $a \gg b$,
@@ -33,7 +33,7 @@ and also the (Euclidean) gradient
 
 They are even available already here in `ManifoldExamples.jl`, see ``[`RosenbrockCost`](@ref ManoptExamples.RosenbrockCost)``{=commonmark} and ``[`RosenbrockGradient!!`](@ref ManoptExamples.RosenbrockGradient!!)``{=commonmark}.
 
-Furthermore, the ``[`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric)``{=commonmark} can be used on $\mathbb R^2$, that is
+Furthermore, the ``[`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric)``{=commonmark} can be used on $ℝ^2$, that is
 
 ```math
 ⟨X,Y⟩_{\mathrm{Rb},p} = X^\mathrm{T}G_pY, \qquad
@@ -233,7 +233,7 @@ function docE_∇f!(M, X, p)
 end
 ```
 
-Then we call the [difference of convex algorithm](https://manoptjl.org/stable/solvers/difference_of_convex/#Manopt.difference_of_convex_algorithm) on Eucldiean space $\mathbb R^2$.
+Then we call the [difference of convex algorithm](https://manoptjl.org/stable/solvers/difference_of_convex/#Manopt.difference_of_convex_algorithm) on Eucldiean space $ℝ^2$.
 
 ```{julia}
 E_doc_state = difference_of_convex_algorithm(
@@ -279,7 +279,7 @@ end
 ```
 
 While the cost of the subgradient can be infered automaticallty, we also have to provide the gradient of the sub problem.
-For $X \in \partial h(p^{(k)})$ the sunproblem top determine $p^{(k+1)}$ reads
+For $X \in   ∂h(p^{(k)})$ the sunproblem top determine $p^{(k+1)}$ reads
 
 ```math
 \operatorname*{argmin}_{p\in\mathcal M} g(p) - \langle X, \log_{p^{(k)}}p\rangle

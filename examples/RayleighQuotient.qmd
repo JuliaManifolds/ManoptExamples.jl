@@ -66,7 +66,7 @@ Pkg.activate("."); # use the example environment,
 using LRUCache, BenchmarkTools, LinearAlgebra, Manifolds, ManoptExamples, Manopt, Random
 Random.seed!(42)
 n = 500
-A = Symmetric(randn(n,n))
+A = Symmetric(randn(n, n) / n)
 ```
 
 And the manifolds
@@ -102,8 +102,8 @@ X = zero_vector(M, p0)
 we can both call
 
 ```{julia}
-Y = grad_f(M,p0)  # Allocates memory
-grad_f(M,X,p0)    # Computes in place of X and returns the result in X.
+Y = grad_f(M, p0)  # Allocates memory
+grad_f(M, X, p0)    # Computes in place of X and returns the result in X.
 norm(M, p0, X-Y)
 ```
 
@@ -162,7 +162,11 @@ We can also benchmark both
 @benchmark gradient_descent($M, $f, $grad_f, $p0)
 ```
 
-We see, that the conversion costs a bit of performance, but if the Euclidean gradient is easier to compute, this might still be ok.
+From these results we see, that the conversion from the Euclidean to the Riemannian gradient
+does require a small amount of effort and hence reduces the performance slighly.
+Still, if the Euclidean Gradient is easier to compute or already available, this is in terms
+of coding the faster way. Finally this is a tradeoff between derivation and implementation
+efforts for the Riemannian gradient and a slight performance reduction when using the Euclidean one.
 
 ### A Solver based (also) on (approximate) Hessian information
 To also involve the Hessian, we consider the [trust regions](https://manoptjl.org/stable/solvers/trust_regions/) solver with three cases:
