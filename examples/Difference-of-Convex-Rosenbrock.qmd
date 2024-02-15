@@ -13,7 +13,7 @@ This example is the code that produces the results in [BergmannFerreiraSantosSou
 Both the Rosenbrock problem
 
 ```math
-    \operatorname*{argmin}_{x\inℝ^2} a\bigl( x_1^2-x_2\bigr)^2 + \bigl(x_1-b\bigr)^2,
+    \operatorname*{argmin}_{x\in ℝ^2} a\bigl( x_1^2-x_2\bigr)^2 + \bigl(x_1-b\bigr)^2,
 ```
 
 where $a,b>0$ and usually $b=1$ and $a \gg b$,

@@ -43,7 +43,7 @@ The challenge here is that most classical algorithm, like gradient descent or Qu
 
 ## The Cyclic Proximal Point algorithm
 
-If the cost consists of a sum of functions, where each of the proximal maps is “easy to evaluate”, for best of cases in closed form, we can “apply the proximal maps in a cyclic fashion” and optain the[Cyclic Proximal Point Algorithm](https://manoptjl.org/stable/solvers/cyclic_proximal_point/) [Bacak:2014](@cite).
+If the cost consists of a sum of functions, where each of the proximal maps is “easy to evaluate”, for best of cases in closed form, we can “apply the proximal maps in a cyclic fashion” and optain the [Cyclic Proximal Point Algorithm](https://manoptjl.org/stable/solvers/cyclic_proximal_point/) [Bacak:2014](@cite).
 
 Both for the distance and the squared distance, we have [generic implementations](https://juliamanifolds.github.io/ManifoldDiff.jl/stable/library/#Proximal-Maps); since this happens in a cyclic manner, there is also always one of the arguments involved in the prox and never both.
 We can improve the performance slightly by computing all proes in parallel that do not interfer. To be precise we can compute first all proxes of distances in the regularizer that start with an odd index in parallel. Afterwards all that start with an even index.
