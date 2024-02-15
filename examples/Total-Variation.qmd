@@ -65,6 +65,7 @@ ENV["GKSwstype"] = "100"
 #| output: false
 using Manifolds, Manopt, ManoptExamples, ManifoldDiff
 using ManifoldDiff: prox_distance
+using ManoptExamples: prox_Total_Variation
 n = 500 #Signal length
 σ = 0.2 # amount of noise
 α = 0.5# in the TV model
@@ -120,7 +121,7 @@ Defining cost and the proximal maps, which are actually 3 proxes to be precise.
 ```{julia}
 #| output: false
 f(N, p) = ManoptExamples.L2_Total_Variation(N, s, α, p)
-proxes_f = ((N, λ, p) -> prox_distance(N, λ, s, p, 2), (N, λ, p) -> prox_TV(N, α * λ, p))
+proxes_f = ((N, λ, p) -> prox_distance(N, λ, s, p, 2), (N, λ, p) -> prox_Total_Variation(N, α * λ, p))
 ```
 
 We run the algorithm
