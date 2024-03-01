@@ -292,7 +292,7 @@ function benchmark_time_state(
         M,
         f,
         g!,
-        x0;
+        p0;
         stepsize=stepsize,
         evaluation=InplaceEvaluation(),
         return_state=true,
@@ -324,7 +324,7 @@ end
 Set up the example hyperparameter optimization study.
 """
 function lbfgs_study(; pruning_coeff::Float64=0.95)
-    Ns = [2^n for n in 1:3:16]
+    Ns = [2^n for n in 1:3:13]
     ls_hz = LineSearches.HagerZhang()
     od = ObjectiveData(
         f_rosenbrock,
