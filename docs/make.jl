@@ -101,11 +101,12 @@ examples_menu =
             "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
             "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md",
         ],
+        "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",
         "Robust PCA" => "examples/Robust-PCA.md",
         "Rosenbrock" => "examples/Rosenbrock.md",
-        "Total Variation" => "examples/Total-Variation.md",
+        "Total Variation" => "examples/Total-Variation.md","
     ]
 # (e) ...finally! make docs
 bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:alpha)
