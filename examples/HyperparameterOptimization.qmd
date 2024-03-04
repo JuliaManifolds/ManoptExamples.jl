@@ -7,8 +7,7 @@ date: 01/03/2024
 ## Introduction
 
 This example shows how to automatically select the best values of hyperparameters of optimization procedures such as retraction, vector transport, size of memory in L-BFGS or line search coefficients.
-Hyperparameter optimization relies on the Optina Python library because it is much more advanced than similar Julia projects, offering Bayesian optimization with conditional fields and early stopping.
-
+Hyperparameter optimization relies on the [Optuna](https://optuna.org/) [AkibaSanoYanaseToshihikoTakeruKoyama:2019](@cite) Python library because it is much more advanced than similar Julia projects, offering Bayesian optimization with conditional hyperparameters and early stopping.
 
 ## General definitions
 
@@ -166,6 +165,9 @@ We have a string that identifies the line search method name and a constructor o
 The next part is the trial evaluation procedure.
 This is one of the more important places which need to be customized to your problem.
 This is the point where we tell Optuna about the relevant optimization hyperparameters and use them to define specific problems.
+The hyperparameter optimization is a multiobjective problem: we want as good problem objectives as possible and as low times as possible.
+As Optuna doesn't currently support multicriteria pruning, which is important for obtaining a solution in a reasonable amount of time, we use a linear combination of sub-objectives to turn the problem into a single-criterion optimization. 
+The hyperparameter optimization objective is a linear combination of achieved objectives the relative weight is controlled by `objective.obj_loss_coeff`.
 
 ```{julia}
 
@@ -266,6 +268,7 @@ end
 
 In the following benchmarking code you will most likely have to adapt solver parameters.
 This is designed around `quasi_Newton` but can be adapted to any solver as needed.
+The example below performs a small number of trials for quick rendering but in practice you should aim for at least a few thousand trials (the `n_trials` parameter).
 
 ```{julia}
 
@@ -324,7 +327,7 @@ end
 Set up the example hyperparameter optimization study.
 """
 function lbfgs_study(; pruning_coeff::Float64=0.95)
-    Ns = [2^n for n in 1:3:13]
+    Ns = [2^n for n in 1:3:12]
     ls_hz = LineSearches.HagerZhang()
     od = ObjectiveData(
         f_rosenbrock,
@@ -362,7 +365,7 @@ function lbfgs_study(; pruning_coeff::Float64=0.95)
     od.pruning_losses = pruning_coeff * baseline_pruning_losses
 
     study = optuna.create_study(; study_name="L-BFGS")
-    # Here you can specify number of trials and timeout (in seconds)
+    # Here you can specify number of trials and timeout (in seconds).
     study.optimize(od; n_trials=100, timeout=150)
     println("Best params is $(study.best_params) with value $(study.best_value)")
     return study
