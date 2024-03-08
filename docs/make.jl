@@ -49,6 +49,7 @@ if "--quarto" ∈ ARGS
         Pkg.instantiate()
         Pkg.build("IJulia") # build IJulia to the right version.
         Pkg.activate(@__DIR__) # but return to the docs one before
+        CondaPkg.add("optuna")
         run(`quarto render $(examples_folder)`)
     end
 end

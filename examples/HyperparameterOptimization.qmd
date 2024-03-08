@@ -1,7 +1,7 @@
 ---
 title: "Hyperparameter optimization"
 author: "Mateusz Baran"
-date: 01/03/2024
+date: 08/03/2024
 ---
 
 ## Introduction
