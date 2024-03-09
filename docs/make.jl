@@ -116,7 +116,7 @@ makedocs(;
         prettyurls=(get(ENV, "CI", nothing) == "true") || ("--prettyurls" ∈ ARGS),
         assets=["assets/favicon.ico", "assets/citations.css"],
         size_threshold_warn=200 * 2^10, # raise slightly to 200 KiB
-        size_threshold=400 * 2^10,      # raise slightly to 400 KiB
+        size_threshold=300 * 2^10,      # raise slightly to 300 KiB
     ),
     authors="Ronny Bergmann",
     sitename="ManoptExamples.jl",
