@@ -27,6 +27,9 @@ optuna = pyimport("optuna")
 
 norm_inf(M::AbstractManifold, p, X) = norm(X, Inf)
 
+# TTsuggest_ structs collect data from a calibrating optimization run
+# that is handled by compute_pruning_losses function
+
 struct TTsuggest_int
     suggestions::Dict{String,Int}
 end
@@ -60,11 +63,24 @@ struct TracingTrial
     report::TTreport
     should_prune::TTshould_prune
 end
-```
 
-        CondaPkg Found dependencies: /home/mateusz/.julia/packages/PythonCall/wXfah/CondaPkg.toml
-        CondaPkg Found dependencies: /home/mateusz/.julia/environments/v1.10/CondaPkg.toml
-        CondaPkg Dependencies already up to date
+function compute_pruning_losses(
+    od,
+    int_suggestions::Dict{String,Int},
+    float_suggestions::Dict{String,Float64},
+    categorical_suggestions::Dict{String,Int},
+)
+    tt = TracingTrial(
+        TTsuggest_int(int_suggestions),
+        TTsuggest_float(float_suggestions),
+        TTsuggest_categorical(categorical_suggestions),
+        TTreport(Float64[]),
+        TTshould_prune(),
+    )
+    od(tt)
+    return tt.report.reported_vals
+end
+```
 
 The next part is your hyperparameter optimization objective. The `ObjectiveData` struct contains all relevant information about the sequence of specific problems.
 The outermost key part is the `N_range` field.
@@ -84,27 +100,7 @@ mutable struct ObjectiveData{TObj,TGrad}
     manopt_stepsize::Vector{Tuple{String,Any}}
     obj_loss_coeff::Float64
 end
-
-
-function compute_pruning_losses(
-    od::ObjectiveData,
-    int_suggestions::Dict{String,Int},
-    float_suggestions::Dict{String,Float64},
-    categorical_suggestions::Dict{String,Int},
-)
-    tt = TracingTrial(
-        TTsuggest_int(int_suggestions),
-        TTsuggest_float(float_suggestions),
-        TTsuggest_categorical(categorical_suggestions),
-        TTreport(Float64[]),
-        TTshould_prune(),
-    )
-    od(tt)
-    return tt.report.reported_vals
-end
 ```
-
-    compute_pruning_losses (generic function with 1 method)
 
 In the example below we optimize hyperparameters on a sequence of Rosenbrock-type problems restricted to spheres:
 
@@ -145,8 +141,6 @@ function g_rosenbrock!(M::AbstractManifold, storage, x)
     return storage
 end
 ```
-
-    g_rosenbrock! (generic function with 2 methods)
 
 Next, `gtol` is the tolerance used for the stopping criterion in optimization.
 `vts` and `retrs` are, respectively, vector transports and retraction methods selected through hyperparameter optimization.
@@ -367,51 +361,51 @@ function lbfgs_study(; pruning_coeff::Float64=0.95)
     # Here you can specify number of trials and timeout (in seconds).
     study.optimize(od; n_trials=1000, timeout=500)
     println("Best params is $(study.best_params) with value $(study.best_value)")
+    selected_manifold = od.manifold_constructors[pyconvert(Int, study.best_params["manifold"])][1]
+    selected_retraction_method = od.retrs[pyconvert(Int, study.best_params["retraction_method"])]
+    selected_vector_transport = od.vts[pyconvert(Int, study.best_params["vector_transport_method"])]
+    println("Selected manifold: $(selected_manifold)")
+    println("Selected retraction method: $(selected_retraction_method)")
+    println("Selected vector transport method: $(selected_vector_transport)")
     return study
 end
 
 lbfgs_study()
 ```
 
-    Best params is {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 5.177946035544975e-05, 'Wolfe-Powell 1-c2': 0.00022065699240592798} with value 5529.393441724406
+    Best params is {'mem_len': 3, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0006125542888545935, 'Wolfe-Powell 1-c2': 0.0010744467792321093} with value 5510.963227438757
+    Selected manifold: Sphere
+    Selected retraction method: ExponentialRetraction()
+    Selected vector transport method: ProjectionTransport()
 
-    [I 2024-03-08 20:47:28,906] A new study created in memory with name: L-BFGS
-    [I 2024-03-08 20:48:00,952] Trial 0 finished with value: 6842.352584581565 and parameters: {'mem_len': 20, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 0 with value: 6842.352584581565.
-    [I 2024-03-08 20:48:29,581] Trial 1 finished with value: 5770.31887029587 and parameters: {'mem_len': 23, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0006037261743456827, 'Wolfe-Powell 1-c2': 0.005132655740564769}. Best is trial 1 with value: 5770.31887029587.
-    [I 2024-03-08 20:48:58,405] Trial 2 finished with value: 5739.761751248307 and parameters: {'mem_len': 28, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0006929848068517475, 'Wolfe-Powell 1-c2': 0.00010072848265341218}. Best is trial 2 with value: 5739.761751248307.
-    [I 2024-03-08 20:49:25,419] Trial 3 finished with value: 5730.88644172447 and parameters: {'mem_len': 13, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0003147799818520074, 'Wolfe-Powell 1-c2': 0.0014392668301114121}. Best is trial 3 with value: 5730.88644172447.
-    [I 2024-03-08 20:49:56,034] Trial 4 finished with value: 7719.590834581578 and parameters: {'mem_len': 30, 'vector_transport_method': 2, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 3 with value: 5730.88644172447.
-    [I 2024-03-08 20:50:12,154] Trial 5 pruned. 
-    [I 2024-03-08 20:50:22,778] Trial 6 pruned. 
-    [I 2024-03-08 20:50:49,949] Trial 7 finished with value: 5747.307298867354 and parameters: {'mem_len': 30, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0004374468447104617, 'Wolfe-Powell 1-c2': 0.0034326269868046764}. Best is trial 3 with value: 5730.88644172447.
-    [I 2024-03-08 20:51:06,074] Trial 8 pruned. 
-    [I 2024-03-08 20:51:23,029] Trial 9 pruned. 
-    [I 2024-03-08 20:51:27,791] Trial 10 pruned. 
-    [I 2024-03-08 20:51:54,957] Trial 11 finished with value: 5715.3223702958485 and parameters: {'mem_len': 11, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 1.214650115543274e-05, 'Wolfe-Powell 1-c2': 0.00010874873474069736}. Best is trial 11 with value: 5715.3223702958485.
-    [I 2024-03-08 20:52:21,759] Trial 12 finished with value: 5674.56137029584 and parameters: {'mem_len': 10, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 1.1496159292180335e-05, 'Wolfe-Powell 1-c2': 0.00010048102268691798}. Best is trial 12 with value: 5674.56137029584.
-    [I 2024-03-08 20:52:47,500] Trial 13 finished with value: 5609.9961560101265 and parameters: {'mem_len': 6, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 1.041783651693428e-05, 'Wolfe-Powell 1-c2': 0.00011453985064919054}. Best is trial 13 with value: 5609.9961560101265.
-    [I 2024-03-08 20:52:51,944] Trial 14 pruned. 
-    [I 2024-03-08 20:53:18,615] Trial 15 finished with value: 5672.700441724388 and parameters: {'mem_len': 8, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 1.2631008943053551e-05, 'Wolfe-Powell 1-c2': 0.00023471299637034984}. Best is trial 13 with value: 5609.9961560101265.
-    [I 2024-03-08 20:53:22,373] Trial 16 pruned. 
-    [I 2024-03-08 20:53:47,189] Trial 17 finished with value: 5529.393441724406 and parameters: {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 5.177946035544975e-05, 'Wolfe-Powell 1-c2': 0.00022065699240592798}. Best is trial 17 with value: 5529.393441724406.
-    [I 2024-03-08 20:53:51,629] Trial 18 pruned. 
-    [I 2024-03-08 20:54:16,456] Trial 19 finished with value: 5529.489941724406 and parameters: {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 4.7581369525514006e-05, 'Wolfe-Powell 1-c2': 0.00022584968387296984}. Best is trial 17 with value: 5529.393441724406.
-    [I 2024-03-08 20:54:20,222] Trial 20 pruned. 
-    [I 2024-03-08 20:54:23,985] Trial 21 pruned. 
-    [I 2024-03-08 20:54:48,819] Trial 22 finished with value: 5529.415727438693 and parameters: {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 8.613616174126538e-05, 'Wolfe-Powell 1-c2': 0.0004565420978727029}. Best is trial 17 with value: 5529.393441724406.
-    [I 2024-03-08 20:54:52,592] Trial 23 pruned. 
-    [I 2024-03-08 20:54:56,341] Trial 24 pruned. 
-    [I 2024-03-08 20:55:00,090] Trial 25 pruned. 
-    [I 2024-03-08 20:55:05,051] Trial 26 pruned. 
-    [I 2024-03-08 20:55:08,813] Trial 27 pruned. 
-    [I 2024-03-08 20:55:12,557] Trial 28 pruned. 
-    [I 2024-03-08 20:55:18,145] Trial 29 pruned. 
-    [I 2024-03-08 20:55:21,905] Trial 30 pruned. 
-    [I 2024-03-08 20:55:25,665] Trial 31 pruned. 
-    [I 2024-03-08 20:55:29,438] Trial 32 pruned. 
-    [I 2024-03-08 20:55:54,460] Trial 33 finished with value: 5537.201441724406 and parameters: {'mem_len': 4, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.00020342007235269214, 'Wolfe-Powell 1-c2': 0.00015592126998615713}. Best is trial 17 with value: 5529.393441724406.
+    [I 2024-03-16 18:04:17,965] A new study created in memory with name: L-BFGS
+    [I 2024-03-16 18:04:45,996] Trial 0 finished with value: 5639.789870295856 and parameters: {'mem_len': 26, 'vector_transport_method': 1, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.00027288064367948073, 'Wolfe-Powell 1-c2': 0.00026503788892114045}. Best is trial 0 with value: 5639.789870295856.
+    [I 2024-03-16 18:05:11,860] Trial 1 finished with value: 5635.936370295855 and parameters: {'mem_len': 11, 'vector_transport_method': 1, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.002743250060163298, 'Wolfe-Powell 1-c2': 0.00037986521186922096}. Best is trial 1 with value: 5635.936370295855.
+    [I 2024-03-16 18:05:39,386] Trial 2 finished with value: 5673.101441724422 and parameters: {'mem_len': 26, 'vector_transport_method': 2, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.00043339485784312605, 'Wolfe-Powell 1-c2': 0.0027302649933974173}. Best is trial 1 with value: 5635.936370295855.
+    [I 2024-03-16 18:06:10,279] Trial 3 finished with value: 7410.818084581564 and parameters: {'mem_len': 26, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 1 with value: 5635.936370295855.
+    [I 2024-03-16 18:06:37,995] Trial 4 finished with value: 5756.566226449636 and parameters: {'mem_len': 25, 'vector_transport_method': 1, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 1 with value: 5635.936370295855.
+    [I 2024-03-16 18:06:42,755] Trial 5 pruned. 
+    [I 2024-03-16 18:06:58,577] Trial 6 pruned. 
+    [I 2024-03-16 18:07:15,366] Trial 7 pruned. 
+    [I 2024-03-16 18:07:40,605] Trial 8 finished with value: 5581.7437274386975 and parameters: {'mem_len': 7, 'vector_transport_method': 1, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0010567355712112379, 'Wolfe-Powell 1-c2': 0.003948002490203636}. Best is trial 8 with value: 5581.7437274386975.
+    [I 2024-03-16 18:07:46,021] Trial 9 pruned. 
+    [I 2024-03-16 18:08:11,512] Trial 10 finished with value: 5510.963227438757 and parameters: {'mem_len': 3, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0006125542888545935, 'Wolfe-Powell 1-c2': 0.0010744467792321093}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:08:35,914] Trial 11 finished with value: 5521.388656010121 and parameters: {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0006738829952322474, 'Wolfe-Powell 1-c2': 0.0010639659137420014}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:09:00,317] Trial 12 finished with value: 5521.36958458155 and parameters: {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.00010975606104676191, 'Wolfe-Powell 1-c2': 0.0007663843095951679}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:09:24,680] Trial 13 finished with value: 5520.7020845815505 and parameters: {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 6.743450835567536e-05, 'Wolfe-Powell 1-c2': 0.0008779759729737719}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:09:50,268] Trial 14 pruned. 
+    [I 2024-03-16 18:10:15,494] Trial 15 finished with value: 5595.119584581556 and parameters: {'mem_len': 6, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 8.147444451747575e-05, 'Wolfe-Powell 1-c2': 0.00012268601197923553}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:10:25,264] Trial 16 pruned. 
+    [I 2024-03-16 18:10:50,209] Trial 17 finished with value: 5572.474513153012 and parameters: {'mem_len': 5, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0015998473664092935, 'Wolfe-Powell 1-c2': 0.0005109172020536229}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:10:54,772] Trial 18 pruned. 
+    [I 2024-03-16 18:11:04,534] Trial 19 pruned. 
+    [I 2024-03-16 18:11:28,873] Trial 20 finished with value: 5512.3824417244705 and parameters: {'mem_len': 3, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 1.1581668103921961e-05, 'Wolfe-Powell 1-c2': 0.0002691056199427656}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:11:53,327] Trial 21 finished with value: 5529.088227438692 and parameters: {'mem_len': 4, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 1.3645031886009879e-05, 'Wolfe-Powell 1-c2': 0.0001863385753491203}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:12:17,911] Trial 22 finished with value: 5522.041370295835 and parameters: {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 1.0030173525937465e-05, 'Wolfe-Powell 1-c2': 0.000543991948003312}. Best is trial 10 with value: 5510.963227438757.
+    [I 2024-03-16 18:12:27,645] Trial 23 pruned. 
+    [I 2024-03-16 18:12:52,163] Trial 24 finished with value: 5528.840941724406 and parameters: {'mem_len': 4, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.000245400433292576, 'Wolfe-Powell 1-c2': 0.000133639324295565}. Best is trial 10 with value: 5510.963227438757.
 
-    Python: <optuna.study.study.Study object at 0x7f21bdfc0a10>
+    Python: <optuna.study.study.Study object at 0x70dd985d9b50>
 
 ## Summary
 

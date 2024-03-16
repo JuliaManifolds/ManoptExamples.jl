@@ -15,6 +15,7 @@ Here are some general definitions that you will most likely be able to directly 
 Just remember to install `optuna`, for example using `CondaPkg` Julia library.
 
 ```{julia}
+#| output: false
 using Manifolds, Manopt
 using PythonCall
 using BenchmarkTools
@@ -28,6 +29,9 @@ using LineSearches
 optuna = pyimport("optuna")
 
 norm_inf(M::AbstractManifold, p, X) = norm(X, Inf)
+
+# TTsuggest_ structs collect data from a calibrating optimization run
+# that is handled by compute_pruning_losses function
 
 struct TTsuggest_int
     suggestions::Dict{String,Int}
@@ -62,32 +66,9 @@ struct TracingTrial
     report::TTreport
     should_prune::TTshould_prune
 end
-```
-
-
-The next part is your hyperparameter optimization objective. The `ObjectiveData` struct contains all relevant information about the sequence of specific problems.
-The outermost key part is the `N_range` field.
-Early stopping requires a series of progressively more complex problems.
-They will be attempted from the most simple one to the most complex one, and are specified by the values of `N` in that vector.
-
-```{julia}
-
-mutable struct ObjectiveData{TObj,TGrad}
-    obj::TObj
-    grad::TGrad
-    N_range::Vector{Int}
-    gtol::Float64
-    vts::Vector{AbstractVectorTransportMethod}
-    retrs::Vector{AbstractRetractionMethod}
-    manifold_constructors::Vector{Tuple{String,Any}}
-    pruning_losses::Vector{Float64}
-    manopt_stepsize::Vector{Tuple{String,Any}}
-    obj_loss_coeff::Float64
-end
-
 
 function compute_pruning_losses(
-    od::ObjectiveData,
+    od,
     int_suggestions::Dict{String,Int},
     float_suggestions::Dict{String,Float64},
     categorical_suggestions::Dict{String,Int},
@@ -101,6 +82,29 @@ function compute_pruning_losses(
     )
     od(tt)
     return tt.report.reported_vals
+end
+
+```
+
+
+The next part is your hyperparameter optimization objective. The `ObjectiveData` struct contains all relevant information about the sequence of specific problems.
+The outermost key part is the `N_range` field.
+Early stopping requires a series of progressively more complex problems.
+They will be attempted from the most simple one to the most complex one, and are specified by the values of `N` in that vector.
+
+```{julia}
+#| output: false
+mutable struct ObjectiveData{TObj,TGrad}
+    obj::TObj
+    grad::TGrad
+    N_range::Vector{Int}
+    gtol::Float64
+    vts::Vector{AbstractVectorTransportMethod}
+    retrs::Vector{AbstractRetractionMethod}
+    manifold_constructors::Vector{Tuple{String,Any}}
+    pruning_losses::Vector{Float64}
+    manopt_stepsize::Vector{Tuple{String,Any}}
+    obj_loss_coeff::Float64
 end
 
 ```
@@ -119,6 +123,7 @@ It is easiest when problems for different values `N` can be distinguished by bei
 `pruning_losses` and `compute_pruning_losses` are related to early pruning used in Optuna and you shouldn't have to modify them.
 
 ```{julia}
+#| output: false
 function f_rosenbrock(x)
     result = 0.0
     for i in 1:2:length(x)
@@ -368,6 +373,12 @@ function lbfgs_study(; pruning_coeff::Float64=0.95)
     # Here you can specify number of trials and timeout (in seconds).
     study.optimize(od; n_trials=1000, timeout=500)
     println("Best params is $(study.best_params) with value $(study.best_value)")
+    selected_manifold = od.manifold_constructors[pyconvert(Int, study.best_params["manifold"])][1]
+    selected_retraction_method = od.retrs[pyconvert(Int, study.best_params["retraction_method"])]
+    selected_vector_transport = od.vts[pyconvert(Int, study.best_params["vector_transport_method"])]
+    println("Selected manifold: $(selected_manifold)")
+    println("Selected retraction method: $(selected_retraction_method)")
+    println("Selected vector transport method: $(selected_vector_transport)")
     return study
 end
 
