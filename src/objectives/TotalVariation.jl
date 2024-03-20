@@ -362,6 +362,45 @@ function grad_Total_Variation!(M::PowerManifold, X, x, p::Int=1)
     end # i in R
     return X
 end
+function _subgrad_Total_Variation(s, M::AbstractManifold, q::Tuple{T,T}, k::Int=1; atol=0) where {T}
+    if k == 2
+        return (-log(M, q[1], q[2]), -log(M, q[2], q[1]))
+    else
+        d = distance(M, q[1], q[2])
+        if d == 0 && s == true # subdifferential containing zero
+            return (zero_vector(M, q[1]), zero_vector(M, q[2]))
+        elseif d ≤ atol && s == false
+            return (
+                ManifoldDiff.subgrad_distance(M, q[2], q[1], k; atol=atol),
+                ManifoldDiff.subgrad_distance(M, q[1], q[2], k; atol=atol),
+            )
+        else
+            return (-log(M, q[1], q[2]) / (d^(2 - k)), -log(M, q[2], q[1]) / (d^(2 - k)))
+        end
+    end
+end
+function _subgrad_Total_Variation!(s, M::AbstractManifold, X, q::Tuple{T,T}, k=1; atol=0) where {T}
+    d = distance(M, q[1], q[2])
+    if d == 0 && s == true # subdifferential containing zero
+        zero_vector!(M, X[1], q[1])
+        zero_vector!(M, X[2], q[2])
+        return X
+    elseif d ≤ atol && s == false
+        ManifoldDiff.subgrad_distance!(M, X[1], q[2], q[1], k; atol=atol)
+        ManifoldDiff.subgrad_distance!(M, X[2], q[1], q[2], k; atol=atol)
+        return X
+    end
+    log!(M, X[1], q[1], q[2])
+    log!(M, X[2], q[2], q[1])
+    if k == 2
+        X[1] .*= -1
+        X[2] .*= -1
+    else
+        X[1] .*= -1 / (d^(2 - k))
+        X[2] .*= -1 / (d^(2 - k))
+    end
+    return X
+end
 @doc raw"""
     X = subgrad_TV(M, (p,q)[, k=1; atol=0])
     subgrad_TV!(M, X, (p,q)[, k=1; atol=0])
@@ -382,7 +421,7 @@ function _subgrad_Total_Variation(s, M::PowerManifold, p, k::Int=1; atol=0)
     d = length(power_size)
     maxInd = last(R)
     X = zero_vector(M, p)
-    cost = L2_Total_Variation(M, p, k, 0)
+    cost = Total_Variation(M, p, k, 0)
     for i in R # iterate over all pixel
         for l in 1:d # for all direction combinations
             el = CartesianIndex(ntuple(i -> (i == l) ? 1 : 0, d)) #l th unit vector
@@ -407,7 +446,7 @@ function _subgrad_Total_Variation!(s, M::PowerManifold, X, p, k::Int=1; atol=0)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
     maxInd = last(R)
-    c = L2_Total_Variation(M, p, k, 0)
+    c = Total_Variation(M, p, k, 0)
     g = [zero_vector(M.manifold, p[first(R)]), zero_vector(M.manifold, p[first(R)])]
     for i in R # iterate over all pixel
         for l in 1:d # for all direction combinations
