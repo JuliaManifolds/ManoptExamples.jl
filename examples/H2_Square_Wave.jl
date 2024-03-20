@@ -15,15 +15,15 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 # Settings
 experiment_name = "H2_Square_Wave_TV"
 results_folder = joinpath(@__DIR__, experiment_name)
-benchmarking = false
-export_orig = false
-export_result = false
-export_table = false
+benchmarking = true
+export_orig = true
+export_result = true
+export_table = true
 toggle_debug = false
 !isdir(results_folder) && mkdir(results_folder)
 #
 # Experiment parameters
-Random.seed!(42)
+Random.seed!(33)
 n = 496 # (this is so that n equals the actual length of the artificial signal)
 σ = 0.1 # Noise parameter
 α = 0.05 # TV parameter
@@ -95,12 +95,12 @@ end
 # Objective, subgradient and prox
 function f(M, p)
     return 1 / length(data) *
-           (1 / 2 * distance(M, data, p)^2 + α * ManoptExamples.costTV(M, p))
+           (1 / 2 * distance(M, data, p)^2 + α * ManoptExamples.Total_Variation(M, p))
 end
 function ∂f(M, p)
     return 1 / length(data) * (
         ManifoldDiff.grad_distance(M, data, p) +
-        α * ManoptExamples.subgrad_TV(M, p; atol=atol)
+        α * ManoptExamples.subgrad_Total_Variation(M, p; atol=atol)
     )
 end
 proxes = (
@@ -177,8 +177,6 @@ b = convex_bundle_method(
         (:Cost, "F(p): %1.8f "),
         (:ξ, "ξ: %1.8f "),
         (:ε, "ε: %1.8f "),
-        (:ϱ, "ϱ: %1.4f "),
-        # (:diameter, "diameter: %1.4f "),
         (:Stepsize, "stepsize: %1.4f "),
         :WarnBundle,
         :Stop,

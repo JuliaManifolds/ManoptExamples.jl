@@ -22,7 +22,7 @@ toggle_debug = false
 !isdir(results_folder) && mkdir(results_folder)
 #
 # Parameters
-Random.seed!(42)
+Random.seed!(33)
 atol = 1e-8# √eps()
 # δ = -1.0
 # μ = 0.5
@@ -41,12 +41,9 @@ end
 #
 # Riemannian median
 function riemannian_median(M, n)
-    if split(string(M), "(")[1] == "Hyperbolic"
-        k_min = k_max = -1.0
-    elseif split(string(M), "(")[1] == "Sphere"
-        k_min = k_max = 1.0
+    if split(string(M), "(")[1] == "Sphere"
+        k_max = 1.0
     else
-        k_min = nothing
         k_max = 0.0
     end
     #
@@ -85,15 +82,14 @@ function riemannian_median(M, n)
         p0;
         diameter=diameter,
         domain=domf,
-        k_min=k_min,
         k_max=k_max,
         count=[:Cost, :SubGradient],
         cache=(:LRU, [:Cost, :SubGradient], 50),
         debug=[
             :Iteration,
             (:Cost, "F(p): %1.16f "),
-            (:ξ, "ξ: %1.16f "),
-            # (:ϱ, "ϱ: %1.4f "),
+            (:ξ, "ξ: %1.8f "),
+            (:last_stepsize, "step size: %1.8f"),
             :Stop,
             1000,
             "\n",
@@ -186,7 +182,6 @@ function riemannian_median(M, n)
         # bundle_size=$bundle_size,
         diameter=$diameter,
         domain=$domf,
-        k_min=$k_min,
         k_max=$k_max,
         # count=[:Cost, :SubGradient],
         cache=(:LRU, [:Cost, :SubGradient], 50),
@@ -238,7 +233,7 @@ function riemannian_median(M, n)
 end
 #
 # Finalize - export costs
-for subexperiment_name in ["Sn"]#["SPD", "Hn", "Sn"]
+for subexperiment_name in ["SPD", "Hn", "Sn"]
     println(subexperiment_name)
     A1 = DataFrame(;
         a="Dimension",
@@ -324,6 +319,7 @@ for subexperiment_name in ["Sn"]#["SPD", "Hn", "Sn"]
     elseif subexperiment_name == "Hn"
         for n in [1, 2, 5, 10, 15]
             M = Hyperbolic(Int(2^n))
+            println("Dimension: $(Int(n))")
             records, times = riemannian_median((M), 1000)
             if export_table
                 B1 = DataFrame(;
@@ -370,6 +366,7 @@ for subexperiment_name in ["Sn"]#["SPD", "Hn", "Sn"]
     elseif subexperiment_name == "Sn"
         for n in [1, 2, 5, 10, 15]
             M = Sphere(Int(2^n))
+            println("Dimension: $(Int(n))")
             records, times = riemannian_median((M), 1000)
             if export_table
                 B1 = DataFrame(;

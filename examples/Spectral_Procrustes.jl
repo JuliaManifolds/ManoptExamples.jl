@@ -17,8 +17,8 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 experiment_name = "Spectral_Procrustes"
 results_folder = joinpath(@__DIR__, experiment_name)
 figures_folder = joinpath(@__DIR__, experiment_name, "figures")
-export_table = true
-benchmark = false
+export_table = true 
+benchmark = true 
 show_plot = true
 !isdir(results_folder) && mkdir(results_folder)
 !isdir(figures_folder) && mkdir(figures_folder)
@@ -38,7 +38,7 @@ end
 #
 # Algorithm parameters
 bundle_cap = 25
-max_iters = 500
+max_iters = 5000
 δ = 0.#1e-2 # Update parameter for μ
 μ = 50. # Initial proxiaml parameter for the proximal bundle method
 k_max = 1/4
@@ -67,33 +67,6 @@ rpb = Manifolds.RiemannianProjectionBackend(Manifolds.ExplicitEmbeddedBackend(M;
 dom(M, p) = distance(M, p, p0) < diam/2 ? true : false
 #riemannian_gradient(M, p, ∂ₑf(get_embedding(M), embed(M, p)))
 
-@doc raw"""
-    DomainBackTrackingStepsize <: Stepsize
-
-Implement a backtrack as long as we are ``q = \operatorname{retr}_p(X)``
-yields a point closer to ``p`` than ``\lVert X \rVert_p`` or
-``q`` is not on the domain.
-For the domain this step size requires a `ConvexBundleMethodState`
-"""
-mutable struct DomainBackTrackingStepsize <: Manopt.Stepsize
-    β::Float64
-end
-function (dbt::DomainBackTrackingStepsize)(
-    amp::AbstractManoptProblem,
-    cbms::ConvexBundleMethodState,
-    ::Any, args...; kwargs...
-)
-    M = get_manifold(amp)
-    t = 1.0
-    q = retract(M, cbms.p_last_serious, -t * cbms.g, cbms.retraction_method)
-    l = norm(M, cbms.p_last_serious, cbms.g)
-    while !cbms.domain(M, q) || distance(M, cbms.p_last_serious, q) < t * l
-        t *= dbt.β
-        retract!(M, q, cbms.p_last_serious, -t * cbms.g, cbms.retraction_method)
-    end
-    return t
-end
-
 #
 # Optimization
 println("\nConvex Bundle Method")
@@ -105,10 +78,10 @@ println("\nConvex Bundle Method")
     bundle_cap=bundle_cap,
     k_max=k_max,
     domain=dom,
-    diam=diam,
+    diameter=diam,
     count=[:Cost, :SubGradient],
     cache=(:LRU, [:Cost, :SubGradient], 50),
-    stepsize = DomainBackTrackingStepsize(0.5),
+    # stepsize = DomainBackTrackingStepsize(0.5),
     stopping_criterion = StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
     debug=[
         :Iteration,
@@ -197,10 +170,9 @@ if benchmark
         $f,
         $∂f,
         $p0;
-        stepsize = $(DomainBackTrackingStepsize(0.5)),
         k_max=$k_max,
         domain=$dom,
-        diam=$diam,
+        diameter=$diam,
         cache=(:LRU, [:Cost, :SubGradient], 50),
         stopping_criterion = StopWhenLagrangeMultiplierLess($tol) | StopAfterIteration($max_iters),
     )
