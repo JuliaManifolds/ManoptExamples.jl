@@ -49,6 +49,7 @@ if "--quarto" ∈ ARGS
         Pkg.instantiate()
         Pkg.build("IJulia") # build IJulia to the right version.
         Pkg.activate(@__DIR__) # but return to the docs one before
+        CondaPkg.add("optuna")
         run(`quarto render $(examples_folder)`)
     end
 end
@@ -101,6 +102,7 @@ examples_menu =
             "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
             "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md",
         ],
+        "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",
         "Robust PCA" => "examples/Robust-PCA.md",
