@@ -181,7 +181,7 @@ if benchmark
         $f,
         $∂f,
         $p0;
-        count=[:Cost, :SubGradient],
+        # count=[:Cost, :SubGradient],
         cache=(:LRU, [:Cost, :SubGradient], 50),
         stepsize=DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
         stopping_criterion=StopWhenSubgradientNormLess(√$tol) | StopAfterIteration($max_iters),

@@ -6,9 +6,9 @@ date: 01/11/2023
 
 ## Introduction
 
-In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2023](@cite)
+In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
 with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021:1](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1], to solve the spectral Procrustes problem on $\mathrm{SO}(250)$.
-This example reproduces the results from [BergmannHerzogJasa:2023](@cite), Section 5.
+This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.
 
 ```{julia}
 #| echo: false
@@ -76,23 +76,32 @@ $$
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(42)
+Random.seed!(33)
 n = 1000
 d = 250
 A = rand(n, d)
 B = randn(n, d)
 tol = 1e-8
 #
+# Compute the orthogonal Procrustes minimizer given A and B
+function orthogonal_procrustes(A, B)
+	s =  svd((A'*B)')
+    R = s.U* s.Vt
+	return R
+end
+#
 # Algorithm parameters
-bundle_size = 15
+bundle_cap = 25
 max_iters = 5000
-ϱ = 1e-2 # Curvature-dependent parameter for the convex bundle method
-μ = 50.0 # Proximal parameter for the PBA
-δ = 0.0 # Update parameter for μ
+δ = 0.#1e-2 # Update parameter for μ
+μ = 50. # Initial proxiaml parameter for the proximal bundle method
+k_max = 1/4
+diameter = π/(3*√k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
-p0 = rand(M)
+p0 = orthogonal_procrustes(A, B) #rand(M)
+project!(M, p0, p0)
 ```
 
 We now define objective and subdifferential (first the Euclidean one, then the projected one).
@@ -108,22 +117,44 @@ function ∂ₑf(M, p)
 end
 rpb = Manifolds.RiemannianProjectionBackend(Manifolds.ExplicitEmbeddedBackend(M; gradient=∂ₑf))
 ∂f(M, p) = Manifolds.gradient(M, f, p, rpb)
+domf(M, p) = distance(M, p, p0) < diameter/2 ? true : false
 ```
 
-We run the optimization algorithms...
+We introduce some keyword arguments for the solvers we will use in this experiment
 ```{julia}
-#| output: false
-p = proximal_bundle_method(
-    M,
-    f,
-    ∂f,
-    p0;
-    δ=δ,
-    μ=μ,
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    stopping_criterion=StopWhenLagrangeMultiplierLess(tol)|StopAfterIteration(max_iters),
-    debug=[
+cbm_kwargs = [
+    :bundle_cap => bundle_cap,
+    :k_max => k_max,
+    :domain => domf,
+    :diameter => diameter,
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+    :debug => [
+        :Iteration,
+        (:Cost, "F(p): %1.16f "),
+        (:ξ, "ξ: %1.8f "),
+        (:ε, "ε: %1.8f "),
+        (:last_stepsize, "step size: %1.8f"),
+        :WarnBundle,
+        :Stop,
+        10,
+        "\n",
+    ],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+cbm_bm_kwargs = [
+    :k_max => k_max,
+    :domain => domf,
+    :diameter => diameter,
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+]
+pba_kwargs = [
+    :bundle_size => bundle_cap,
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol)|StopAfterIteration(max_iters),
+    :debug =>[
         :Iteration,
         :Stop,
         (:Cost, "F(p): %1.16f "),
@@ -132,102 +163,62 @@ p = proximal_bundle_method(
         (:μ, "μ: %1.8f "),
         :Stop,
         :WarnBundle,
-        1000,
+        10,
         "\n",
     ],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-    return_objective=true,
-)
-p_result = get_solver_result(p)
-p_record = get_record(p)
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+pba_bm_kwargs = [
+    :cache =>(:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) |                                   StopAfterIteration(max_iters),
+]
+sgm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
+    :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
+    :record => [:Iteration, :Cost, :p_star],
+    :return_state => true,
+]
+sgm_bm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) |
+                           StopAfterIteration(max_iters),
+]
+```
+
+We run the optimization algorithms...
+```{julia}
+#| output: false
+cbm = convex_bundle_method(M, f, ∂f, p0; cbm_kwargs...)
+cbm_result = get_solver_result(cbm)
+cbm_record = get_record(cbm)
 #
-b = convex_bundle_method(
-    M,
-    f,
-    ∂f,
-    p0;
-    bundle_size=bundle_size,
-    ϱ=ϱ,
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    debug=[
-        :Iteration,
-        (:Cost, "F(p): %1.16f "),
-        (:ξ, "ξ: %1.16f "),
-        (:ϱ, "ϱ: %1.4f "),
-        :WarnBundle,
-        :Stop,
-        1000,
-        "\n",
-    ],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-    return_objective=true,
-)
-b_result = get_solver_result(b)
-b_record = get_record(b)
+pba = proximal_bundle_method(M, f, ∂f, p0; pba_kwargs...)
+pba_result = get_solver_result(pba)
+pba_record = get_record(pba)
 #
-s = subgradient_method(
-    M,
-    f,
-    ∂f,
-    p0;
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    stepsize=DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    stopping_criterion=StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
-    debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-)
-s_result = get_solver_result(s)
-s_record = get_record(s)
+sgm = subgradient_method(M, f, ∂f, p0; sgm_kwargs...)
+sgm_result = get_solver_result(sgm)
+sgm_record = get_record(sgm)
 ```
 
 ... And we benchmark their performance.
 ```{julia}
 if benchmarking
-    p_bm = @benchmark proximal_bundle_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        δ=$δ,
-        μ=$μ,
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        stopping_criterion=StopWhenLagrangeMultiplierLess($tol)|StopAfterIteration($max_iters),
-    )
-    b_bm = @benchmark convex_bundle_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        bundle_size=$bundle_size,
-        ϱ=$ϱ,
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-    )
-    s_bm = @benchmark subgradient_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        stepsize=DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-        stopping_criterion=StopWhenSubgradientNormLess(√$tol) | StopAfterIteration($max_iters),
-    )
+    pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; pba_bm_kwargs...)
+    cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; cbm_bm_kwargs...)
+    sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; sgm_bm_kwargs...)
     #
     experiments = ["RCBM", "PBA", "SGM"]
-    records = [b_record, p_record, s_record]
-    results = [b_result, p_result, s_result]
+    records = [cbm_record, pba_record, sgm_record]
+    results = [cbm_result, pba_result, sgm_result]
     times = [
-        median(b_bm).time * 1e-9,
-        median(p_bm).time * 1e-9,
-        median(s_bm).time * 1e-9,
+        median(cbm_bm).time * 1e-9,
+        median(pba_bm).time * 1e-9,
+        median(sgm_bm).time * 1e-9,
     ]
     #
     # Finalize - export costs

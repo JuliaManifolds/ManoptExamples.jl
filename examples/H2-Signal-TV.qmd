@@ -141,7 +141,6 @@ end
 We introduce some keyword arguments for the solvers we will use in this experiment
 ```{julia}
 cbm_kwargs(diameter, domf, k_max) = [
-    :count => [:Cost, :SubGradient],
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :domain => domf,
@@ -166,7 +165,6 @@ cbm_bm_kwargs = [
     :k_max => k_max,
 ]
 pba_kwargs = [
-    :count => [:Cost, :SubGradient],
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :debug => [
         :Iteration,
@@ -188,7 +186,6 @@ pba_bm_kwargs = [
     :stopping_criterion => StopWhenLagrangeMultiplierLess($atol) |                                   StopAfterIteration($max_iters),
 ]
 sgm_kwargs = [
-    :count => [:Cost, :SubGradient],
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
     :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
