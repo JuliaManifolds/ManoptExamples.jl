@@ -21,9 +21,9 @@ Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version
 
 export_orig = true
-export_table = false
-export_result = false
-benchmarking = false
+export_table = true
+export_result = true
+benchmarking = true
 
 experiment_name = "H2-Signal-TV"
 results_folder = joinpath(@__DIR__, experiment_name)
@@ -70,11 +70,12 @@ $$
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(42)
+Random.seed!(33)
 n = 496 # (this is so that n equals the actual length of the artificial signal)
 σ = 0.1 # Noise parameter
 α = 0.05 # TV parameter
-atol = 1e-8 # √eps()
+atol = 1e-8
+k_max = 0.0
 max_iters = 15000
 #
 # Colors
@@ -137,6 +138,94 @@ function matrixify_Poincare_ball(input)
 end
 ```
 
+We introduce some keyword arguments for the solvers we will use in this experiment
+```{julia}
+cbm_kwargs(diameter, domf, k_max) = [
+    :count => [:Cost, :SubGradient],
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :diameter => diameter,
+    :domain => domf,
+    :k_max = k_max,
+    :debug => [
+        :Iteration,
+        (:Cost, "F(p): %1.8f "),
+        (:ξ, "ξ: %1.16f "),
+        (:ε, "ε: %1.16f "),
+        :WarnBundle,
+        :Stop,
+        1000,
+        "\n",
+        ],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+cbm_bm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :diameter => diameter,
+    :domain => domf,
+    :k_max => k_max,
+]
+pba_kwargs = [
+    :count => [:Cost, :SubGradient],
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :debug => [
+        :Iteration,
+        :Stop,
+        (:Cost, "F(p): %1.16f "),
+        (:ν, "ν: %1.16f "),
+        (:c, "c: %1.16f "),
+        (:μ, "μ: %1.8f "),
+        :Stop,
+        1000,
+        "\n",
+    ],
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+pba_bm_kwargs = [
+    :cache =>(:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess($atol) |                                   StopAfterIteration($max_iters),
+]
+sgm_kwargs = [
+    :count => [:Cost, :SubGradient],
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
+    :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+sgm_bm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) |
+                           StopAfterIteration(max_iters),
+]
+cppa_kwargs = [
+    :stopping_criterion => StopWhenAny(
+        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
+    ),
+    :debug => [
+        :Iteration,
+        " | ",
+        DebugProximalParameter(),
+        " | ",
+        (:Cost, "F(p): %1.16f "),
+        " | ",
+        :Change,
+        "\n",
+        1000,
+        :Stop,
+    ],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+cpp_bm_kwargs = [
+    :stopping_criterion => StopWhenAny(
+        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
+    ),
+]
+```
+
 We now fix the data for the experiment...
 ```{julia}
 #| output: false
@@ -145,7 +234,7 @@ data, geodesics = artificial_H2_signal(n; a=-6.0, b=6.0, T=3)
 Hn = PowerManifold(H, NestedPowerRepresentation(), length(data))
 noise = map(p -> exp(H, p, rand(H; vector_at=p, σ=σ)), data)
 p0 = noise
-diam = 2.5 * distance(Hn, p0, data) # Diameter for the convex bundle method
+diameter = floatmax(Float64)
 ```
 
 ... As well as objective, subdifferential, and proximal map.
@@ -153,13 +242,19 @@ diam = 2.5 * distance(Hn, p0, data) # Diameter for the convex bundle method
 #| output: false
 function f(M, p)
     return 1 / length(data) *
-        (1 / 2 * distance(M, data, p)^2 + α * ManoptExamples.costTV(M, p))
+           (1 / 2 * distance(M, data, p)^2 + α * ManoptExamples.Total_Variation(M, p))
 end
+domf(M, p) = distance(M, p, p0) < diameter / 2 ? true : false
 function ∂f(M, p)
-    return 1 / length(data) *
-        (grad_distance(M, data, p) + α * ManoptExamples.subgrad_TV(M, p; atol=atol))
+    return 1 / length(data) * (
+        ManifoldDiff.grad_distance(M, data, p) +
+        α * ManoptExamples.subgrad_Total_Variation(M, p; atol=atol)
+    )
 end
-proxes = ((M, λ, p) -> prox_distance(M, λ, data, p, 2), (M, λ, p) -> prox_TV(M, α * λ, p))
+proxes = (
+    (M, λ, p) -> ManifoldDiff.prox_distance(M, λ, data, p, 2),
+    (M, λ, p) -> ManoptExamples.prox_Total_Variation(M, α * λ, p),
+)
 ```
 
 We can now plot the initial setting.
@@ -211,149 +306,39 @@ end
 Finally, we run the optimization algorithms...
 ```{julia}
 #| output: false
-b = convex_bundle_method(
-    Hn,
-    f,
-    ∂f,
-    p0;
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    diam=diam,
-    debug=[
-        :Iteration,
-        (:Cost, "F(p): %1.8f "),
-        (:ξ, "ξ: %1.16f "),
-        (:ε, "ε: %1.16f "),
-        (:ϱ, "ϱ: %1.4f "),
-        (:diam, "diam: %1.4f "),
-        :WarnBundle,
-        :Stop,
-        1000,
-        "\n",
-        ],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-    return_objective=true,
-)
-b_result = get_solver_result(b)
-b_record = get_record(b)
+cbm = convex_bundle_method(Hn, f, ∂f, p0; cbm_kwargs...)
+cbm_result = get_solver_result(cbm)
+cbm_record = get_record(cbm)
 #
-p = proximal_bundle_method(
-    Hn,
-    f,
-    ∂f,
-    p0;
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    stopping_criterion=StopWhenLagrangeMultiplierLess(atol)|StopAfterIteration(max_iters),
-    debug=[
-        :Iteration,
-        :Stop,
-        (:Cost, "F(p): %1.16f "),
-        (:ν, "ν: %1.16f "),
-        (:c, "c: %1.16f "),
-        (:μ, "μ: %1.8f "),
-        # (:α, "α: %1.8f "),
-        :Stop,
-        1000,
-        "\n",
-    ],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-    return_objective=true,
-)
-p_result = get_solver_result(p)
-p_record = get_record(p)
+pba = proximal_bundle_method(Hn, f, ∂f, p0; pba_kwargs...)
+pba_result = get_solver_result(pba)
+pba_record = get_record(pba)
 #
-s = subgradient_method(
-    Hn,
-    f,
-    ∂f,
-    p0;
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    stopping_criterion=StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
-    debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-)
-s_result = get_solver_result(s)
-s_record = get_record(s)
+sgm = subgradient_method(Hn, f, ∂f, p0; sgm_kwargs...)
+sgm_result = get_solver_result(sgm)
+sgm_record = get_record(sgm)
 #
-c = cyclic_proximal_point(
-    Hn,
-    f,
-    proxes,
-    p0;
-    stopping_criterion=StopWhenAny(StopAfterIteration(max_iters),StopWhenChangeLess(10.0^-8)),
-    debug=[
-        :Iteration,
-        " | ",
-        DebugProximalParameter(),
-        " | ",
-        (:Cost, "F(p): %1.16f "),
-        " | ",
-        :Change,
-        "\n",
-        1000,
-        :Stop,
-    ],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-)
-c_result = get_solver_result(c)
-c_record = get_record(c)
+cppa = cyclic_proximal_point(Hn, f, proxes, p0; cppa_kwargs...)
+cppa_result = get_solver_result(cppa)
+cppa_record = get_record(cppa)
 ```
 
 ... And we benchmark their performance.
 ```{julia}
 if benchmarking
-    p_bm = @benchmark proximal_bundle_method(
-        $Hn,
-        $f,
-        $∂f,
-        $p0;
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        stopping_criterion=StopWhenLagrangeMultiplierLess($atol)|StopAfterIteration($max_iters),
-    )
-    b_bm = @benchmark convex_bundle_method(
-        $Hn,
-        $f,
-        $∂f,
-        $p0;
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        diam=$diam,
-        p_estimate=$data,
-    )
-    s_bm = @benchmark subgradient_method(
-        $Hn,
-        $f,
-        $∂f,
-        $p0;
-        count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        stopping_criterion=StopWhenSubgradientNormLess(√$atol) | StopAfterIteration($max_iters),
-    )
-    c_bm = @benchmark cyclic_proximal_point(
-        $Hn,
-        $f,
-        $proxes,
-        $p0;
-        stopping_criterion=StopWhenAny(StopAfterIteration($max_iters),StopWhenChangeLess(10.0^-8))
-    )
+    pba_bm = @benchmark proximal_bundle_method($Hn, $f, $∂f, $p0; pba_bm_kwargs...)
+    cbm_bm = @benchmark convex_bundle_method($Hn, $f, $∂f, $p0; cbm_bm_kwargs...)
+    sgm_bm = @benchmark subgradient_method($Hn, $f, $∂f, $p0; sgm_bm_kwargs...)
+    cppa_bm = @benchmark cyclic_proximal_point($Hn, $f, $proxes, $p0; cppa_bm_kwargs...)
     #
     experiments = ["CBM", "PBA", "SGM", "CPPA"]
-    records = [b_record, p_record, s_record, c_record]
-    results = [b_result, p_result, s_result, c_result]
+    records = [cbm_record, pba_record, sgm_record, cppa_record]
+    results = [cbm_result, pba_result, sgm_result, cppa_result]
     times = [
-        median(b_bm).time * 1e-9,
-        median(p_bm).time * 1e-9,
-        median(s_bm).time * 1e-9,
-        median(c_bm).time * 1e-9,
+        median(cbm_bm).time * 1e-9,
+        median(pba_bm).time * 1e-9,
+        median(sgm_bm).time * 1e-9,
+        median(cppa_bm).time * 1e-9,
     ]
     #
     # Finalize - export costs
@@ -391,6 +376,7 @@ if export_result
     ball_p = convert.(PoincareBallPoint, p_result)
     ball_s = convert.(PoincareBallPoint, s_result)
     ball_c = convert.(PoincareBallPoint, c_result)
+    #
     # Plot results
     plot!(
         ball_scene,
@@ -401,7 +387,7 @@ if export_result
         label="Convex Bundle Method",
     )
     #
-    # Suppress next plots for clarity
+    # Suppress some plots for clarity
     # plot!(ball_scene, H, ball_p; label="Proximal Bundle Method")
     # plot!(ball_scene, H, ball_s; label="Subgradient Method")
     # plot!(ball_scene, H, ball_c; label="CPPA")
