@@ -138,91 +138,6 @@ function matrixify_Poincare_ball(input)
 end
 ```
 
-We introduce some keyword arguments for the solvers we will use in this experiment
-```{julia}
-cbm_kwargs(diameter, domf, k_max) = [
-    :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :diameter => diameter,
-    :domain => domf,
-    :k_max = k_max,
-    :debug => [
-        :Iteration,
-        (:Cost, "F(p): %1.8f "),
-        (:ξ, "ξ: %1.16f "),
-        (:ε, "ε: %1.16f "),
-        :WarnBundle,
-        :Stop,
-        1000,
-        "\n",
-        ],
-    :record => [:Iteration, :Cost, :Iterate],
-    :return_state => true,
-]
-cbm_bm_kwargs = [
-    :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :diameter => diameter,
-    :domain => domf,
-    :k_max => k_max,
-]
-pba_kwargs = [
-    :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :debug => [
-        :Iteration,
-        :Stop,
-        (:Cost, "F(p): %1.16f "),
-        (:ν, "ν: %1.16f "),
-        (:c, "c: %1.16f "),
-        (:μ, "μ: %1.8f "),
-        :Stop,
-        1000,
-        "\n",
-    ],
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
-    :record => [:Iteration, :Cost, :Iterate],
-    :return_state => true,
-]
-pba_bm_kwargs = [
-    :cache =>(:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess($atol) |                                   StopAfterIteration($max_iters),
-]
-sgm_kwargs = [
-    :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
-    :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
-    :record => [:Iteration, :Cost, :Iterate],
-    :return_state => true,
-]
-sgm_bm_kwargs = [
-    :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenSubgradientNormLess(√atol) |
-                           StopAfterIteration(max_iters),
-]
-cppa_kwargs = [
-    :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
-    ),
-    :debug => [
-        :Iteration,
-        " | ",
-        DebugProximalParameter(),
-        " | ",
-        (:Cost, "F(p): %1.16f "),
-        " | ",
-        :Change,
-        "\n",
-        1000,
-        :Stop,
-    ],
-    :record => [:Iteration, :Cost, :Iterate],
-    :return_state => true,
-]
-cpp_bm_kwargs = [
-    :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
-    ),
-]
-```
-
 We now fix the data for the experiment...
 ```{julia}
 #| output: false
@@ -300,6 +215,91 @@ if export_orig
 end
 ```
 
+We introduce some keyword arguments for the solvers we will use in this experiment
+```{julia}
+cbm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :diameter => diameter,
+    :domain => domf,
+    :k_max => k_max,
+    :debug => [
+        :Iteration,
+        (:Cost, "F(p): %1.8f "),
+        (:ξ, "ξ: %1.16f "),
+        (:ε, "ε: %1.16f "),
+        :WarnBundle,
+        :Stop,
+        1000,
+        "\n",
+        ],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+cbm_bm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :diameter => diameter,
+    :domain => domf,
+    :k_max => k_max,
+]
+pba_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :debug => [
+        :Iteration,
+        :Stop,
+        (:Cost, "F(p): %1.16f "),
+        (:ν, "ν: %1.16f "),
+        (:c, "c: %1.16f "),
+        (:μ, "μ: %1.8f "),
+        :Stop,
+        1000,
+        "\n",
+    ],
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+pba_bm_kwargs = [
+    :cache =>(:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) |                                   StopAfterIteration(max_iters),
+]
+sgm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
+    :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+sgm_bm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) |
+                           StopAfterIteration(max_iters),
+]
+cppa_kwargs = [
+    :stopping_criterion => StopWhenAny(
+        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
+    ),
+    :debug => [
+        :Iteration,
+        " | ",
+        DebugProximalParameter(),
+        " | ",
+        (:Cost, "F(p): %1.16f "),
+        " | ",
+        :Change,
+        "\n",
+        1000,
+        :Stop,
+    ],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+cppa_bm_kwargs = [
+    :stopping_criterion => StopWhenAny(
+        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
+    ),
+]
+```
+
 Finally, we run the optimization algorithms...
 ```{julia}
 #| output: false
@@ -369,10 +369,10 @@ Lastly, we plot the results.
 ```{julia}
 if export_result
     # Convert hyperboloid points to Poincaré ball points
-    ball_b = convert.(PoincareBallPoint, b_result)
-    ball_p = convert.(PoincareBallPoint, p_result)
-    ball_s = convert.(PoincareBallPoint, s_result)
-    ball_c = convert.(PoincareBallPoint, c_result)
+    ball_b = convert.(PoincareBallPoint, cbm_result)
+    ball_p = convert.(PoincareBallPoint, pba_result)
+    ball_s = convert.(PoincareBallPoint, sgm_result)
+    ball_c = convert.(PoincareBallPoint, cppa_result)
     #
     # Plot results
     plot!(

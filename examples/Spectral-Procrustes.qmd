@@ -20,8 +20,8 @@ Pkg.activate("."); # for reproducibility use the local tutorial environment.
 
 Pkg.develop(path="../") # a trick to work on the local dev version
 
-export_table = false
-benchmarking = false
+export_table = true
+benchmarking = true
 
 experiment_name = "Spectral-Procrustes"
 results_folder = joinpath(@__DIR__, experiment_name)
