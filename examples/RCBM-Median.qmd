@@ -18,7 +18,8 @@ using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version
-export_table = true
+benchmarking = false
+export_table = false
 plot = true
 ```
 
@@ -41,6 +42,7 @@ f(p) = \sum_{j = 1}^N w_j \, \mathrm{dist}(p, q_j),
 ```
 
 where $w_j$, $j = 1, \ldots, N$ are positive weights such that $\sum_{j = 1}^N w_j = 1$.
+
 The Riemannian geometric median $p^*$ of the dataset
 
 ```math
@@ -61,170 +63,95 @@ We initialize the experiment parameters, as well as utility functions.
 
 ```{julia}
 #| output: false
-Random.seed!(30)
-σ = 0.1 # Noise parameter
-atol = 1e-8 # √eps()
+Random.seed!(33)
+atol = 1e-8
+N = 1000 # number of data points
 experiment_name = "Riemannian_Median"
 results_folder = joinpath(@__DIR__, experiment_name)
-function close_point(M, p, tol)
+spd_dims = [2, 5, 10, 15]
+hn_sn_dims = [1, 2, 5, 10, 15]
+# Generate a point that is at least `tol` close to the point `p` on `M`
+function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
     X = rand(M; vector_at = p)
     X .= tol * rand() * X / norm(M, p, X)
-    return retract(M, p, X, Manifolds.default_retraction_method(M, typeof(p)))
+    return retract(M, p, X, retraction_method)
 end
 ```
-
-## The Median on the Sphere
-
-## The Median on the Hyperboloid Model
 
 ```{julia}
-#| output: false
-function riemannian_median(M, n)
-    if split(string(M),"(")[1] == "Hyperbolic"
-        k_min = k_max = -1.0
-    elseif split(string(M),"(")[1] == "Sphere"
-        k_min = k_max = 1.0
-    else
-        k_min = k_max = nothing
-    end
-    #
-    # Data
-    if split(string(M),"(")[1] == "Sphere"
-        north = [0.0 for _ in 1:manifold_dimension(M)]
-        push!(north, 1.0)
-        data = [close_point(M, north, π/4) for _ in 1:n]
-        p0 = data[minimum(Tuple(findmax(dists)[2]))]
-        diam = π/2
-    else
-        data = [rand(M) for _ in 1:n]
-        dists = [distance(M, z, y) for z in data, y in data]
-        diam = maximum(dists)
-        p0 = data[minimum(Tuple(findmax(dists)[2]))]
-    end
-    #
-    # Objective and subdifferential
-    f(M, p) = sum(1 / length(data) * distance.(Ref(M), Ref(p), data))
-    function ∂f(M, p)
-        return sum(
-            1 / length(data) *
-            ManifoldDiff.subgrad_distance.(Ref(M), data, Ref(p), 1; atol=atol),
-        )
-    end
-    #
-    # Optimization
-    p = proximal_bundle_method(
-        M,
-        f,
-        ∂f,
-        p0;
-        count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        debug=[
-            :Iteration,
-            :Stop,
-            (:Cost, "F(p): %1.16f "),
-            (:ν, "ν: %1.16f "),
-            (:c, "c: %1.16f "),
-            (:μ, "μ: %1.8f "),
-            :Stop,
-            1000,
-            "\n",
-        ],
-        record=[:Iteration, :Cost, :Iterate],
-        return_state=true,
+# Objective and subdifferential
+f(M, p, data) = sum(1 / length(data) * distance.(Ref(M), Ref(p), data))
+domf(M, p, p0, diameter) = distance(M, p, p0) < diameter / 2 ? true : false
+function ∂f(M, p, data, atol=atol)
+    return sum(
+        1 / length(data) *
+        ManifoldDiff.subgrad_distance.(Ref(M), data, Ref(p), 1; atol=atol),
     )
-    p_result = get_solver_result(p)
-    p_record = get_record(p)
-    #
-    b = convex_bundle_method(
-        M,
-        f,
-        ∂f,
-        p0;
-        diam=diam,
-        k_min = k_min,
-        k_max = k_max,
-        count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        debug=[
-            :Iteration,
-            (:Cost, "F(p): %1.16f "),
-            (:ξ, "ξ: %1.16f "),
-            (:ϱ, "ϱ: %1.4f "),
-            (:diam, "diam: %1.4f "),
-            :Stop,
-            1000,
-            "\n",
-        ],
-        record=[:Iteration, :Cost, :Iterate],
-        return_state=true,
-    )
-    b_result = get_solver_result(b)
-    b_record = get_record(b)
-    #
-    s = subgradient_method(
-        M,
-        f,
-        ∂f,
-        p0;
-        count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        stepsize=DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-        stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
-        debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
-        record=[:Iteration, :Cost, :Iterate],
-        return_state=true,
-        return_options=true,
-    )
-    s_result = get_solver_result(s)
-    s_record = get_record(s)
-    #
-    # Benchmarking
-    b_bm = @benchmark convex_bundle_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        diam=$diam,
-        k_min = $k_min,
-        k_max = $k_max,
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-    )
-    p_bm = @benchmark proximal_bundle_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-    )
-    s_bm = @benchmark subgradient_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        stepsize=DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-        stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
-    )
-    #
-    # Results
-    records = [b_record,
-        p_record,
-        s_record,
-    ]
-    times = [
-        median(b_bm).time * 1e-9,
-        median(p_bm).time * 1e-9,
-        median(s_bm).time * 1e-9,
-    ]
-    return records, times
 end
 ```
-We finalize by exporting the results with the benchmarks.
-<!-- ```{julia}
-for subexperiment_name in ["SPD", "Hn", "Sn"]
-    println(subexperiment_name)
-    A1 = DataFrame(;
+
+```{julia}
+cmb_kwargs(diameter, domf, k_max) = [
+    diameter => diameter,
+    domain => domf,
+    k_max => k_max,
+    count => [:Cost, :SubGradient],
+    cache => (:LRU, [:Cost, :SubGradient], 50),
+    debug => [
+        :Iteration,
+        (:Cost, "F(p): %1.16f "),
+        (:ξ, "ξ: %1.8f "),
+        (:last_stepsize, "step size: %1.8f"),
+        :Stop,
+        1000,
+        "\n",
+    ],
+    record => [:Iteration, :Cost, :Iterate],
+    return_state => true,
+]
+cbm_bm_kwargs(diameter, domf, k_max) = [
+    diameter = $diameter,
+    domain = $domf,
+    k_max = $k_max,
+    cache = (:LRU, [:Cost, :SubGradient], 50),
+]
+pba_kwargs = [
+    count => [:Cost, :SubGradient],
+    cache => (:LRU, [:Cost, :SubGradient], 50),
+    debug => [
+        :Iteration,
+        :Stop,
+        (:Cost, "F(p): %1.16f "),
+        (:ν, "ν: %1.16f "),
+        (:c, "c: %1.16f "),
+        (:μ, "μ: %1.8f "),
+        :Stop,
+        1000,
+        "\n",
+    ],
+    record => [:Iteration, :Cost, :Iterate],
+    return_state => true,
+]
+pba_bm_kwargs = [cache = (:LRU, [:Cost, :SubGradient], 50),]
+sgm_kwargs = [
+    count => [:Cost, :SubGradient],
+    cache => (:LRU, [:Cost, :SubGradient], 50),
+    stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
+    stopping_criterion => StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+    debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
+    record => [:Iteration, :Cost, :Iterate],
+    return_state => true,
+]
+sgm_bm_kwargs = [
+    cache = (:LRU, [:Cost, :SubGradient], 50),
+    stepsize = DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
+    stopping_criterion = StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+]
+```
+
+Before running the experiments, we initialize data collection tables that we will use later
+```{julia}
+A1 = DataFrame(;
         a="Dimension",
         b="Iterations",
         c="Time (s)",
@@ -233,6 +160,41 @@ for subexperiment_name in ["SPD", "Hn", "Sn"]
         f="Time (s)",
         g="Objective",
     )
+CSV.write(
+    joinpath(
+        results_folder,
+        experiment_name * "_$subexperiment_name" * "-Comparisons-Convex-Prox.csv",
+    ),
+    A1;
+    header=false,
+)
+A2 = DataFrame(;
+    a="Dimension",
+    b="Iterations",
+    c="Time (s)",
+    d="Objective",
+)
+CSV.write(
+    joinpath(
+        results_folder,
+        experiment_name * "_$subexperiment_name" * "-Comparisons-Subgrad.csv",
+    ),
+    A2;
+    header=false,
+)
+```
+
+```{julia}
+function initialize_dataframes(results_folder, experiment_name, subexperiment_name)
+    A1 = DataFrame(;
+            a="Dimension",
+            b="Iterations",
+            c="Time (s)",
+            d="Objective",
+            e="Iterations",
+            f="Time (s)",
+            g="Objective",
+        )
     CSV.write(
         joinpath(
             results_folder,
@@ -255,138 +217,194 @@ for subexperiment_name in ["SPD", "Hn", "Sn"]
         A2;
         header=false,
     )
-    if subexperiment_name == "SPD"
-        for n in [2, 5, 10, 15]
-            M = SymmetricPositiveDefinite(Int(n))
-            println("Dimension: $(Int(n))")
-            records, times = riemannian_median((M), 1000)
-            if export_table
-                B1 = DataFrame(;
-                    a=manifold_dimension(M),
-                    b=maximum(first.(records[1])),
-                    c=times[1],
-                    d=minimum([r[2] for r in records[1]]),
-                    e=maximum(first.(records[2])),
-                    f=times[2],
-                    g=minimum([r[2] for r in records[2]]),
-                )
-                CSV.write(
-                    joinpath(
-                        results_folder,
-                        experiment_name *
-                        "_$subexperiment_name" *
-                        "-Comparisons-Convex-Prox.csv",
-                    ),
-                    B1;
-                    append=true,
-                )
-                B2 = DataFrame(;
-                    a=manifold_dimension(M),
-                    b=maximum(first.(records[3])),
-                    c=times[3],
-                    d=minimum([r[2] for r in records[3]]),
-                )
-                CSV.write(
-                    joinpath(
-                        results_folder,
-                        experiment_name *
-                        "_$subexperiment_name" *
-                        "-Comparisons-Subgrad.csv",
-                    ),
-                    B2;
-                    append=true,
-                )
-            end
-        end
-    elseif subexperiment_name == "Hn"
-        for n in [1, 2, 5, 10, 15]
-            M = Hyperbolic(Int(2^n))
-            records, times = riemannian_median((M), 1000)
-            if export_table
-                B1 = DataFrame(;
-                    a=manifold_dimension(M),
-                    b=maximum(first.(records[1])),
-                    c=times[1],
-                    d=minimum([r[2] for r in records[1]]),
-                    e=maximum(first.(records[2])),
-                    f=times[2],
-                    g=minimum([r[2] for r in records[2]]),
-                )
-                CSV.write(
-                    joinpath(
-                        results_folder,
-                        experiment_name *
-                        "_$subexperiment_name" *
-                        "-Comparisons-Convex-Prox.csv",
-                    ),
-                    B1;
-                    append=true,
-                )
-                B2 = DataFrame(;
-                    a=manifold_dimension(M),
-                    b=maximum(first.(records[3])),
-                    c=times[3],
-                    d=minimum([r[2] for r in records[3]]),
-                )
-                CSV.write(
-                    joinpath(
-                        results_folder,
-                        experiment_name *
-                        "_$subexperiment_name" *
-                        "-Comparisons-Subgrad.csv",
-                        # "-Comparisons-Subgrad-CPPA.csv",
-                    ),
-                    B2;
-                    append=true,
-                )
-            end
-        end
-    elseif subexperiment_name == "Sn"
-        for n in [1, 2, 5, 10, 15]
-            M = Sphere(Int(2^n))
-            records, times = riemannian_median((M), 1000)
-            if export_table
-                B1 = DataFrame(;
-                    a=manifold_dimension(M),
-                    b=maximum(first.(records[1])),
-                    c=times[1],
-                    d=minimum([r[2] for r in records[1]]),
-                    e=maximum(first.(records[2])),
-                    f=times[2],
-                    g=minimum([r[2] for r in records[2]]),
-                )
-                CSV.write(
-                    joinpath(
-                        results_folder,
-                        experiment_name *
-                        "_$subexperiment_name" *
-                        "-Comparisons-Convex-Prox.csv",
-                    ),
-                    B1;
-                    append=true,
-                )
-                B2 = DataFrame(;
-                    a=manifold_dimension(M),
-                    b=maximum(first.(records[3])),
-                    c=times[3],
-                    d=minimum([r[2] for r in records[3]]),
-                    # e=maximum(first.(records[4])),
-                    # f=times[4],
-                    # g=minimum([r[2] for r in records[4]]),
-                )
-                CSV.write(
-                    joinpath(
-                        results_folder,
-                        experiment_name *
-                        "_$subexperiment_name" *
-                        "-Comparisons-Subgrad.csv",
-                        # "-Comparisons-Subgrad-CPPA.csv",
-                    ),
-                    B2;
-                    append=true,
-                )
-            end
-        end
+end
+```
+
+```{julia}
+function write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name)
+    B1 = DataFrame(;
+        a=manifold_dimension(M),
+        b=maximum(first.(records[1])),
+        c=times[1],
+        d=minimum([r[2] for r in records[1]]),
+        e=maximum(first.(records[2])),
+        f=times[2],
+        g=minimum([r[2] for r in records[2]]),
+    )
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name *
+            "_$subexperiment_name" *
+            "-Comparisons-Convex-Prox.csv",
+        ),
+        B1;
+        append=true,
+    )
+    B2 = DataFrame(;
+        a=manifold_dimension(M),
+        b=maximum(first.(records[3])),
+        c=times[3],
+        d=minimum([r[2] for r in records[3]]),
+    )
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name *
+            "_$subexperiment_name" *
+            "-Comparisons-Subgrad.csv",
+        ),
+        B2;
+        append=true,
+    )
+end
+```
+
+
+## The Median on the Hyperboloid Model
+```{julia}
+subexperiment_name = "Hn"
+k_max_hn = 0.0
+diameter_hn = floatmax(Float64)
+initialize_dataframes(results_folder, experiment_name, subexperiment_name)
+for n in hn_sn_dims
+
+    M = Hyperbolic(Int(2^n))
+    data = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data, y in data]
+    p0 = data[minimum(Tuple(findmax(dists)[2]))]
+    f_hn(M, p) = f(M, p, data)
+    domf_hn(M, p) = domf(M, p, p0, diameter)
+    ∂f_hn(M, p) = ∂f(M, p, data, atol)
+
+    # Optimization
+    pba = proximal_bundle_method(M, f_hn, ∂f_hn, p0; pba_kwargs...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
+
+    cbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; cbm_kwargs(diameter_hn, domf_hn, k_max_hn)...)
+    cbm_result = get_solver_result(cbm)
+    cbm_record = get_record(cbm)
+
+    sgm = subgradient_method(M, f_hn, ∂f_hn, p0; sgm_kwargs...)
+    sgm_result = get_solver_result(sgm)
+    sgm_record = get_record(sgm)
+
+    records = [
+        cbm_record,
+        pba_record,
+        sgm_record,
+    ]
+
+    if benchmarking
+        cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; cbm_bm_kwargs(diameter_hn, domf_hn, k_max_hn)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; sgm_bm_kwargs...)
+        times = [
+            median(cbm_bm).time * 1e-9,
+            median(pba_bm).time * 1e-9,
+            median(sgm_bm).time * 1e-9,
+        ]
+        (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name))
     end
 end
-``` -->
+```
+
+
+## The Median on the Symmetric Positive Definite Matrix Space
+```{julia}
+subexperiment_name = "SPD"
+k_max_spd = 0.0
+diameter_spd = floatmax(Float64)
+initialize_dataframes(results_folder, experiment_name, subexperiment_name)
+for n in spd_dims
+
+    M = SymmetricPositiveDefinite(Int(2^n))
+    data = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data, y in data]
+    p0 = data[minimum(Tuple(findmax(dists)[2]))]
+    f_spd(M, p) = f(M, p, data)
+    domf_spd(M, p) = domf(M, p, p0, diameter)
+    ∂f_spd(M, p) = ∂f(M, p, data, atol)
+
+    # Optimization
+    pba = proximal_bundle_method(M, f_spd, ∂f_spd, p0; pba_kwargs...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
+
+    cbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; cbm_kwargs(diameter_spd, domf_spd, k_max_spd)...)
+    cbm_result = get_solver_result(cbm)
+    cbm_record = get_record(cbm)
+
+    sgm = subgradient_method(M, f_spd, ∂f_spd, p0; sgm_kwargs...)
+    sgm_result = get_solver_result(sgm)
+    sgm_record = get_record(sgm)
+
+    records = [
+        cbm_record,
+        pba_record,
+        sgm_record,
+    ]
+
+    if benchmarking
+        cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; cbm_bm_kwargs(diameter_spd, domf_spd, k_max_spd)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; sgm_bm_kwargs...)
+        times = [
+            median(cbm_bm).time * 1e-9,
+            median(pba_bm).time * 1e-9,
+            median(sgm_bm).time * 1e-9,
+        ]
+        (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name)) 
+    end
+end
+```
+
+## The Median on the Sphere
+```{julia}
+subexperiment_name = "Sn"
+k_max_sn = 1.0
+diameter_sn = floatmax(Float64)
+initialize_dataframes(results_folder, experiment_name, subexperiment_name)
+for n in hn_sn_dims
+
+    M = Hyperbolic(Int(2^n))
+    data = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data, y in data]
+    p0 = data[minimum(Tuple(findmax(dists)[2]))]
+    f_sn(M, p) = f(M, p, data)
+    domf_sn(M, p) = domf(M, p, p0, diameter)
+    ∂f_sn(M, p) = ∂f(M, p, data, atol)
+
+    # Optimization
+    pba = proximal_bundle_method(M, f_sn, ∂f_sn, p0; pba_kwargs...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
+
+    cbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; cbm_kwargs(diameter_sn, domf_sn, k_max_sn)...)
+    cbm_result = get_solver_result(cbm)
+    cbm_record = get_record(cbm)
+
+    sgm = subgradient_method(M, f_sn, ∂f_sn, p0; sgm_kwargs...)
+    sgm_result = get_solver_result(sgm)
+    sgm_record = get_record(sgm)
+
+    records = [
+        cbm_record,
+        pba_record,
+        sgm_record,
+    ]
+
+    if benchmarking
+        cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; cbm_bm_kwargs(diameter_sn, domf_sn, k_max_sn)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; sgm_bm_kwargs...)
+        times = [
+            median(cbm_bm).time * 1e-9,
+            median(pba_bm).time * 1e-9,
+            median(sgm_bm).time * 1e-9,
+        ]
+        (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name))
+    end
+end
+```
