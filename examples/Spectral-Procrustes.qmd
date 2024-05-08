@@ -22,6 +22,7 @@ Pkg.develop(path="../") # a trick to work on the local dev version
 
 export_table = true
 benchmarking = true
+show_plot = true
 
 experiment_name = "Spectral-Procrustes"
 results_folder = joinpath(@__DIR__, experiment_name)
@@ -43,33 +44,34 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 ## The Problem
 
 Given two matrices $A, B \in \mathbb R^{n \times d}$ we aim to solve the orthogonal Procrustes problem
-$$
+```math
 	{\arg\min}_{p \in \mathrm{SO}(d)}\ \Vert A - B \, p \Vert_2
 	,
-$$
+```
+
 where $\mathrm{SO}(d)$ is equipped with the standard bi-invariant metric, and where $\Vert \,\cdot\, \Vert_2$ denotes the spectral norm of a matrix, \ie, its largest singular value.
 We aim to find the best matrix $p \in \mathbb R^{d \times d}$ such that $p^\top p = \mathrm{id}$ is the identity matrix, or in other words $p$ is the best rotation.
 Note that the spectral norm is convex in the Euclidean sense, but not geodesically convex on $\mathrm{SO}(d)$. 
 If we define the objective as
-$$
+```math
     f (p)
 	= 
     \Vert A - B \, p \Vert_2
     ,
-$$
+```
 its subdifferential is given by
-$$
+```math
     \partial f(p) = \mathrm{proj}_p(-B^\top UV^\top)
-$$
+```
 where $U$ and $V$ are some left and right singular vectors, respectively, corresponding to the largest singular value of $A - B \, p$, and $\mathrm{proj}_p$ is the projection onto
-$$
+```math
 	\mathcal T_p \mathrm{SO}(d)
 	=
 	\{
     A \in \mathbb R^{d,d} \, \vert \, pA^\top + Ap^\top = 0, \, \mathrm{trace}(p^{-1}A)=0
     \}
 	.
-$$
+```
 
 ## Numerical Experiment
 
@@ -220,17 +222,24 @@ if benchmarking
         median(pba_bm).time * 1e-9,
         median(sgm_bm).time * 1e-9,
     ]
+    if show_plot
+        global fig = plot(xscale=:log10)
+    end
     #
     # Finalize - export costs
     if export_table
         for (time, record, result, experiment) in zip(times, records, results, experiments)
             C1 = [0.5 f(M, p0)]
             C = cat(first.(record), [r[2] for r in record]; dims=2)
+            bm_data = vcat(C1, C)
             CSV.write(
                 joinpath(results_folder, experiment_name * "_" * experiment * "-result.csv"),
-                DataFrame(vcat(C1, C), :auto);
+                DataFrame(bm_data, :auto);
                 header=["i", "cost"],
             )
+            if show_plot
+                plot!(fig, bm_data[:,1], bm_data[:,2]; label=experiment)
+            end
         end
         D = cat(
             experiments,
@@ -246,4 +255,14 @@ if benchmarking
         )
     end
 end
+```
+
+We can take a look at how the algorithms compare to each other in their performance with the following table...
+```{julia}
+export_table && CSV.read(joinpath(experiment_name, experiment_name * "-comparisons.csv"), DataFrame; delim = ",")
+```
+
+... and this cost versus iterations plot
+```{julia}
+show_plot && fig
 ```

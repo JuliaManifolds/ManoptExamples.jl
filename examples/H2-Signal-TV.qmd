@@ -45,7 +45,7 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 Let $\mathcal M = \mathcal H^2$ be the $2$-dimensional hyperbolic space and let $p, q \in \mathcal M^n$ be two manifold-valued signals, for $n \in \mathbb N$.
 Let $f \colon \mathcal M \to \mathbb R$ be defined by
 
-$$
+```math
     f_q (p)
 	= 
 	\frac{1}{n}
@@ -55,15 +55,16 @@ $$
     \alpha \operatorname{TV}(p)
     \}
 	,
-$$
+```
 
 where $\operatorname{TV}(p)$, is the total variation term given by
-$$
+
+```math
     \operatorname{TV}(p)
     =
     \sum_{i = 1}^{n-1} \mathrm{dist}(p_i, p_{i+1})
     .
-$$
+```
 
 ## Numerical Experiment
 
@@ -171,7 +172,7 @@ proxes = (
 
 We can now plot the initial setting.
 ```{julia}
-ball_scene = plot()
+global ball_scene = plot()
 if export_orig
     ball_data = convert.(PoincareBallPoint, data)
     ball_noise = convert.(PoincareBallPoint, noise)
