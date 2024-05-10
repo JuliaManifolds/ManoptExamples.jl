@@ -18,8 +18,8 @@ using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version
-benchmarking = false
-export_table = false
+benchmarking = true
+export_table = true
 plot = true
 ```
 
@@ -266,9 +266,9 @@ for n in hn_sn_dims
     ]
 
     if benchmarking
-        cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; cbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; pba_bm_kwargs...)
-        sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; sgm_bm_kwargs...)
+        cbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; cbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; sgm_bm_kwargs...)
         times = [
             median(cbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
@@ -317,9 +317,9 @@ for n in spd_dims
     ]
 
     if benchmarking
-        cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; cbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; pba_bm_kwargs...)
-        sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; sgm_bm_kwargs...)
+        cbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; cbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; sgm_bm_kwargs...)
         times = [
             median(cbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
@@ -345,7 +345,7 @@ for n in hn_sn_dims
     data = [close_point(M, north, diameter / 2) for _ in 1:n]
     p0 = data[1]
 
-    f_sn(M, p) = f(M, p, data)
+    f_sn(M, p) = f_spd(M, p_spd, data)
     domf_sn(M, p) = domf(M, p, p0, diameter_sn)
     ∂f_sn(M, p) = ∂f(M, p, data, atol)
 
@@ -369,9 +369,9 @@ for n in hn_sn_dims
     ]
 
     if benchmarking
-        cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; cbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; pba_bm_kwargs...)
-        sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; sgm_bm_kwargs...)
+        cbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; cbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; sgm_bm_kwargs...)
         times = [
             median(cbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
