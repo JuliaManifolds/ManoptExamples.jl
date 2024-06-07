@@ -74,9 +74,7 @@ end
 function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0; kwargs...)
     return RobustPCAGrad!!(data, ε, zero(data))
 end
-function RobustPCAGrad!!(
-    ::Grassmann, data::AbstractMatrix, ε=1.0; kwargs...
-)
+function RobustPCAGrad!!(::Grassmann, data::AbstractMatrix, ε=1.0; kwargs...)
     return RobustPCAGrad!!(data, ε, zero(data))
 end
 function (f::RobustPCAGrad!!)(M::Grassmann, p)

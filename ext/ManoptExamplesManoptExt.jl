@@ -2,7 +2,7 @@ module ManoptExamplesManoptExt
 
 using ManoptExamples
 import ManoptExamples: robust_PCA_objective, Riemannian_mean_objective
-import ManoptExamples. Rosenbrock_objecgtive
+import ManoptExamples.Rosenbrock_objecgtive
 import ManoptExamples: prox_second_order_Total_Variation, prox_second_order_Total_Variation!
 
 if isdefined(Base, :get_extension)
@@ -94,12 +94,17 @@ function ManoptExamples.prox_second_order_Total_Variation(
     PowX = [x...]
     PowM = ManifoldsBase.PowerManifold(M, ManifoldsBase.NestedPowerRepresentation(), 3)
     xR = PowX
-    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * ManoptExamples.second_order_Total_Variation(M, x)
+    function F(M, x)
+        return 1 / 2 * distance(M, PowX, x)^2 +
+               λ * ManoptExamples.second_order_Total_Variation(M, x)
+    end
     function ∂F(PowM, x)
         return log(PowM, x, PowX) +
                λ * ManoptExamples.grad_second_order_Total_Variation(PowM, x)
     end
-    Manopt.subgradient_method!(PowM, F, ∂F, xR; stopping_criterion=stopping_criterion, kwargs...)
+    Manopt.subgradient_method!(
+        PowM, F, ∂F, xR; stopping_criterion=stopping_criterion, kwargs...
+    )
     return (xR...,)
 end
 function ManoptExamples.prox_second_order_Total_Variation!(
