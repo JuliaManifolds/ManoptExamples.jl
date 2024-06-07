@@ -731,7 +731,7 @@ See [BacakBergmannSteidlWeinmann:2016](@cite) for a derivation.
   The computation can also be done in place.
 
   !!! note
-    This function rewuires `Manopt.jl` to be loaded
+    This function requires `Manopt.jl` to be loaded
 """
 function prox_second_order_Total_Variation end
 
@@ -759,7 +759,7 @@ The parameter `λ` is the prox parameter.
   The computation can also be done in place.
 
 !!! note
-    This function rewuires `Manopt.jl` to be loaded
+    This function requires `Manopt.jl` to be loaded
 """
 function prox_second_order_Total_Variation(
     M::PowerManifold{N,T}, λ, x, p::Int=1
