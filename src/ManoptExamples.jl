@@ -34,6 +34,7 @@ using ManifoldDiff:
     differential_shortest_geodesic_endpoint,
     differential_shortest_geodesic_endpoint!,
     grad_distance
+using Requires
 
 const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
 
