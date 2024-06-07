@@ -44,8 +44,9 @@ E(p) = d_{\mathcal M}^2(f,p) + \alpha \operatorname{TV}(p)
 
 [`Total_Variation`](@ref)
 """
-L2_Total_Variation(M, p_data, α, p) =
-    1 / 2 * distance(M, p_data, p)^2 + α * Total_Variation(M, p)
+function L2_Total_Variation(M, p_data, α, p)
+    return 1 / 2 * distance(M, p_data, p)^2 + α * Total_Variation(M, p)
+end
 
 @doc raw"""
     L2_Total_Variation_1_2(M, f, α, β, x)
