@@ -14,6 +14,9 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 [weakdeps]
 Manopt = "0fc0a36d-df90-57f3-8f93-d78a9fc72bb5"
 
+[extensions]
+ManoptExamplesManoptExt = "Manopt"
+
 [compat]
 LinearAlgebra = "1.6"
 ManifoldDiff = "0.3"

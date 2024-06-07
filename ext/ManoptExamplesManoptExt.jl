@@ -1,20 +1,16 @@
 module ManoptExamplesManoptExt
 
-using ManoptExamples
-import ManoptExamples: robust_PCA_objective, Riemannian_mean_objective
-import ManoptExamples.Rosenbrock_objecgtive
-import ManoptExamples: prox_second_order_Total_Variation, prox_second_order_Total_Variation!
-
 if isdefined(Base, :get_extension)
     using Manopt
-    using ManifoldBase
+    using ManoptExamples
 else
     # imports need to be relative for Requires.jl-based workflows:
     # https://github.com/JuliaArrays/ArrayInterface.jl/pull/387
+    using ..ManoptExamples
     using ..Manopt
-    using ..ManifoldBase
 end
 
+using ManifoldsBase
 #
 #
 # Objectives
@@ -124,15 +120,21 @@ function ManoptExamples.prox_second_order_Total_Variation!(
     PowX = [x...]
     PowM = PowerManifold(M, NestedPowerRepresentation(), 3)
     copyto!(M, y, PowX)
-    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * second_order_Total_Variation(M, x)
-    ∂F!(M, y, x) = log!(M, y, x, PowX) + λ * grad_second_order_Total_Variation!(M, y, x)
-    subgradient_method!(
+    function F(M, x)
+        return 1 / 2 * distance(M, PowX, x)^2 +
+               λ * ManoptExamples.second_order_Total_Variation(M, x)
+    end
+    function ∂F!(M, y, x)
+        return log!(M, y, x, PowX) +
+               λ * ManoptExamples.grad_second_order_Total_Variation!(M, y, x)
+    end
+    Manopt.subgradient_method!(
         PowM,
         F,
         ∂F!,
         y;
         stopping_criterion=stopping_criterion,
-        evaluation=InplaceEvaluation(),
+        evaluation=Manopt.InplaceEvaluation(),
         kwargs...,
     )
     return y
