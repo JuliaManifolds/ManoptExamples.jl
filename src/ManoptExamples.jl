@@ -8,7 +8,7 @@
 """
 module ManoptExamples
 using LinearAlgebra: dot, Symmetric, Diagonal, I
-using ManifoldsBase, Manopt, Manifolds, ManifoldDiff
+using ManifoldsBase, Manifolds, ManifoldDiff
 using ManifoldsBase: TypeParameter
 import ManifoldsBase: exp!, exp, inner, log, log!
 import Manifolds:
@@ -34,7 +34,6 @@ using ManifoldDiff:
     differential_shortest_geodesic_endpoint,
     differential_shortest_geodesic_endpoint!,
     grad_distance
-using Manopt: subgradient_method
 
 const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
 
