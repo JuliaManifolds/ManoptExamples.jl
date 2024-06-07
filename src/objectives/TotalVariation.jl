@@ -728,58 +728,12 @@ See [BacakBergmannSteidlWeinmann:2016](@cite) for a derivation.
 # Output
 * `(y1,y2,y3)` – resulting tuple of points of the proximal map.
   The computation can also be done in place.
+
+  !!! note
+    This function rewuires `Manopt.jl` to be loaded
 """
-function prox_second_order_Total_Variation(
-    M::AbstractManifold,
-    λ,
-    x::Tuple{T,T,T},
-    p::Int=1;
-    stopping_criterion::StoppingCriterion=StopAfterIteration(10),
-    kwargs...,
-) where {T}
-    (p != 1) && throw(
-        ErrorException(
-            "Proximal Map of TV2(M, λ, x, p) not implemented for p=$(p) (requires p=1) on general manifolds.",
-        ),
-    )
-    PowX = [x...]
-    PowM = PowerManifold(M, NestedPowerRepresentation(), 3)
-    xR = PowX
-    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * second_order_Total_Variation(M, x)
-    ∂F(PowM, x) = log(PowM, x, PowX) + λ * grad_second_order_Total_Variation(PowM, x)
-    subgradient_method!(PowM, F, ∂F, xR; stopping_criterion=stopping_criterion, kwargs...)
-    return (xR...,)
-end
-function prox_second_order_Total_Variation!(
-    M::AbstractManifold,
-    y,
-    λ,
-    x::Tuple{T,T,T},
-    p::Int=1;
-    stopping_criterion::StoppingCriterion=StopAfterIteration(10),
-    kwargs...,
-) where {T}
-    (p != 1) && throw(
-        ErrorException(
-            "Proximal Map of TV2(M, λ, x, p) not implemented for p=$(p) (requires p=1) on general manifolds.",
-        ),
-    )
-    PowX = [x...]
-    PowM = PowerManifold(M, NestedPowerRepresentation(), 3)
-    copyto!(M, y, PowX)
-    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * second_order_Total_Variation(M, x)
-    ∂F!(M, y, x) = log!(M, y, x, PowX) + λ * grad_second_order_Total_Variation!(M, y, x)
-    subgradient_method!(
-        PowM,
-        F,
-        ∂F!,
-        y;
-        stopping_criterion=stopping_criterion,
-        evaluation=InplaceEvaluation(),
-        kwargs...,
-    )
-    return y
-end
+function prox_second_order_Total_Variation end
+
 @doc raw"""
     y = prox_second_order_Total_Variation(M, λ, x[, p=1])
     prox_second_order_Total_Variation!(M, y, λ, x[, p=1])
@@ -802,6 +756,9 @@ The parameter `λ` is the prox parameter.
 # Output
 * `y` – resulting point with all mentioned proximal points evaluated (in a cyclic order).
   The computation can also be done in place.
+
+!!! note
+    This function rewuires `Manopt.jl` to be loaded
 """
 function prox_second_order_Total_Variation(
     M::PowerManifold{N,T}, λ, x, p::Int=1

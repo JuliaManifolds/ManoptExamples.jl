@@ -91,19 +91,10 @@ end
 Return the gradient objective of the Rosenbrock example.
 
 See also [`RosenbrockCost`](@ref), [`RosenbrockGradient!!`](@ref)
+!!! note
+   The objective is available when `Manopt.jl` is loaded.
 """
-function Rosenbrock_objective(
-    M::AbstractManifold=ManifoldsBase.DefaultManifold();
-    a=100.0,
-    b=1.0,
-    evaluation=AllocatingEvaluation(),
-)
-    return Manopt.ManifoldGradientObjective(
-        RosenbrockCost(M; a=a, b=b),
-        RosenbrockGradient!!(M; a=a, b=b, evaluation=evaluation);
-        evaluation=evaluation,
-    )
-end
+function Rosenbrock_objective end
 
 #
 # A new metric

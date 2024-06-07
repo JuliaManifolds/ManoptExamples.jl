@@ -11,12 +11,15 @@ ManifoldsBase = "3362f125-f0bb-47a3-aa74-596ffd7ef2fb"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
+[weakdeps]
+Manopt = "0fc0a36d-df90-57f3-8f93-d78a9fc72bb5"
+
 [compat]
 LinearAlgebra = "1.6"
 ManifoldDiff = "0.3"
 Manifolds = "0.9"
 ManifoldsBase = "0.15"
-Manopt = "0.4.7"
+Manopt = "0.4.7, 0.5"
 Markdown = "1.6"
 Random = "1.6"
 Test = "1.6"

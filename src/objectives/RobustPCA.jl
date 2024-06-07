@@ -71,11 +71,11 @@ mutable struct RobustPCAGrad!!{D,F}
     ε::F
     temp::D
 end
-function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
+function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0; kwargs...)
     return RobustPCAGrad!!(data, ε, zero(data))
 end
 function RobustPCAGrad!!(
-    ::Grassmann, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation()
+    ::Grassmann, data::AbstractMatrix, ε=1.0; kwargs...
 )
     return RobustPCAGrad!!(data, ε, zero(data))
 end
@@ -96,3 +96,25 @@ function (f::RobustPCAGrad!!)(M::Grassmann, X, p)
     project!(M, X, p, X) # Convert to Riemannian gradient
     return X
 end
+
+@doc raw"""
+    robust_PCA_objective(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
+    robust_PCA_objective(M, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluton())
+
+Generate the objective for the robust PCA task for some given `data` ``D`` and Huber regularization
+parameter ``ε``.
+
+
+# See also
+[`RobustPCACost`](@ref ManoptExamples.RobustPCACost), [`RobustPCAGrad!!`](@ref ManoptExamples.RobustPCAGrad!!)
+
+!!! note
+    Since the construction is independent of the manifold, that argument is optional and
+    mainly provided to comply with other objectives. Similarly, independent of the `evaluation`,
+    indeed the gradient always allows for both the allocating and the in-place variant to be used,
+    though that keyword is used to setup the objective.
+
+!!! note
+   The objective is available when `Manopt.jl` is loaded.
+"""
+function robust_PCA_objective end

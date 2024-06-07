@@ -1,77 +1,136 @@
-@doc raw"""
-    robust_PCA_objective(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
-    robust_PCA_objective(M, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluton())
+module ManoptExamplesManoptExt
 
-Generate the objective for the robust PCA task for some given `data` ``D`` and Huber regularization
-parameter ``ε``.
+using ManoptExamples
+import ManoptExamples: robust_PCA_objective, Riemannian_mean_objective
+import ManoptExamples. Rosenbrock_objecgtive
+import ManoptExamples: prox_second_order_Total_Variation, prox_second_order_Total_Variation!
 
+if isdefined(Base, :get_extension)
+    using Manopt
+    using ManifoldBase
+else
+    # imports need to be relative for Requires.jl-based workflows:
+    # https://github.com/JuliaArrays/ArrayInterface.jl/pull/387
+    using ..Manopt
+    using ..ManifoldBase
+end
 
-# See also
-[`RobustPCACost`](@ref ManoptExamples.RobustPCACost), [`RobustPCAGrad!!`](@ref ManoptExamples.RobustPCAGrad!!)
-
-!!! note
-    Since the construction is independent of the manifold, that argument is optional and
-    mainly provided to comply with other objectives. Similarly, independent of the `evaluation`,
-    indeed the gradient always allows for both the allocating and the in-place variant to be used,
-    though that keyword is used to setup the objective.
-"""
-function robust_PCA_objective(
+#
+#
+# Objectives
+function ManoptExamples.robust_PCA_objective(
     data::AbstractMatrix, ε=1.0; evaluation=Manopt.AllocatingEvaluation()
 )
     return Manopt.ManifoldGradientObjective(
-        RobustPCACost(data, ε), RobustPCAGrad!!(data, 1.0; evaluation=evaluation)
+        ManoptExamples.RobustPCACost(data, ε),
+        ManoptExamples.RobustPCAGrad!!(data, 1.0; evaluation=evaluation),
     )
 end
-function robust_PCA_objective(
+function ManoptExamples.robust_PCA_objective(
     M::AbstractManifold,
     data::AbstractMatrix,
     ε=1.0;
     evaluation=Manopt.AllocatingEvaluation(),
 )
     return Manopt.ManifoldGradientObjective(
-        RobustPCACost(M, data, ε),
-        RobustPCAGrad!!(M, data, ε; evaluation=evaluation);
+        ManoptExamples.RobustPCACost(M, data, ε),
+        ManoptExamples.RobustPCAGrad!!(M, data, ε; evaluation=evaluation);
         evaluation=evaluation,
     )
 end
 
-@doc raw"""
-    Riemannian_mean_objective(data, initial_vector=nothing, evaluation=AllocatingEvaluation())
-    Riemannian_mean_objective(M, data;
-    initial_vector=zero_vector(M, first(data)),
-    evaluation=AllocatingEvaluton()
-    )
-
-Generate the objective for the Riemannian mean task for some given vector of
-`data` points on the Riemannian manifold `M`.
-
-# See also
-[`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost), [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!)
-
-!!! note
-    The first constructor should only be used if an additional storage of the vector is not
-    feasible, since initialising the `initial_vector` to `nothing` disables the in-place variant.
-    Hence the evaluation is a positional argument, since it only can be changed,
-    if a vector is provided.
-"""
-function Riemannian_mean_objective(
+function ManoptExamples.Riemannian_mean_objective(
     data::AbstractVector; initial_vector=nothing, evaluation=Manopt.AllocatingEvaluation()
 )
     return Manopt.ManifoldGradientObjective(
-        RiemannianMeanCost(data),
-        RiemannianMeanGradient!!(data, initial_vector);
+        ManoptExamples.RiemannianMeanCost(data),
+        ManoptExamples.RiemannianMeanGradient!!(data, initial_vector);
         evaluation=evaluation,
     )
 end
-function Riemannian_mean_objective(
+function ManoptExamples.Riemannian_mean_objective(
     M::AbstractManifold,
     data;
     initial_vector=zero_vector(M, first(data)),
     evaluation=Manopt.AllocatingEvaluation(),
 )
     return Manopt.ManifoldGradientObjective(
-        RiemannianMeanCost(data),
-        RiemannianMeanGradient!!(M, data; initial_vector=initial_vector);
+        ManoptExamples.RiemannianMeanCost(data),
+        ManoptExamples.RiemannianMeanGradient!!(M, data; initial_vector=initial_vector);
         evaluation=evaluation,
     )
+end
+
+function ManoptExamples.Rosenbrock_objective(
+    M::AbstractManifold=ManifoldsBase.DefaultManifold();
+    a=100.0,
+    b=1.0,
+    evaluation=Manopt.AllocatingEvaluation(),
+)
+    return Manopt.ManifoldGradientObjective(
+        ManoptExamples.RosenbrockCost(M; a=a, b=b),
+        ManoptExamples.RosenbrockGradient!!(M; a=a, b=b, evaluation=evaluation);
+        evaluation=evaluation,
+    )
+end
+
+#
+#
+# prox with a subsolver
+#
+function ManoptExamples.prox_second_order_Total_Variation(
+    M::AbstractManifold,
+    λ,
+    x::Tuple{T,T,T},
+    p::Int=1;
+    stopping_criterion::StoppingCriterion=Manopt.StopAfterIteration(10),
+    kwargs...,
+) where {T}
+    (p != 1) && throw(
+        ErrorException(
+            "Proximal Map of TV2(M, λ, x, p) not implemented for p=$(p) (requires p=1) on general manifolds.",
+        ),
+    )
+    PowX = [x...]
+    PowM = ManifoldsBase.PowerManifold(M, ManifoldsBase.NestedPowerRepresentation(), 3)
+    xR = PowX
+    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * ManoptExamples.second_order_Total_Variation(M, x)
+    function ∂F(PowM, x)
+        return log(PowM, x, PowX) +
+               λ * ManoptExamples.grad_second_order_Total_Variation(PowM, x)
+    end
+    Manopt.subgradient_method!(PowM, F, ∂F, xR; stopping_criterion=stopping_criterion, kwargs...)
+    return (xR...,)
+end
+function ManoptExamples.prox_second_order_Total_Variation!(
+    M::AbstractManifold,
+    y,
+    λ,
+    x::Tuple{T,T,T},
+    p::Int=1;
+    stopping_criterion::StoppingCriterion=Manopt.StopAfterIteration(10),
+    kwargs...,
+) where {T}
+    (p != 1) && throw(
+        ErrorException(
+            "Proximal Map of TV2(M, λ, x, p) not implemented for p=$(p) (requires p=1) on general manifolds.",
+        ),
+    )
+    PowX = [x...]
+    PowM = PowerManifold(M, NestedPowerRepresentation(), 3)
+    copyto!(M, y, PowX)
+    F(M, x) = 1 / 2 * distance(M, PowX, x)^2 + λ * second_order_Total_Variation(M, x)
+    ∂F!(M, y, x) = log!(M, y, x, PowX) + λ * grad_second_order_Total_Variation!(M, y, x)
+    subgradient_method!(
+        PowM,
+        F,
+        ∂F!,
+        y;
+        stopping_criterion=stopping_criterion,
+        evaluation=InplaceEvaluation(),
+        kwargs...,
+    )
+    return y
+end
+
 end
