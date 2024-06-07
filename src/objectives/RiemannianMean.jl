@@ -89,7 +89,7 @@ function (rmg::RiemannianMeanGradient!!{T})(M, X::T, p) where {T}
 end
 
 @doc raw"""
-    Riemannian_mean_objective(data, initial_vector=nothing, evaluation=AllocatingEvaluation())
+    Riemannian_mean_objective(data, initial_vector=nothing, evaluation=Manopt.AllocatingEvaluation())
     Riemannian_mean_objective(M, data;
     initial_vector=zero_vector(M, first(data)),
     evaluation=AllocatingEvaluton()
@@ -106,25 +106,8 @@ Generate the objective for the Riemannian mean task for some given vector of
     feasible, since initialising the `initial_vector` to `nothing` disables the in-place variant.
     Hence the evaluation is a positional argument, since it only can be changed,
     if a vector is provided.
+
+!!! note
+   The objective is available when `Manopt.jl` is loaded.
 """
-function Riemannian_mean_objective(
-    data::AbstractVector; initial_vector=nothing, evaluation=Manopt.AllocatingEvaluation()
-)
-    return Manopt.ManifoldGradientObjective(
-        RiemannianMeanCost(data),
-        RiemannianMeanGradient!!(data, initial_vector);
-        evaluation=evaluation,
-    )
-end
-function Riemannian_mean_objective(
-    M::AbstractManifold,
-    data;
-    initial_vector=zero_vector(M, first(data)),
-    evaluation=Manopt.AllocatingEvaluation(),
-)
-    return Manopt.ManifoldGradientObjective(
-        RiemannianMeanCost(data),
-        RiemannianMeanGradient!!(M, data; initial_vector=initial_vector);
-        evaluation=evaluation,
-    )
-end
+function Riemannian_mean_objective end
