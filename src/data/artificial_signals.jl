@@ -205,5 +205,5 @@ function Lemniscate(
     return exp(manifold, p, Z)
 end
 function Lemniscate(n::Integer; interval=[0.0, 2 * π], kwargs...)
-    return map(t -> Lemniscate(t; kwargs...), range(interval[1], interval[2], n))
+    return map(t -> Lemniscate(t; kwargs...), range(interval[1], interval[2]; length=n))
 end
