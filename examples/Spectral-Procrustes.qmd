@@ -21,7 +21,7 @@ Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version
 
 export_table = true
-benchmarking = true
+benchmarking = false
 show_plot = true
 
 experiment_name = "Spectral-Procrustes"
@@ -33,6 +33,7 @@ figures_folder = joinpath(@__DIR__, experiment_name, "figures")
 
 ```{julia}
 #| output: false
+using PrettyTables
 using BenchmarkTools
 using CSV, DataFrames
 using ColorSchemes, Plots
@@ -124,6 +125,7 @@ domf(M, p) = distance(M, p, p0) < diameter/2 ? true : false
 
 We introduce some keyword arguments for the solvers we will use in this experiment
 ```{julia}
+#| output: false
 cbm_kwargs = [
     :bundle_cap => bundle_cap,
     :k_max => k_max,
@@ -209,10 +211,11 @@ sgm_record = get_record(sgm)
 
 ... And we benchmark their performance.
 ```{julia}
+#| output: false
 if benchmarking
-    pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; pba_bm_kwargs...)
-    cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; cbm_bm_kwargs...)
-    sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; sgm_bm_kwargs...)
+    pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; $pba_bm_kwargs...)
+    cbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; $cbm_bm_kwargs...)
+    sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; $sgm_bm_kwargs...)
     #
     experiments = ["RCBM", "PBA", "SGM"]
     records = [cbm_record, pba_record, sgm_record]
@@ -241,7 +244,7 @@ if benchmarking
                 plot!(fig, bm_data[:,1], bm_data[:,2]; label=experiment)
             end
         end
-        D = cat(
+        global D = cat(
             experiments,
             [maximum(first.(record)) for record in records],
             [t for t in times],
@@ -259,10 +262,11 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table...
 ```{julia}
-export_table && CSV.read(joinpath(experiment_name, experiment_name * "-comparisons.csv"), DataFrame; delim = ",")
+#| code-fold: true
+export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "-comparisons.csv"), DataFrame; delim = ","), tf = tf_markdown)
 ```
-
 ... and this cost versus iterations plot
 ```{julia}
+#| code-fold: true
 show_plot && fig
 ```
