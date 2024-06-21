@@ -82,6 +82,7 @@ end
 ```
 
 ```{julia}
+#| output: false
 # Objective and subdifferential
 f(M, p, data) = sum(1 / length(data) * distance.(Ref(M), Ref(p), data))
 domf(M, p, p0, diameter) = distance(M, p, p0) < diameter / 2 ? true : false
@@ -94,6 +95,7 @@ end
 ```
 
 ```{julia}
+#| output: false
 cbm_kwargs(diameter, domf, k_max) = [
     :diameter => diameter,
     :domain => domf,
@@ -154,6 +156,7 @@ sgm_bm_kwargs = [
 
 Before running the experiments, we initialize data collection functions that we will use later
 ```{julia}
+#| output: false
 function initialize_dataframes(results_folder, experiment_name, subexperiment_name)
     A1 = DataFrame(;
             a="Dimension",
@@ -190,6 +193,7 @@ end
 ```
 
 ```{julia}
+#| output: false
 function write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name)
     B1 = DataFrame(;
         a=manifold_dimension(M),
@@ -231,6 +235,7 @@ end
 
 ## The Median on the Hyperboloid Model
 ```{julia}
+#| output: false
 subexperiment_name = "Hn"
 k_max_hn = 0.0
 diameter_hn = floatmax(Float64)
@@ -267,8 +272,8 @@ for n in hn_sn_dims
 
     if benchmarking
         cbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; cbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; pba_bm_kwargs...)
-        sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; sgm_bm_kwargs...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; $pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
         times = [
             median(cbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
@@ -278,10 +283,21 @@ for n in hn_sn_dims
     end
 end
 ```
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
+```{julia}
+#| code-fold: true
+export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Convex-Prox.csv"), DataFrame; delim = ","), tf = tf_markdown)
+```
+... Whereas the following table refers to the SGM
+```{julia}
+#| code-fold: true
+export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Subgrad.csv"), DataFrame; delim = ","), tf = tf_markdown)
+```
 
 
 ## The Median on the Symmetric Positive Definite Matrix Space
 ```{julia}
+#| output: false
 subexperiment_name = "SPD"
 k_max_spd = 0.0
 diameter_spd = floatmax(Float64)
@@ -318,8 +334,8 @@ for n in spd_dims
 
     if benchmarking
         cbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; cbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; pba_bm_kwargs...)
-        sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; sgm_bm_kwargs...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; $pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; $sgm_bm_kwargs...)
         times = [
             median(cbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
@@ -329,9 +345,20 @@ for n in spd_dims
     end
 end
 ```
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
+```{julia}
+#| code-fold: true
+export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Convex-Prox.csv"), DataFrame; delim = ","), tf = tf_markdown)
+```
+... Whereas the following table refers to the SGM
+```{julia}
+#| code-fold: true
+export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Subgrad.csv"), DataFrame; delim = ","), tf = tf_markdown)
+```
 
 ## The Median on the Sphere
 ```{julia}
+#| output: false
 subexperiment_name = "Sn"
 k_max_sn = 1.0
 diameter_sn = π / 4
@@ -370,8 +397,8 @@ for n in hn_sn_dims
 
     if benchmarking
         cbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; cbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; pba_bm_kwargs...)
-        sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; sgm_bm_kwargs...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; $pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; $sgm_bm_kwargs...)
         times = [
             median(cbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
@@ -380,4 +407,14 @@ for n in hn_sn_dims
         (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name))
     end
 end
+```
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
+```{julia}
+#| code-fold: true
+export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Convex-Prox.csv"), DataFrame; delim = ","), tf = tf_markdown)
+```
+... Whereas the following table refers to the SGM
+```{julia}
+#| code-fold: true
+export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Subgrad.csv"), DataFrame; delim = ","), tf = tf_markdown)
 ```
