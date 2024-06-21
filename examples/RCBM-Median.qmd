@@ -25,6 +25,7 @@ plot = true
 
 ```{julia}
 #| output: false
+using PrettyTables 
 using BenchmarkTools
 using CSV, DataFrames
 using ColorSchemes, Plots
