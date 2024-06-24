@@ -102,6 +102,10 @@ examples_menu =
             "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
             "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md",
         ],
+        "Convex Bundle Method" => [
+            "Hyperbolic Signal Denoising" => "examples/H2-Signal-TV.md",
+            "Spectral Procrustes" => "examples/Spectral-Procrustes.md",
+        ],
         "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",
