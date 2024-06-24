@@ -6,6 +6,7 @@ project:
     - "*.qmd"
     - "!Difference-of-Convex-Benchmark.qmd"
     - "!HyperparameterOptimization.qmd"
+    - "!RCBM-Median.qmd"
 
 crossref:
   fig-prefix: Figure
