@@ -10,6 +10,7 @@ with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobak
 This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.2.
 
 ``` julia
+using PrettyTables 
 using BenchmarkTools
 using CSV, DataFrames
 using ColorSchemes, Plots
@@ -172,7 +173,6 @@ if export_orig
         markerstrokecolor=noise_color,
         label="Noise",
     )
-    display(ball_scene)
     matrix_data = matrixify_Poincare_ball(ball_data)
     matrix_noise = matrixify_Poincare_ball(ball_noise)
     matrix_geodesics = matrixify_Poincare_ball(ball_geodesics)
@@ -191,17 +191,16 @@ if export_orig
         DataFrame(matrix_geodesics, :auto);
         header=["x", "y"],
     )
+    display(ball_scene)
 end
 ```
 
 ![](H2-Signal-TV_files/figure-commonmark/cell-8-output-1.svg)
 
-    "/Users/hajgj/Repositories/Julia/ManoptExamples.jl/examples/H2-Signal-TV/H2-Signal-TV-geodesics.csv"
-
 We introduce some keyword arguments for the solvers we will use in this experiment
 
 ``` julia
-cbm_kwargs = [
+rcbm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :domain => domf,
@@ -219,7 +218,7 @@ cbm_kwargs = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
 ]
-cbm_bm_kwargs = [
+rcbm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :domain => domf,
@@ -284,19 +283,12 @@ cppa_bm_kwargs = [
 ]
 ```
 
-    1-element Vector{Pair{Symbol, StopWhenAny{Tuple{StopAfterIteration, StopWhenChangeLess{LogarithmicInverseRetraction, StoreStateAction{@NamedTuple{}, @NamedTuple{}, @NamedTuple{}, @NamedTuple{}, @NamedTuple{}, @NamedTuple{}}}}}}}:
-     :stopping_criterion => StopWhenAny with the Stopping Criteria
-        Stop When _one_ of the following are fulfilled:
-            Max Iteration 15000:    not reached
-            |Δp| < 1.0e-8: not reached
-        Overall: not reached
-
 Finally, we run the optimization algorithms…
 
 ``` julia
-cbm = convex_bundle_method(Hn, f, ∂f, p0; cbm_kwargs...)
-cbm_result = get_solver_result(cbm)
-cbm_record = get_record(cbm)
+rcbm = convex_bundle_method(Hn, f, ∂f, p0; rcbm_kwargs...)
+rcbm_result = get_solver_result(rcbm)
+rcbm_record = get_record(rcbm)
 #
 pba = proximal_bundle_method(Hn, f, ∂f, p0; pba_kwargs...)
 pba_result = get_solver_result(pba)
@@ -315,16 +307,16 @@ cppa_record = get_record(cppa)
 
 ``` julia
 if benchmarking
-    pba_bm = @benchmark proximal_bundle_method($Hn, $f, $∂f, $p0; pba_bm_kwargs...)
-    cbm_bm = @benchmark convex_bundle_method($Hn, $f, $∂f, $p0; cbm_bm_kwargs...)
-    sgm_bm = @benchmark subgradient_method($Hn, $f, $∂f, $p0; sgm_bm_kwargs...)
-    cppa_bm = @benchmark cyclic_proximal_point($Hn, $f, $proxes, $p0; cppa_bm_kwargs...)
+    pba_bm = @benchmark proximal_bundle_method($Hn, $f, $∂f, $p0; $pba_bm_kwargs...)
+    rcbm_bm = @benchmark convex_bundle_method($Hn, $f, $∂f, $p0; $rcbm_bm_kwargs...)
+    sgm_bm = @benchmark subgradient_method($Hn, $f, $∂f, $p0; $sgm_bm_kwargs...)
+    cppa_bm = @benchmark cyclic_proximal_point($Hn, $f, $proxes, $p0; $cppa_bm_kwargs...)
     #
-    experiments = ["CBM", "PBA", "SGM", "CPPA"]
-    records = [cbm_record, pba_record, sgm_record, cppa_record]
-    results = [cbm_result, pba_result, sgm_result, cppa_result]
+    experiments = ["RCBM", "PBA", "SGM", "CPPA"]
+    records = [rcbm_record, pba_record, sgm_record, cppa_record]
+    results = [rcbm_result, pba_result, sgm_result, cppa_result]
     times = [
-        median(cbm_bm).time * 1e-9,
+        median(rcbm_bm).time * 1e-9,
         median(pba_bm).time * 1e-9,
         median(sgm_bm).time * 1e-9,
         median(cppa_bm).time * 1e-9,
@@ -357,14 +349,26 @@ if benchmarking
 end
 ```
 
-    "/Users/hajgj/Repositories/Julia/ManoptExamples.jl/examples/H2-Signal-TV/H2-Signal-TV-comparisons.csv"
+We can take a look at how the algorithms compare to each other in their performance with the following table…
+
+``` julia
+export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "-comparisons.csv"), DataFrame; delim = ","), tf = tf_markdown)
+```
+
+    | Algorithm | Iterations | Time (s) |  Objective |       Error |
+    |   String7 |      Int64 |  Float64 |    Float64 |     Float64 |
+    |-----------|------------|----------|------------|-------------|
+    |      RCBM |       4017 |  67.5321 | 0.00179287 | 0.000331751 |
+    |       PBA |      14807 |  111.508 | 0.00181956 | 0.000440844 |
+    |       SGM |      15000 |  109.079 | 0.00179154 | 0.000330336 |
+    |      CPPA |      15000 |  100.925 | 0.00179276 | 0.000332292 |
 
 Lastly, we plot the results.
 
 ``` julia
 if export_result
     # Convert hyperboloid points to Poincaré ball points
-    ball_b = convert.(PoincareBallPoint, cbm_result)
+    ball_b = convert.(PoincareBallPoint, rcbm_result)
     ball_p = convert.(PoincareBallPoint, pba_result)
     ball_s = convert.(PoincareBallPoint, sgm_result)
     ball_c = convert.(PoincareBallPoint, cppa_result)
@@ -379,12 +383,6 @@ if export_result
         label="Convex Bundle Method",
     )
     #
-    # Suppress some plots for clarity
-    # plot!(ball_scene, H, ball_p; label="Proximal Bundle Method")
-    # plot!(ball_scene, H, ball_s; label="Subgradient Method")
-    # plot!(ball_scene, H, ball_c; label="CPPA")
-    display(ball_scene)
-    #
     # Write csv files
     matrix_b = matrixify_Poincare_ball(ball_b)
     CSV.write(
@@ -392,9 +390,13 @@ if export_result
         DataFrame(matrix_b, :auto);
         header=["x", "y"],
     )
+    #
+    # Suppress some plots for clarity, since they are visually indistinguishable
+    # plot!(ball_scene, H, ball_p; label="Proximal Bundle Method")
+    # plot!(ball_scene, H, ball_s; label="Subgradient Method")
+    # plot!(ball_scene, H, ball_c; label="CPPA")
+    display(ball_scene)
 end
 ```
 
-![](H2-Signal-TV_files/figure-commonmark/cell-12-output-1.svg)
-
-    "/Users/hajgj/Repositories/Julia/ManoptExamples.jl/examples/H2-Signal-TV/H2-Signal-TV-bundle_optimum.csv"
+![](H2-Signal-TV_files/figure-commonmark/cell-13-output-1.svg)
