@@ -97,7 +97,7 @@ end
 
 ```{julia}
 #| output: false
-cbm_kwargs(diameter, domf, k_max) = [
+rcbm_kwargs(diameter, domf, k_max) = [
     :diameter => diameter,
     :domain => domf,
     :k_max => k_max,
@@ -115,7 +115,7 @@ cbm_kwargs(diameter, domf, k_max) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
 ]
-cbm_bm_kwargs(diameter, domf, k_max) = [
+rcbm_bm_kwargs(diameter, domf, k_max) = [
     :diameter => diameter,
     :domain => domf,
     :k_max => k_max,
@@ -257,26 +257,26 @@ for n in hn_sn_dims
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
 
-    cbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; cbm_kwargs(diameter_hn, domf_hn, k_max_hn)...)
-    cbm_result = get_solver_result(cbm)
-    cbm_record = get_record(cbm)
+    rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(diameter_hn, domf_hn, k_max_hn)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
 
     sgm = subgradient_method(M, f_hn, ∂f_hn, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
     sgm_record = get_record(sgm)
 
     records = [
-        cbm_record,
+        rcbm_record,
         pba_record,
         sgm_record,
     ]
 
     if benchmarking
-        cbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; cbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
         times = [
-            median(cbm_bm).time * 1e-9,
+            median(rcbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
             median(sgm_bm).time * 1e-9,
         ]
@@ -319,26 +319,26 @@ for n in spd_dims
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
 
-    cbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; cbm_kwargs(diameter_spd, domf_spd, k_max_spd)...)
-    cbm_result = get_solver_result(cbm)
-    cbm_record = get_record(cbm)
+    rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(diameter_spd, domf_spd, k_max_spd)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
 
     sgm = subgradient_method(M, f_spd, ∂f_spd, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
     sgm_record = get_record(sgm)
 
     records = [
-        cbm_record,
+        rcbm_record,
         pba_record,
         sgm_record,
     ]
 
     if benchmarking
-        cbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; cbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; $sgm_bm_kwargs...)
         times = [
-            median(cbm_bm).time * 1e-9,
+            median(rcbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
             median(sgm_bm).time * 1e-9,
         ]
@@ -382,26 +382,26 @@ for n in hn_sn_dims
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
 
-    cbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; cbm_kwargs(diameter_sn, domf_sn, k_max_sn)...)
-    cbm_result = get_solver_result(cbm)
-    cbm_record = get_record(cbm)
+    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(diameter_sn, domf_sn, k_max_sn)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
 
     sgm = subgradient_method(M, f_sn, ∂f_sn, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
     sgm_record = get_record(sgm)
 
     records = [
-        cbm_record,
+        rcbm_record,
         pba_record,
         sgm_record,
     ]
 
     if benchmarking
-        cbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; cbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; $sgm_bm_kwargs...)
         times = [
-            median(cbm_bm).time * 1e-9,
+            median(rcbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
             median(sgm_bm).time * 1e-9,
         ]
