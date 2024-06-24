@@ -1,4 +1,4 @@
-using Manifolds, Test, ManoptExamples
+using Manifolds, Test, ManoptExamples, Manopt
 using ManoptExamples:
     adjoint_differential_forward_logs,
     adjoint_differential_forward_logs!,

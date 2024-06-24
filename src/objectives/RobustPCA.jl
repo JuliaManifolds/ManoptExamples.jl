@@ -71,12 +71,10 @@ mutable struct RobustPCAGrad!!{D,F}
     ε::F
     temp::D
 end
-function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation())
+function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0; kwargs...)
     return RobustPCAGrad!!(data, ε, zero(data))
 end
-function RobustPCAGrad!!(
-    ::Grassmann, data::AbstractMatrix, ε=1.0; evaluation=AllocatingEvaluation()
-)
+function RobustPCAGrad!!(::Grassmann, data::AbstractMatrix, ε=1.0; kwargs...)
     return RobustPCAGrad!!(data, ε, zero(data))
 end
 function (f::RobustPCAGrad!!)(M::Grassmann, p)
@@ -113,23 +111,8 @@ parameter ``ε``.
     mainly provided to comply with other objectives. Similarly, independent of the `evaluation`,
     indeed the gradient always allows for both the allocating and the in-place variant to be used,
     though that keyword is used to setup the objective.
+
+!!! note
+   The objective is available when `Manopt.jl` is loaded.
 """
-function robust_PCA_objective(
-    data::AbstractMatrix, ε=1.0; evaluation=Manopt.AllocatingEvaluation()
-)
-    return Manopt.ManifoldGradientObjective(
-        RobustPCACost(data, ε), RobustPCAGrad!!(data, 1.0; evaluation=evaluation)
-    )
-end
-function robust_PCA_objective(
-    M::AbstractManifold,
-    data::AbstractMatrix,
-    ε=1.0;
-    evaluation=Manopt.AllocatingEvaluation(),
-)
-    return Manopt.ManifoldGradientObjective(
-        RobustPCACost(M, data, ε),
-        RobustPCAGrad!!(M, data, ε; evaluation=evaluation);
-        evaluation=evaluation,
-    )
-end
+function robust_PCA_objective end

@@ -5,7 +5,21 @@ All notable changes to this Julia package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.6] – unreleased
+## [0.1.8] – 12/06/2024
+
+### Changed
+
+* use `range` compatible with Julia 1.6 and hence lower the compatibility entry for Julia again.
+
+## [0.1.7] – 07/06/2024
+
+### Changed
+
+* make `Manopt.jl` a weak dependency and load functions that require parts of it
+  only load as an extension. This makes it easier to use the examples in the tests
+  of Manopt itself.
+
+## [0.1.6] – 22/03/2024
 
 ### Added
 
