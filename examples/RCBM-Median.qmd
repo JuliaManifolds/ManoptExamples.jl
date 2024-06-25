@@ -7,7 +7,7 @@ date: 20/10/2023
 ## Introduction
 
 In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
-with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021:1](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1], to find the Riemannian median.
+with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1], to find the Riemannian median.
 This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.
 
 ```{julia}
@@ -25,7 +25,7 @@ plot = true
 
 ```{julia}
 #| output: false
-using PrettyTables 
+using PrettyTables
 using BenchmarkTools
 using CSV, DataFrames
 using ColorSchemes, Plots
@@ -342,7 +342,7 @@ for n in spd_dims
             median(pba_bm).time * 1e-9,
             median(sgm_bm).time * 1e-9,
         ]
-        (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name)) 
+        (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name))
     end
 end
 ```

@@ -6,11 +6,11 @@ Hajg Jasa
 ## Introduction
 
 In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
-with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021:1](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1](@cite), to denoise an artificial signal on the Hyperbolic space $\mathcal H^2$.
+with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1](@cite), to denoise an artificial signal on the Hyperbolic space $\mathcal H^2$.
 This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.2.
 
 ``` julia
-using PrettyTables 
+using PrettyTables
 using BenchmarkTools
 using CSV, DataFrames
 using ColorSchemes, Plots
@@ -26,7 +26,7 @@ Let $f \colon \mathcal M \to \mathbb R$ be defined by
 
 ``` math
     f_q (p)
-    = 
+    =
     \frac{1}{n}
     \{
     \frac{1}{2} \sum_{i = 1}^n \mathrm{dist}(p_i, q_i)^2
@@ -355,13 +355,12 @@ We can take a look at how the algorithms compare to each other in their performa
 export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "-comparisons.csv"), DataFrame; delim = ","), tf = tf_markdown)
 ```
 
-    | Algorithm | Iterations | Time (s) |  Objective |       Error |
-    |   String7 |      Int64 |  Float64 |    Float64 |     Float64 |
-    |-----------|------------|----------|------------|-------------|
-    |      RCBM |       4017 |  67.5321 | 0.00179287 | 0.000331751 |
-    |       PBA |      14807 |  111.508 | 0.00181956 | 0.000440844 |
-    |       SGM |      15000 |  109.079 | 0.00179154 | 0.000330336 |
-    |      CPPA |      15000 |  100.925 | 0.00179276 | 0.000332292 |
+| Algorithm | Iterations | Time (s) |  Objective |       Error |
+|-----------|------------|----------|------------|-------------|
+|      RCBM |       4017 |  67.5321 | 0.00179287 | 0.000331751 |
+|       PBA |      14807 |  111.508 | 0.00181956 | 0.000440844 |
+|       SGM |      15000 |  109.079 | 0.00179154 | 0.000330336 |
+|      CPPA |      15000 |  100.925 | 0.00179276 | 0.000332292 |
 
 Lastly, we plot the results.
 

@@ -7,7 +7,7 @@ date: 01/11/2023
 ## Introduction
 
 In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
-with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021:1](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1], to solve the spectral Procrustes problem on $\mathrm{SO}(250)$.
+with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1], to solve the spectral Procrustes problem on $\mathrm{SO}(250)$.
 This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.
 
 ```{julia}
@@ -52,11 +52,11 @@ Given two matrices $A, B \in \mathbb R^{n \times d}$ we aim to solve the orthogo
 
 where $\mathrm{SO}(d)$ is equipped with the standard bi-invariant metric, and where $\Vert \,\cdot\, \Vert_2$ denotes the spectral norm of a matrix, \ie, its largest singular value.
 We aim to find the best matrix $p \in \mathbb R^{d \times d}$ such that $p^\top p = \mathrm{id}$ is the identity matrix, or in other words $p$ is the best rotation.
-Note that the spectral norm is convex in the Euclidean sense, but not geodesically convex on $\mathrm{SO}(d)$. 
+Note that the spectral norm is convex in the Euclidean sense, but not geodesically convex on $\mathrm{SO}(d)$.
 If we define the objective as
 ```math
     f (p)
-	= 
+	=
     \Vert A - B \, p \Vert_2
     ,
 ```

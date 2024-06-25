@@ -6,7 +6,7 @@ Hajg Jasa
 ## Introduction
 
 In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
-with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021:1](@cite), and with the Subgradient Method (SGM), introduced in \[FerreiraOliveira:1998:1\], to solve the spectral Procrustes problem on $\mathrm{SO}(250)$.
+with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in \[FerreiraOliveira:1998:1\], to solve the spectral Procrustes problem on $\mathrm{SO}(250)$.
 This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.
 
 ``` julia
@@ -35,7 +35,7 @@ If we define the objective as
 
 ``` math
     f (p)
-    = 
+    =
     \Vert A - B \, p \Vert_2
     ,
 ```
