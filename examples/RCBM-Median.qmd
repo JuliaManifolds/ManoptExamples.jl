@@ -419,3 +419,12 @@ export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name 
 #| code-fold: true
 export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Subgrad.csv"), DataFrame; delim = ","), tf = tf_markdown)
 ```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["RCBM-Median.md"]
+Canonical=false
+```
+````

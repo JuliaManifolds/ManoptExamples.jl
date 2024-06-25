@@ -270,3 +270,12 @@ export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name 
 #| code-fold: true
 (show_plot && benchmarking) && fig
 ```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["Spectral-Procrustes.md"]
+Canonical=false
+```
+````

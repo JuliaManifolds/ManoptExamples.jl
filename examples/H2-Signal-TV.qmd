@@ -370,10 +370,16 @@ end
 ```
 We can take a look at how the algorithms compare to each other in their performance with the following table...
 ```{julia}
+#| echo: false
 #| code-fold: true
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "-comparisons.csv"), DataFrame; delim = ","), tf = tf_markdown)
-```
-Lastly, we plot the results.
+export_table && pretty_table(
+    CSV.read(
+        joinpath(experiment_name, experiment_name * "-comparisons.csv"),
+        DataFrame;
+        delim=",",
+    );
+    tf=tf_markdown,
+)Lastly, we plot the results.
 ```{julia}
 if export_result
     # Convert hyperboloid points to Poincaré ball points
@@ -407,3 +413,12 @@ if export_result
     display(ball_scene)
 end
 ```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["H2-Signal-TV.md"]
+Canonical=false
+```
+````
