@@ -411,11 +411,13 @@ end
 ```
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
 ```{julia}
+#| echo: false
 #| code-fold: true
 export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Convex-Prox.csv"), DataFrame; delim = ","), tf = tf_markdown)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
+#| echo: false
 #| code-fold: true
 export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Subgrad.csv"), DataFrame; delim = ","), tf = tf_markdown)
 ```
