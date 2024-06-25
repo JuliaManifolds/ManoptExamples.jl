@@ -23,3 +23,5 @@ docs/src/examples/*.md
 examples/*.ipynb
 examples/*_files/*
 docs/src/changelog.md
+!docs/src/examples/H2-Signal-TV_files/figure-commonmark
+!docs/src/examples/Spectral-Procrustes_files/figure-commonmark
