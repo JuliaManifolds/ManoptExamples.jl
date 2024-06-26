@@ -322,6 +322,17 @@ if benchmarking
         median(cppa_bm).time * 1e-9,
     ]
     #
+    global B = cat(
+        experiments,
+        [maximum(first.(record)) for record in records],
+        [t for t in times],
+        [minimum([r[2] for r in record]) for record in records],
+        [distance(Hn, data, result) / length(data) for result in results];
+        dims=2,
+    )
+    #
+    global header = ["Algorithm", "Iterations", "Time (s)", "Objective", "Error"]
+    #
     # Finalize - export costs
     if export_table
         for (time, record, result, experiment) in zip(times, records, results, experiments)
@@ -332,18 +343,10 @@ if benchmarking
                 header=["i", "cost"],
             )
         end
-        B = cat(
-            experiments,
-            [maximum(first.(record)) for record in records],
-            [t for t in times],
-            [minimum([r[2] for r in record]) for record in records],
-            [distance(Hn, data, result) / length(data) for result in results];
-            dims=2,
-        )
         CSV.write(
             joinpath(results_folder, experiment_name * "-comparisons.csv"),
             DataFrame(B, :auto);
-            header=["Algorithm", "Iterations", "Time (s)", "Objective", "Error"],
+            header=header,
         )
     end
 end
@@ -351,16 +354,7 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table…
 
-``` julia
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "-comparisons.csv"), DataFrame; delim = ","), tf = tf_markdown)
-```
-
-| Algorithm | Iterations | Time (s) |  Objective |       Error |
-|-----------|------------|----------|------------|-------------|
-|      RCBM |       4017 |  67.5321 | 0.00179287 | 0.000331751 |
-|       PBA |      14807 |  111.508 | 0.00181956 | 0.000440844 |
-|       SGM |      15000 |  109.079 | 0.00179154 | 0.000330336 |
-|      CPPA |      15000 |  100.925 | 0.00179276 | 0.000332292 |
+[TABLE]
 
 Lastly, we plot the results.
 
@@ -399,3 +393,11 @@ end
 ```
 
 ![](H2-Signal-TV_files/figure-commonmark/cell-13-output-1.svg)
+
+## Literature
+
+```@bibliography
+Pages = ["H2-Signal-TV.md"]
+Canonical=false
+```
+

@@ -212,6 +212,16 @@ if benchmarking
         global fig = plot(xscale=:log10)
     end
     #
+    global D = cat(
+        experiments,
+        [maximum(first.(record)) for record in records],
+        [t for t in times],
+        [minimum([r[2] for r in record]) for record in records];
+        dims=2,
+    )
+    # 
+    global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
+    #
     # Finalize - export costs
     if export_table
         for (time, record, result, experiment) in zip(times, records, results, experiments)
@@ -227,17 +237,10 @@ if benchmarking
                 plot!(fig, bm_data[:,1], bm_data[:,2]; label=experiment)
             end
         end
-        global D = cat(
-            experiments,
-            [maximum(first.(record)) for record in records],
-            [t for t in times],
-            [minimum([r[2] for r in record]) for record in records];
-            dims=2,
-        )
         CSV.write(
             joinpath(results_folder, experiment_name * "-comparisons.csv"),
             DataFrame(D, :auto);
-            header=["Algorithm", "Iterations", "Time (s)", "Objective"],
+            header=header,
         )
     end
 end
@@ -245,21 +248,16 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table…
 
-``` julia
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "-comparisons.csv"), DataFrame; delim = ","), tf = tf_markdown)
-```
-
-    | Algorithm | Iterations | Time (s) | Objective |
-    |   String7 |      Int64 |  Float64 |   Float64 |
-    |-----------|------------|----------|-----------|
-    |      RCBM |         26 |  13.8346 |    235.46 |
-    |       PBA |         31 |  3.15591 |    235.46 |
-    |       SGM |       5000 |    288.9 |    235.46 |
+[TABLE]
 
 … and this cost versus iterations plot
 
-``` julia
-(show_plot && benchmarking) && fig
+![](Spectral-Procrustes_files/figure-commonmark/cell-10-output-1.svg)
+
+## Literature
+
+```@bibliography
+Pages = ["Spectral-Procrustes.md"]
+Canonical=false
 ```
 
-![](Spectral-Procrustes_files/figure-commonmark/cell-10-output-1.svg)
