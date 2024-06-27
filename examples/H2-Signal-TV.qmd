@@ -1,7 +1,7 @@
 ---
 title: "A comparison of the RCBM with the PBA, the SGM, and the CPPA for denoising a signal on the hyperbolic space"
 author: "Hajg Jasa"
-date: 01/11/2023
+date: 06/27/2024
 ---
 
 ## Introduction
@@ -50,11 +50,11 @@ Let $f \colon \mathcal M \to \mathbb R$ be defined by
     f_q (p)
 	=
 	\frac{1}{n}
-	\{
+	\left{
     \frac{1}{2} \sum_{i = 1}^n \mathrm{dist}(p_i, q_i)^2
     +
     \alpha \operatorname{TV}(p)
-    \}
+    \right}
 	,
 ```
 
@@ -375,8 +375,7 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-#| output: asis
-benchmarking && pretty_table(B; tf=tf_markdown, header=header)
+benchmarking && pretty_table(DataFrame(B, :auto); tf=tf_markdown, header=header)
 ```
 Lastly, we plot the results.
 ```{julia}

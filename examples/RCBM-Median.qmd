@@ -1,7 +1,7 @@
 ---
 title: "A comparison of the RCBM with the PBA and the SGM for the Riemannian median"
 author: "Hajg Jasa"
-date: 20/10/2023
+date: 06/27/2024
 ---
 
 ## Introduction
@@ -9,6 +9,7 @@ date: 20/10/2023
 In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
 with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1], to find the Riemannian median.
 This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.
+The runtimes reported in the tables are measured in seconds.
 
 ```{julia}
 #| echo: false
@@ -158,16 +159,40 @@ sgm_bm_kwargs = [
 Before running the experiments, we initialize data collection functions that we will use later
 ```{julia}
 #| output: false
-function initialize_dataframes(results_folder, experiment_name, subexperiment_name)
-    A1 = DataFrame(;
-            a="Dimension",
-            b="Iterations",
-            c="Time (s)",
-            d="Objective",
-            e="Iterations",
-            f="Time (s)",
-            g="Objective",
-        )
+global col_names_1 = [
+    :Dimension,
+    :Iterations_1,
+    :Time_1,
+    :Objective_1,
+    :Iterations_2,
+    :Time_2,
+    :Objective_2,
+]
+col_types_1 = [
+    Int64,
+    Int64,
+    Float64,
+    Float64,
+    Int64,
+    Float64,
+    Float64,
+]
+named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
+global col_names_2 = [
+    :Dimension,
+    :Iterations,
+    :Time,
+    :Objective,
+]
+col_types_2 = [
+    Int64,
+    Int64,
+    Float64,
+    Float64,
+]
+named_tuple_2 = (; zip(col_names_2, type[] for type in col_types_2 )...)
+function initialize_dataframes(results_folder, experiment_name, subexperiment_name, named_tuple_1, named_tuple_2)
+    A1 = DataFrame(named_tuple_1)
     CSV.write(
         joinpath(
             results_folder,
@@ -176,12 +201,7 @@ function initialize_dataframes(results_folder, experiment_name, subexperiment_na
         A1;
         header=false,
     )
-    A2 = DataFrame(;
-        a="Dimension",
-        b="Iterations",
-        c="Time (s)",
-        d="Objective",
-    )
+    A2 = DataFrame(named_tuple_2)
     CSV.write(
         joinpath(
             results_folder,
@@ -190,21 +210,31 @@ function initialize_dataframes(results_folder, experiment_name, subexperiment_na
         A2;
         header=false,
     )
+    return A1, A2
 end
 ```
 
 ```{julia}
 #| output: false
-function write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name)
+function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1, col_names_2)
     B1 = DataFrame(;
-        a=manifold_dimension(M),
-        b=maximum(first.(records[1])),
-        c=times[1],
-        d=minimum([r[2] for r in records[1]]),
-        e=maximum(first.(records[2])),
-        f=times[2],
-        g=minimum([r[2] for r in records[2]]),
+        Dimension=manifold_dimension(M),
+        Iterations_1=maximum(first.(records[1])),
+        Time_1=times[1],
+        Objective_1=minimum([r[2] for r in records[1]]),
+        Iterations_2=maximum(first.(records[2])),
+        Time_2=times[2],
+        Objective_2=minimum([r[2] for r in records[2]]),
     )
+    B2 = DataFrame(;
+        Dimension=manifold_dimension(M),
+        Iterations=maximum(first.(records[3])),
+        Time=times[3],
+        Objective=minimum([r[2] for r in records[3]]),
+    )
+    return B1, B2
+end
+function write_dataframes(B1, B2, results_folder, experiment_name, subexperiment_name)
     CSV.write(
         joinpath(
             results_folder,
@@ -214,12 +244,6 @@ function write_dataframes(M, records, times, results_folder, experiment_name, su
         ),
         B1;
         append=true,
-    )
-    B2 = DataFrame(;
-        a=manifold_dimension(M),
-        b=maximum(first.(records[3])),
-        c=times[3],
-        d=minimum([r[2] for r in records[3]]),
     )
     CSV.write(
         joinpath(
@@ -240,7 +264,14 @@ end
 subexperiment_name = "Hn"
 k_max_hn = 0.0
 diameter_hn = floatmax(Float64)
-initialize_dataframes(results_folder, experiment_name, subexperiment_name)
+global A1, A2 = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    subexperiment_name,
+    named_tuple_1,
+    named_tuple_2
+)
+
 for n in hn_sn_dims
 
     M = Hyperbolic(Int(2^n))
@@ -275,24 +306,41 @@ for n in hn_sn_dims
         rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
+        
         times = [
             median(rcbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
             median(sgm_bm).time * 1e-9,
         ]
-        (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name))
+
+        B1, B2 = export_dataframes(
+            M,
+            records,
+            times,
+            results_folder,
+            experiment_name,
+            subexperiment_name,
+            col_names_1,
+            col_names_2,
+        )
+
+        append!(A1, B1)
+        append!(A2, B2)
+        (export_table) && (write_dataframes(B1, B2, results_folder, experiment_name, subexperiment_name))
     end
 end
 ```
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
 ```{julia}
+#| echo: false
 #| code-fold: true
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Convex-Prox.csv"), DataFrame; delim = ","), tf = tf_markdown)
+benchmarking && pretty_table(A1, tf = tf_markdown, header=col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
+#| echo: false
 #| code-fold: true
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Subgrad.csv"), DataFrame; delim = ","), tf = tf_markdown)
+benchmarking && pretty_table(A2, tf = tf_markdown, header=col_names_2)
 ```
 
 
@@ -302,10 +350,17 @@ export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name 
 subexperiment_name = "SPD"
 k_max_spd = 0.0
 diameter_spd = floatmax(Float64)
-initialize_dataframes(results_folder, experiment_name, subexperiment_name)
+global A1_SPD, A2_SPD = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    subexperiment_name,
+    named_tuple_1,
+    named_tuple_2
+)
+
 for n in spd_dims
 
-    M = SymmetricPositiveDefinite(Int(2^n))
+    M = SymmetricPositiveDefinite(Int(n))
     data = [rand(M) for _ in 1:N]
     dists = [distance(M, z, y) for z in data, y in data]
     p0 = data[minimum(Tuple(findmax(dists)[2]))]
@@ -337,24 +392,41 @@ for n in spd_dims
         rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; $sgm_bm_kwargs...)
+
         times = [
             median(rcbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
             median(sgm_bm).time * 1e-9,
         ]
-        (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name))
+
+        B1_SPD, B2_SPD = export_dataframes(
+            M,
+            records,
+            times,
+            results_folder,
+            experiment_name,
+            subexperiment_name,
+            col_names_1,
+            col_names_2,
+        )
+
+        append!(A1_SPD, B1_SPD)
+        append!(A2_SPD, B2_SPD)
+        (export_table) && (write_dataframes(B1_SPD, B2_SPD, results_folder, experiment_name, subexperiment_name))
     end
 end
 ```
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
 ```{julia}
+#| echo: false
 #| code-fold: true
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Convex-Prox.csv"), DataFrame; delim = ","), tf = tf_markdown)
+benchmarking && pretty_table(A1_SPD, tf = tf_markdown, header=col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
+#| echo: false
 #| code-fold: true
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Subgrad.csv"), DataFrame; delim = ","), tf = tf_markdown)
+benchmarking && pretty_table(A2_SPD, tf = tf_markdown, header=col_names_2)
 ```
 
 ## The Median on the Sphere
@@ -363,7 +435,14 @@ export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name 
 subexperiment_name = "Sn"
 k_max_sn = 1.0
 diameter_sn = π / 4
-initialize_dataframes(results_folder, experiment_name, subexperiment_name)
+global A1_Sn, A2_Sn = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    subexperiment_name,
+    named_tuple_1,
+    named_tuple_2
+)
+
 for n in hn_sn_dims
 
     M = Sphere(Int(2^n))
@@ -400,12 +479,27 @@ for n in hn_sn_dims
         rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; $sgm_bm_kwargs...)
+
         times = [
             median(rcbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
             median(sgm_bm).time * 1e-9,
         ]
-        (export_table) && (write_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name))
+
+        B1_Sn, B2_Sn = export_dataframes(
+            M,
+            records,
+            times,
+            results_folder,
+            experiment_name,
+            subexperiment_name,
+            col_names_1,
+            col_names_2,
+        )
+
+        append!(A1_Sn, B1_Sn)
+        append!(A2_Sn, B2_Sn)
+        (export_table) && (write_dataframes(B1_Sn, B2_Sn, results_folder, experiment_name, subexperiment_name))
     end
 end
 ```
@@ -413,13 +507,13 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Convex-Prox.csv"), DataFrame; delim = ","), tf = tf_markdown)
+benchmarking && pretty_table(A1_Sn, tf = tf_markdown, header=col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
-export_table && pretty_table(CSV.read(joinpath(experiment_name, experiment_name * "_" * subexperiment_name * "-Comparisons-Subgrad.csv"), DataFrame; delim = ","), tf = tf_markdown)
+benchmarking && pretty_table(A2_Sn, tf = tf_markdown, header=col_names_2)
 ```
 
 ## Literature

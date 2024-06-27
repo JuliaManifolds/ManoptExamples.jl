@@ -1,7 +1,7 @@
 ---
 title: "A comparison of the RCBM with the PBA, the SGM for solving the spectral Procrustes problem"
 author: "Hajg Jasa"
-date: 01/11/2023
+date: 06/27/2024
 ---
 
 ## Introduction
@@ -191,6 +191,7 @@ sgm_bm_kwargs = [
     :stopping_criterion => StopWhenSubgradientNormLess(√tol) |
                            StopAfterIteration(max_iters),
 ]
+global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
 ```
 
 We run the optimization algorithms...
@@ -237,7 +238,7 @@ if benchmarking
         dims=2,
     )
     # 
-    global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
+    
     #
     # Finalize - export costs
     if export_table
@@ -267,8 +268,7 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-#| output: asis
-benchmarking && pretty_table(D; tf = tf_markdown, header=header)
+benchmarking && pretty_table(DataFrame(D, :auto); tf = tf_markdown, header=header)
 ```
 ... and this cost versus iterations plot
 ```{julia}
