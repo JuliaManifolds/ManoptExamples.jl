@@ -28,11 +28,11 @@ Let $f \colon \mathcal M \to \mathbb R$ be defined by
     f_q (p)
     =
     \frac{1}{n}
-    \left{
+    \left(
     \frac{1}{2} \sum_{i = 1}^n \mathrm{dist}(p_i, q_i)^2
     +
     \alpha \operatorname{TV}(p)
-    \right}
+    \right)
     ,
 ```
 

@@ -1,7 +1,7 @@
 A comparison of the RCBM with the PBA, the SGM for solving the spectral Procrustes problem
 ================
 Hajg Jasa
-1/11/23
+6/27/24
 
 ## Introduction
 
@@ -174,6 +174,7 @@ sgm_bm_kwargs = [
     :stopping_criterion => StopWhenSubgradientNormLess(√tol) |
                            StopAfterIteration(max_iters),
 ]
+global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
 ```
 
 We run the optimization algorithms…
@@ -220,7 +221,7 @@ if benchmarking
         dims=2,
     )
     # 
-    global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
+    
     #
     # Finalize - export costs
     if export_table
@@ -248,7 +249,11 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table…
 
-[TABLE]
+| Algorithm | Iterations | Time (s) | Objective |
+|-----------|------------|----------|-----------|
+|      RCBM |         26 |  13.7482 |    235.46 |
+|       PBA |         31 |  3.31156 |    235.46 |
+|       SGM |       5000 |  292.542 |    235.46 |
 
 … and this cost versus iterations plot
 

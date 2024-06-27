@@ -103,6 +103,7 @@ examples_menu =
             "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md",
         ],
         "Convex Bundle Method" => [
+            "Riemannian Median" => "examples/RCBM-Median.md",
             "Hyperbolic Signal Denoising" => "examples/H2-Signal-TV.md",
             "Spectral Procrustes" => "examples/Spectral-Procrustes.md",
         ],
