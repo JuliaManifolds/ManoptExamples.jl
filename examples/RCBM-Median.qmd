@@ -452,7 +452,7 @@ for n in hn_sn_dims
     data = [close_point(M, north, diameter / 2) for _ in 1:n]
     p0 = data[1]
 
-    f_sn(M, p) = f_spd(M, p_spd, data)
+    f_sn(M, p) = f(M, p, data)
     domf_sn(M, p) = domf(M, p, p0, diameter_sn)
     ∂f_sn(M, p) = ∂f(M, p, data, atol)
 
