@@ -1,5 +1,5 @@
 #
-# Solving the spectral orthogonal procrustes problem
+# Solving the spectral procrustes problem
 # comparing the convex bundle method to
 # 1. the proximal bundle method
 # 2. the subgradient method
@@ -7,18 +7,18 @@
 #
 using BenchmarkTools
 using CSV, DataFrames
-using ColorSchemes, Plots#; pgfplotsx()#PGFPlotsX
+using ColorSchemes, Plots
 using QuadraticModels, RipQP
 using Random, LinearAlgebra, LRUCache
 using ManifoldDiff, Manifolds, Manopt, ManoptExamples
-
+#
 #
 # Settings
 experiment_name = "Spectral_Procrustes"
 results_folder = joinpath(@__DIR__, experiment_name)
 figures_folder = joinpath(@__DIR__, experiment_name, "figures")
-export_table = true 
-benchmark = true 
+export_table = true
+benchmark = true
 show_plot = true
 !isdir(results_folder) && mkdir(results_folder)
 !isdir(figures_folder) && mkdir(figures_folder)
@@ -29,44 +29,42 @@ n = 1000
 d = 250
 A = rand(n, d)
 B = randn(n, d)
-tol = 1e-8#1e-7 # setting this to 1e-8 just makes subgradient run longer.
+tol = 1e-8
 function orthogonal_procrustes(A, B)
-	s =  svd((A'*B)')
-    R = s.U* s.Vt
-	return R
+    s = svd((A' * B)')
+    R = s.U * s.Vt
+    return R
 end
 #
 # Algorithm parameters
 bundle_cap = 25
 max_iters = 5000
-δ = 0.#1e-2 # Update parameter for μ
-μ = 50. # Initial proxiaml parameter for the proximal bundle method
-k_max = 1/4
-diam = π/(3*√k_max)
+δ = 0.0 #1e-2 # Update parameter for μ
+μ = 50.0 # Initial proximal parameter for the proximal bundle method
+k_max = 1 / 4
+diam = π / (3 * √k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
-p0 = orthogonal_procrustes(A, B) #rand(M)
+p0 = orthogonal_procrustes(A, B)
 project!(M, p0, p0)
-# Z = rand(M; vector_at = OP)
-# Z /= norm(M, OP, Z)
-# p0 = exp(M, OP, Z)
 #
 # Objective and Euclidean subgradient
-f(M, p) = opnorm(A - B*p)
+f(M, p) = opnorm(A - B * p)
 function ∂ₑf(M, p)
-	cost_svd = svd(A - B*p)
-	# # find all maxima in S – since S is sorted, these are the first n ones - improve?
-	indices = [i for (i, v) in enumerate(cost_svd.S) if abs(v - cost_svd.S[1]) < eps()]
-	# We could extend this, since any linear combination (coefficients less than one in sum) is also in the subgradient
-	ind = rand(indices)
-	return -B'*(cost_svd.U[:,ind]*cost_svd.Vt[ind,:]')
+    cost_svd = svd(A - B * p)
+    # # find all maxima in S – since S is sorted, these are the first n ones - improve?
+    indices = [i for (i, v) in enumerate(cost_svd.S) if abs(v - cost_svd.S[1]) < eps()]
+    # We could extend this, since any linear combination (coefficients less than one in sum) is also in the subgradient
+    ind = rand(indices)
+    return -B' * (cost_svd.U[:, ind] * cost_svd.Vt[ind, :]')
 end
-rpb = Manifolds.RiemannianProjectionBackend(Manifolds.ExplicitEmbeddedBackend(M; gradient=∂ₑf))
+rpb = Manifolds.RiemannianProjectionBackend(
+    Manifolds.ExplicitEmbeddedBackend(M; gradient=∂ₑf)
+)
 ∂f(M, p) = Manifolds.gradient(M, f, p, rpb)
-dom(M, p) = distance(M, p, p0) < diam/2 ? true : false
+dom(M, p) = distance(M, p, p0) < diam / 2 ? true : false
 #riemannian_gradient(M, p, ∂ₑf(get_embedding(M), embed(M, p)))
-
 #
 # Optimization
 println("\nConvex Bundle Method")
@@ -81,8 +79,7 @@ println("\nConvex Bundle Method")
     diameter=diam,
     count=[:Cost, :SubGradient],
     cache=(:LRU, [:Cost, :SubGradient], 50),
-    # stepsize = DomainBackTrackingStepsize(0.5),
-    stopping_criterion = StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+    stopping_criterion=StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
     debug=[
         :Iteration,
         (:Cost, "F(p): %1.16f "),
@@ -113,7 +110,7 @@ println("\nProx Bundle Method")
     bundle_size=bundle_cap,
     count=[:Cost, :SubGradient],
     cache=(:LRU, [:Cost, :SubGradient], 50),
-    stopping_criterion=StopWhenLagrangeMultiplierLess(tol)|StopAfterIteration(max_iters),
+    stopping_criterion=StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
     debug=[
         :Iteration,
         :Stop,
@@ -163,7 +160,8 @@ if benchmark
         # δ=$δ,
         # μ=$μ,
         cache=(:LRU, [:Cost, :SubGradient], 50),
-        stopping_criterion=StopWhenLagrangeMultiplierLess($tol)|StopAfterIteration($max_iters),
+        stopping_criterion=StopWhenLagrangeMultiplierLess($tol) |
+                           StopAfterIteration($max_iters),
     )
     b_bm = @benchmark convex_bundle_method(
         $M,
@@ -174,7 +172,8 @@ if benchmark
         domain=$dom,
         diameter=$diam,
         cache=(:LRU, [:Cost, :SubGradient], 50),
-        stopping_criterion = StopWhenLagrangeMultiplierLess($tol) | StopAfterIteration($max_iters),
+        stopping_criterion=StopWhenLagrangeMultiplierLess($tol) |
+                           StopAfterIteration($max_iters),
     )
     s_bm = @benchmark subgradient_method(
         $M,
@@ -184,14 +183,11 @@ if benchmark
         # count=[:Cost, :SubGradient],
         cache=(:LRU, [:Cost, :SubGradient], 50),
         stepsize=DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-        stopping_criterion=StopWhenSubgradientNormLess(√$tol) | StopAfterIteration($max_iters),
+        stopping_criterion=StopWhenSubgradientNormLess(√$tol) |
+                           StopAfterIteration($max_iters),
     )
     #
-    times = [
-        median(b_bm).time * 1e-9,
-        median(p_bm).time * 1e-9,
-        median(s_bm).time * 1e-9,
-    ]
+    times = [median(b_bm).time * 1e-9, median(p_bm).time * 1e-9, median(s_bm).time * 1e-9]
     #
     # Finalize - export costs
     if export_table
@@ -211,7 +207,7 @@ if benchmark
 end
 # Cost plot and export
 if show_plot
-    fig = plot(xscale=:log10);
+    fig = plot(; xscale=:log10)
 end
 for (record, result, experiment) in zip(records, results, experiments)
     C1 = [0.5 f(M, p0)]
@@ -219,14 +215,13 @@ for (record, result, experiment) in zip(records, results, experiments)
     data = vcat(C1, C)
     if export_table
         CSV.write(
-            joinpath(
-                results_folder, experiment_name * "_" * experiment * "-result.csv"),
-                DataFrame(data, :auto);
-                header=["i", "cost"],
+            joinpath(results_folder, experiment_name * "_" * experiment * "-result.csv"),
+            DataFrame(data, :auto);
+            header=["i", "cost"],
         )
     end
     if show_plot
-        plot!(fig, data[:,1], data[:,2]; label=experiment)
+        plot!(fig, data[:, 1], data[:, 2]; label=experiment)
     end
 end
 show_plot && fig
