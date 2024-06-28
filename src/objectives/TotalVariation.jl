@@ -171,7 +171,7 @@ end
     second_order_Total_Variation(M,x [,p=1])
 
 compute the ``\operatorname{TV}_2^p`` functional for data `x` on the
-`PowerManifold` manifoldmanifold `M`, i.e. ``\mathcal M = \mathcal N^n``,
+`PowerManifold` manifold `M`, i.e. ``\mathcal M = \mathcal N^n``,
 where ``n ∈ \mathbb N^k`` denotes the dimensions of the data `x`.
 Let ``\mathcal I_i^{\pm}`` denote the forward and backward neighbors, respectively,
 i.e. with ``\mathcal G`` as all indices from ``\mathbf{1} ∈ \mathbb N^k`` to ``n`` we
@@ -255,7 +255,7 @@ end
     X = grad_Total_Variation(M, (x,y)[, p=1])
     grad_Total_Variation!(M, X, (x,y)[, p=1])
 
-compute the (sub) gradient of ``\frac{1}{p}d^p_{\mathcal M}(x,y)`` with respect
+compute the (deterministic) (sub) gradient of ``\frac{1}{p}d^p_{\mathcal M}(x,y)`` with respect
 to both ``x`` and ``y`` (in place of `X` and `Y`).
 """
 function grad_Total_Variation(M::AbstractManifold, q::Tuple{T,T}, p=1) where {T}
@@ -362,6 +362,144 @@ function grad_Total_Variation!(M::PowerManifold, X, x, p::Int=1)
         end # directions
     end # i in R
     return X
+end
+function _subgrad_Total_Variation(
+    s, M::AbstractManifold, q::Tuple{T,T}, k::Int=1; atol=0
+) where {T}
+    if k == 2
+        return (-log(M, q[1], q[2]), -log(M, q[2], q[1]))
+    else
+        d = distance(M, q[1], q[2])
+        if d == 0 && s == true # subdifferential containing zero
+            return (zero_vector(M, q[1]), zero_vector(M, q[2]))
+        elseif d ≤ atol && s == false
+            return (
+                ManifoldDiff.subgrad_distance(M, q[2], q[1], k; atol=atol),
+                ManifoldDiff.subgrad_distance(M, q[1], q[2], k; atol=atol),
+            )
+        else
+            return (-log(M, q[1], q[2]) / (d^(2 - k)), -log(M, q[2], q[1]) / (d^(2 - k)))
+        end
+    end
+end
+function _subgrad_Total_Variation!(
+    s, M::AbstractManifold, X, q::Tuple{T,T}, k=1; atol=0
+) where {T}
+    d = distance(M, q[1], q[2])
+    if d == 0 && s == true # subdifferential containing zero
+        zero_vector!(M, X[1], q[1])
+        zero_vector!(M, X[2], q[2])
+        return X
+    elseif d ≤ atol && s == false
+        ManifoldDiff.subgrad_distance!(M, X[1], q[2], q[1], k; atol=atol)
+        ManifoldDiff.subgrad_distance!(M, X[2], q[1], q[2], k; atol=atol)
+        return X
+    end
+    log!(M, X[1], q[1], q[2])
+    log!(M, X[2], q[2], q[1])
+    if k == 2
+        X[1] .*= -1
+        X[2] .*= -1
+    else
+        X[1] .*= -1 / (d^(2 - k))
+        X[2] .*= -1 / (d^(2 - k))
+    end
+    return X
+end
+@doc raw"""
+    X = subgrad_TV(M, (p,q)[, k=1; atol=0])
+    subgrad_TV!(M, X, (p,q)[, k=1; atol=0])
+
+compute the (randomized) subgradient of ``\frac{1}{k}d^k_{\mathcal M}(p,q)`` with respect
+to both ``p`` and ``q`` (in place of `X` and `Y`).
+"""
+function subgrad_Total_Variation(
+    M::AbstractManifold, q::Tuple{T,T}, k::Int=1; atol=0
+) where {T}
+    return _subgrad_Total_Variation(false, M, q, k; atol=atol)
+end
+function subgrad_Total_Variation!(
+    M::AbstractManifold, X, q::Tuple{T,T}, k::Int=1; atol=0
+) where {T}
+    return _subgrad_Total_Variation!(false, M, X, q, k; atol=atol)
+end
+
+function _subgrad_Total_Variation(s, M::PowerManifold, p, k::Int=1; atol=0)
+    power_size = power_dimensions(M)
+    R = CartesianIndices(Tuple(power_size))
+    d = length(power_size)
+    maxInd = last(R)
+    X = zero_vector(M, p)
+    cost = Total_Variation(M, p, k, 0)
+    for i in R # iterate over all pixel
+        for l in 1:d # for all direction combinations
+            el = CartesianIndex(ntuple(i -> (i == l) ? 1 : 0, d)) #l th unit vector
+            j = i + el # compute neighbor
+            if all(map(<=, j.I, maxInd.I)) # is this neighbor in range?
+                if k != 1
+                    g =
+                        (cost[i] == 0 ? 1 : 1 / cost[i]) .*
+                        _subgrad_Total_Variation(s, M.manifold, (p[i], p[j]), k; atol=atol) # Compute TV on these
+                else
+                    g = _subgrad_Total_Variation(s, M.manifold, (p[i], p[j]), k; atol=atol) # Compute TV on these
+                end
+                X[i] += g[1]
+                X[j] += g[2]
+            end
+        end # directions
+    end # i in R
+    return X
+end
+function _subgrad_Total_Variation!(s, M::PowerManifold, X, p, k::Int=1; atol=0)
+    power_size = power_dimensions(M)
+    R = CartesianIndices(Tuple(power_size))
+    d = length(power_size)
+    maxInd = last(R)
+    c = Total_Variation(M, p, k, 0)
+    g = [zero_vector(M.manifold, p[first(R)]), zero_vector(M.manifold, p[first(R)])]
+    for i in R # iterate over all pixel
+        for l in 1:d # for all direction combinations
+            el = CartesianIndex(ntuple(i -> (i == l) ? 1 : 0, d)) #l th unit vector
+            j = i + el # compute neighbor
+            if all(map(<=, j.I, maxInd.I)) # is this neighbor in range?
+                _subgrad_Total_Variation!(s, M.manifold, g, (p[i], p[j]), k; atol=atol) # Compute TV on these
+                if k != 1
+                    (c[i] != 0) && (g[1] .*= 1 / c[i])
+                    (c[i] != 0) && (g[2] .*= 1 / c[i])
+                end
+                X[i] += g[1]
+                X[j] += g[2]
+            end
+        end # directions
+    end # i in R
+    return X
+end
+@doc raw"""
+    X = subgrad_TV(M, λ, p[, k=1; atol=0])
+    subgrad_TV!(M, X, λ, p[, k=1; atol=0])
+
+Compute the (randomized) subgradient ``\partial F`` of all forward differences occurring,
+in the power manifold array, i.e. of the function
+
+```math
+F(p) = \sum_{i}\sum_{j ∈ \mathcal I_i} d^k(p_i,p_j)
+```
+
+where ``i`` runs over all indices of the `PowerManifold` manifold `M`
+and ``\mathcal I_i`` denotes the forward neighbors of ``i``.
+
+# Input
+* `M` – a `PowerManifold` manifold
+* `p` – a point.
+
+# Ouput
+* X – resulting tangent vector in ``T_p\mathcal M``. The computation can also be done in place.
+"""
+function subgrad_Total_Variation(M::PowerManifold, p, k::Int=1; atol=0)
+    return _subgrad_Total_Variation(false, M, p, k; atol=atol)
+end
+function subgrad_Total_Variation!(M::PowerManifold, X, p, k::Int=1; atol=0)
+    return _subgrad_Total_Variation!(false, M, X, p, k; atol=atol)
 end
 @doc raw"""
     Y = grad_second_order_Total_Variation(M, q[, p=1])

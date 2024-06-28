@@ -6,6 +6,9 @@ project:
     - "*.qmd"
     - "!Difference-of-Convex-Benchmark.qmd"
     - "!HyperparameterOptimization.qmd"
+    - "!RCBM-Median.qmd"
+    - "!Spectral-Procrustes.qmd"
+    - "!H2-Signal-TV.qmd"
 
 crossref:
   fig-prefix: Figure

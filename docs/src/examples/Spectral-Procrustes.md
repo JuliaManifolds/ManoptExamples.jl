@@ -1,0 +1,268 @@
+A comparison of the RCBM with the PBA, the SGM for solving the spectral Procrustes problem
+================
+Hajg Jasa
+6/27/24
+
+## Introduction
+
+In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
+with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in \[FerreiraOliveira:1998:1\], to solve the spectral Procrustes problem on $\mathrm{SO}(250)$.
+This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.
+
+``` julia
+using PrettyTables
+using BenchmarkTools
+using CSV, DataFrames
+using ColorSchemes, Plots
+using QuadraticModels, RipQP
+using Random, LinearAlgebra, LRUCache
+using ManifoldDiff, Manifolds, Manopt, ManoptExamples
+```
+
+## The Problem
+
+Given two matrices $A, B \in \mathbb R^{n \times d}$ we aim to solve the orthogonal Procrustes problem
+
+``` math
+    {\arg\min}_{p \in \mathrm{SO}(d)}\ \Vert A - B \, p \Vert_2
+    ,
+```
+
+where $\mathrm{SO}(d)$ is equipped with the standard bi-invariant metric, and where $\Vert \,\cdot\, \Vert_2$ denotes the spectral norm of a matrix, , its largest singular value.
+We aim to find the best matrix $p \in \mathbb R^{d \times d}$ such that $p^\top p = \mathrm{id}$ is the identity matrix, or in other words $p$ is the best rotation.
+Note that the spectral norm is convex in the Euclidean sense, but not geodesically convex on $\mathrm{SO}(d)$.
+If we define the objective as
+
+``` math
+    f (p)
+    =
+    \Vert A - B \, p \Vert_2
+    ,
+```
+
+its subdifferential is given by
+
+``` math
+    \partial f(p) = \mathrm{proj}_p(-B^\top UV^\top)
+```
+
+where $U$ and $V$ are some left and right singular vectors, respectively, corresponding to the largest singular value of $A - B \, p$, and $\mathrm{proj}_p$ is the projection onto
+
+``` math
+    \mathcal T_p \mathrm{SO}(d)
+    =
+    \{
+    A \in \mathbb R^{d,d} \, \vert \, pA^\top + Ap^\top = 0, \, \mathrm{trace}(p^{-1}A)=0
+    \}
+    .
+```
+
+## Numerical Experiment
+
+We initialize the experiment parameters, as well as some utility functions.
+
+``` julia
+Random.seed!(33)
+n = 1000
+d = 250
+A = rand(n, d)
+B = randn(n, d)
+tol = 1e-8
+#
+# Compute the orthogonal Procrustes minimizer given A and B
+function orthogonal_procrustes(A, B)
+    s =  svd((A'*B)')
+    R = s.U* s.Vt
+    return R
+end
+#
+# Algorithm parameters
+bundle_cap = 25
+max_iters = 5000
+δ = 0.#1e-2 # Update parameter for μ
+μ = 50. # Initial proxiaml parameter for the proximal bundle method
+k_max = 1/4
+diameter = π/(3*√k_max)
+#
+# Manifolds and data
+M = SpecialOrthogonal(d)
+p0 = orthogonal_procrustes(A, B) #rand(M)
+project!(M, p0, p0)
+```
+
+We now define objective and subdifferential (first the Euclidean one, then the projected one).
+
+``` julia
+f(M, p) = opnorm(A - B*p)
+function ∂ₑf(M, p)
+    cost_svd = svd(A - B*p)
+    # Find all maxima in S – since S is sorted, these are the first n ones
+    indices = [i for (i, v) in enumerate(cost_svd.S) if abs(v - cost_svd.S[1]) < eps()]
+    ind = rand(indices)
+    return -B'*(cost_svd.U[:,ind]*cost_svd.Vt[ind,:]')
+end
+rpb = Manifolds.RiemannianProjectionBackend(Manifolds.ExplicitEmbeddedBackend(M; gradient=∂ₑf))
+∂f(M, p) = Manifolds.gradient(M, f, p, rpb)
+domf(M, p) = distance(M, p, p0) < diameter/2 ? true : false
+```
+
+We introduce some keyword arguments for the solvers we will use in this experiment
+
+``` julia
+rcbm_kwargs = [
+    :bundle_cap => bundle_cap,
+    :k_max => k_max,
+    :domain => domf,
+    :diameter => diameter,
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+    :debug => [
+        :Iteration,
+        (:Cost, "F(p): %1.16f "),
+        (:ξ, "ξ: %1.8f "),
+        (:ε, "ε: %1.8f "),
+        (:last_stepsize, "step size: %1.8f"),
+        :WarnBundle,
+        :Stop,
+        10,
+        "\n",
+    ],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+rcbm_bm_kwargs = [
+    :k_max => k_max,
+    :domain => domf,
+    :diameter => diameter,
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+]
+pba_kwargs = [
+    :bundle_size => bundle_cap,
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol)|StopAfterIteration(max_iters),
+    :debug =>[
+        :Iteration,
+        :Stop,
+        (:Cost, "F(p): %1.16f "),
+        (:ν, "ν: %1.16f "),
+        (:c, "c: %1.16f "),
+        (:μ, "μ: %1.8f "),
+        :Stop,
+        :WarnBundle,
+        10,
+        "\n",
+    ],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+]
+pba_bm_kwargs = [
+    :cache =>(:LRU, [:Cost, :SubGradient], 50),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) |                                   StopAfterIteration(max_iters),
+]
+sgm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
+    :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
+    :record => [:Iteration, :Cost, :p_star],
+    :return_state => true,
+]
+sgm_bm_kwargs = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) |
+                           StopAfterIteration(max_iters),
+]
+global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
+```
+
+We run the optimization algorithms…
+
+``` julia
+rcbm = convex_bundle_method(M, f, ∂f, p0; rcbm_kwargs...)
+rcbm_result = get_solver_result(rcbm)
+rcbm_record = get_record(rcbm)
+#
+pba = proximal_bundle_method(M, f, ∂f, p0; pba_kwargs...)
+pba_result = get_solver_result(pba)
+pba_record = get_record(pba)
+#
+sgm = subgradient_method(M, f, ∂f, p0; sgm_kwargs...)
+sgm_result = get_solver_result(sgm)
+sgm_record = get_record(sgm)
+```
+
+… And we benchmark their performance.
+
+``` julia
+if benchmarking
+    pba_bm = @benchmark proximal_bundle_method($M, $f, $∂f, $p0; $pba_bm_kwargs...)
+    rcbm_bm = @benchmark convex_bundle_method($M, $f, $∂f, $p0; $rcbm_bm_kwargs...)
+    sgm_bm = @benchmark subgradient_method($M, $f, $∂f, $p0; $sgm_bm_kwargs...)
+    #
+    experiments = ["RCBM", "PBA", "SGM"]
+    records = [rcbm_record, pba_record, sgm_record]
+    results = [rcbm_result, pba_result, sgm_result]
+    times = [
+        median(rcbm_bm).time * 1e-9,
+        median(pba_bm).time * 1e-9,
+        median(sgm_bm).time * 1e-9,
+    ]
+    if show_plot
+        global fig = plot(xscale=:log10)
+    end
+    #
+    global D = cat(
+        experiments,
+        [maximum(first.(record)) for record in records],
+        [t for t in times],
+        [minimum([r[2] for r in record]) for record in records];
+        dims=2,
+    )
+    # 
+    
+    #
+    # Finalize - export costs
+    if export_table
+        for (time, record, result, experiment) in zip(times, records, results, experiments)
+            C1 = [0.5 f(M, p0)]
+            C = cat(first.(record), [r[2] for r in record]; dims=2)
+            bm_data = vcat(C1, C)
+            CSV.write(
+                joinpath(results_folder, experiment_name * "_" * experiment * "-result.csv"),
+                DataFrame(bm_data, :auto);
+                header=["i", "cost"],
+            )
+            if show_plot
+                plot!(fig, bm_data[:,1], bm_data[:,2]; label=experiment)
+            end
+        end
+        CSV.write(
+            joinpath(results_folder, experiment_name * "-comparisons.csv"),
+            DataFrame(D, :auto);
+            header=header,
+        )
+    end
+end
+```
+
+We can take a look at how the algorithms compare to each other in their performance with the following table…
+
+| Algorithm | Iterations | Time (s) | Objective |
+|-----------|------------|----------|-----------|
+|      RCBM |         26 |  13.7482 |    235.46 |
+|       PBA |         31 |  3.31156 |    235.46 |
+|       SGM |       5000 |  292.542 |    235.46 |
+
+… and this cost versus iterations plot
+
+![](Spectral-Procrustes_files/figure-commonmark/cell-10-output-1.svg)
+
+## Literature
+
+```@bibliography
+Pages = ["Spectral-Procrustes.md"]
+Canonical=false
+```
+
