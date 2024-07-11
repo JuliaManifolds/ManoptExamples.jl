@@ -44,7 +44,7 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 
 ## The Problem
 
-Given two matrices $A, B \in \mathbb R^{n \times d}$ we aim to solve the orthogonal Procrustes problem
+Given two matrices $A, B \in \mathbb R^{n \times d}$ we aim to solve the Procrustes problem
 ```math
 	{\arg\min}_{p \in \mathrm{SO}(d)}\ \Vert A - B \, p \Vert_2
 	,
@@ -53,18 +53,18 @@ Given two matrices $A, B \in \mathbb R^{n \times d}$ we aim to solve the orthogo
 where $\mathrm{SO}(d)$ is equipped with the standard bi-invariant metric, and where $\Vert \,\cdot\, \Vert_2$ denotes the spectral norm of a matrix, \ie, its largest singular value.
 We aim to find the best matrix $p \in \mathbb R^{d \times d}$ such that $p^\top p = \mathrm{id}$ is the identity matrix, or in other words $p$ is the best rotation.
 Note that the spectral norm is convex in the Euclidean sense, but not geodesically convex on $\mathrm{SO}(d)$.
-If we define the objective as
+Let us define the objective as
 ```math
     f (p)
 	=
     \Vert A - B \, p \Vert_2
-    ,
+    .
 ```
-its subdifferential is given by
+To obtain subdifferential information, we use
 ```math
-    \partial f(p) = \mathrm{proj}_p(-B^\top UV^\top)
+    \mathrm{proj}_p(-B^\top UV^\top)
 ```
-where $U$ and $V$ are some left and right singular vectors, respectively, corresponding to the largest singular value of $A - B \, p$, and $\mathrm{proj}_p$ is the projection onto
+as a substitute for $\partial f(p)$, where $U$ and $V$ are some left and right singular vectors, respectively, corresponding to the largest singular value of $A - B \, p$, and $\mathrm{proj}_p$ is the projection onto
 ```math
 	\mathcal T_p \mathrm{SO}(d)
 	=

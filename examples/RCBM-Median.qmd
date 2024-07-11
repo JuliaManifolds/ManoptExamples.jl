@@ -430,6 +430,9 @@ benchmarking && pretty_table(A2_SPD, tf = tf_markdown, header=col_names_2)
 ```
 
 ## The Median on the Sphere
+
+For the last experiment, note that a major difference here is that the sphere has constant positive sectional curvature equal to $1$. In this case, we lose the global convexity of the Riemannian distance and thus of the objective. Minimizers still exist, but they may, in general, be non-unique.
+
 ```{julia}
 #| output: false
 subexperiment_name = "Sn"

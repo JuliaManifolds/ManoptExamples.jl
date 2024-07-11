@@ -425,6 +425,8 @@ We can take a look at how the algorithms compare to each other in their performa
 
 ## The Median on the Sphere
 
+For the last experiment, note that a major difference here is that the sphere has constant positive sectional curvature equal to $1$. In this case, we lose the global convexity of the Riemannian distance and thus of the objective. Minimizers still exist, but they may, in general, be non-unique.
+
 ``` julia
 subexperiment_name = "Sn"
 k_max_sn = 1.0

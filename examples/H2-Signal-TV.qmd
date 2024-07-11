@@ -123,10 +123,6 @@ function artificial_H2_signal(
             )
         end
     end
-    #! In order to have length(data) ∝ pts, we need typeof(l) == Int and mod(pts, l) == 0.
-    if pts != length(data)
-        @warn "The length of the output signal will differ from the input number of points."
-    end
     return data, geodesics
 end
 function matrixify_Poincare_ball(input)
