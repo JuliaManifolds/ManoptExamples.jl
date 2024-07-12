@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>The Rayleigh Quotient · ManoptExamples.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li class="is-active"><a class="tocitem" href>The Rayleigh Quotient</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>The Rayleigh Quotient</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>The Rayleigh Quotient</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/RayleighQuotient.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="The-Rayleigh-Quotient"><a class="docs-heading-anchor" href="#The-Rayleigh-Quotient">The Rayleigh Quotient</a><a id="The-Rayleigh-Quotient-1"></a><a class="docs-heading-anchor-permalink" href="#The-Rayleigh-Quotient" title="Permalink"></a></h1><p>Ronny Bergmann 2024-03-09</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>This example reproduces a few conceptual ideas of Optimization on Manifolds that are used throughout <a href="../../references/#Boumal:2023">[Bou23]</a> using the Rayleigh quotient and explores several different ways to use the algorithms from <a href="https://manoptjl.org"><code>Manopt.jl</code></a>.</p><p>For a symmetric matrix <span>$A \in \mathbb R^{n\times n}$</span> we consider the <a href="https://en.wikipedia.org/wiki/Rayleigh_quotient">📖 Rayleigh Quotient</a></p><p class="math-container">\[\operatorname*{arg\,min}_{x \in \mathbb R^n \backslash \{0\}}
+\frac{x^{\mathrm{T}}Ax}{\lVert x \rVert^2}.\]</p><p>On the sphere we can omit the denominator and obtain</p><p class="math-container">\[f(p) = p^{\mathrm{T}}Ap,\qquad p ∈ 𝕊^{n-1},\]</p><p>which by itself we can again continue in the embedding as</p><p class="math-container">\[\tilde f(x) = x^{\mathrm{T}}Ax,\qquad x \in \mathbb R^n.\]</p><p>This cost has the nice feature that at the minimizer <span>$p^*\in\mathbb S^{n-1}$</span> the function falue <span>$f(p^*)$</span> is the smalles eigenvalue of <span>$A$</span>.</p><p>For the embedded function <span>$\tilde f$</span> the gradient and Hessian can be computed with classical methods as</p><p class="math-container">\[\begin{align*}
+∇\tilde f(x) &amp;= 2Ax, \qquad x ∈ ℝ^n,
+\\
+∇^2\tilde f(x)[V] &amp;= 2AV, \qquad x, V ∈ ℝ^n.
+\end{align*}\]</p><p>Similarly, cf. Examples 3.62 and 5.27 of <a href="../../references/#Boumal:2023">[Bou23]</a>, the Riemannian gradient and Hessian on the manifold <span>$\mathcal M = \mathbb S^{n-1}$</span> are given by</p><p class="math-container">\[\begin{align*}
+\operatorname{grad} f(p) &amp;= 2Ap - 2(p^{\mathrm{T}}Ap)*p,\qquad p ∈ 𝕊^{n-1},
+\\
+\operatorname{Hess} f(p)[X] &amp;=  2AX - 2(p^{\mathrm{T}}AX)p - 2(p^{\mathrm{T}}Ap)X,\qquad p ∈ 𝕊^{n-1}, X \in T_p𝕊^{n-1}
+\end{align*}\]</p><p>Let’s first generate an example martrx <span>$A$</span>.</p><pre><code class="language-julia hljs">using Pkg;
+cd(@__DIR__)
+Pkg.activate(&quot;.&quot;); # use the example environment,</code></pre><pre><code class="language-julia hljs">using LRUCache, BenchmarkTools, LinearAlgebra, Manifolds, ManoptExamples, Manopt, Random
+Random.seed!(42)
+n = 500
+A = Symmetric(randn(n,n))</code></pre><p>And the manifolds</p><pre><code class="language-julia hljs">M = Sphere(n-1)</code></pre><pre><code class="nohighlight hljs">Sphere(499, ℝ)</code></pre><pre><code class="language-julia hljs">E = get_embedding(M)</code></pre><pre><code class="nohighlight hljs">Euclidean(500; field = ℝ)</code></pre><h3 id="Setup-the-corresponding-functions"><a class="docs-heading-anchor" href="#Setup-the-corresponding-functions">Setup the corresponding functions</a><a id="Setup-the-corresponding-functions-1"></a><a class="docs-heading-anchor-permalink" href="#Setup-the-corresponding-functions" title="Permalink"></a></h3><p>Since <a href="../../objectives/#ManoptExamples.RayleighQuotientCost"><code>RayleighQuotientCost</code></a>, <a href="../../objectives/#ManoptExamples.RayleighQuotientGrad!!"><code>RayleighQuotientGrad!!</code></a>, and <a href="../../objectives/#ManoptExamples.RayleighQuotientHess!!"><code>RayleighQuotientHess!!</code></a> are themselves manifold agnostic we only need to initialize them once. Agnostic here means that they would compute <span>$f$</span> is called with <code>M</code> as their first argument and <span>$\tilde f$</span> if called with <code>E</code>.</p><p>We instantiate</p><pre><code class="language-julia hljs">f = ManoptExamples.RayleighQuotientCost(A)
+grad_f = ManoptExamples.RayleighQuotientGrad!!(A)
+Hess_f = ManoptExamples.RayleighQuotientHess!!(A)</code></pre><p>the suffix <code>!!</code> also indicates that these functions both work as allocating and in-place variants. Given a starting point and some memory</p><pre><code class="language-julia hljs">p0 = [1.0, zeros(n-1)...]
+X = zero_vector(M, p0)</code></pre><p>we can both call</p><pre><code class="language-julia hljs">Y = grad_f(M,p0)  # Allocates memory
+grad_f(M,X,p0)    # Computes in place of X and returns the result in X.
+norm(M, p0, X-Y)</code></pre><pre><code class="nohighlight hljs">0.0</code></pre><p>Now we can use a few different variants of solvers to approaach this and this tutorial will walk you through a few of them.</p><p>First of all let’s construct the actual result – since Rayleigh quotient minimization is not necessarily the best way to compute the smallest Eigenvalue. We can also compute</p><pre><code class="language-julia hljs">λ = min(eigvals(A)...)</code></pre><pre><code class="nohighlight hljs">-44.838605046940486</code></pre><h3 id="A-Solver-based-on-gradient-information"><a class="docs-heading-anchor" href="#A-Solver-based-on-gradient-information">A Solver based on gradient information</a><a id="A-Solver-based-on-gradient-information-1"></a><a class="docs-heading-anchor-permalink" href="#A-Solver-based-on-gradient-information" title="Permalink"></a></h3><p>Let’s first just use first-order information and since we are just starting, maybe we only derived the Euclidean gradient <span>$\nabla \tilde f$</span>. We can “tell” the solver, that the provided function and the gradient are defined as the Euclidean variants in the embedding. internally, <code>Manopt.jl</code> then issues the conversion for Euclidean gradients to the corresponding Riemannian one, cf. e.g. <a href="https://manoptjl.org/stable/tutorials/AutomaticDifferentiation/#EmbeddedGradient">this tutorial section</a> or Section 3.8 or more precisely Example 3.62 in <a href="../../references/#Boumal:2023">[Bou23]</a>.</p><p>But instead of diving into all the tecnical details, we can just specify <code>objective_type=:Euclidean</code> to trigger the conversion. We start with a simple <a href="https://manoptjl.org/stable/solvers/gradient_descent/">gradient descent</a></p><pre><code class="language-julia hljs">s = gradient_descent(M, f, grad_f, p0; objective_type=:Euclidean,
+    debug = [:Iteration, :Cost, :GradientNorm, 50, &quot;\n&quot;],
+    return_state=true,
+)
+q1 = get_solver_result(s)
+s</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.363357
+# 50    f(x): -44.206244|grad f(p)|:2.387846624353276
+# 100   f(x): -44.546883|grad f(p)|:2.256125365459942
+# 150   f(x): -44.765220|grad f(p)|:1.3051578932969472
+# 200   f(x): -44.824730|grad f(p)|:0.5758153603739719
+
+# Solver state for `Manopt.jl`s Gradient Descent
+After 200 iterations
+
+## Parameters
+* retraction method: ExponentialRetraction()
+
+## Stepsize
+ArmijoLinesearch() with keyword parameters
+  * initial_stepsize    = 1.0
+  * retraction_method   = ExponentialRetraction()
+  * contraction_factor  = 0.95
+  * sufficient_decrease = 0.1
+
+## Stopping Criterion
+Stop When _one_ of the following are fulfilled:
+    Max Iteration 200:  reached
+    |grad f| &lt; 1.0e-9: not reached
+Overall: reached
+This indicates convergence: No
+
+## Debug
+    [(:Iteration, &quot;# %-6d&quot;), (:Cost, &quot;f(x): %f&quot;), (:GradientNorm, &quot;|grad f(p)|:%s&quot;), &quot;\n&quot;, 50]</code></pre><p>From the final cost we can already see that <code>q1</code> is an eigenvector to the smallest eigenvalue we obtaines above.</p><p>And we can compare this to running with the Riemannian gradient, since the <a href="../../objectives/#ManoptExamples.RayleighQuotientGrad!!"><code>RayleighQuotientGrad!!</code></a> returns this one as well, when just called with the sphere as first Argument, we just have to remove the <code>objective_type</code>.</p><pre><code class="language-julia hljs">q2 = gradient_descent(M, f, grad_f, p0;
+    debug = [:Iteration, :Cost, :GradientNorm, 50, &quot;\n&quot;],
+)
+#Test that both are the same
+isapprox(M, q1,q2)</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.363357
+# 50    f(x): -44.206244|grad f(p)|:2.387846624353294
+# 100   f(x): -44.546883|grad f(p)|:2.2561253654599915
+# 150   f(x): -44.765220|grad f(p)|:1.305157893296954
+# 200   f(x): -44.824730|grad f(p)|:0.5758153603739878
+
+true</code></pre><p>We can also benchmark both</p><pre><code class="language-julia hljs">@benchmark gradient_descent($M, $f, $grad_f, $p0; objective_type=:Euclidean)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 9 samples with 1 evaluation.
+ Range (min … max):  608.169 ms … 640.193 ms  ┊ GC (min … max): 7.37% … 7.11%
+ Time  (median):     615.895 ms               ┊ GC (median):    7.38%
+ Time  (mean ± σ):   617.565 ms ±   9.721 ms  ┊ GC (mean ± σ):  7.37% ± 0.18%
+
+  ▁ ▁     █     ▁▁     ▁       ▁                              ▁  
+  █▁█▁▁▁▁▁█▁▁▁▁▁██▁▁▁▁▁█▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█ ▁
+  608 ms           Histogram: frequency by time          640 ms &lt;
+
+ Memory estimate: 1.13 GiB, allocs estimate: 3852.</code></pre><pre><code class="language-julia hljs">@benchmark gradient_descent($M, $f, $grad_f, $p0)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 51 samples with 1 evaluation.
+ Range (min … max):  92.767 ms … 108.453 ms  ┊ GC (min … max): 0.00% … 3.90%
+ Time  (median):     98.474 ms               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   99.068 ms ±   3.786 ms  ┊ GC (mean ± σ):  1.16% ± 1.85%
+
+            ▁  ▁ █▁  ▄▁       ▁▄ ▁ ▁          ▁                 
+  ▆▆▆▆▁▆▆▁▁▆█▁▁█▆██▆▆██▁▆▆▆▆▁▁██▁█▆█▆▁▆▁▆▁▁▁▁▆█▁▆▁▆▆▁▆▁▁▁▁▁▁▁▆ ▁
+  92.8 ms         Histogram: frequency by time          108 ms &lt;
+
+ Memory estimate: 12.02 MiB, allocs estimate: 3246.</code></pre><p>We see, that the conversion costs a bit of performance, but if the Euclidean gradient is easier to compute, this might still be ok.</p><h3 id="A-Solver-based-(also)-on-(approximate)-Hessian-information"><a class="docs-heading-anchor" href="#A-Solver-based-(also)-on-(approximate)-Hessian-information">A Solver based (also) on (approximate) Hessian information</a><a id="A-Solver-based-(also)-on-(approximate)-Hessian-information-1"></a><a class="docs-heading-anchor-permalink" href="#A-Solver-based-(also)-on-(approximate)-Hessian-information" title="Permalink"></a></h3><p>To also involve the Hessian, we consider the <a href="https://manoptjl.org/stable/solvers/trust_regions/">trust regions</a> solver with three cases:</p><ol><li>Euclidean, approximating the Hessian</li><li>Euclidean, providing the Hessian</li><li>Riemannian, providing the Hessian but also using in-place evaluations.</li></ol><pre><code class="language-julia hljs">q3 = trust_regions(M, f, grad_f, p0; objective_type=:Euclidean,
+    debug = [:Iteration, :Cost, :GradientNorm, 10, &quot;\n&quot;],
+);</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.363357
+# 10    f(x): -43.522431|grad f(p)|:9.779418323323288
+# 20    f(x): -44.838605|grad f(p)|:8.451144677175197e-12</code></pre><p>To provide the Hessian in the high-level interface we need to prodive it as an anonymous function, since any <code>struct</code> is considered to (eventually) be the also optional starting point. For space reasons, let’s also shorten the debug print to only iterations 7 and 14.</p><pre><code class="language-julia hljs">q4 = trust_regions(M, f, grad_f, (E, p, X) -&gt; Hess_f(E, p, X), p0; objective_type=:Euclidean,
+    debug = [:Iteration, :Cost, :GradientNorm, 10, &quot;\n&quot;],
+);</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.363357
+# 10    f(x): -43.522431|grad f(p)|:9.779418323423874
+# 20    f(x): -44.838605|grad f(p)|:1.1638484603322704e-11</code></pre><pre><code class="language-julia hljs">q5 = trust_regions(M, f, grad_f, (M, Y, p, X) -&gt; Hess_f(M, Y, p, X), p0;
+    evaluation=InplaceEvaluation(),
+    debug = [:Iteration, :Cost, :GradientNorm, 10, &quot;\n&quot;],
+);</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.363357
+# 10    f(x): -43.522431|grad f(p)|:9.779418323423881
+# 20    f(x): -44.838605|grad f(p)|:1.1445271377332597e-11</code></pre><p>Let’s also here compare them in benchmarks. Let’s here compare all variants in their (more performant) in-place versions.</p><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $p0;
+  objective_type=:Euclidean,
+  evaluation=InplaceEvaluation(),
+)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 3 samples with 1 evaluation.
+ Range (min … max):  2.015 s …   2.073 s  ┊ GC (min … max): 9.18% … 8.97%
+ Time  (median):     2.043 s              ┊ GC (median):    9.10%
+ Time  (mean ± σ):   2.044 s ± 29.057 ms  ┊ GC (mean ± σ):  9.09% ± 0.11%
+
+  █                          █                            █  
+  █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█ ▁
+  2.01 s         Histogram: frequency by time        2.07 s &lt;
+
+ Memory estimate: 3.81 GiB, allocs estimate: 21954.</code></pre><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $((E, Y, p, X) -&gt; Hess_f(E, Y, p, X)), $p0;
+  evaluation=InplaceEvaluation(),
+  objective_type=:Euclidean
+)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 4 samples with 1 evaluation.
+ Range (min … max):  1.364 s …   1.389 s  ┊ GC (min … max): 9.36% … 9.17%
+ Time  (median):     1.373 s              ┊ GC (median):    9.27%
+ Time  (mean ± σ):   1.375 s ± 10.702 ms  ┊ GC (mean ± σ):  9.25% ± 0.08%
+
+  █                 █   █                                 █  
+  █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█ ▁
+  1.36 s         Histogram: frequency by time        1.39 s &lt;
+
+ Memory estimate: 2.56 GiB, allocs estimate: 19283.</code></pre><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $((M, Y, p, X) -&gt; Hess_f(M, Y, p, X)), $p0;
+    evaluation=InplaceEvaluation(),
+)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 104 samples with 1 evaluation.
+ Range (min … max):  43.071 ms … 56.913 ms  ┊ GC (min … max): 0.00% … 7.68%
+ Time  (median):     47.405 ms              ┊ GC (median):    0.00%
+ Time  (mean ± σ):   48.179 ms ±  2.909 ms  ┊ GC (mean ± σ):  3.35% ± 4.22%
+
+         ▁▁▁▆▆ ▆▁▃▆▃▃  ▁▁    ▃   █▆  ▁▁     ▁                  
+  ▄▁▁▄▄▇▄█████▇██████▄▇██▄▄▄▄█▄▇▄██▇▄██▁▁▄▄▁█▁▁▁▁▄▁▁▄▁▄▄▁▁▁▁▄ ▄
+  43.1 ms         Histogram: frequency by time        56.4 ms &lt;
+
+ Memory estimate: 16.23 MiB, allocs estimate: 6802.</code></pre><p>We see that Hessian approximation is quite costly, and Gradient and Hessian conversion somewhat costly; still, they also might serve as a good starting point, before deciding to delve into computing Riemannian gradients and Hessians.</p><p>Of course all 5 runs obtained solutions close by; one might consider the gradient based runs to not have fully converged.</p><pre><code class="language-julia hljs">[distance(M, q1, q) for q ∈ [q2,q3] ]</code></pre><pre><code class="nohighlight hljs">2-element Vector{Float64}:
+ 1.5505190490543112e-15
+ 0.1301942153125503</code></pre><pre><code class="language-julia hljs">[distance(M, q3, q) for q ∈ [q4,q5] ]</code></pre><pre><code class="nohighlight hljs">2-element Vector{Float64}:
+ 5.325642276241738e-14
+ 5.1713218623657045e-14</code></pre><p>Which we can also see in the final cost, comparing it to the Eigenvalue</p><pre><code class="language-julia hljs">[f(M, q) - λ for q ∈ [q1, q2, q3, q4, q5] ]</code></pre><pre><code class="nohighlight hljs">5-element Vector{Float64}:
+  0.013874911807278067
+  0.01387491180739886
+  6.679101716144942e-13
+ -4.106937012693379e-12
+ -3.964828465541359e-12</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>We illustrated several possibilities to call solvers, with both Euclidean gradient and Hessian and Riemannian gradient and Hessian, allocating and in-place function. While the performance is better for the Riemannian case, the Euclidean one is a worthy alternative, when those are easier to compute.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[Bou23]</dt>
+<dd>
+<div id="Boumal:2023">N. Boumal. <a href='https://www.nicolasboumal.net/#book'><i>An Introduction to Optimization on Smooth Manifolds</i></a>. <a href='https://doi.org/10.1017/9781009166164'>Cambridge University Press (2023)</a>.</div>
+</dd>
+</dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Difference-of-Convex-Frank-Wolfe/">« Frank Wolfe comparison</a><a class="docs-footer-nextpage" href="../Riemannian-mean/">Riemannian Mean »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 24 October 2023 02:07">Tuesday 24 October 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
