@@ -72,10 +72,10 @@ where $\operatorname{TV}(p)$, is the total variation term given by
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(33)
-n = 496 # (this is so that n equals the actual length of the artificial signal)
-σ = 0.1 # Noise parameter
-α = 0.05 # TV parameter
+Random.seed!(42)
+n = 496
+σ = 0.01 # Noise parameter
+α = 0.02 # TV parameter
 atol = 1e-8
 k_max = 0.0
 max_iters = 15000
@@ -140,11 +140,12 @@ We now fix the data for the experiment...
 ```{julia}
 #| output: false
 H = Hyperbolic(2)
-data, geodesics = artificial_H2_signal(n; a=-6.0, b=6.0, T=3)
-Hn = PowerManifold(H, NestedPowerRepresentation(), length(data))
-noise = map(p -> exp(H, p, rand(H; vector_at=p, σ=σ)), data)
+signal, geodesics = artificial_H2_signal(n; a=-6.0, b=6.0, T=3)
+noise = map(p -> exp(H, p, rand(H; vector_at=p, σ=σ)), signal)
 p0 = noise
+data = noise
 diameter = floatmax(Float64)
+Hn = PowerManifold(H, NestedPowerRepresentation(), length(data))
 ```
 
 ... As well as objective, subdifferential, and proximal map.
@@ -171,17 +172,17 @@ We can now plot the initial setting.
 ```{julia}
 global ball_scene = plot()
 if export_orig
-    ball_data = convert.(PoincareBallPoint, data)
+    ball_signal = convert.(PoincareBallPoint, signal)
     ball_noise = convert.(PoincareBallPoint, noise)
     ball_geodesics = convert.(PoincareBallPoint, geodesics)
-    plot!(ball_scene, H, ball_data; geodesic_interpolation=100, label="Geodesics")
+    plot!(ball_scene, H, ball_signal; geodesic_interpolation=100, label="Geodesics")
     plot!(
         ball_scene,
         H,
-        ball_data;
+        ball_signal;
         markercolor=data_color,
         markerstrokecolor=data_color,
-        label="Data",
+        label="Signal",
     )
     plot!(
         ball_scene,
@@ -191,7 +192,7 @@ if export_orig
         markerstrokecolor=noise_color,
         label="Noise",
     )
-    matrix_data = matrixify_Poincare_ball(ball_data)
+    matrix_data = matrixify_Poincare_ball(ball_signal)
     matrix_noise = matrixify_Poincare_ball(ball_noise)
     matrix_geodesics = matrixify_Poincare_ball(ball_geodesics)
     CSV.write(

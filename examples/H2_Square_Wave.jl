@@ -15,28 +15,28 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 # Settings
 experiment_name = "H2_Square_Wave_TV"
 results_folder = joinpath(@__DIR__, experiment_name)
-benchmarking = true
+benchmarking = false
 export_orig = true
 export_result = true
-export_table = true
+export_table = false
 toggle_debug = false
 !isdir(results_folder) && mkdir(results_folder)
 #
 # Experiment parameters
 Random.seed!(33)
-n = 496 # (this is so that n equals the actual length of the artificial signal)
-σ = 0.1 # Noise parameter
-α = 0.05 # TV parameter
-atol = 1e-8 #√eps()
+n = 496
+σ = 0.01 # Noise parameter
+α = 0.02 # TV parameter
+atol = 1e-8 # √eps()
 k_max = 0.0
 max_iters = 15000
 # Algorithm parameters (currently not used, in favor of defaults)
-ε = Inf # Parameter of the proximal bundle method tied to the injectivity radius of the manifold
-δ = 0.01 # Update parameter for μ
-μ = 0.5 # Initial proxiaml parameter for the proximal bundle method
+# ε = Inf # Parameter of the proximal bundle method tied to the injectivity radius of the manifold
+# δ = 0.01 # Update parameter for μ
+# μ = 0.5 # Initial proximal parameter for the proximal bundle method
 #
 # Colors
-data_color = RGBA{Float64}(colorant"#BBBBBB")
+signal_color = RGBA{Float64}(colorant"#BBBBBB")
 noise_color = RGBA{Float64}(colorant"#33BBEE") # Tol Vibrant Teal
 result_color = RGBA{Float64}(colorant"#EE7733") # Tol Vibrant Orange
 #
@@ -92,6 +92,16 @@ function matrixify_Poincare_ball(input)
     return hcat(input_x, input_y)
 end
 #
+# Manifolds and data
+H = Hyperbolic(2)
+signal, geodesics = artificial_H2_signal(n; a=-6.0, b=6.0, T=3)
+Hn = PowerManifold(H, NestedPowerRepresentation(), length(signal))
+noise = map(p -> exp(H, p, rand(H; vector_at=p, σ=σ)), signal)
+p0 = noise
+data = noise
+diameter = floatmax(Float64)
+domf(M, p) = distance(M, p, p0) ≤ diameter / 2 ? true : false
+#
 # Objective, subgradient and prox
 function f(M, p)
     return 1 / length(data) *
@@ -108,31 +118,22 @@ proxes = (
     (M, λ, p) -> ManoptExamples.prox_Total_Variation(M, α * λ, p),
 )
 #
-# Manifolds and data
-H = Hyperbolic(2)
-data, geodesics = artificial_H2_signal(n; a=-6.0, b=6.0, T=3)
-Hn = PowerManifold(H, NestedPowerRepresentation(), length(data))
-noise = map(p -> exp(H, p, rand(H; vector_at=p, σ=σ)), data)
-p0 = noise
-diameter = floatmax(Float64)# 2.5 * distance(Hn, p0, data) # Diameter for the convex bundle method
-domf(M, p) = distance(M, p, p0) ≤ diameter / 2 ? true : false
-#
 # Plot initial values
 ball_scene = plot()
 if export_orig
-    ball_data = convert.(PoincareBallPoint, data)
+    ball_signal = convert.(PoincareBallPoint, signal)
     ball_noise = convert.(PoincareBallPoint, noise)
     ball_geodesics = convert.(PoincareBallPoint, geodesics)
-    plot!(ball_scene, H, ball_data; geodesic_interpolation=100, label="Geodesics")#, tex_output_standalone = true)
+    plot!(ball_scene, H, ball_signal; geodesic_interpolation=100, label="Geodesics")#, tex_output_standalone = true)
     plot!(
         ball_scene,
         H,
-        ball_data;
-        markercolor=data_color,
-        markerstrokecolor=data_color,
-        label="Data",
+        ball_signal;
+        markercolor=signal_color,
+        markerstrokecolor=signal_color,
+        label="Signal",
     )
-    # savefig(ball_scene, joinpath(results_folder, experiment_name * "-data.tex"))
+    # savefig(ball_scene, joinpath(results_folder, experiment_name * "-signal.tex"))
     plot!(
         ball_scene,
         H,
@@ -141,24 +142,24 @@ if export_orig
         markerstrokecolor=noise_color,
         label="Noise",
     )
-    matrix_data = matrixify_Poincare_ball(ball_data)
+    matrix_signal = matrixify_Poincare_ball(ball_signal)
     matrix_noise = matrixify_Poincare_ball(ball_noise)
     matrix_geodesics = matrixify_Poincare_ball(ball_geodesics)
-    CSV.write(
-        joinpath(results_folder, experiment_name * "-data.csv"),
-        DataFrame(matrix_data, :auto);
-        header=["x", "y"],
-    )
-    CSV.write(
-        joinpath(results_folder, experiment_name * "-noise.csv"),
-        DataFrame(matrix_noise, :auto);
-        header=["x", "y"],
-    )
-    CSV.write(
-        joinpath(results_folder, experiment_name * "-geodesics.csv"),
-        DataFrame(matrix_geodesics, :auto);
-        header=["x", "y"],
-    )
+    # CSV.write(
+    #     joinpath(results_folder, experiment_name * "-data.csv"),
+    #     DataFrame(matrix_data, :auto);
+    #     header=["x", "y"],
+    # )
+    # CSV.write(
+    #     joinpath(results_folder, experiment_name * "-noise.csv"),
+    #     DataFrame(matrix_noise, :auto);
+    #     header=["x", "y"],
+    # )
+    # CSV.write(
+    #     joinpath(results_folder, experiment_name * "-geodesics.csv"),
+    #     DataFrame(matrix_geodesics, :auto);
+    #     header=["x", "y"],
+    # )
 end
 #
 # Optimization
@@ -167,11 +168,15 @@ b = convex_bundle_method(
     f,
     ∂f,
     p0;
+    # atol_λ=atol,
+    # atol_errors=atol,
+    # bundle_cap=50,
     domain=domf,
     k_max=k_max,
     count=[:Cost, :SubGradient],
     cache=(:LRU, [:Cost, :SubGradient], 50),
     diameter=diameter,
+    stopping_criterion=StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
     debug=[
         :Iteration,
         (:Cost, "F(p): %1.8f "),
@@ -202,9 +207,9 @@ p = proximal_bundle_method(
     debug=[
         :Iteration,
         :Stop,
-        (:Cost, "F(p): %1.16f "),
-        (:ν, "ν: %1.16f "),
-        (:c, "c: %1.16f "),
+        (:Cost, "F(p): %1.8f "),
+        (:ν, "ν: %1.8f "),
+        (:c, "c: %1.8f "),
         (:μ, "μ: %1.8f "),
         :Stop,
         1000,
@@ -226,7 +231,7 @@ s = subgradient_method(
     count=[:Cost, :SubGradient],
     cache=(:LRU, [:Cost, :SubGradient], 50),
     stopping_criterion=StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
-    debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
+    debug=[:Iteration, (:Cost, "F(p): %1.8f "), :Stop, 1000, "\n"],
     record=[:Iteration, :Cost, :Iterate],
     return_state=true,
     return_options=true,
@@ -247,7 +252,7 @@ c = cyclic_proximal_point(
         " | ",
         DebugProximalParameter(),
         " | ",
-        (:Cost, "F(p): %1.16f "),
+        (:Cost, "F(p): %1.8f "),
         " | ",
         :Change,
         "\n",
@@ -265,9 +270,9 @@ c_record = get_record(c)
 if export_result
     # Convert hyperboloid points to Poincaré ball points
     ball_b = convert.(PoincareBallPoint, b_result)
-    ball_p = convert.(PoincareBallPoint, p_result)
-    ball_s = convert.(PoincareBallPoint, s_result)
-    ball_c = convert.(PoincareBallPoint, c_result)
+    # ball_p = convert.(PoincareBallPoint, p_result)
+    # ball_s = convert.(PoincareBallPoint, s_result)
+    # ball_c = convert.(PoincareBallPoint, c_result)
     # Plot results
     plot!(
         ball_scene,
@@ -283,11 +288,11 @@ if export_result
     display(ball_scene)
 
     matrix_b = matrixify_Poincare_ball(ball_b)
-    CSV.write(
-        joinpath(results_folder, experiment_name * "-bundle_optimum.csv"),
-        DataFrame(matrix_b, :auto);
-        header=["x", "y"],
-    )
+    # CSV.write(
+    #     joinpath(results_folder, experiment_name * "-bundle_optimum.csv"),
+    #     DataFrame(matrix_b, :auto);
+    #     header=["x", "y"],
+    # )
 end
 #
 # Benchmarking
