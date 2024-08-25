@@ -1,4 +1,4 @@
 [deps]
 jupyter = ""
-optuna = "3.5"
 python = "3.11"
+optuna = ""
