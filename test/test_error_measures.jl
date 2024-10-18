@@ -1,8 +1,7 @@
-using Manifolds, Test, ManoptExamples
+using Manifolds, Test, ManoptExamples, Distributions, RecursiveArrayTools
 using ManoptExamples: mean_squared_error, mean_average_error
 using Random
 Random.seed!(42)
-
 @testset "Error Measures" begin
     M = Sphere(2)
     N = PowerManifold(M, NestedPowerRepresentation(), 2)
