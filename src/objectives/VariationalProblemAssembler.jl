@@ -1,37 +1,32 @@
-using OffsetArrays
-
 @doc raw"""
 This function is called by Newton's method to compute the rhs and the matrix for the Newton step
 """
-function get_rhs_Jac!(b,A,y,integrand,transport)
-	Oy = OffsetArray([y0, y..., yT], 0:(length(y)+1))
+function get_rhs_Jac!(b,A,h,y,integrand,transport)
 	S = integrand.domain
 	# Schleife über Intervalle
-	for i in 1:length(Oy)-1
-		yl=Oy[i-1]
-		yr=Oy[i]
+	for i in 1:length(y)-1
+		yl=y[i-1]
+		yr=y[i]
 		Bcl=get_basis(S,yl,DefaultOrthonormalBasis())
 	    Bl = get_vectors(S, yl, Bcl)
 		Bcr=get_basis(S,yr,DefaultOrthonormalBasis())
 	    Br = get_vectors(S, yr, Bcr)
-        assemble_local_rhs!(b, i, yl, yr, Bl, Br, integrand)		
-        assemble_local_Jac!(A, i, yl, yr, Bl, Br, integrand, transport)		
+        assemble_local_rhs!(b, h, i, yl, yr, Bl, Br, integrand)		
+        assemble_local_Jac!(A, h, i, yl, yr, Bl, Br, integrand, transport)		
 	end
 end
 
 @doc raw"""
 This function is called by Newton's method to compute the rhs for the simplified Newton step
 """
-function get_rhs_simplified!(b,y,y_trial,integrand,transport)
-	Oy = OffsetArray([y0, y..., yT], 0:(length(y)+1))
-	Oytrial = OffsetArray([y0, y_trial..., yT], 0:(length(y)+1))
+function get_rhs_simplified!(b,h,y,y_trial,integrand,transport)
 	S = integrand.domain
 	# Schleife über Intervalle
-	for i in 1:length(Oy)-1
-			yl=Oy[i-1]
-			yr=Oy[i]
-			yl_trial=Oytrial[i-1]	
-			yr_trial=Oytrial[i]	
+	for i in 1:length(y)-1
+			yl=y[i-1]
+			yr=y[i]
+			yl_trial=y_trial[i-1]	
+			yr_trial=y_trial[i]	
 			Bcl=get_basis(S,yl,DefaultOrthonormalBasis())
 			Bl=get_vectors(S, yl,Bcl)
 			Bcr=get_basis(S,yr,DefaultOrthonormalBasis())
@@ -42,14 +37,14 @@ function get_rhs_simplified!(b,y,y_trial,integrand,transport)
 				Bl[k]=transport.value(S,yl,Bl[k],yl_trial)
 				Br[k]=transport.value(S,yr,Br[k],yr_trial)
 			end
-        	assemble_local_rhs!(b, i, yl_trial, yr_trial, Bl, Br,integrand)		
+        	assemble_local_rhs!(b, h, i, yl_trial, yr_trial, Bl, Br,integrand)		
 	end
 end
 
 @doc raw"""
 This is a helper function
 """
-function assemble_local_rhs!(b, i, yl, yr, Bl, Br,integrand)
+function assemble_local_rhs!(b, h, i, yl, yr, Bl, Br,integrand)
 	dim = manifold_dimension(integrand.domain)
     idxl=dim*(i-2)
     idxr=dim*(i-1)
@@ -81,7 +76,7 @@ end
 @doc raw"""
 This is a helper function
 """
-function assemble_local_Jac!(A, i, yl, yr, Bl,Br,integrand, transport)
+function assemble_local_Jac!(A, h, i, yl, yr, Bl,Br,integrand, transport)
  dim = manifold_dimension(integrand.domain)
  idxl=dim*(i-2)
  idxr=dim*(i-1)
@@ -99,8 +94,8 @@ function assemble_local_Jac!(A, i, yl, yr, Bl,Br,integrand, transport)
 		Bdotrj=(1-0)*Br[j]/h
 
 		# y-Ableitungen der Projektionen
-		Pprimel=transport.derivative(S,yl,Bl[j],Bl[k])
-		Pprimer=transport.derivative(S,yr,Br[j],Br[k])
+		Pprimel=transport.derivative(integrand.domain,yl,Bl[j],Bl[k])
+		Pprimer=transport.derivative(integrand.domain,yr,Br[j],Br[k])
 
 		# Zeit- und y-Ableitungen der Projektionen
 		Pprimedotl=(0-1)*Pprimel/h
