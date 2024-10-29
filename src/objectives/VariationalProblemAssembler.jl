@@ -44,7 +44,7 @@ function get_rhs_simplified!(b,y,y_trial,integrand,transport)
 	end
 end
 
-doc raw"""
+@doc raw"""
 This is a helper function
 """
 function assemble_local_rhs!(b, i, yl, yr, Bl, Br,integrand)
