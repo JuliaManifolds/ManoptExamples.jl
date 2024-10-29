@@ -10,6 +10,8 @@ module ManoptExamples
 using LinearAlgebra: dot, Symmetric, Diagonal, I
 using ManifoldsBase, Manifolds, ManifoldDiff
 using ManifoldsBase: TypeParameter
+using OffsetArrays
+using SparseArrays
 import ManifoldsBase: exp!, exp, inner, log, log!
 import Manifolds:
     change_representer, change_representer!, local_metric, inverse_local_metric
@@ -66,5 +68,5 @@ include("data/artificial_images.jl")
 include("ErrorMeasures.jl")
 
 export exp!, exp, inner, log, log!
-export change_representer, change_representer!, local_metric, inverse_local_metric, get_rhs_Jac!
+export change_representer, change_representer!, local_metric, inverse_local_metric
 end
