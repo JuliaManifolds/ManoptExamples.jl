@@ -1,3 +1,5 @@
+using OffsetArrays
+
 @doc raw"""
 This function is called by Newton's method to compute the rhs and the matrix for the Newton step
 """
