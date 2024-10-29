@@ -58,6 +58,7 @@ include("objectives/RiemannianMean.jl")
 include("objectives/RobustPCA.jl")
 include("objectives/Rosenbrock.jl")
 include("objectives/TotalVariation.jl")
+include("objectives/VariationalProblemAssembler.jl")
 
 include("data/artificial_signals.jl")
 include("data/artificial_images.jl")
@@ -65,5 +66,5 @@ include("data/artificial_images.jl")
 include("ErrorMeasures.jl")
 
 export exp!, exp, inner, log, log!
-export change_representer, change_representer!, local_metric, inverse_local_metric
+export change_representer, change_representer!, local_metric, inverse_local_metric, get_rhs_Jac!
 end
