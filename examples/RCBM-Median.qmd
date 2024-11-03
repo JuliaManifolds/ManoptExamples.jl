@@ -65,7 +65,7 @@ We initialize the experiment parameters, as well as utility functions.
 
 ```{julia}
 #| output: false
-Random.seed!(33)
+Random.seed!(6)
 experiment_name = "RCBM-Median"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
@@ -87,7 +87,7 @@ end
 #| output: false
 # Objective and subdifferential
 f(M, p, data) = sum(1 / length(data) * distance.(Ref(M), Ref(p), data))
-domf(M, p, p0, diameter) = distance(M, p, p0) < diameter / 2 ? true : false
+domf(M, p, centroid, diameter) = distance(M, p, centroid) < diameter / 2 ? true : false
 function ∂f(M, p, data, atol=atol)
     return sum(
         1 / length(data) *
@@ -98,12 +98,10 @@ end
 
 ```{julia}
 #| output: false
-rcbm_kwargs(diameter, domf, k_max) = [
-    :diameter => diameter,
-    :domain => domf,
-    :k_max => k_max,
-    :count => [:Cost, :SubGradient],
+rcbm_kwargs(diameter, domf, k_max, k_min) = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :count => [:Cost, :SubGradient],
+    :domain => domf,
     :debug => [
         :Iteration,
         (:Cost, "F(p): %1.16f "),
@@ -113,18 +111,23 @@ rcbm_kwargs(diameter, domf, k_max) = [
         1000,
         "\n",
     ],
+    :diameter => diameter,
+    :k_max => k_max,
+    :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
 ]
-rcbm_bm_kwargs(diameter, domf, k_max) = [
+rcbm_bm_kwargs(diameter, domf, k_max, k_min) = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :domain => domf,
     :k_max => k_max,
-    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :k_min => k_min,
 ]
-pba_kwargs = [
-    :count => [:Cost, :SubGradient],
+pba_kwargs(ε) = [
+    :ε => ε,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :count => [:Cost, :SubGradient],
     :debug => [
         :Iteration,
         :Stop,
@@ -139,20 +142,20 @@ pba_kwargs = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
 ]
-pba_bm_kwargs = [:cache => (:LRU, [:Cost, :SubGradient], 50),]
+pba_bm_kwargs(ε) = [:ε => ε, :cache => (:LRU, [:Cost, :SubGradient], 50),]
 sgm_kwargs = [
-    :count => [:Cost, :SubGradient],
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+    :count => [:Cost, :SubGradient],
     :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(5000),
 ]
 sgm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(5000),
 ]
 ```
 
@@ -262,8 +265,10 @@ end
 ```{julia}
 #| output: false
 subexperiment_name = "Hn"
-k_max_hn = 0.0
-diameter_hn = floatmax(Float64)
+k_max_hn = -1.0
+k_min_hn = -1.0
+ε_hn = Inf
+
 global A1, A2 = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -277,18 +282,20 @@ for n in hn_sn_dims
     M = Hyperbolic(Int(2^n))
     data = [rand(M) for _ in 1:N]
     dists = [distance(M, z, y) for z in data, y in data]
-    p0 = data[minimum(Tuple(findmax(dists)[2]))]
+    diameter_hn = 2 * maximum(dists) + 1e-1
+    centroid_hn = data[minimum(Tuple(findmax(dists)[2]))]
+    p0 = data[1]
 
     f_hn(M, p) = f(M, p, data)
-    domf_hn(M, p) = domf(M, p, p0, diameter_hn)
+    domf_hn(M, p) = domf(M, p, centroid_hn, diameter_hn)
     ∂f_hn(M, p) = ∂f(M, p, data, atol)
 
     # Optimization
-    pba = proximal_bundle_method(M, f_hn, ∂f_hn, p0; pba_kwargs...)
+    pba = proximal_bundle_method(M, f_hn, ∂f_hn, p0; pba_kwargs(ε_hn)...)
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
 
-    rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(diameter_hn, domf_hn, k_max_hn)...)
+    rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(diameter_hn, domf_hn, k_max_hn, k_min_hn)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
 
@@ -303,8 +310,8 @@ for n in hn_sn_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; $pba_bm_kwargs...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn, $k_min_hn)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; pba_bm_kwargs($ε_hn)...)
         sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
         
         times = [
@@ -349,7 +356,9 @@ benchmarking && pretty_table(A2, tf = tf_markdown, header=col_names_2)
 #| output: false
 subexperiment_name = "SPD"
 k_max_spd = 0.0
-diameter_spd = floatmax(Float64)
+k_min_spd = -1/2
+ε_spd = Inf
+
 global A1_SPD, A2_SPD = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -363,18 +372,20 @@ for n in spd_dims
     M = SymmetricPositiveDefinite(Int(n))
     data = [rand(M) for _ in 1:N]
     dists = [distance(M, z, y) for z in data, y in data]
-    p0 = data[minimum(Tuple(findmax(dists)[2]))]
+    diameter_spd = 2 * maximum(dists) + 1e-1
+    centroid_spd = data[minimum(Tuple(findmax(dists)[2]))]
+    p0 = data[1]
 
     f_spd(M, p) = f(M, p, data)
-    domf_spd(M, p) = domf(M, p, p0, diameter_spd)
+    domf_spd(M, p) = domf(M, p, centroid_spd, diameter_spd)
     ∂f_spd(M, p) = ∂f(M, p, data, atol)
 
     # Optimization
-    pba = proximal_bundle_method(M, f_spd, ∂f_spd, p0; pba_kwargs...)
+    pba = proximal_bundle_method(M, f_spd, ∂f_spd, p0; pba_kwargs(ε_spd)...)
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
 
-    rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(diameter_spd, domf_spd, k_max_spd)...)
+    rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(diameter_spd, domf_spd, k_max_spd, k_min_spd)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
 
@@ -389,8 +400,8 @@ for n in spd_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; $pba_bm_kwargs...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd, $k_min_spd)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; pba_bm_kwargs($ε_spd)...)
         sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; $sgm_bm_kwargs...)
 
         times = [
@@ -437,7 +448,10 @@ For the last experiment, note that a major difference here is that the sphere ha
 #| output: false
 subexperiment_name = "Sn"
 k_max_sn = 1.0
+k_min_sn = 1.0
 diameter_sn = π / 4
+ε_sn = 1e-2
+
 global A1_Sn, A2_Sn = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -451,20 +465,20 @@ for n in hn_sn_dims
     M = Sphere(Int(2^n))
     north = [0.0 for _ in 1:manifold_dimension(M)]
     push!(north, 1.0)
-    diameter = π / 4 #2 * π/7
-    data = [close_point(M, north, diameter / 2) for _ in 1:n]
-    p0 = data[1]
+    data = [close_point(M, north, diameter_sn / 2) for _ in 1:n]
+    dists = [distance(M, z, y) for z in data, y in data]
+    p0 = data[minimum(Tuple(findmax(dists)[2]))]
 
     f_sn(M, p) = f(M, p, data)
-    domf_sn(M, p) = domf(M, p, p0, diameter_sn)
+    domf_sn(M, p) = domf(M, p, north, diameter_sn)
     ∂f_sn(M, p) = ∂f(M, p, data, atol)
 
     # Optimization
-    pba = proximal_bundle_method(M, f_sn, ∂f_sn, p0; pba_kwargs...)
+    pba = proximal_bundle_method(M, f_sn, ∂f_sn, p0; pba_kwargs(ε_sn)...)
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
 
-    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(diameter_sn, domf_sn, k_max_sn)...)
+    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(diameter_sn, domf_sn, k_max_sn, k_min_sn)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
 
@@ -479,8 +493,8 @@ for n in hn_sn_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn)...)
-        pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; $pba_bm_kwargs...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn, $k_min_sn)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; pba_bm_kwargs($ε_sn)...)
         sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; $sgm_bm_kwargs...)
 
         times = [

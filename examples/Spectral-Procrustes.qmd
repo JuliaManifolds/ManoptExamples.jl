@@ -79,7 +79,7 @@ as a substitute for $\partial f(p)$, where $U$ and $V$ are some left and right s
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(33)
+Random.seed!(40)
 n = 1000
 d = 250
 A = rand(n, d)
@@ -96,14 +96,15 @@ end
 # Algorithm parameters
 bundle_cap = 25
 max_iters = 5000
-δ = 0.#1e-2 # Update parameter for μ
-μ = 50. # Initial proxiaml parameter for the proximal bundle method
+δ = 0.0 # Update parameter for the proximal parameter in the PBA
+μ = 50.0 # Initial proxiaml parameter for the proximal bundle method
 k_max = 1/4
-diameter = π/(3*√k_max)
+k_min = 0.0
+diameter = π/(20 * √k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
-p0 = orthogonal_procrustes(A, B) #rand(M)
+p0 = orthogonal_procrustes(A, B)
 project!(M, p0, p0)
 ```
 
@@ -128,11 +129,8 @@ We introduce some keyword arguments for the solvers we will use in this experime
 #| output: false
 rcbm_kwargs = [
     :bundle_cap => bundle_cap,
-    :k_max => k_max,
-    :domain => domf,
-    :diameter => diameter,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+    :diameter => diameter,
     :debug => [
         :Iteration,
         (:Cost, "F(p): %1.16f "),
@@ -144,20 +142,24 @@ rcbm_kwargs = [
         10,
         "\n",
     ],
+    :domain => domf,
+    :k_max => k_max,
+    :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
 ]
 rcbm_bm_kwargs = [
-    :k_max => k_max,
-    :domain => domf,
-    :diameter => diameter,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :diameter => diameter,
+    :domain => domf,
+    :k_max => k_max,
+    :k_min => k_min,
     :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
 ]
 pba_kwargs = [
-    :bundle_size => bundle_cap,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol)|StopAfterIteration(max_iters),
+    :bundle_size => bundle_cap,
     :debug =>[
         :Iteration,
         :Stop,
@@ -172,24 +174,24 @@ pba_kwargs = [
     ],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol)| StopAfterIteration(max_iters),
 ]
 pba_bm_kwargs = [
     :cache =>(:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) |                                   StopAfterIteration(max_iters),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
 ]
 sgm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
     :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
     :record => [:Iteration, :Cost, :p_star],
     :return_state => true,
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
 ]
 sgm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(√tol) |
-                           StopAfterIteration(max_iters),
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
 ]
 global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
 ```

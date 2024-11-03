@@ -17,9 +17,9 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 experiment_name = "Spectral_Procrustes"
 results_folder = joinpath(@__DIR__, experiment_name)
 figures_folder = joinpath(@__DIR__, experiment_name, "figures")
-export_table = true
+export_table = false
 benchmark = true
-show_plot = true
+show_plot = false
 !isdir(results_folder) && mkdir(results_folder)
 !isdir(figures_folder) && mkdir(figures_folder)
 #
@@ -42,7 +42,8 @@ max_iters = 5000
 δ = 0.0 #1e-2 # Update parameter for μ
 μ = 50.0 # Initial proximal parameter for the proximal bundle method
 k_max = 1 / 4
-diam = π / (3 * √k_max)
+k_min = 0.0
+diam = π / (20 * √k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
@@ -75,6 +76,7 @@ println("\nConvex Bundle Method")
     p0;
     bundle_cap=bundle_cap,
     k_max=k_max,
+    k_min=k_min,
     domain=dom,
     diameter=diam,
     count=[:Cost, :SubGradient],
@@ -85,8 +87,9 @@ println("\nConvex Bundle Method")
         (:Cost, "F(p): %1.16f "),
         (:ξ, "ξ: %1.8f "),
         (:ε, "ε: %1.8f "),
-        (:k_max, "k_max: %1.4f "),
-        (:last_stepsize, "step size: %1.8f"),
+        (:ϱ, "ϱ: %1.4f "),
+        (:last_stepsize, "step size: %1.8f "),
+        (:null_stepsize, "null step size: %1.8f"),
         :WarnBundle,
         :Stop,
         10,
@@ -137,7 +140,7 @@ println("\nSubgradient Method")
     p0;
     count=[:Cost, :SubGradient],
     cache=(:LRU, [:Cost, :SubGradient], 50),
-    stepsize=DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
+    stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
     stopping_criterion=StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
     debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
     record=[:Iteration, :Cost, :p_star],
@@ -169,6 +172,7 @@ if benchmark
         $∂f,
         $p0;
         k_max=$k_max,
+        k_min=$k_min,
         domain=$dom,
         diameter=$diam,
         cache=(:LRU, [:Cost, :SubGradient], 50),
@@ -182,7 +186,7 @@ if benchmark
         $p0;
         # count=[:Cost, :SubGradient],
         cache=(:LRU, [:Cost, :SubGradient], 50),
-        stepsize=DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
+        stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
         stopping_criterion=StopWhenSubgradientNormLess(√$tol) |
                            StopAfterIteration($max_iters),
     )

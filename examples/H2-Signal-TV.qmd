@@ -78,6 +78,8 @@ n = 496
 α = 0.02 # TV parameter
 atol = 1e-8
 k_max = 0.0
+k_min = -1.0
+ε = Inf # PBA parameter
 max_iters = 15000
 #
 # Colors
@@ -142,9 +144,8 @@ We now fix the data for the experiment...
 H = Hyperbolic(2)
 signal, geodesics = artificial_H2_signal(n; a=-6.0, b=6.0, T=3)
 noise = map(p -> exp(H, p, rand(H; vector_at=p, σ=σ)), signal)
-p0 = noise
 data = noise
-diameter = floatmax(Float64)
+diameter = 100/n * maximum([distance(H, data[i], data[j]) for i in 1:n, j in 1:n])
 Hn = PowerManifold(H, NestedPowerRepresentation(), length(data))
 ```
 
@@ -155,7 +156,7 @@ function f(M, p)
     return 1 / length(data) *
            (1 / 2 * distance(M, data, p)^2 + α * ManoptExamples.Total_Variation(M, p))
 end
-domf(M, p) = distance(M, p, p0) < diameter / 2 ? true : false
+domf(M, p) = distance(M, p, data) < diameter / 2 ? true : false
 function ∂f(M, p)
     return 1 / length(data) * (
         ManifoldDiff.grad_distance(M, data, p) +
@@ -220,8 +221,6 @@ We introduce some keyword arguments for the solvers we will use in this experime
 rcbm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
-    :domain => domf,
-    :k_max => k_max,
     :debug => [
         :Iteration,
         (:Cost, "F(p): %1.8f "),
@@ -232,16 +231,23 @@ rcbm_kwargs = [
         1000,
         "\n",
         ],
+    :domain => domf,
+    :k_max => k_max,
+    :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
 ]
 rcbm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :domain => domf,
     :k_max => k_max,
+    :k_min => k_min,
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
 ]
 pba_kwargs = [
+    :ε => ε,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :debug => [
         :Iteration,
@@ -254,30 +260,28 @@ pba_kwargs = [
         1000,
         "\n",
     ],
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
 ]
 pba_bm_kwargs = [
+    :ε => ε,
     :cache =>(:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) |                                   StopAfterIteration(max_iters),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
 ]
 sgm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
     :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
 ]
 sgm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenSubgradientNormLess(√atol) |
-                           StopAfterIteration(max_iters),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
 ]
 cppa_kwargs = [
-    :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
-    ),
     :debug => [
         :Iteration,
         " | ",
@@ -292,30 +296,29 @@ cppa_kwargs = [
     ],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stopping_criterion => StopWhenAny(StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)),
 ]
 cppa_bm_kwargs = [
-    :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
-    ),
+    :stopping_criterion => StopWhenAny(StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)),
 ]
 ```
 
 Finally, we run the optimization algorithms...
 ```{julia}
 #| output: false
-rcbm = convex_bundle_method(Hn, f, ∂f, p0; rcbm_kwargs...)
+rcbm = convex_bundle_method(Hn, f, ∂f, data; rcbm_kwargs...)
 rcbm_result = get_solver_result(rcbm)
 rcbm_record = get_record(rcbm)
 #
-pba = proximal_bundle_method(Hn, f, ∂f, p0; pba_kwargs...)
+pba = proximal_bundle_method(Hn, f, ∂f, data; pba_kwargs...)
 pba_result = get_solver_result(pba)
 pba_record = get_record(pba)
 #
-sgm = subgradient_method(Hn, f, ∂f, p0; sgm_kwargs...)
+sgm = subgradient_method(Hn, f, ∂f, data; sgm_kwargs...)
 sgm_result = get_solver_result(sgm)
 sgm_record = get_record(sgm)
 #
-cppa = cyclic_proximal_point(Hn, f, proxes, p0; cppa_kwargs...)
+cppa = cyclic_proximal_point(Hn, f, proxes, data; cppa_kwargs...)
 cppa_result = get_solver_result(cppa)
 cppa_record = get_record(cppa)
 ```
@@ -324,10 +327,10 @@ cppa_record = get_record(cppa)
 ```{julia}
 #| output: false
 if benchmarking
-    pba_bm = @benchmark proximal_bundle_method($Hn, $f, $∂f, $p0; $pba_bm_kwargs...)
-    rcbm_bm = @benchmark convex_bundle_method($Hn, $f, $∂f, $p0; $rcbm_bm_kwargs...)
-    sgm_bm = @benchmark subgradient_method($Hn, $f, $∂f, $p0; $sgm_bm_kwargs...)
-    cppa_bm = @benchmark cyclic_proximal_point($Hn, $f, $proxes, $p0; $cppa_bm_kwargs...)
+    pba_bm = @benchmark proximal_bundle_method($Hn, $f, $∂f, $data; $pba_bm_kwargs...)
+    rcbm_bm = @benchmark convex_bundle_method($Hn, $f, $∂f, $data; $rcbm_bm_kwargs...)
+    sgm_bm = @benchmark subgradient_method($Hn, $f, $∂f, $data; $sgm_bm_kwargs...)
+    cppa_bm = @benchmark cyclic_proximal_point($Hn, $f, $proxes, $data; $cppa_bm_kwargs...)
     #
     experiments = ["RCBM", "PBA", "SGM", "CPPA"]
     records = [rcbm_record, pba_record, sgm_record, cppa_record]

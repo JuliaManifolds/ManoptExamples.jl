@@ -15,9 +15,9 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 # Settings
 experiment_name = "H2_Square_Wave_TV"
 results_folder = joinpath(@__DIR__, experiment_name)
-benchmarking = false
-export_orig = true
-export_result = true
+benchmarking = true
+export_orig = false
+export_result = false
 export_table = false
 toggle_debug = false
 !isdir(results_folder) && mkdir(results_folder)
@@ -29,6 +29,7 @@ n = 496
 α = 0.02 # TV parameter
 atol = 1e-8 # √eps()
 k_max = 0.0
+k_min = -1.0
 max_iters = 15000
 # Algorithm parameters (currently not used, in favor of defaults)
 # ε = Inf # Parameter of the proximal bundle method tied to the injectivity radius of the manifold
@@ -99,7 +100,7 @@ Hn = PowerManifold(H, NestedPowerRepresentation(), length(signal))
 noise = map(p -> exp(H, p, rand(H; vector_at=p, σ=σ)), signal)
 p0 = noise
 data = noise
-diameter = floatmax(Float64)
+diameter = maximum([distance(H, data[i], data[j]) for i in 1:n, j in 1:n]) * 100/n #1.0 #floatmax(Float64)
 domf(M, p) = distance(M, p, p0) ≤ diameter / 2 ? true : false
 #
 # Objective, subgradient and prox
@@ -163,90 +164,93 @@ if export_orig
 end
 #
 # Optimization
-b = convex_bundle_method(
-    Hn,
-    f,
-    ∂f,
-    p0;
-    # atol_λ=atol,
-    # atol_errors=atol,
-    # bundle_cap=50,
-    domain=domf,
-    k_max=k_max,
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    diameter=diameter,
-    stopping_criterion=StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
-    debug=[
-        :Iteration,
-        (:Cost, "F(p): %1.8f "),
-        (:ξ, "ξ: %1.8f "),
-        (:ε, "ε: %1.8f "),
-        (:Stepsize, "stepsize: %1.4f "),
-        :WarnBundle,
-        :Stop,
-        1000,
-        "\n",
-    ],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-    return_objective=true,
-)
-b_result = get_solver_result(b)
-b_record = get_record(b)
+# b = convex_bundle_method(
+#     Hn,
+#     f,
+#     ∂f,
+#     p0;
+#     # atol_λ=atol,
+#     # atol_errors=atol,
+#     # bundle_cap=50,
+#     domain=domf,
+#     k_max=k_max,
+#     k_min=k_min,
+#     count=[:Cost, :SubGradient],
+#     cache=(:LRU, [:Cost, :SubGradient], 50),
+#     diameter=diameter,
+#     stopping_criterion=StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
+#     debug=[
+#         :Iteration,
+#         (:Cost, "F(p): %1.8f "),
+#         (:ξ, "ξ: %1.8f "),
+#         (:ε, "ε: %1.8f "),
+#         (:last_stepsize, "last step size: %1.4f "),
+#         # (:null_stepsize, "null step size: %1.4f "), 
+#         (:ϱ, "ϱ: %1.2f "),
+#         :WarnBundle,
+#         :Stop,
+#         1000,
+#         "\n",
+#     ],
+#     record=[:Iteration, :Cost, :Iterate],
+#     return_state=true,
+#     return_options=true,
+#     return_objective=true,
+# )
+# b_result = get_solver_result(b)
+# b_record = get_record(b)
 #
-p = proximal_bundle_method(
-    Hn,
-    f,
-    ∂f,
-    p0;
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    stopping_criterion=StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
-    debug=[
-        :Iteration,
-        :Stop,
-        (:Cost, "F(p): %1.8f "),
-        (:ν, "ν: %1.8f "),
-        (:c, "c: %1.8f "),
-        (:μ, "μ: %1.8f "),
-        :Stop,
-        1000,
-        "\n",
-    ],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-    return_objective=true,
-)
-p_result = get_solver_result(p)
-p_record = get_record(p)
+# p = proximal_bundle_method(
+#     Hn,
+#     f,
+#     ∂f,
+#     p0;
+#     ε=Inf,
+#     count=[:Cost, :SubGradient],
+#     cache=(:LRU, [:Cost, :SubGradient], 50),
+#     stopping_criterion=StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
+#     debug=[
+#         :Iteration,
+#         :Stop,
+#         (:Cost, "F(p): %1.8f "),
+#         (:ν, "ν: %1.8f "),
+#         (:c, "c: %1.8f "),
+#         (:μ, "μ: %1.8f "),
+#         :Stop,
+#         1000,
+#         "\n",
+#     ],
+#     record=[:Iteration, :Cost, :Iterate],
+#     return_state=true,
+#     return_options=true,
+#     return_objective=true,
+# )
+# p_result = get_solver_result(p)
+# p_record = get_record(p)
 #
-s = subgradient_method(
-    Hn,
-    f,
-    ∂f,
-    p0;
-    count=[:Cost, :SubGradient],
-    cache=(:LRU, [:Cost, :SubGradient], 50),
-    stopping_criterion=StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
-    debug=[:Iteration, (:Cost, "F(p): %1.8f "), :Stop, 1000, "\n"],
-    record=[:Iteration, :Cost, :Iterate],
-    return_state=true,
-    return_options=true,
-)
-s_result = get_solver_result(s)
-s_record = get_record(s)
+# s = subgradient_method(
+#     Hn,
+#     f,
+#     ∂f,
+#     p0;
+#     count=[:Cost, :SubGradient],
+#     cache=(:LRU, [:Cost, :SubGradient], 50),
+#     stopping_criterion=StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
+#     stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+#     debug=[:Iteration, (:Cost, "F(p): %1.8f "), :Stop, 1000, "\n"],
+#     record=[:Iteration, :Cost, :Iterate],
+#     return_state=true,
+#     return_options=true,
+# )
+# s_result = get_solver_result(s)
+# s_record = get_record(s)
 #
 c = cyclic_proximal_point(
     Hn,
     f,
     proxes,
     p0;
-    stopping_criterion=StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(10.0^-8)
-    ),
+    stopping_criterion=StopAfterIteration(max_iters) | StopWhenChangeLess(Hn, 1e-8),
     debug=[
         :Iteration,
         " | ",
@@ -261,7 +265,7 @@ c = cyclic_proximal_point(
     ],
     record=[:Iteration, :Cost, :Iterate],
     return_state=true,
-    return_options=true,
+    # return_options=true,
 )
 c_result = get_solver_result(c)
 c_record = get_record(c)
@@ -302,6 +306,7 @@ if benchmarking
         $f,
         $∂f,
         $p0;
+        ε=Inf,
         cache=(:LRU, [:Cost, :SubGradient], 50),
         stopping_criterion=StopWhenLagrangeMultiplierLess($atol) |
                            StopAfterIteration($max_iters),
@@ -315,6 +320,7 @@ if benchmarking
         diameter=$diameter,
         domain=$domf,
         k_max=$k_max,
+        k_min=$k_min,
     )
     s_bm = @benchmark subgradient_method(
         $Hn,
@@ -325,16 +331,17 @@ if benchmarking
         cache=(:LRU, [:Cost, :SubGradient], 50),
         stopping_criterion=StopWhenSubgradientNormLess(√$atol) |
                            StopAfterIteration($max_iters),
+        stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
     )
-    c_bm = @benchmark cyclic_proximal_point(
-        $Hn,
-        $f,
-        $proxes,
-        $p0;
-        stopping_criterion=StopWhenAny(
-            StopAfterIteration($max_iters), StopWhenChangeLess(10.0^-8)
-        ),
-    )
+    # c_bm = @benchmark cyclic_proximal_point(
+    #     $Hn,
+    #     $f,
+    #     $proxes,
+    #     $p0;
+    #     stopping_criterion=StopWhenAny(
+    #         StopAfterIteration($max_iters), StopWhenChangeLess(10.0^-8)
+    #     ),
+    # )
     #
     experiments = ["RCBM", "PBA", "SGM", "CPPA"]
     records = [b_record, p_record, s_record, c_record]
