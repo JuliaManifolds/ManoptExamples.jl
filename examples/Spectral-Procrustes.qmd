@@ -2,6 +2,7 @@
 title: "A comparison of the RCBM with the PBA, the SGM for solving the spectral Procrustes problem"
 author: "Hajg Jasa"
 date: 06/27/2024
+engine: julia
 ---
 
 ## Introduction
@@ -79,7 +80,7 @@ as a substitute for $\partial f(p)$, where $U$ and $V$ are some left and right s
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(40)
+Random.seed!(33)
 n = 1000
 d = 250
 A = rand(n, d)
@@ -96,11 +97,9 @@ end
 # Algorithm parameters
 bundle_cap = 25
 max_iters = 5000
-δ = 0.0 # Update parameter for the proximal parameter in the PBA
-μ = 50.0 # Initial proxiaml parameter for the proximal bundle method
 k_max = 1/4
 k_min = 0.0
-diameter = π/(20 * √k_max)
+diameter = π/(4 * √k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
@@ -277,6 +276,21 @@ benchmarking && pretty_table(DataFrame(D, :auto); tf = tf_markdown, header=heade
 #| echo: false
 #| code-fold: true
 (show_plot && benchmarking) && fig
+```
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+using Dates
+now()
 ```
 
 ## Literature

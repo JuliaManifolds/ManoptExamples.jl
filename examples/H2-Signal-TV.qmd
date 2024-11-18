@@ -2,6 +2,7 @@
 title: "A comparison of the RCBM with the PBA, the SGM, and the CPPA for denoising a signal on the hyperbolic space"
 author: "Hajg Jasa"
 date: 06/27/2024
+# engine: julia
 ---
 
 ## Introduction
@@ -72,7 +73,7 @@ where $\operatorname{TV}(p)$, is the total variation term given by
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(42)
+Random.seed!(57)
 n = 496
 σ = 0.01 # Noise parameter
 α = 0.02 # TV parameter
@@ -410,6 +411,21 @@ if export_result
     # plot!(ball_scene, H, ball_c; label="CPPA")
     display(ball_scene)
 end
+```
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+using Dates
+now()
 ```
 
 ## Literature

@@ -2,6 +2,7 @@
 title: "A comparison of the RCBM with the PBA and the SGM for the Riemannian median"
 author: "Hajg Jasa"
 date: 06/27/2024
+engine: julia
 ---
 
 ## Introduction
@@ -19,6 +20,7 @@ using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version
+Pkg.develop(path="../../Manopt.jl") # a trick to work on the local dev version
 benchmarking = true
 export_table = true
 plot = true
@@ -31,7 +33,7 @@ using BenchmarkTools
 using CSV, DataFrames
 using ColorSchemes, Plots
 using QuadraticModels, RipQP
-using Random, LinearAlgebra, LRUCache
+using LinearAlgebra, LRUCache, Random
 using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 ```
 
@@ -65,17 +67,17 @@ We initialize the experiment parameters, as well as utility functions.
 
 ```{julia}
 #| output: false
-Random.seed!(6)
 experiment_name = "RCBM-Median"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
+seed_argument = 57
 
 atol = 1e-8
 N = 1000 # number of data points
 spd_dims = [2, 5, 10, 15]
 hn_sn_dims = [1, 2, 5, 10, 15]
 
-# Generate a point that is at least `tol` close to the point `p` on `M`
+# Generate a point that is at most `tol` close to the point `p` on `M`
 function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
     X = rand(M; vector_at = p)
     X .= tol * rand() * X / norm(M, p, X)
@@ -278,26 +280,26 @@ global A1, A2 = initialize_dataframes(
 )
 
 for n in hn_sn_dims
+    Random.seed!(seed_argument)
 
     M = Hyperbolic(Int(2^n))
-    data = [rand(M) for _ in 1:N]
-    dists = [distance(M, z, y) for z in data, y in data]
-    diameter_hn = 2 * maximum(dists) + 1e-1
-    centroid_hn = data[minimum(Tuple(findmax(dists)[2]))]
-    p0 = data[1]
-
-    f_hn(M, p) = f(M, p, data)
-    domf_hn(M, p) = domf(M, p, centroid_hn, diameter_hn)
-    ∂f_hn(M, p) = ∂f(M, p, data, atol)
+    data_hn = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data_hn, y in data_hn]
+    diameter_hn = 2 * maximum(dists)
+    p0 = data_hn[minimum(Tuple(findmax(dists)[2]))]
+    
+    f_hn(M, p) = f(M, p, data_hn)
+    domf_hn(M, p) = domf(M, p, p0, diameter_hn)
+    ∂f_hn(M, p) = ∂f(M, p, data_hn, atol)
 
     # Optimization
-    pba = proximal_bundle_method(M, f_hn, ∂f_hn, p0; pba_kwargs(ε_hn)...)
-    pba_result = get_solver_result(pba)
-    pba_record = get_record(pba)
-
     rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(diameter_hn, domf_hn, k_max_hn, k_min_hn)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
+
+    pba = proximal_bundle_method(M, f_hn, ∂f_hn, p0; pba_kwargs(ε_hn)...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
 
     sgm = subgradient_method(M, f_hn, ∂f_hn, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
@@ -368,26 +370,26 @@ global A1_SPD, A2_SPD = initialize_dataframes(
 )
 
 for n in spd_dims
+    Random.seed!(seed_argument)
 
     M = SymmetricPositiveDefinite(Int(n))
-    data = [rand(M) for _ in 1:N]
-    dists = [distance(M, z, y) for z in data, y in data]
-    diameter_spd = 2 * maximum(dists) + 1e-1
-    centroid_spd = data[minimum(Tuple(findmax(dists)[2]))]
-    p0 = data[1]
+    data_spd = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data_spd, y in data_spd]
+    diameter_spd = 2 * maximum(dists)
+    p0 = data_spd[minimum(Tuple(findmax(dists)[2]))]
 
-    f_spd(M, p) = f(M, p, data)
-    domf_spd(M, p) = domf(M, p, centroid_spd, diameter_spd)
-    ∂f_spd(M, p) = ∂f(M, p, data, atol)
+    f_spd(M, p) = f(M, p, data_spd)
+    domf_spd(M, p) = domf(M, p, p0, diameter_spd)
+    ∂f_spd(M, p) = ∂f(M, p, data_spd, atol)
 
     # Optimization
-    pba = proximal_bundle_method(M, f_spd, ∂f_spd, p0; pba_kwargs(ε_spd)...)
-    pba_result = get_solver_result(pba)
-    pba_record = get_record(pba)
-
     rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(diameter_spd, domf_spd, k_max_spd, k_min_spd)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
+
+    pba = proximal_bundle_method(M, f_spd, ∂f_spd, p0; pba_kwargs(ε_spd)...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
 
     sgm = subgradient_method(M, f_spd, ∂f_spd, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
@@ -449,7 +451,7 @@ For the last experiment, note that a major difference here is that the sphere ha
 subexperiment_name = "Sn"
 k_max_sn = 1.0
 k_min_sn = 1.0
-diameter_sn = π / 4
+diameter_sn = π / 3
 ε_sn = 1e-2
 
 global A1_Sn, A2_Sn = initialize_dataframes(
@@ -461,26 +463,27 @@ global A1_Sn, A2_Sn = initialize_dataframes(
 )
 
 for n in hn_sn_dims
+    Random.seed!(seed_argument)
 
     M = Sphere(Int(2^n))
     north = [0.0 for _ in 1:manifold_dimension(M)]
     push!(north, 1.0)
-    data = [close_point(M, north, diameter_sn / 2) for _ in 1:n]
-    dists = [distance(M, z, y) for z in data, y in data]
-    p0 = data[minimum(Tuple(findmax(dists)[2]))]
+    data_sn = [close_point(M, north, diameter_sn / 2) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data_sn, y in data_sn]
+    p0 = data_sn[minimum(Tuple(findmax(dists)[2]))]
 
-    f_sn(M, p) = f(M, p, data)
+    f_sn(M, p) = f(M, p, data_sn)
     domf_sn(M, p) = domf(M, p, north, diameter_sn)
-    ∂f_sn(M, p) = ∂f(M, p, data, atol)
+    ∂f_sn(M, p) = ∂f(M, p, data_sn, atol)
 
     # Optimization
-    pba = proximal_bundle_method(M, f_sn, ∂f_sn, p0; pba_kwargs(ε_sn)...)
-    pba_result = get_solver_result(pba)
-    pba_record = get_record(pba)
-
     rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(diameter_sn, domf_sn, k_max_sn, k_min_sn)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
+
+    pba = proximal_bundle_method(M, f_sn, ∂f_sn, p0; pba_kwargs(ε_sn)...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
 
     sgm = subgradient_method(M, f_sn, ∂f_sn, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
@@ -531,6 +534,21 @@ benchmarking && pretty_table(A1_Sn, tf = tf_markdown, header=col_names_1)
 #| echo: false
 #| code-fold: true
 benchmarking && pretty_table(A2_Sn, tf = tf_markdown, header=col_names_2)
+```
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+using Dates
+now()
 ```
 
 ## Literature

@@ -39,11 +39,9 @@ end
 # Algorithm parameters
 bundle_cap = 25
 max_iters = 5000
-δ = 0.0 #1e-2 # Update parameter for μ
-μ = 50.0 # Initial proximal parameter for the proximal bundle method
 k_max = 1 / 4
 k_min = 0.0
-diam = π / (20 * √k_max)
+diam = π / (4 * √k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
@@ -132,6 +130,7 @@ println("\nProx Bundle Method")
 )
 p_result = get_solver_result(p)
 p_record = get_record(p)
+println(distance(M, p_result, p0))
 println("\nSubgradient Method")
 @time s = subgradient_method(
     M,

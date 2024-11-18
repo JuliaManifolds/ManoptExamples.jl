@@ -22,7 +22,7 @@ toggle_debug = false
 !isdir(results_folder) && mkdir(results_folder)
 #
 # Parameters
-Random.seed!(50)
+Random.seed!(57)
 atol = 1e-8# √eps()
 # δ = -1.0
 # μ = 0.5
@@ -41,6 +41,7 @@ end
 #
 # Riemannian median
 function riemannian_median(M, n)
+    Random.seed!(57)
     if split(string(M), "(")[1] == "Sphere"
         k_max = 1.0
         k_min = 1.0
@@ -56,19 +57,19 @@ function riemannian_median(M, n)
     end
     #
     # Data
-    if split(string(M), "(")[1] == "Sphere"
+    if split(string(M), "(")[1] == "Hyperbolic" || split(string(M), "(")[1] == "SymmetricPositiveDefinite"
+        data = [rand(M) for _ in 1:n]#[close_point(M, rand(M), diameter/2) for _ in 1:n]#
+        dists = [distance(M, z, y) for z in data, y in data]
+        diameter = 2maximum(dists) #10.0 #floatmax(Float64)
+        p0 = data[minimum(Tuple(findmax(dists)[2]))] # data[findfirst(x -> x == diameter, dists)[1]] #data[1]
+        centroid = p0 # data[minimum(Tuple(findmin(dists)[2]))] 
+    else
         centroid = [0.0 for _ in 1:manifold_dimension(M)]
         push!(centroid, 1.0)
         diameter = π/3 #manifold_dimension(M) < 2^10 ? π / 3 : π / 4 #* π/7
         data = [close_point(M, centroid, diameter / 2) for _ in 1:n]
         dists = [distance(M, z, y) for z in data, y in data]
-        p0 = rand(data)#data[minimum(Tuple(findmax(dists)[2]))] #data[1]
-    else
-        data = [rand(M) for _ in 1:n]#[close_point(M, rand(M), diameter/2) for _ in 1:n]#
-        dists = [distance(M, z, y) for z in data, y in data]
-        diameter = 2maximum(dists) #10.0 #floatmax(Float64)
-        p0 = rand(data) #data[minimum(Tuple(findmax(dists)[2]))] # data[findfirst(x -> x == diameter, dists)[1]] #data[1]
-        centroid = p0 # data[minimum(Tuple(findmin(dists)[2]))] 
+        p0 = data[minimum(Tuple(findmax(dists)[2]))] #data[1]
     end
     #
     # Objective, subgradient and prox
@@ -145,58 +146,58 @@ function riemannian_median(M, n)
     p_result = get_solver_result(p)
     p_record = get_record(p)
     #
-    # @time s = subgradient_method(
-    #     M,
-    #     f,
-    #     ∂f,
-    #     p0;
-    #     count=[:Cost, :SubGradient],
-    #     cache=(:LRU, [:Cost, :SubGradient], 50),
-    #     stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
-    #     stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(1),
-    #     debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
-    #     record=[:Iteration, :Cost, :Iterate],
-    #     return_state=true,
-    #     return_options=true,
-    # )
-    # s_result = get_solver_result(s)
-    # s_record = get_record(s)
+    @time s = subgradient_method(
+        M,
+        f,
+        ∂f,
+        p0;
+        count=[:Cost, :SubGradient],
+        cache=(:LRU, [:Cost, :SubGradient], 50),
+        stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+        stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+        debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
+        record=[:Iteration, :Cost, :Iterate],
+        return_state=true,
+        return_options=true,
+    )
+    s_result = get_solver_result(s)
+    s_record = get_record(s)
     #
     # Benchmarking
-    # b_bm = @benchmark convex_bundle_method(
-    #     $M,
-    #     $f,
-    #     $∂f,
-    #     $p0;
-    #     # bundle_size=$bundle_size,
-    #     diameter=$diameter,
-    #     domain=$domf,
-    #     k_max=$k_max,
-    #     k_min=$k_min,
-    #     # count=[:Cost, :SubGradient],
-    #     cache=(:LRU, [:Cost, :SubGradient], 50),
-    # )
-    # p_bm = @benchmark proximal_bundle_method(
-    #     $M,
-    #     $f,
-    #     $∂f,
-    #     $p0;
-    #     ε=$ε,
-    #     # δ=$δ,
-    #     # μ=$μ,
-    #     # count=[:Cost, :SubGradient],
-    #     cache=(:LRU, [:Cost, :SubGradient], 50),
-    # )
-    # s_bm = @benchmark subgradient_method(
-    #     $M,
-    #     $f,
-    #     $∂f,
-    #     $p0;
-    #     # count=[:Cost, :SubGradient],
-    #     cache=(:LRU, [:Cost, :SubGradient], 50),
-    #     stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
-    #     stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
-    # )
+    b_bm = @benchmark convex_bundle_method(
+        $M,
+        $f,
+        $∂f,
+        $p0;
+        # bundle_size=$bundle_size,
+        diameter=$diameter,
+        domain=$domf,
+        k_max=$k_max,
+        k_min=$k_min,
+        # count=[:Cost, :SubGradient],
+        cache=(:LRU, [:Cost, :SubGradient], 50),
+    )
+    p_bm = @benchmark proximal_bundle_method(
+        $M,
+        $f,
+        $∂f,
+        $p0;
+        ε=$ε,
+        # δ=$δ,
+        # μ=$μ,
+        # count=[:Cost, :SubGradient],
+        cache=(:LRU, [:Cost, :SubGradient], 50),
+    )
+    s_bm = @benchmark subgradient_method(
+        $M,
+        $f,
+        $∂f,
+        $p0;
+        # count=[:Cost, :SubGradient],
+        cache=(:LRU, [:Cost, :SubGradient], 50),
+        stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+        stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+    )
     #
     # Results
     records = [
@@ -214,7 +215,7 @@ function riemannian_median(M, n)
 end
 #
 # Finalize - export costs
-for subexperiment_name in ["SPD", "Hn", "Sn"]
+for subexperiment_name in ["Sn"]#["Hn", "SPD", "Sn"]
     println(subexperiment_name)
     A1 = DataFrame(;
         a="Dimension",
@@ -254,7 +255,7 @@ for subexperiment_name in ["SPD", "Hn", "Sn"]
         for n in [2, 5, 10, 15]
             M = SymmetricPositiveDefinite(Int(n))
             println("Dimension: $(Int(n))")
-            records, times = riemannian_median((M), 1000)
+            records, times = riemannian_median(M, 1000)
             if export_table
                 B1 = DataFrame(;
                     a=manifold_dimension(M),
@@ -301,7 +302,7 @@ for subexperiment_name in ["SPD", "Hn", "Sn"]
         for n in [1, 2, 5, 10, 15]
             M = Hyperbolic(Int(2^n))
             println("Dimension: $(Int(n))")
-            records, times = riemannian_median((M), 1000)
+            records, times = riemannian_median(M, 1000)
             if export_table
                 B1 = DataFrame(;
                     a=manifold_dimension(M),
@@ -348,7 +349,7 @@ for subexperiment_name in ["SPD", "Hn", "Sn"]
         for n in [1, 2, 5, 10, 15]
             M = Sphere(Int(2^n))
             println("Dimension: $(Int(n))")
-            records, times = riemannian_median((M), 1000)
+            records, times = riemannian_median(M, 1000)
             if export_table
                 B1 = DataFrame(;
                     a=manifold_dimension(M),
