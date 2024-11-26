@@ -42,6 +42,7 @@ max_iters = 5000
 k_max = 1 / 4
 k_min = 0.0
 diam = π / (4 * √k_max)
+β=0.65
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
@@ -72,6 +73,7 @@ println("\nConvex Bundle Method")
     f,
     ∂f,
     p0;
+    contraction_factor=β,
     bundle_cap=bundle_cap,
     k_max=k_max,
     k_min=k_min,
@@ -130,7 +132,10 @@ println("\nProx Bundle Method")
 )
 p_result = get_solver_result(p)
 p_record = get_record(p)
+println("Distance")
 println(distance(M, p_result, p0))
+println("Costs")
+println("   $(f(M, b_result) - f(M, p_result))")
 println("\nSubgradient Method")
 @time s = subgradient_method(
     M,

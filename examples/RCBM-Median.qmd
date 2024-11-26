@@ -75,7 +75,7 @@ seed_argument = 57
 atol = 1e-8
 N = 1000 # number of data points
 spd_dims = [2, 5, 10, 15]
-hn_sn_dims = [1, 2, 5, 10, 15]
+hn_sn_dims = [1, 2, 5, 10]#, 15]
 
 # Generate a point that is at most `tol` close to the point `p` on `M`
 function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
@@ -100,7 +100,8 @@ end
 
 ```{julia}
 #| output: false
-rcbm_kwargs(diameter, domf, k_max, k_min) = [
+maxiter = 100000
+rcbm_kwargs(contraction_factor, diameter, domf, k_max, k_min, retraction_method=ExponentialRetraction()) = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :count => [:Cost, :SubGradient],
     :domain => domf,
@@ -118,13 +119,17 @@ rcbm_kwargs(diameter, domf, k_max, k_min) = [
     :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stepsize => Manopt.DomainBackTracking(contraction_factor=contraction_factor, retraction_method=retraction_method),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(maxiter),
 ]
-rcbm_bm_kwargs(diameter, domf, k_max, k_min) = [
+rcbm_bm_kwargs(contraction_factor, diameter, domf, k_max, k_min, retraction_method=ExponentialRetraction()) = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :domain => domf,
     :k_max => k_max,
     :k_min => k_min,
+    :stepsize => Manopt.DomainBackTracking(contraction_factor=contraction_factor, retraction_method=retraction_method),
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(maxiter),
 ]
 pba_kwargs(ε) = [
     :ε => ε,
@@ -143,6 +148,7 @@ pba_kwargs(ε) = [
     ],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(maxiter),
 ]
 pba_bm_kwargs(ε) = [:ε => ε, :cache => (:LRU, [:Cost, :SubGradient], 50),]
 sgm_kwargs = [
@@ -152,12 +158,12 @@ sgm_kwargs = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(5000),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(maxiter),
 ]
 sgm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(5000),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(maxiter),
 ]
 ```
 
@@ -269,7 +275,8 @@ end
 subexperiment_name = "Hn"
 k_max_hn = -1.0
 k_min_hn = -1.0
-ε_hn = Inf
+contraction_factor = 0.975
+ε_hn = 1e2
 
 global A1, A2 = initialize_dataframes(
     results_folder,
@@ -287,13 +294,13 @@ for n in hn_sn_dims
     dists = [distance(M, z, y) for z in data_hn, y in data_hn]
     diameter_hn = 2 * maximum(dists)
     p0 = data_hn[minimum(Tuple(findmax(dists)[2]))]
-    
+
     f_hn(M, p) = f(M, p, data_hn)
     domf_hn(M, p) = domf(M, p, p0, diameter_hn)
     ∂f_hn(M, p) = ∂f(M, p, data_hn, atol)
 
     # Optimization
-    rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(diameter_hn, domf_hn, k_max_hn, k_min_hn)...)
+    rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(contraction_factor, diameter_hn, domf_hn, k_max_hn, k_min_hn)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
 
@@ -312,7 +319,7 @@ for n in hn_sn_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn, $k_min_hn)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($contraction_factor, $diameter_hn, $domf_hn, $k_max_hn, $k_min_hn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; pba_bm_kwargs($ε_hn)...)
         sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
         
@@ -359,7 +366,8 @@ benchmarking && pretty_table(A2, tf = tf_markdown, header=col_names_2)
 subexperiment_name = "SPD"
 k_max_spd = 0.0
 k_min_spd = -1/2
-ε_spd = Inf
+contraction_factor = 0.975
+ε_spd = 1e2
 
 global A1_SPD, A2_SPD = initialize_dataframes(
     results_folder,
@@ -377,13 +385,13 @@ for n in spd_dims
     dists = [distance(M, z, y) for z in data_spd, y in data_spd]
     diameter_spd = 2 * maximum(dists)
     p0 = data_spd[minimum(Tuple(findmax(dists)[2]))]
-
+    
     f_spd(M, p) = f(M, p, data_spd)
     domf_spd(M, p) = domf(M, p, p0, diameter_spd)
     ∂f_spd(M, p) = ∂f(M, p, data_spd, atol)
 
     # Optimization
-    rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(diameter_spd, domf_spd, k_max_spd, k_min_spd)...)
+    rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(contraction_factor, diameter_spd, domf_spd, k_max_spd, k_min_spd)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
 
@@ -402,7 +410,7 @@ for n in spd_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd, $k_min_spd)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($contraction_factor, $diameter_spd, $domf_spd, $k_max_spd, $k_min_spd)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; pba_bm_kwargs($ε_spd)...)
         sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; $sgm_bm_kwargs...)
 
@@ -451,6 +459,7 @@ For the last experiment, note that a major difference here is that the sphere ha
 subexperiment_name = "Sn"
 k_max_sn = 1.0
 k_min_sn = 1.0
+contraction_factor = 0.65
 diameter_sn = π / 3
 ε_sn = 1e-2
 
@@ -468,7 +477,12 @@ for n in hn_sn_dims
     M = Sphere(Int(2^n))
     north = [0.0 for _ in 1:manifold_dimension(M)]
     push!(north, 1.0)
-    data_sn = [close_point(M, north, diameter_sn / 2) for _ in 1:N]
+    data_sn = [close_point(M, north, diameter_sn / 2)]
+    distance(M, data_sn[1], north) < diameter_sn / 2 ? pop!(data_sn) : nothing
+    while length(data_sn) < N
+        q = close_point(M, north, diameter_sn / 2)
+        distance(M, q, north) < diameter_sn / 2 ? push!(data_sn, q) : nothing 
+    end
     dists = [distance(M, z, y) for z in data_sn, y in data_sn]
     p0 = data_sn[minimum(Tuple(findmax(dists)[2]))]
 
@@ -477,7 +491,7 @@ for n in hn_sn_dims
     ∂f_sn(M, p) = ∂f(M, p, data_sn, atol)
 
     # Optimization
-    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(diameter_sn, domf_sn, k_max_sn, k_min_sn)...)
+    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(contraction_factor, diameter_sn, domf_sn, k_max_sn, k_min_sn)...)
     rcbm_result = get_solver_result(rcbm)
     rcbm_record = get_record(rcbm)
 
@@ -496,7 +510,7 @@ for n in hn_sn_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn, $k_min_sn)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($contraction_factor, $diameter_sn, $domf_sn, $k_max_sn, $k_min_sn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; pba_bm_kwargs($ε_sn)...)
         sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; $sgm_bm_kwargs...)
 
@@ -534,6 +548,124 @@ benchmarking && pretty_table(A1_Sn, tf = tf_markdown, header=col_names_1)
 #| echo: false
 #| code-fold: true
 benchmarking && pretty_table(A2_Sn, tf = tf_markdown, header=col_names_2)
+```
+
+We now run the same experiment, but with the [ProjectionRetraction](@ref) instead of the exponential map.
+
+```{julia}
+#| output: false
+subexperiment_name = "Sn_projection"
+k_max_sn = 1.0
+k_min_sn = 1.0
+contraction_factor = 0.65
+diameter_sn = π / 3
+ε_sn = 1e-2
+
+global A1_Sn_proj, A2_Sn_proj = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    subexperiment_name,
+    named_tuple_1,
+    named_tuple_2
+)
+
+for n in hn_sn_dims
+    Random.seed!(seed_argument)
+
+    M = Sphere(Int(2^n))
+    north = [0.0 for _ in 1:manifold_dimension(M)]
+    push!(north, 1.0)
+    data_sn = [close_point(M, north, diameter_sn / 2;
+        retraction_method=ProjectionRetraction())]
+    distance(M, data_sn[1], north) < diameter_sn / 2 ? pop!(data_sn) : nothing
+    while length(data_sn) < N
+        q = close_point(M, north, diameter_sn / 2; 
+            retraction_method=ProjectionRetraction())
+        distance(M, q, north) < diameter_sn / 2 ? push!(data_sn, q) : nothing 
+    end
+    dists = [distance(M, z, y) for z in data_sn, y in data_sn]
+    p0 = data_sn[minimum(Tuple(findmax(dists)[2]))]
+
+    f_sn(M, p) = f(M, p, data_sn)
+    domf_sn(M, p) = domf(M, p, north, diameter_sn)
+    ∂f_sn(M, p) = ∂f(M, p, data_sn, atol)
+
+    # Optimization
+    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; 
+        retraction_method=ProjectionRetraction(),
+        inverse_retraction_method=ProjectionInverseRetraction(),
+        rcbm_kwargs(contraction_factor, diameter_sn, domf_sn, k_max_sn, k_min_sn, ProjectionRetraction())...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
+
+    pba = proximal_bundle_method(M, f_sn, ∂f_sn, p0;
+        retraction_method=ProjectionRetraction(),
+        inverse_retraction_method=ProjectionInverseRetraction(),
+        pba_kwargs(ε_sn)...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
+
+    sgm = subgradient_method(M, f_sn, ∂f_sn, p0; 
+        retraction_method=ProjectionRetraction(),
+        inverse_retraction_method=ProjectionInverseRetraction(),
+        sgm_kwargs...)
+    sgm_result = get_solver_result(sgm)
+    sgm_record = get_record(sgm)
+
+    records = [
+        rcbm_record,
+        pba_record,
+        sgm_record,
+    ]
+
+    if benchmarking
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; 
+            retraction_method=$ProjectionRetraction(),
+            inverse_retraction_method=$ProjectionInverseRetraction(),
+            rcbm_bm_kwargs($contraction_factor, $diameter_sn, $domf_sn, $k_max_sn, $k_min_sn, $ProjectionRetraction())...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; 
+            retraction_method=$ProjectionRetraction(),
+            inverse_retraction_method=$ProjectionInverseRetraction(),
+            pba_bm_kwargs($ε_sn)...)
+        sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; 
+            retraction_method=$ProjectionRetraction(),
+            inverse_retraction_method=$ProjectionInverseRetraction(),
+            $sgm_bm_kwargs...)
+
+        times = [
+            median(rcbm_bm).time * 1e-9,
+            median(pba_bm).time * 1e-9,
+            median(sgm_bm).time * 1e-9,
+        ]
+
+        B1_Sn_proj, B2_Sn_proj = export_dataframes(
+            M,
+            records,
+            times,
+            results_folder,
+            experiment_name,
+            subexperiment_name,
+            col_names_1,
+            col_names_2,
+        )
+
+        append!(A1_Sn_proj, B1_Sn_proj)
+        append!(A2_Sn_proj, B2_Sn_proj)
+        (export_table) && (write_dataframes(B1_Sn_proj, B2_Sn_proj, results_folder, experiment_name, subexperiment_name))
+    end
+end
+```
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
+```{julia}
+#| echo: false
+#| code-fold: true
+benchmarking && pretty_table(A1_Sn_proj, tf = tf_markdown, header=col_names_1)
+```
+... Whereas the following table refers to the SGM
+```{julia}
+#| echo: false
+#| code-fold: true
+benchmarking && pretty_table(A2_Sn_proj, tf = tf_markdown, header=col_names_2)
 ```
 
 ## Technical details

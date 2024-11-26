@@ -19,11 +19,13 @@ export_orig = false
 export_result = false
 export_table = false
 toggle_debug = false
+benchmarking = false
 !isdir(results_folder) && mkdir(results_folder)
 #
 # Parameters
 Random.seed!(57)
 atol = 1e-8# √eps()
+β = 0.65
 # δ = -1.0
 # μ = 0.5
 #
@@ -41,35 +43,87 @@ end
 #
 # Riemannian median
 function riemannian_median(M, n)
-    Random.seed!(57)
     if split(string(M), "(")[1] == "Sphere"
         k_max = 1.0
         k_min = 1.0
         ε = 1e-2
+        β = 0.65
     elseif split(string(M), "(")[1] == "Hyperbolic"
         k_max = 0.0
         k_min = -1.0
-        ε = Inf
+        ε = 1e2
+        β = 0.975#999
     else
         k_max = 0.0
         k_min = -1/2
-        ε = Inf
+        ε = 1e2
+        β = 0.975#975#0.975
     end
     #
     # Data
     if split(string(M), "(")[1] == "Hyperbolic" || split(string(M), "(")[1] == "SymmetricPositiveDefinite"
+        Random.seed!(57)
         data = [rand(M) for _ in 1:n]#[close_point(M, rand(M), diameter/2) for _ in 1:n]#
         dists = [distance(M, z, y) for z in data, y in data]
         diameter = 2maximum(dists) #10.0 #floatmax(Float64)
         p0 = data[minimum(Tuple(findmax(dists)[2]))] # data[findfirst(x -> x == diameter, dists)[1]] #data[1]
         centroid = p0 # data[minimum(Tuple(findmin(dists)[2]))] 
+        # scene=plot()
+        if split(string(M), "(")[1] == "Hyperbolic" 
+            # if manifold_dimension(M) == 2^15
+                # β = 0.975#0.99999
+            # else
+            #     β = 0.65#0.995
+            # end
+            # if manifold_dimension(M) >= 2^10
+            #     β = 0.975#0.9999999
+            # else            
+            #     β = 0.975
+            # end
+            # β = 0.999
+        else
+            # if n > 4
+            #     β = 0.9999999
+            # else
+            # if manifold_dimension(M) == 2^15
+                # β = 0.975#0.9999999#0.975#0.99999
+            # end
+            # else
+            #     β = 0.995
+            # end 
+            println(manifold_dimension(M))
+            # if manifold_dimension(M) == 3
+            # β = 0.975
+            # elseif manifold_dimension(M) in [15, 55]
+            #     β = 0.999999
+            # else
+            #     β = 0.9999999
+            # end
+            println(β)
+        end
     else
         centroid = [0.0 for _ in 1:manifold_dimension(M)]
         push!(centroid, 1.0)
         diameter = π/3 #manifold_dimension(M) < 2^10 ? π / 3 : π / 4 #* π/7
-        data = [close_point(M, centroid, diameter / 2) for _ in 1:n]
+        Random.seed!(57)
+        data = [close_point(M, centroid, diameter / 2)]
+        distance(M, data[1], centroid) < diameter/2 ? pop!(data) : nothing
+        while length(data) < n
+            q = close_point(M, centroid, diameter / 2)
+            distance(M, q, centroid) < diameter/2 ? push!(data, q) : nothing 
+        end
         dists = [distance(M, z, y) for z in data, y in data]
         p0 = data[minimum(Tuple(findmax(dists)[2]))] #data[1]
+
+        # scene = plot(M,data; wireframe_color=colorant"#CCCCCC", markersize=3)
+        # scatter!(scene, M, [p0, ]; markersize=10, label="Initial")
+        # if manifold_dimension(M) == 2^15
+        #     β = 0.9999999
+        # if manifold_dimension(M) >= 2^10
+            # β = 0.975#0.975#0.9999999
+        # else            
+        #     β = 0.65
+        # end
     end
     #
     # Objective, subgradient and prox
@@ -91,6 +145,10 @@ function riemannian_median(M, n)
         f,
         ∂f,
         p0;
+        # atol_λ=1e-10,
+        # bundle_cap=10,
+        contraction_factor=β,
+        # stepsize=Manopt.DomainBackTrackingStepsize(β),
         diameter=diameter,
         domain=domf,
         k_max=k_max,
@@ -98,25 +156,27 @@ function riemannian_median(M, n)
         count=[:Cost, :SubGradient],
         cache=(:LRU, [:Cost, :SubGradient], 50),
         debug=[
-            :Iteration,
-            (:Cost, "F(p): %1.16f "),
-            (:ξ, "ξ: %1.8f "),
-            (:ε, "ε: %1.8f "),
-            (:last_stepsize, "step size: %1.8f "),
-            (:null_stepsize, "null step size: %1.8f "),
-            (:ϱ, "ϱ: %1.2f "),
-            (:diameter, "diam: %1.2f"),
-            :Stop,
-            10,
-            "\n",
+        :Iteration,
+        (:Cost, "F(p): %1.16f "),
+        (:ξ, "ξ: %1.8f "),
+        (:ε, "ε: %1.8f "),
+        (:last_stepsize, "step size: %1.4e "),
+        (:null_stepsize, "null step size: %1.8f "),
+        (:ϱ, "ϱ: %1.2f "),
+        (:diameter, "diam: %1.2f"),
+        :Stop,
+        10,
+        "\n",
         ],
         record=[:Iteration, :Cost, :Iterate],
         return_state=true,
         return_options=true,
         return_objective=true,
+        # stopping_criterion=StopAfterIteration(20),
     )
     b_result = get_solver_result(b)
     b_record = get_record(b)
+    # scatter!(scene, M, [b_result, ]; markersize=10, label="RCBM")
     #
     @time p = proximal_bundle_method(
         M,
@@ -130,74 +190,83 @@ function riemannian_median(M, n)
         cache=(:LRU, [:Cost, :SubGradient], 50),
         # stopping_criterion=StopWhenCostLess(f(M,b_result))|StopAfterIteration(10000),
         debug=[
-            :Iteration,
-            :Stop,
-            (:Cost, "F(p): %1.16f "),
-            (:ν, "ν: %1.16f "),
-            (:c, "c: %1.16f "),
-            (:μ, "μ: %1.8f "),
-            :Stop,
-            1000,
-            "\n",
+        :Iteration,
+        :Stop,
+        (:Cost, "F(p): %1.16f "),
+        (:ν, "ν: %1.16f "),
+        (:c, "c: %1.16f "),
+        (:μ, "μ: %1.8f "),
+        :Stop,
+        10,
+        "\n",
         ],
         record=[:Iteration, :Cost, :Iterate],
         return_state=true,
     )
     p_result = get_solver_result(p)
     p_record = get_record(p)
+    # scatter!(scene, M, [p_result, ]; markersize=10, label="PBA")
     #
-    @time s = subgradient_method(
-        M,
-        f,
-        ∂f,
-        p0;
-        count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
-        stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
-        debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
-        record=[:Iteration, :Cost, :Iterate],
-        return_state=true,
-        return_options=true,
-    )
-    s_result = get_solver_result(s)
-    s_record = get_record(s)
+    # @time s = subgradient_method(
+    #     M,
+    #     f,
+    #     ∂f,
+    #     p0;
+    #     count=[:Cost, :SubGradient],
+    #     cache=(:LRU, [:Cost, :SubGradient], 50),
+    #     stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    #     stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+    #     debug=[:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
+    #     record=[:Iteration, :Cost, :Iterate],
+    #     return_state=true,
+    #     return_options=true,
+    # )
+    # s_result = get_solver_result(s)
+    # s_record = get_record(s)
+    # display(scene)
+    # println("RCBM", b_result, "\n")
+    # println("PBA", p_result, "\n") 
+    # println("RCBM - PBA = ", f(M, b_result) - f(M, p_result))
     #
     # Benchmarking
-    b_bm = @benchmark convex_bundle_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        # bundle_size=$bundle_size,
-        diameter=$diameter,
-        domain=$domf,
-        k_max=$k_max,
-        k_min=$k_min,
-        # count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-    )
-    p_bm = @benchmark proximal_bundle_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        ε=$ε,
-        # δ=$δ,
-        # μ=$μ,
-        # count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-    )
-    s_bm = @benchmark subgradient_method(
-        $M,
-        $f,
-        $∂f,
-        $p0;
-        # count=[:Cost, :SubGradient],
-        cache=(:LRU, [:Cost, :SubGradient], 50),
-        stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
-        stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
-    )
+    if benchmarking
+        b_bm = @benchmark convex_bundle_method(
+            $M,
+            $f,
+            $∂f,
+            $p0;
+            # bundle_size=$bundle_size,
+            contraction_factor=$β,
+            diameter=$diameter,
+            domain=$domf,
+            k_max=$k_max,
+            k_min=$k_min,
+            # count=[:Cost, :SubGradient],
+            cache=(:LRU, [:Cost, :SubGradient], 50),
+            stepsize=Manopt.DomainBackTrackingStepsize($β),
+        )
+        p_bm = @benchmark proximal_bundle_method(
+            $M,
+            $f,
+            $∂f,
+            $p0;
+            ε=$ε,
+            # δ=$δ,
+            # μ=$μ,
+            # count=[:Cost, :SubGradient],
+            cache=(:LRU, [:Cost, :SubGradient], 50),
+        )
+        s_bm = @benchmark subgradient_method(
+            $M,
+            $f,
+            $∂f,
+            $p0;
+            # count=[:Cost, :SubGradient],
+            cache=(:LRU, [:Cost, :SubGradient], 50),
+            stepsize=DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+            stopping_criterion=StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+        )
+    end
     #
     # Results
     records = [
@@ -211,11 +280,12 @@ function riemannian_median(M, n)
         # median(s_bm).time * 1e-9,
     ]
     println("   R = $(distance(M, b_result, p0))")
+    println("   $(f(M, b_result) - f(M, p_result))")
     return records, times
 end
 #
 # Finalize - export costs
-for subexperiment_name in ["Sn"]#["Hn", "SPD", "Sn"]
+for subexperiment_name in ["Hn", "SPD", "Sn"]
     println(subexperiment_name)
     A1 = DataFrame(;
         a="Dimension",
@@ -254,7 +324,7 @@ for subexperiment_name in ["Sn"]#["Hn", "SPD", "Sn"]
     if subexperiment_name == "SPD"
         for n in [2, 5, 10, 15]
             M = SymmetricPositiveDefinite(Int(n))
-            println("Dimension: $(Int(n))")
+            println("Dimension: $(Int(n^2))")
             records, times = riemannian_median(M, 1000)
             if export_table
                 B1 = DataFrame(;
@@ -299,9 +369,9 @@ for subexperiment_name in ["Sn"]#["Hn", "SPD", "Sn"]
             end
         end
     elseif subexperiment_name == "Hn"
-        for n in [1, 2, 5, 10, 15]
+        for n in [1, 2, 5, 10]#, 15]
             M = Hyperbolic(Int(2^n))
-            println("Dimension: $(Int(n))")
+            println("Dimension: $(Int(2^n))")
             records, times = riemannian_median(M, 1000)
             if export_table
                 B1 = DataFrame(;
@@ -346,9 +416,9 @@ for subexperiment_name in ["Sn"]#["Hn", "SPD", "Sn"]
             end
         end
     elseif subexperiment_name == "Sn"
-        for n in [1, 2, 5, 10, 15]
+        for n in [1, 2, 5, 10]#, 15]
             M = Sphere(Int(2^n))
-            println("Dimension: $(Int(n))")
+            println("Dimension: $(Int(2^n))")
             records, times = riemannian_median(M, 1000)
             if export_table
                 B1 = DataFrame(;

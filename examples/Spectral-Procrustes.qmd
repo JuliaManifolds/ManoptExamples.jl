@@ -100,6 +100,7 @@ max_iters = 5000
 k_max = 1/4
 k_min = 0.0
 diameter = π/(4 * √k_max)
+contraction_factor = 0.65
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
@@ -146,6 +147,7 @@ rcbm_kwargs = [
     :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stepsize => Manopt.DomainBackTracking(contraction_factor=contraction_factor),
     :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
 ]
 rcbm_bm_kwargs = [
@@ -154,6 +156,7 @@ rcbm_bm_kwargs = [
     :domain => domf,
     :k_max => k_max,
     :k_min => k_min,
+    :stepsize => Manopt.DomainBackTracking(contraction_factor=contraction_factor),
     :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
 ]
 pba_kwargs = [
