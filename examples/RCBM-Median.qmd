@@ -101,7 +101,7 @@ end
 ```{julia}
 #| output: false
 maxiter = 5000
-rcbm_kwargs(contraction_factor, diameter, domf, k_max, k_min, retraction_method=ExponentialRetraction()) = [
+rcbm_kwargs(diameter, domf, k_max, k_min) = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :count => [:Cost, :SubGradient],
     :domain => domf,
@@ -120,7 +120,7 @@ rcbm_kwargs(contraction_factor, diameter, domf, k_max, k_min, retraction_method=
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
 ]
-rcbm_bm_kwargs(contraction_factor, diameter, domf, k_max, k_min, retraction_method=ExponentialRetraction()) = [
+rcbm_bm_kwargs(diameter, domf, k_max, k_min) = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :domain => domf,
