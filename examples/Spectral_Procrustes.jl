@@ -24,7 +24,7 @@ show_plot = false
 !isdir(figures_folder) && mkdir(figures_folder)
 #
 # Experiment parameters
-Random.seed!(33)
+Random.seed!(57)
 n = 1000
 d = 250
 A = rand(n, d)

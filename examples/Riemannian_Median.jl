@@ -25,7 +25,7 @@ benchmarking = false
 # Parameters
 Random.seed!(57)
 atol = 1e-8# √eps()
-β = 0.65
+β = 0.975
 # δ = -1.0
 # μ = 0.5
 #
@@ -47,16 +47,16 @@ function riemannian_median(M, n)
         k_max = 1.0
         k_min = 1.0
         ε = 1e-2
-        β = 0.65
+        β = 0.975#65
     elseif split(string(M), "(")[1] == "Hyperbolic"
         k_max = 0.0
         k_min = -1.0
-        ε = 1e2
+        ε = 1e-2
         β = 0.975#999
     else
         k_max = 0.0
         k_min = -1/2
-        ε = 1e2
+        ε = 1e-2
         β = 0.975#975#0.975
     end
     #
@@ -285,7 +285,7 @@ function riemannian_median(M, n)
 end
 #
 # Finalize - export costs
-for subexperiment_name in ["Hn", "SPD", "Sn"]
+for subexperiment_name in ["Sn"]#["Hn", "SPD", "Sn"]
     println(subexperiment_name)
     A1 = DataFrame(;
         a="Dimension",

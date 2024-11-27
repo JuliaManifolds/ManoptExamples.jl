@@ -80,12 +80,11 @@ as a substitute for $\partial f(p)$, where $U$ and $V$ are some left and right s
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(33)
+Random.seed!(57)
 n = 1000
 d = 250
 A = rand(n, d)
 B = randn(n, d)
-tol = 1e-8
 #
 # Compute the orthogonal Procrustes minimizer given A and B
 function orthogonal_procrustes(A, B)
@@ -95,12 +94,9 @@ function orthogonal_procrustes(A, B)
 end
 #
 # Algorithm parameters
-bundle_cap = 25
-max_iters = 5000
 k_max = 1/4
 k_min = 0.0
 diameter = π/(4 * √k_max)
-contraction_factor = 0.65
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
@@ -128,7 +124,6 @@ We introduce some keyword arguments for the solvers we will use in this experime
 ```{julia}
 #| output: false
 rcbm_kwargs = [
-    :bundle_cap => bundle_cap,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :debug => [
@@ -147,8 +142,6 @@ rcbm_kwargs = [
     :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => Manopt.DomainBackTracking(contraction_factor=contraction_factor),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
 ]
 rcbm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
@@ -156,12 +149,9 @@ rcbm_bm_kwargs = [
     :domain => domf,
     :k_max => k_max,
     :k_min => k_min,
-    :stepsize => Manopt.DomainBackTracking(contraction_factor=contraction_factor),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
 ]
 pba_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :bundle_size => bundle_cap,
     :debug =>[
         :Iteration,
         :Stop,
@@ -176,11 +166,9 @@ pba_kwargs = [
     ],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol)| StopAfterIteration(max_iters),
 ]
 pba_bm_kwargs = [
     :cache =>(:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
 ]
 sgm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
