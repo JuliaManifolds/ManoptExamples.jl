@@ -24,7 +24,7 @@ show_plot = false
 !isdir(figures_folder) && mkdir(figures_folder)
 #
 # Experiment parameters
-Random.seed!(57)
+Random.seed!(33)
 n = 1000
 d = 250
 A = rand(n, d)
@@ -41,8 +41,8 @@ bundle_cap = 25
 max_iters = 5000
 k_max = 1 / 4
 k_min = 0.0
-diam = π / (4 * √k_max)
-β=0.65
+diam = π / (3 * √k_max)
+β=0.975
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)

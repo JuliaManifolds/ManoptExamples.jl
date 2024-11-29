@@ -23,15 +23,15 @@ toggle_debug = true
 !isdir(results_folder) && mkdir(results_folder)
 #
 # Experiment parameters
-Random.seed!(1)
 n = 496
-σ = 0.05 # Noise parameter
-α = .50 # TV parameter
-atol = 1e-6 # √eps()
+σ = 0.1 #0.1 # Noise parameter
+α = 0.5 #0.6#√σ# 0.08 # TV parameter
+atol = 1e-8# √eps()
 k_max = 0.0
 k_min = -1.0
-max_iters = 5000#15000
-β = 0.975 #0.9999999#75
+max_iters = 5000#200
+bundle_cap = 25
+β = 0.975#0.9999#0.975 #0.9999999#75
 # Algorithm parameters (currently not used, in favor of defaults)
 # ε = Inf # Parameter of the proximal bundle method tied to the injectivity radius of the manifold
 # δ = 0.01 # Update parameter for μ
@@ -94,29 +94,35 @@ function matrixify_Poincare_ball(input)
     return hcat(input_x, input_y)
 end
 #
-# Manifolds and data
+# Manifolds and noise
+Random.seed!(33)
 H = Hyperbolic(2)
 signal, geodesics = artificial_H2_signal(n; a=-6.0, b=6.0, T=3)
-Hn = PowerManifold(H, NestedPowerRepresentation(), length(signal))
 noise = map(p -> exp(H, p, rand(H; vector_at=p, σ=σ)), signal)
-p0 = noise
-data = noise
-diameter = maximum([distance(H, data[i], data[j]) for i in 1:n, j in 1:n]) * 3#00/n #1.0 #floatmax(Float64)
+# p0 = copy(noise)
+# temp = copy(noise)
+# push!(temp, noise[end])
+# pushfirst!(temp, noise[1])
+# noise = copy(temp)
+# n = length(noise)
+p0 = copy(noise)
+Hn = PowerManifold(H, NestedPowerRepresentation(), length(noise))
+diameter = 3 * maximum([distance(H, noise[i], noise[j]) for i in 1:n, j in 1:n]) #1.0 #floatmax(Float64)
 domf(M, p) = distance(M, p, p0) < diameter / 2 ? true : false
 #
 # Objective, subgradient and prox
 function f(M, p)
-    return 1 / 10length(data) *
-           (1 / 2 * distance(M, data, p)^2 + α * ManoptExamples.Total_Variation(M, p))
+    return 1 / length(noise) *
+           (1 / 2 * distance(M, noise, p)^2 + α * ManoptExamples.Total_Variation(M, p))
 end
 function ∂f(M, p)
-    return 1 / 10length(data) * (
-        ManifoldDiff.grad_distance(M, data, p) +
+    return 1 / length(noise) * (
+        ManifoldDiff.grad_distance(M, noise, p) +
         α * ManoptExamples.subgrad_Total_Variation(M, p; atol=atol)
     )
 end
 proxes = (
-    (M, λ, p) -> ManifoldDiff.prox_distance(M, λ, data, p, 2),
+    (M, λ, p) -> ManifoldDiff.prox_distance(M, λ, noise, p, 2),
     (M, λ, p) -> ManoptExamples.prox_Total_Variation(M, α * λ, p),
 )
 #
@@ -148,7 +154,7 @@ if export_orig
     matrix_noise = matrixify_Poincare_ball(ball_noise)
     matrix_geodesics = matrixify_Poincare_ball(ball_geodesics)
     # CSV.write(
-    #     joinpath(results_folder, experiment_name * "-data.csv"),
+    #     joinpath(results_folder, experiment_name * "-noise.csv"),
     #     DataFrame(matrix_data, :auto);
     #     header=["x", "y"],
     # )
@@ -172,7 +178,7 @@ end
     p0;
     # atol_λ=atol,
     # atol_errors=atol,
-    # bundle_cap=100,
+    bundle_cap=bundle_cap,
     # contraction_factor=β,
     domain=domf,
     k_max=k_max,
@@ -208,7 +214,6 @@ b_record = get_record(b)
     f,
     ∂f,
     p0;
-    ε=1e2,
     count=[:Cost, :SubGradient],
     cache=(:LRU, [:Cost, :SubGradient], 50),
     stopping_criterion=StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(max_iters),
@@ -377,7 +382,7 @@ if benchmarking
             [maximum(first.(record)) for record in records],
             [t for t in times],
             [minimum([r[2] for r in record]) for record in records],
-            [distance(Hn, data, result) / length(data) for result in results];
+            [distance(Hn, noise, result) / length(noise) for result in results];
             dims=2,
         )
         CSV.write(

@@ -2,7 +2,7 @@
 title: "A comparison of the RCBM with the PBA, the SGM for solving the spectral Procrustes problem"
 author: "Hajg Jasa"
 date: 06/27/2024
-engine: julia
+# engine: julia
 ---
 
 ## Introduction
@@ -80,11 +80,13 @@ as a substitute for $\partial f(p)$, where $U$ and $V$ are some left and right s
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(57)
+Random.seed!(33)
 n = 1000
 d = 250
 A = rand(n, d)
 B = randn(n, d)
+tol = 1e-8
+max_iters = 5000
 #
 # Compute the orthogonal Procrustes minimizer given A and B
 function orthogonal_procrustes(A, B)
@@ -96,7 +98,7 @@ end
 # Algorithm parameters
 k_max = 1/4
 k_min = 0.0
-diameter = π/(4 * √k_max)
+diameter = π/(3 * √k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)

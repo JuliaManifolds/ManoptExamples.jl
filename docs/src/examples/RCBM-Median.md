@@ -1,7 +1,6 @@
-A comparison of the RCBM with the PBA and the SGM for the Riemannian median
-================
+# A comparison of the RCBM with the PBA and the SGM for the Riemannian median
 Hajg Jasa
-6/27/24
+2024-06-27
 
 ## Introduction
 
@@ -16,7 +15,7 @@ using BenchmarkTools
 using CSV, DataFrames
 using ColorSchemes, Plots
 using QuadraticModels, RipQP
-using Random, LinearAlgebra, LRUCache
+using LinearAlgebra, LRUCache, Random
 using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 ```
 
@@ -49,17 +48,17 @@ where equality is justified since $p^*$ is uniquely determined on Hadamard manif
 We initialize the experiment parameters, as well as utility functions.
 
 ``` julia
-Random.seed!(33)
 experiment_name = "RCBM-Median"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
+seed_argument = 57
 
 atol = 1e-8
 N = 1000 # number of data points
 spd_dims = [2, 5, 10, 15]
 hn_sn_dims = [1, 2, 5, 10, 15]
 
-# Generate a point that is at least `tol` close to the point `p` on `M`
+# Generate a point that is at most `tol` close to the point `p` on `M`
 function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
     X = rand(M; vector_at = p)
     X .= tol * rand() * X / norm(M, p, X)
@@ -70,7 +69,7 @@ end
 ``` julia
 # Objective and subdifferential
 f(M, p, data) = sum(1 / length(data) * distance.(Ref(M), Ref(p), data))
-domf(M, p, p0, diameter) = distance(M, p, p0) < diameter / 2 ? true : false
+domf(M, p, centroid, diameter) = distance(M, p, centroid) < diameter / 2 ? true : false
 function ∂f(M, p, data, atol=atol)
     return sum(
         1 / length(data) *
@@ -80,12 +79,11 @@ end
 ```
 
 ``` julia
-rcbm_kwargs(diameter, domf, k_max) = [
-    :diameter => diameter,
-    :domain => domf,
-    :k_max => k_max,
-    :count => [:Cost, :SubGradient],
+maxiter = 5000
+rcbm_kwargs(diameter, domf, k_max, k_min) = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :count => [:Cost, :SubGradient],
+    :domain => domf,
     :debug => [
         :Iteration,
         (:Cost, "F(p): %1.16f "),
@@ -95,18 +93,22 @@ rcbm_kwargs(diameter, domf, k_max) = [
         1000,
         "\n",
     ],
+    :diameter => diameter,
+    :k_max => k_max,
+    :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
 ]
-rcbm_bm_kwargs(diameter, domf, k_max) = [
+rcbm_bm_kwargs(diameter, domf, k_max, k_min) = [
+    :cache => (:LRU, [:Cost, :SubGradient], 50),
     :diameter => diameter,
     :domain => domf,
     :k_max => k_max,
-    :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :k_min => k_min,
 ]
 pba_kwargs = [
-    :count => [:Cost, :SubGradient],
     :cache => (:LRU, [:Cost, :SubGradient], 50),
+    :count => [:Cost, :SubGradient],
     :debug => [
         :Iteration,
         :Stop,
@@ -120,21 +122,22 @@ pba_kwargs = [
     ],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stopping_criterion => StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(maxiter),
 ]
 pba_bm_kwargs = [:cache => (:LRU, [:Cost, :SubGradient], 50),]
 sgm_kwargs = [
-    :count => [:Cost, :SubGradient],
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+    :count => [:Cost, :SubGradient],
     :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(maxiter),
 ]
 sgm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(1e-4) | StopAfterIteration(5000),
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(maxiter),
 ]
 ```
 
@@ -243,8 +246,9 @@ end
 
 ``` julia
 subexperiment_name = "Hn"
-k_max_hn = 0.0
-diameter_hn = floatmax(Float64)
+k_max_hn = -1.0
+k_min_hn = -1.0
+
 global A1, A2 = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -254,24 +258,26 @@ global A1, A2 = initialize_dataframes(
 )
 
 for n in hn_sn_dims
+    Random.seed!(seed_argument)
 
     M = Hyperbolic(Int(2^n))
-    data = [rand(M) for _ in 1:N]
-    dists = [distance(M, z, y) for z in data, y in data]
-    p0 = data[minimum(Tuple(findmax(dists)[2]))]
+    data_hn = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data_hn, y in data_hn]
+    diameter_hn = 2 * maximum(dists)
+    p0 = data_hn[minimum(Tuple(findmax(dists)[2]))]
 
-    f_hn(M, p) = f(M, p, data)
+    f_hn(M, p) = f(M, p, data_hn)
     domf_hn(M, p) = domf(M, p, p0, diameter_hn)
-    ∂f_hn(M, p) = ∂f(M, p, data, atol)
+    ∂f_hn(M, p) = ∂f(M, p, data_hn, atol)
 
     # Optimization
+    rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(diameter_hn, domf_hn, k_max_hn, k_min_hn)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
+
     pba = proximal_bundle_method(M, f_hn, ∂f_hn, p0; pba_kwargs...)
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
-
-    rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(diameter_hn, domf_hn, k_max_hn)...)
-    rcbm_result = get_solver_result(rcbm)
-    rcbm_record = get_record(rcbm)
 
     sgm = subgradient_method(M, f_hn, ∂f_hn, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
@@ -284,7 +290,7 @@ for n in hn_sn_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn, $k_min_hn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
         
@@ -314,30 +320,31 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |     Time_1 | Objective_1 | Iterations_2 |   Time_2 | Objective_2 |
-|-----------|--------------|------------|-------------|--------------|----------|-------------|
-|         2 |            9 | 0.00479385 |     1.07452 |          225 | 0.113286 |     1.07452 |
-|         4 |            8 | 0.00464954 |     1.09164 |          235 | 0.120968 |     1.09164 |
-|        32 |           13 |  0.0110309 |     1.10437 |          223 | 0.159239 |     1.10437 |
-|      1024 |           16 |   0.250066 |     1.09989 |          240 |  3.53749 |     1.09989 |
-|     32768 |           14 |    5.66661 |     1.07903 |          223 |  81.9645 |     1.07903 |
+    | Dimension | Iterations_1 |     Time_1 | Objective_1 | Iterations_2 |   Time_2 | Objective_2 |
+    |-----------|--------------|------------|-------------|--------------|----------|-------------|
+    |         2 |            9 | 0.00523775 |     1.05192 |          251 | 0.132011 |     1.05192 |
+    |         4 |            8 | 0.00469981 |     1.07516 |          230 | 0.132091 |     1.07516 |
+    |        32 |           15 |  0.0151958 |     1.08559 |          234 | 0.180374 |     1.08559 |
+    |      1024 |           16 |   0.284984 |     1.09706 |          234 |  4.00771 |     1.09706 |
+    |     32768 |           16 |    7.34017 |      1.0681 |          229 |  91.2803 |      1.0681 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |       Time | Objective |
-|-----------|------------|------------|-----------|
-|         2 |         15 | 0.00681038 |   1.02872 |
-|         4 |         18 | 0.00879092 |   1.08236 |
-|        32 |         21 |  0.0168037 |   1.10419 |
-|      1024 |         24 |   0.342026 |   1.09989 |
-|     32768 |         19 |    6.39479 |   1.07883 |
+    | Dimension | Iterations |       Time | Objective |
+    |-----------|------------|------------|-----------|
+    |         2 |         18 | 0.00811254 |   1.04748 |
+    |         4 |         19 | 0.00953129 |   1.05518 |
+    |        32 |         25 |  0.0208788 |   1.08559 |
+    |      1024 |         23 |   0.400038 |   1.09706 |
+    |     32768 |         21 |    8.81869 |   1.06488 |
 
 ## The Median on the Symmetric Positive Definite Matrix Space
 
 ``` julia
 subexperiment_name = "SPD"
 k_max_spd = 0.0
-diameter_spd = floatmax(Float64)
+k_min_spd = -1/2
+
 global A1_SPD, A2_SPD = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -347,24 +354,26 @@ global A1_SPD, A2_SPD = initialize_dataframes(
 )
 
 for n in spd_dims
+    Random.seed!(seed_argument)
 
     M = SymmetricPositiveDefinite(Int(n))
-    data = [rand(M) for _ in 1:N]
-    dists = [distance(M, z, y) for z in data, y in data]
-    p0 = data[minimum(Tuple(findmax(dists)[2]))]
-
-    f_spd(M, p) = f(M, p, data)
+    data_spd = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data_spd, y in data_spd]
+    diameter_spd = 2 * maximum(dists)
+    p0 = data_spd[minimum(Tuple(findmax(dists)[2]))]
+    
+    f_spd(M, p) = f(M, p, data_spd)
     domf_spd(M, p) = domf(M, p, p0, diameter_spd)
-    ∂f_spd(M, p) = ∂f(M, p, data, atol)
+    ∂f_spd(M, p) = ∂f(M, p, data_spd, atol)
 
     # Optimization
+    rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(diameter_spd, domf_spd, k_max_spd, k_min_spd)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
+
     pba = proximal_bundle_method(M, f_spd, ∂f_spd, p0; pba_kwargs...)
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
-
-    rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(diameter_spd, domf_spd, k_max_spd)...)
-    rcbm_result = get_solver_result(rcbm)
-    rcbm_record = get_record(rcbm)
 
     sgm = subgradient_method(M, f_spd, ∂f_spd, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
@@ -377,7 +386,7 @@ for n in spd_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd, $k_min_spd)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; $sgm_bm_kwargs...)
 
@@ -407,21 +416,21 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |   Time_1 | Objective_1 | Iterations_2 |   Time_2 | Objective_2 |
-|-----------|--------------|----------|-------------|--------------|----------|-------------|
-|         3 |           16 | 0.152925 |    0.254264 |           56 | 0.525707 |    0.254264 |
-|        15 |           11 | 0.265103 |    0.433549 |           83 |   1.9075 |    0.433549 |
-|        55 |           10 | 0.599664 |    0.624809 |           91 |  4.86849 |    0.624809 |
-|       120 |            9 |  1.03983 |    0.769986 |          117 |  11.5079 |    0.769986 |
+    | Dimension | Iterations_1 |   Time_1 | Objective_1 | Iterations_2 |   Time_2 | Objective_2 |
+    |-----------|--------------|----------|-------------|--------------|----------|-------------|
+    |         3 |           43 | 0.303751 |    0.260846 |           57 | 0.441796 |    0.260846 |
+    |        15 |           49 |  2.01407 |    0.436536 |           75 |  1.74885 |    0.436536 |
+    |        55 |           15 |  1.30749 |    0.618059 |           89 |  6.15426 |    0.618059 |
+    |       120 |            6 |  1.20377 |    0.764031 |          123 |  15.4064 |    0.764031 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |    Time | Objective |
-|-----------|------------|---------|-----------|
-|         3 |       5000 | 41.8571 |  0.254264 |
-|        15 |       1758 | 40.2008 |  0.433549 |
-|        55 |        768 |  40.049 |  0.624809 |
-|       120 |        429 | 41.8372 |  0.769986 |
+    | Dimension | Iterations |    Time | Objective |
+    |-----------|------------|---------|-----------|
+    |         3 |       4629 | 46.5469 |  0.260846 |
+    |        15 |       1727 | 40.4873 |  0.436536 |
+    |        55 |        776 | 53.3628 |  0.618059 |
+    |       120 |        438 | 53.5932 |  0.764031 |
 
 ## The Median on the Sphere
 
@@ -430,7 +439,9 @@ For the last experiment, note that a major difference here is that the sphere ha
 ``` julia
 subexperiment_name = "Sn"
 k_max_sn = 1.0
-diameter_sn = π / 4
+k_min_sn = 1.0
+diameter_sn = π / 3
+
 global A1_Sn, A2_Sn = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -440,26 +451,32 @@ global A1_Sn, A2_Sn = initialize_dataframes(
 )
 
 for n in hn_sn_dims
+    Random.seed!(seed_argument)
 
     M = Sphere(Int(2^n))
     north = [0.0 for _ in 1:manifold_dimension(M)]
     push!(north, 1.0)
-    diameter = π / 4 #2 * π/7
-    data = [close_point(M, north, diameter / 2) for _ in 1:n]
-    p0 = data[1]
+    data_sn = [close_point(M, north, diameter_sn / 2)]
+    distance(M, data_sn[1], north) < diameter_sn / 2 ? pop!(data_sn) : nothing
+    while length(data_sn) < N
+        q = close_point(M, north, diameter_sn / 2)
+        distance(M, q, north) < diameter_sn / 2 ? push!(data_sn, q) : nothing 
+    end
+    dists = [distance(M, z, y) for z in data_sn, y in data_sn]
+    p0 = data_sn[minimum(Tuple(findmax(dists)[2]))]
 
-    f_sn(M, p) = f(M, p, data)
-    domf_sn(M, p) = domf(M, p, p0, diameter_sn)
-    ∂f_sn(M, p) = ∂f(M, p, data, atol)
+    f_sn(M, p) = f(M, p, data_sn)
+    domf_sn(M, p) = domf(M, p, north, diameter_sn)
+    ∂f_sn(M, p) = ∂f(M, p, data_sn, atol)
 
     # Optimization
+    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(diameter_sn, domf_sn, k_max_sn, k_min_sn)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
+
     pba = proximal_bundle_method(M, f_sn, ∂f_sn, p0; pba_kwargs...)
     pba_result = get_solver_result(pba)
     pba_record = get_record(pba)
-
-    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(diameter_sn, domf_sn, k_max_sn)...)
-    rcbm_result = get_solver_result(rcbm)
-    rcbm_record = get_record(rcbm)
 
     sgm = subgradient_method(M, f_sn, ∂f_sn, p0; sgm_kwargs...)
     sgm_result = get_solver_result(sgm)
@@ -472,7 +489,7 @@ for n in hn_sn_dims
     ]
 
     if benchmarking
-        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn)...)
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn, $k_min_sn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; $sgm_bm_kwargs...)
 
@@ -502,23 +519,62 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |      Time_1 | Objective_1 | Iterations_2 |     Time_2 | Objective_2 |
-|-----------|--------------|-------------|-------------|--------------|------------|-------------|
-|         2 |            2 | 0.000121292 |         0.0 |            3 | 0.00012375 |         0.0 |
-|         4 |         5000 |    0.740364 |    0.163604 |           30 | 0.00401738 |    0.163604 |
-|        32 |           68 |  0.00849283 |    0.103703 |           37 | 0.00136038 |    0.103703 |
-|      1024 |           65 |   0.0922398 |    0.119482 |           32 | 0.00716244 |    0.119482 |
-|     32768 |           39 |      1.2733 |    0.176366 |           37 |   0.361279 |    0.176366 |
+    | Dimension | Iterations_1 |    Time_1 | Objective_1 | Iterations_2 |    Time_2 | Objective_2 |
+    |-----------|--------------|-----------|-------------|--------------|-----------|-------------|
+    |         2 |           43 | 0.0158139 |    0.258898 |           71 | 0.0184203 |    0.258898 |
+    |         4 |           74 | 0.0230197 |    0.253525 |           62 | 0.0168082 |    0.253525 |
+    |        32 |          102 |  0.043011 |    0.259886 |           64 | 0.0272739 |    0.259886 |
+    |      1024 |          103 |  0.890434 |    0.266993 |           68 |  0.622527 |    0.266993 |
+    |     32768 |           80 |   27.1998 |    0.259302 |           65 |   29.1502 |    0.259302 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |        Time |   Objective |
-|-----------|------------|-------------|-------------|
-|         2 |       5000 |   0.0143786 | 9.98865e-15 |
-|         4 |         30 | 0.000119917 |    0.163604 |
-|        32 |       5000 |   0.0257619 |    0.103703 |
-|      1024 |       5000 |    0.718539 |    0.119482 |
-|     32768 |       5000 |     33.9769 |    0.176366 |
+    | Dimension | Iterations |      Time | Objective |
+    |-----------|------------|-----------|-----------|
+    |         2 |        401 | 0.0970337 |  0.258898 |
+    |         4 |       5000 |   1.33258 |  0.253525 |
+    |        32 |        231 | 0.0963392 |  0.259886 |
+    |      1024 |        185 |   1.98786 |  0.266993 |
+    |     32768 |        157 |    205.02 |  0.259302 |
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+``` julia
+using Pkg
+Pkg.status()
+```
+
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.5.0
+      [336ed68f] CSV v0.10.15
+      [35d6a980] ColorSchemes v3.27.1
+    ⌅ [5ae59095] Colors v0.12.11
+      [a93c6f00] DataFrames v1.7.0
+      [7073ff75] IJulia v1.26.0
+      [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.1
+      [d3d80556] LineSearches v7.3.0
+      [af67fdf4] ManifoldDiff v0.3.13
+      [1cead3c2] Manifolds v0.10.7
+      [3362f125] ManifoldsBase v0.15.22
+      [0fc0a36d] Manopt v0.5.3 `../../Manopt.jl`
+      [5b8d5e80] ManoptExamples v0.1.10 `..`
+      [51fcb6bd] NamedColors v0.2.2
+      [91a5bcdd] Plots v1.40.9
+    ⌃ [08abe8d2] PrettyTables v2.3.2
+      [6099a3de] PythonCall v0.9.23
+      [f468eda6] QuadraticModels v0.9.7
+      [1e40b3f8] RipQP v0.6.4
+    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
+
+``` julia
+using Dates
+now()
+```
+
+    2024-11-28T00:40:27.330
 
 ## Literature
 
@@ -526,4 +582,3 @@ We can take a look at how the algorithms compare to each other in their performa
 Pages = ["RCBM-Median.md"]
 Canonical=false
 ```
-

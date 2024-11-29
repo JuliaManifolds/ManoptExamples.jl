@@ -2,7 +2,7 @@
 title: "A comparison of the RCBM with the PBA and the SGM for the Riemannian median"
 author: "Hajg Jasa"
 date: 06/27/2024
-engine: julia
+# engine: julia
 ---
 
 ## Introduction

@@ -1,7 +1,6 @@
-A comparison of the RCBM with the PBA, the SGM for solving the spectral Procrustes problem
-================
+# A comparison of the RCBM with the PBA, the SGM for solving the spectral Procrustes problem
 Hajg Jasa
-6/27/24
+2024-06-27
 
 ## Introduction
 
@@ -68,6 +67,7 @@ d = 250
 A = rand(n, d)
 B = randn(n, d)
 tol = 1e-8
+max_iters = 5000
 #
 # Compute the orthogonal Procrustes minimizer given A and B
 function orthogonal_procrustes(A, B)
@@ -77,16 +77,13 @@ function orthogonal_procrustes(A, B)
 end
 #
 # Algorithm parameters
-bundle_cap = 25
-max_iters = 5000
-δ = 0.#1e-2 # Update parameter for μ
-μ = 50. # Initial proxiaml parameter for the proximal bundle method
 k_max = 1/4
-diameter = π/(3*√k_max)
+k_min = 0.0
+diameter = π/(3 * √k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
-p0 = orthogonal_procrustes(A, B) #rand(M)
+p0 = orthogonal_procrustes(A, B)
 project!(M, p0, p0)
 ```
 
@@ -110,12 +107,8 @@ We introduce some keyword arguments for the solvers we will use in this experime
 
 ``` julia
 rcbm_kwargs = [
-    :bundle_cap => bundle_cap,
-    :k_max => k_max,
-    :domain => domf,
-    :diameter => diameter,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+    :diameter => diameter,
     :debug => [
         :Iteration,
         (:Cost, "F(p): %1.16f "),
@@ -127,20 +120,21 @@ rcbm_kwargs = [
         10,
         "\n",
     ],
+    :domain => domf,
+    :k_max => k_max,
+    :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
 ]
 rcbm_bm_kwargs = [
-    :k_max => k_max,
-    :domain => domf,
-    :diameter => diameter,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+    :diameter => diameter,
+    :domain => domf,
+    :k_max => k_max,
+    :k_min => k_min,
 ]
 pba_kwargs = [
-    :bundle_size => bundle_cap,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol)|StopAfterIteration(max_iters),
     :debug =>[
         :Iteration,
         :Stop,
@@ -158,21 +152,19 @@ pba_kwargs = [
 ]
 pba_bm_kwargs = [
     :cache =>(:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) |                                   StopAfterIteration(max_iters),
 ]
 sgm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
     :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
     :record => [:Iteration, :Cost, :p_star],
     :return_state => true,
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
 ]
 sgm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(√tol) |
-                           StopAfterIteration(max_iters),
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
 ]
 global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
 ```
@@ -249,15 +241,54 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table…
 
-| Algorithm | Iterations | Time (s) | Objective |
-|-----------|------------|----------|-----------|
-|      RCBM |         26 |  13.7482 |    235.46 |
-|       PBA |         31 |  3.31156 |    235.46 |
-|       SGM |       5000 |  292.542 |    235.46 |
+    | Algorithm | Iterations | Time (s) | Objective |
+    |-----------|------------|----------|-----------|
+    |      RCBM |         99 |  102.036 |    235.46 |
+    |       PBA |         31 |   5.8049 |    235.46 |
+    |       SGM |       5000 |  402.739 |    235.46 |
 
 … and this cost versus iterations plot
 
 ![](Spectral-Procrustes_files/figure-commonmark/cell-10-output-1.svg)
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+``` julia
+using Pkg
+Pkg.status()
+```
+
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.5.0
+      [336ed68f] CSV v0.10.15
+      [35d6a980] ColorSchemes v3.27.1
+    ⌅ [5ae59095] Colors v0.12.11
+      [a93c6f00] DataFrames v1.7.0
+      [7073ff75] IJulia v1.26.0
+      [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.1
+      [d3d80556] LineSearches v7.3.0
+      [af67fdf4] ManifoldDiff v0.3.13
+      [1cead3c2] Manifolds v0.10.7
+      [3362f125] ManifoldsBase v0.15.22
+      [0fc0a36d] Manopt v0.5.3 `../../Manopt.jl`
+      [5b8d5e80] ManoptExamples v0.1.10 `..`
+      [51fcb6bd] NamedColors v0.2.2
+      [91a5bcdd] Plots v1.40.9
+    ⌃ [08abe8d2] PrettyTables v2.3.2
+      [6099a3de] PythonCall v0.9.23
+      [f468eda6] QuadraticModels v0.9.7
+      [1e40b3f8] RipQP v0.6.4
+    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
+
+``` julia
+using Dates
+now()
+```
+
+    2024-11-29T09:36:53.667
 
 ## Literature
 
@@ -265,4 +296,3 @@ We can take a look at how the algorithms compare to each other in their performa
 Pages = ["Spectral-Procrustes.md"]
 Canonical=false
 ```
-
