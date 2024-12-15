@@ -6,7 +6,7 @@ date: 11/06/2023
 
 ## Introduction
 
-In this example we compare the Difference of Convex Algprithm (DCA) [BergmannFerreiraSantosSouza:2023](@cite)
+In this example we compare the Difference of Convex Algorithm (DCA) [BergmannFerreiraSantosSouza:2023](@cite)
 with the Frank-Wolfe Algorithm, which was introduced in [WeberSra:2022](@cite).
 This example reproduces the results from [BergmannFerreiraSantosSouza:2023](@cite), Section 7.3.
 
@@ -131,7 +131,7 @@ and $D=(d_{ij})$.
 @doc raw"""
     closed_form_solution!(M, q, L, U, p X)
 
-Compute the closeed form solution of the constraint sub problem in place of ``q``.
+Compute the closed form solution of the constraint sub problem in place of ``q``.
 """
 function closed_form_solution!(M::SymmetricPositiveDefinite, q, L, U, p, X)
     # extract p^1/2 and p^{-1/2}
@@ -284,7 +284,7 @@ Let's compare both methods when they have the same stopping criteria
     sub_problem=dc_sub_solution_safe!,
     evaluation=InplaceEvaluation(),
     stopping_criterion = StopAfterIteration(300) |
-        StopWhenChangeLess(1e-14) | StopWhenGradientChangeLess(M, 1e-9),
+        StopWhenChangeLess(M, 1e-14) | StopWhenGradientChangeLess(M, 1e-9),
     debug = [
         (:Iteration, "# %-8d "), (:Cost, "F(p): %0.14f"), (:Change, " |Δp|: %0.14f "),
         (:GradientNorm, " |grad f(p)|: %0.8f "),
@@ -314,7 +314,7 @@ For the statistics we extract the recordings from the state
 
 ## Define the Frank-Wolfe functions
 
-For Frank wolfe, the cost is just defined as $-h(p)$ but the minimisation is constraint to $\mathcal C$, which is enfored by the oracle.
+For Frank wolfe, the cost is just defined as $-h(p)$ but the minimisation is constraint to $\mathcal C$, which is enforced by the oracle.
 
 ```{julia}
 #| output: false
@@ -335,7 +335,7 @@ Similarly we can run the Frank-Wolfe algorithm with
     sub_problem=oracle_fw!,
     evaluation=InplaceEvaluation(),
     stopping_criterion = StopAfterIteration(10^4) |
-        StopWhenChangeLess(1e-14) | StopWhenGradientChangeLess(M, 1e-9),
+        StopWhenChangeLess(M, 1e-14) | StopWhenGradientChangeLess(M, 1e-9),
     debug = [
         (:Iteration, "# %-8d "), :Cost, (:Change, " |Δp|: %0.14f "),
         (:GradientNorm, " |grad f(p)|: %0.8f "),

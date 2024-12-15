@@ -126,7 +126,7 @@ end
 ```
 
 Which is the following cure, which clearly starts and ends slower than its speed in the middle,
-which can be seen by the increasing length of the gangent vectors in the middle.
+which can be seen by the increasing length of the tangent vectors in the middle.
 
 ![The original curve](img/bezier/bezier-acceleration-orig.png)
 
