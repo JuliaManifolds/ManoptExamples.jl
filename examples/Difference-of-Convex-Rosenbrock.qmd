@@ -139,7 +139,7 @@ and call the [gradient descent algorithm](https://manoptjl.org/stable/solvers/gr
 Eucl_GD_state = gradient_descent(M, f, ∇f!!, p0;
     evaluation=InplaceEvaluation(),
     debug=[debug_vec...,10^7],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(M, 1e-16),
     record=[:Iteration, :Cost],
     return_state=true,
 )
@@ -172,7 +172,7 @@ end
 R_GD_state = gradient_descent(M_rb, f, grad_f!, p0;
     evaluation=InplaceEvaluation(),
     debug=[debug_vec...,10^6],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(M_rb, 1e-16),
     record=[:Iteration, :Cost],
     return_state=true,
 )
@@ -243,7 +243,7 @@ E_doc_state = difference_of_convex_algorithm(
     debug=[debug_vec..., 10^4],
     evaluation=InplaceEvaluation(),
     record=[:Iteration, :Cost],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(M, 1e-16),
     sub_hess=nothing, # Use gradient descent
     sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
     return_state=true,
@@ -370,7 +370,7 @@ R_doc_state = difference_of_convex_algorithm(
     debug=[debug_vec..., 10^6],
     evaluation=InplaceEvaluation(),
     record=[:Iteration, :Cost],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(M_rb, 1e-16),
     sub_grad=docR_sub_grad,
     sub_hess = nothing, # Use gradient descent
     sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
