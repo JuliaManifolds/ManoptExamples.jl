@@ -37,7 +37,7 @@ indigo = paul_tol["mutedindigo"]
 teal = paul_tol["mutedteal"]
 ```
 
-We consider the collowing constraint maximimization problem of the Fréchet mean
+We consider the following constraint maximization problem of the Fréchet mean
 on the [symmetric positive definite matrices](https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html) $\mathcal P(n)$ with the [affine invariant metric](https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html#Default-metric:-the-affine-invariant-metric).
 Let $q_1,\ldots,q_m \in \mathcal P(n)$ be a set of points and $\mu_1,\ldots,\mu_m$ be a set of weights,
 such that they sum to one. We consider then
@@ -152,7 +152,7 @@ end
 
 ## The Difference of Convex Formulation
 
-We use $g(p) = \iota_{\mathcal C}(p)$ as the indicator funtion of the set $\mathcal C$. We use
+We use $g(p) = \iota_{\mathcal C}(p)$ as the indicator function of the set $\mathcal C$. We use
 
 ```{julia}
 #| output: false
