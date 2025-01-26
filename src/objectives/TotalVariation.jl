@@ -644,7 +644,10 @@ function prox_Total_Variation(
             ),
         )
     end
-    return (exp(M, x[1], log(M, x[1], x[2]), t), exp(M, x[2], log(M, x[2], x[1]), t))
+    return (
+        ManifoldsBase.expt(M, x[1], log(M, x[1], x[2]), t),
+        ManifoldsBase.expt(M, x[2], log(M, x[2], x[1]), t),
+    )
 end
 function prox_Total_Variation!(
     M::AbstractManifold, y, λ::Number, x::Tuple{T,T}, p::Int=1
@@ -663,8 +666,8 @@ function prox_Total_Variation!(
     end
     X1 = log(M, x[1], x[2])
     X2 = log(M, x[2], x[1])
-    exp!(M, y[1], x[1], X1, t)
-    exp!(M, y[2], x[2], X2, t)
+    Manifolds.expt!(M, y[1], x[1], X1, t)
+    Manifolds.expt!(M, y[2], x[2], X2, t)
     return y
 end
 @doc raw"""
