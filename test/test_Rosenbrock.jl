@@ -1,4 +1,4 @@
-using Manopt, ManoptExamples, Manifolds, Test
+using Manopt, ManoptExamples, Manifolds, ManifoldsBase, Test
 
 @testset "Rosenbrock Tests" begin
     M = Euclidean(2)
@@ -22,10 +22,10 @@ using Manopt, ManoptExamples, Manifolds, Test
         Xrb = inverse_local_metric(Mrb, p) * X
         @test change_representer(Mrb, EuclideanMetric(), p, X) == Xrb
         q(t) = p .+ t * [X[1], (X[2] + X[1]^2)]
-        @test ManifoldsBase.expt(Mrb, p, X, 0.5) == q(0.5)
+        @test ManifoldsBase.exp_fused(Mrb, p, X, 0.5) == q(0.5)
         @test exp(Mrb, p, X) == q(1.0)
         p1 = copy(M, p)
-        Manifolds.expt!(Mrb, p1, p, X, 0.5)
+        ManifoldsBase.exp_fused!(Mrb, p1, p, X, 0.5)
         @test p1 == q(0.5)
         exp!(Mrb, p1, p, X)
         @test p1 == q(1.0)

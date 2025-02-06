@@ -174,9 +174,9 @@ function exp(
     p,
     X,
 )
-    return ManifoldsBase.expt(M, p, X, 1.0)
+    return ManifoldsBase.exp_fused(M, p, X, 1.0)
 end
-function ManifoldsBase.expt!(
+function ManifoldsBase.exp_fused!(
     ::MetricManifold{
         ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
     },
@@ -190,7 +190,7 @@ function ManifoldsBase.expt!(
     return q
 end
 # Overwrite default to not dispatch on ODESolver
-function exp!(
+function ManifoldsBase.exp!(
     M::MetricManifold{
         ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
     },
@@ -198,7 +198,7 @@ function exp!(
     p,
     X,
 )
-    Manifolds.expt!(M, q, p, X, 1.0)
+    ManifoldsBase.exp_fused!(M, q, p, X, 1.0)
     return q
 end
 
