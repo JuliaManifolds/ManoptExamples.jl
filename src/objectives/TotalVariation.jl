@@ -645,8 +645,8 @@ function prox_Total_Variation(
         )
     end
     return (
-        ManifoldsBase.expt(M, x[1], log(M, x[1], x[2]), t),
-        ManifoldsBase.expt(M, x[2], log(M, x[2], x[1]), t),
+        ManifoldsBase.exp_fused(M, x[1], log(M, x[1], x[2]), t),
+        ManifoldsBase.exp_fused(M, x[2], log(M, x[2], x[1]), t),
     )
 end
 function prox_Total_Variation!(
@@ -666,8 +666,8 @@ function prox_Total_Variation!(
     end
     X1 = log(M, x[1], x[2])
     X2 = log(M, x[2], x[1])
-    Manifolds.expt!(M, y[1], x[1], X1, t)
-    Manifolds.expt!(M, y[2], x[2], X2, t)
+    ManifoldsBase.exp_fused!(M, y[1], x[1], X1, t)
+    ManifoldsBase.exp_fused!(M, y[2], x[2], X2, t)
     return y
 end
 @doc raw"""
