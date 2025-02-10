@@ -83,7 +83,7 @@ rmp = DefaultManoptProblem(M, rmo)
 This enables us to for example solve the task with different, gradient based, solvers. The first is the same as above, just not using the high-level interface
 
 ```{julia}
-s1 = GradientDescentState(M, copy(M, first(data)))
+s1 = GradientDescentState(M; p=copy(M, first(data)))
 solve!(rmp, s1)
 x2 = get_solver_result(s1)
 ```
