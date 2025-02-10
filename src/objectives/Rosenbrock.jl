@@ -42,7 +42,7 @@ minimizer(f::RosenbrockCost) = [f.b, f.b^2]
 @doc raw"""
     RosenbrockGradient
 
-Provide Eclidean GRadient fo the Rosenbrock function in 2D, i.e. for some ``a,b ∈ ℝ``
+Provide Euclidean gradient fo the Rosenbrock function in 2D, i.e. for some ``a,b ∈ ℝ``
 
 ```math
 \nabla f(\mathcal M, p) = \begin{pmatrix}
@@ -121,7 +121,7 @@ struct RosenbrockMetric <: AbstractMetric end
     Y = change_representer(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, ::EuclideanMetric, p, X)
     change_representer!(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, Y, ::EuclideanMetric, p, X)
 
-Given the Euclidan gradient `X` at `p`, this function computes the corresponting Riesz representer `Y``
+Given the Euclidean gradient `X` at `p`, this function computes the corresponding Riesz representer `Y``
 such that ``⟨X,Z⟩ = ⟨ Y, Z ⟩_{\mathrm{Rb},p}`` holds for all ``Z``, in other words ``Y = G(p)^{-1}X``.
 
 this function is used in `riemannian_gradient` to convert a Euclidean into a Riemannian gradient.
