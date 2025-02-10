@@ -187,7 +187,7 @@ function artificial_SPD_image2(pts=64, fraction=0.66)
             # (a) from Zo a part to Zt
             C = Zo
             if (row > 1) # in X direction
-                C = exp(
+                C = ManifoldsBase.exp_fused(
                     M,
                     C,
                     log(M, C, Zt),
@@ -195,7 +195,7 @@ function artificial_SPD_image2(pts=64, fraction=0.66)
                 )
             end
             if (col > 1) # and then in Y direction
-                C = exp(
+                C = ManifoldsBase.exp_fused(
                     M,
                     C,
                     vector_transport_to(
