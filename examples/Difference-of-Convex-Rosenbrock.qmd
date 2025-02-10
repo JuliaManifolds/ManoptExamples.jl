@@ -333,7 +333,7 @@ function (ϕ::SubGrad)(M, X, p)
 end
 ```
 
-And in orer to update the subsolvers gradient correctly, we have to overwrite
+And in orer to update the sub solvers gradient correctly, we have to overwrite
 
 ```{julia}
 #| output: false
