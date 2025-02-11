@@ -37,7 +37,6 @@ using ManifoldDiff:
 
 const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
 
-
 # Common collection of functions useful for several problems
 
 # Objectives
