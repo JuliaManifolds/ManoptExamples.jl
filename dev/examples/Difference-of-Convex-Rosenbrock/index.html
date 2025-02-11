@@ -14,7 +14,7 @@ G_p = \begin{pmatrix}
  = a\bigl( x_1^2-x_2\bigr)^2 + 2\bigl(x_1-b\bigr)^2 - \bigl(x_1-b\bigr)^2\]</p><p>that is</p><p class="math-container">\[g(x) = a\bigl( x_1^2-x_2\bigr)^2 + 2\bigl(x_1-b\bigr)^2 \quad\text{ and }\quad h(x) = \bigl(x_1-b\bigr)^2\]</p><pre><code class="language-julia hljs">using LinearAlgebra, Random, Statistics
 using Manifolds, Manopt, ManoptExamples
 using NamedColors, Plots
-import Manopt: set_manopt_parameter!
+import Manopt: set_parameter!
 Random.seed!(42)</code></pre><pre><code class="language-julia hljs">paul_tol = load_paul_tol()
 indigo = paul_tol[&quot;mutedindigo&quot;]
 green = paul_tol[&quot;mutedgreen&quot;]
@@ -34,37 +34,34 @@ f = ManoptExamples.RosenbrockCost(M; a=a, b=b)
     ]</code></pre><p>and call the <a href="https://manoptjl.org/stable/solvers/gradient_descent/#Manopt.gradient_descent">gradient descent algorithm</a></p><pre><code class="language-julia hljs">Eucl_GD_state = gradient_descent(M, f, ∇f!!, p0;
     evaluation=InplaceEvaluation(),
     debug=[debug_vec...,10^7],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M, 1e-16),
     record=[:Iteration, :Cost],
     return_state=true,
 )</code></pre><pre><code class="nohighlight hljs">Initial F(x): 7.2208e+03 
 # 10000000 F(x): 8.9937e-06 |δp|: 1.3835e+00 | |grad f|: 8.170355e-03
-# 20000000 F(x): 2.9474e-09 |δp|: 6.5764e-03 | |grad f|: 1.419191e-04
-# 30000000 F(x): 9.8376e-13 |δp|: 1.1918e-04 | |grad f|: 2.526295e-06
-# 40000000 F(x): 3.2830e-16 |δp|: 2.1773e-06 | |grad f|: 4.526313e-08
-# 50000000 F(x): 1.0154e-19 |δp|: 3.9803e-08 | |grad f|: 6.838240e-10
-At iteration 53073227 the algorithm performed a step with a change (0.0) less than 1.0e-16.
+The algorithm reached its maximal number of iterations (10000000).
 
 # Solver state for `Manopt.jl`s Gradient Descent
-After 53073227 iterations
+After 10000000 iterations
 
 ## Parameters
 * retraction method: ExponentialRetraction()
 
 ## Stepsize
-ArmijoLinesearch() with keyword parameters
-  * initial_stepsize    = 1.0
-  * retraction_method   = ExponentialRetraction()
-  * contraction_factor  = 0.95
-  * sufficient_decrease = 0.1
+ArmijoLinesearch(;
+    initial_stepsize=1.0
+    retraction_method=ExponentialRetraction()
+    contraction_factor=0.95
+    sufficient_decrease=0.1
+)
 
 ## Stopping criterion
 
 Stop When _one_ of the following are fulfilled:
-    Max Iteration 100000000:    not reached
-    |Δp| &lt; 1.0e-16: reached
+    Max Iteration 10000000: reached
+    |Δp| &lt; 1.0e-16: not reached
 Overall: reached
-This indicates convergence: Yes
+This indicates convergence: No
 
 ## Debug
     :Iteration = [(:Iteration, &quot;# %-8d &quot;), (:Cost, &quot;F(x): %1.4e&quot;), &quot; &quot;, (:Change, &quot;|δp|: %1.4e | &quot;), (:GradientNorm, &quot;|grad f|: %1.6e&quot;), &quot;\n&quot;, 10000000]
@@ -82,7 +79,7 @@ function grad_f(M, p)
 end</code></pre><pre><code class="language-julia hljs">R_GD_state = gradient_descent(M_rb, f, grad_f!, p0;
     evaluation=InplaceEvaluation(),
     debug=[debug_vec...,10^6],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M_rb, 1e-16),
     record=[:Iteration, :Cost],
     return_state=true,
 )</code></pre><pre><code class="nohighlight hljs">Initial F(x): 7.2208e+03 
@@ -97,16 +94,17 @@ After 2443750 iterations
 * retraction method: ExponentialRetraction()
 
 ## Stepsize
-ArmijoLinesearch() with keyword parameters
-  * initial_stepsize    = 1.0
-  * retraction_method   = ExponentialRetraction()
-  * contraction_factor  = 0.95
-  * sufficient_decrease = 0.1
+ArmijoLinesearch(;
+    initial_stepsize=1.0
+    retraction_method=ExponentialRetraction()
+    contraction_factor=0.95
+    sufficient_decrease=0.1
+)
 
 ## Stopping criterion
 
 Stop When _one_ of the following are fulfilled:
-    Max Iteration 100000000:    not reached
+    Max Iteration 10000000: not reached
     |Δp| &lt; 1.0e-16: reached
 Overall: reached
 This indicates convergence: Yes
@@ -155,7 +153,7 @@ end</code></pre><p>Then we call the <a href="https://manoptjl.org/stable/solvers
     debug=[debug_vec..., 10^4],
     evaluation=InplaceEvaluation(),
     record=[:Iteration, :Cost],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M, 1e-16),
     sub_hess=nothing, # Use gradient descent
     sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
     return_state=true,
@@ -176,11 +174,12 @@ After 26549 iterations
     | * retraction method: ExponentialRetraction()
     | 
     | ## Stepsize
-    | ArmijoLinesearch() with keyword parameters
-    |   * initial_stepsize    = 1.0
-    |   * retraction_method   = ExponentialRetraction()
-    |   * contraction_factor  = 0.95
-    |   * sufficient_decrease = 0.1
+    | ArmijoLinesearch(;
+    |     initial_stepsize=1.0
+    |     retraction_method=ExponentialRetraction()
+    |     contraction_factor=0.95
+    |     sufficient_decrease=0.1
+    | )
     | 
     | ## Stopping criterion
     | 
@@ -193,7 +192,7 @@ After 26549 iterations
 ## Stopping criterion
 
 Stop When _one_ of the following are fulfilled:
-    Max Iteration 100000000:    not reached
+    Max Iteration 10000000: not reached
     |Δp| &lt; 1.0e-16: reached
 Overall: reached
 This indicates convergence: Yes
@@ -222,7 +221,7 @@ function grad_g(M, p; a=100, b=1)
     X = zero(p)
     grad_g!(M, X, p; a=a, b=b)
     return X
-end</code></pre><p>While the cost of the subgradient can be infered automaticallty, we also have to provide the gradient of the sub problem. For <span>$X \in ∂h(p^{(k)})$</span> the sunproblem top determine <span>$p^{(k+1)}$</span> reads</p><p class="math-container">\[\operatorname*{argmin}_{p\in\mathcal M} g(p) - \langle X, \log_{p^{(k)}}p\rangle\]</p><p>for which usually the cost and gradient functions are computed automatically in the difference of convex algorithm. However, in our case first the closed form solution for the adjoint differential of the logaithmic map is complicated to compute and second the gradint can even be given in a nicer form. We can first simplify in our case with <span>$X = \operatorname{grad} h(p^{(k)})$</span> that</p><p class="math-container">\[\phi(p) = g(p) - \langle X, \log_{p^{(k)}}p\rangle
+end</code></pre><p>While the cost of the subgradient can be infered automaticallty, we also have to provide the gradient of the sub problem. For <span>$X \in   ∂h(p^{(k)})$</span> the sunproblem top determine <span>$p^{(k+1)}$</span> reads</p><p class="math-container">\[\operatorname*{argmin}_{p\in\mathcal M} g(p) - \langle X, \log_{p^{(k)}}p\rangle\]</p><p>for which usually the cost and gradient functions are computed automatically in the difference of convex algorithm. However, in our case first the closed form solution for the adjoint differential of the logaithmic map is complicated to compute and second the gradint can even be given in a nicer form. We can first simplify in our case with <span>$X = \operatorname{grad} h(p^{(k)})$</span> that</p><p class="math-container">\[\phi(p) = g(p) - \langle X, \log_{p^{(k)}}p\rangle
 = a\bigl( p_{1}^2-p_{2}\bigr)^2
         + 2\bigl(p_{1}-b\bigr)^2 - 2(p^{(k)}_1-b)p_1 + 2(p^{(k)}_1-b)p^{(k)}_1,\]</p><p>its Euclidean gradient reads</p><p class="math-container">\[\operatorname{grad}\phi(p) =
     \nabla \varphi(p)
@@ -247,8 +246,8 @@ function (ϕ::SubGrad)(M, X, p)
     ]
     riemannian_gradient!(M, X, p, X) # convert
     return X
-end</code></pre><p>And in orer to update the subsolvers gradient correctly, we have to overwrite</p><pre><code class="language-julia hljs">set_manopt_parameter!(ϕ::SubGrad, ::Val{:p}, p) = (ϕ.pk .= p)
-set_manopt_parameter!(ϕ::SubGrad, ::Val{:X}, X) = (ϕ.Xk .= X)</code></pre><p>And we again introduce for ease of use</p><pre><code class="language-julia hljs">docR_g(M, p) = g(M, p; a=a, b=b)
+end</code></pre><p>And in orer to update the sub solvers gradient correctly, we have to overwrite</p><pre><code class="language-julia hljs">set_parameter!(ϕ::SubGrad, ::Val{:p}, p) = (ϕ.pk .= p)
+set_parameter!(ϕ::SubGrad, ::Val{:X}, X) = (ϕ.Xk .= X)</code></pre><p>And we again introduce for ease of use</p><pre><code class="language-julia hljs">docR_g(M, p) = g(M, p; a=a, b=b)
 docR_f(M, p) = docR_g(M, p) - h(M, p; a=a, b=b)
 docR_grad_h!(M, X, p) = grad_h!(M, X, p; a=a, b=b)
 docR_grad_g!(M, X, p) = grad_g!(M, X, p; a=a, b=b)
@@ -266,7 +265,7 @@ docR_sub_grad = SubGrad(copy(M, p0), zero_vector(M, p0), a, b)</code></pre><p>Th
     debug=[debug_vec..., 10^6],
     evaluation=InplaceEvaluation(),
     record=[:Iteration, :Cost],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M_rb, 1e-16),
     sub_grad=docR_sub_grad,
     sub_hess = nothing, # Use gradient descent
     sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
@@ -286,11 +285,12 @@ After 1235 iterations
     | * retraction method: ExponentialRetraction()
     | 
     | ## Stepsize
-    | ArmijoLinesearch() with keyword parameters
-    |   * initial_stepsize    = 1.0
-    |   * retraction_method   = ExponentialRetraction()
-    |   * contraction_factor  = 0.95
-    |   * sufficient_decrease = 0.1
+    | ArmijoLinesearch(;
+    |     initial_stepsize=1.0
+    |     retraction_method=ExponentialRetraction()
+    |     contraction_factor=0.95
+    |     sufficient_decrease=0.1
+    | )
     | 
     | ## Stopping criterion
     | 
@@ -303,7 +303,7 @@ After 1235 iterations
 ## Stopping criterion
 
 Stop When _one_ of the following are fulfilled:
-    Max Iteration 100000000:    not reached
+    Max Iteration 10000000: not reached
     |Δp| &lt; 1.0e-16: reached
 Overall: reached
 This indicates convergence: Yes
@@ -319,7 +319,7 @@ This indicates convergence: Yes
     yaxis=:log,
     ylims=(1e-16, 5*1e5),
     xaxis=:log,
-    xlims=(1,10^8),
+    xlims=(1,10^7),
 )
 scatter!(fig, [1,], [f(M,p0),], label=raw&quot;$f(p_0)$&quot;, markercolor=grey)
 egi = get_record(Eucl_GD_state, :Iteration, :Iteration)[1:10000:end] #5308 entries
@@ -336,4 +336,4 @@ plot!(fig, edi, edc, color=sand, label=&quot;Euclidean DoC&quot;)
 #
 rdi = get_record(R_doc_state, :Iteration, :Iteration) # 1235 entries
 rdc = get_record(R_doc_state, :Iteration, :Cost) # 1235 entries
-plot!(fig, rdi, rdc, color=green, label=&quot;Riemannian DoC&quot;)</code></pre><p><img src="../Difference-of-Convex-Rosenbrock_files/figure-commonmark/cell-22-output-1.svg" alt/></p><p>And we can see that using difference of convex outperforms gradient descent, and using the Riemannian approach required less iterations than their Euclidean counterparts.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BFSS23]</dt><dd><div>R. Bergmann, O. P. Ferreira, E. M. Santos and J. C. Souza. <em>The difference of convex algorithm on Hadamard manifolds</em>. Preprint (2023), <a href="https://arxiv.org/abs/2112.05250">arXiv:2112.05250</a>.</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Difference-of-Convex-Benchmark/">« A Benchmark</a><a class="docs-footer-nextpage" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Friday 18 October 2024 13:41">Friday 18 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+plot!(fig, rdi, rdc, color=green, label=&quot;Riemannian DoC&quot;)</code></pre><p><img src="../Difference-of-Convex-Rosenbrock_files/figure-commonmark/cell-22-output-1.svg" alt/></p><p>And we can see that using difference of convex outperforms gradient descent, and using the Riemannian approach required less iterations than their Euclidean counterparts.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BFSS23]</dt><dd><div>R. Bergmann, O. P. Ferreira, E. M. Santos and J. C. Souza. <em>The difference of convex algorithm on Hadamard manifolds</em>. Preprint (2023), <a href="https://arxiv.org/abs/2112.05250">arXiv:2112.05250</a>.</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Difference-of-Convex-Benchmark/">« A Benchmark</a><a class="docs-footer-nextpage" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Tuesday 11 February 2025 15:41">Tuesday 11 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -18,16 +18,16 @@ grad_f = ManoptExamples.RayleighQuotientGrad!!(A)
 Hess_f = ManoptExamples.RayleighQuotientHess!!(A)</code></pre><p>the suffix <code>!!</code> also indicates that these functions both work as allocating and in-place variants. Given a starting point and some memory</p><pre><code class="language-julia hljs">p0 = [1.0, zeros(n-1)...]
 X = zero_vector(M, p0)</code></pre><p>we can both call</p><pre><code class="language-julia hljs">Y = grad_f(M, p0)  # Allocates memory
 grad_f(M, X, p0)    # Computes in place of X and returns the result in X.
-norm(M, p0, X-Y)</code></pre><pre><code class="nohighlight hljs">0.0</code></pre><p>Now we can use a few different variants of solvers to approaach this and this tutorial will walk you through a few of them.</p><p>First of all let’s construct the actual result – since Rayleigh quotient minimization is not necessarily the best way to compute the smallest Eigenvalue. We can also compute</p><pre><code class="language-julia hljs">λ = min(eigvals(A)...)</code></pre><pre><code class="nohighlight hljs">-0.08967721009388108</code></pre><h3 id="A-Solver-based-on-gradient-information"><a class="docs-heading-anchor" href="#A-Solver-based-on-gradient-information">A Solver based on gradient information</a><a id="A-Solver-based-on-gradient-information-1"></a><a class="docs-heading-anchor-permalink" href="#A-Solver-based-on-gradient-information" title="Permalink"></a></h3><p>Let’s first just use first-order information and since we are just starting, maybe we only derived the Euclidean gradient <span>$\nabla \tilde f$</span>. We can “tell” the solver, that the provided function and the gradient are defined as the Euclidean variants in the embedding. internally, <code>Manopt.jl</code> then issues the conversion for Euclidean gradients to the corresponding Riemannian one, cf. e.g. <a href="https://manoptjl.org/stable/tutorials/AutomaticDifferentiation/#EmbeddedGradient">this tutorial section</a> or Section 3.8 or more precisely Example 3.62 in [<a href="../../references/#Boumal:2023">Bou23</a>].</p><p>But instead of diving into all the tecnical details, we can just specify <code>objective_type=:Euclidean</code> to trigger the conversion. We start with a simple <a href="https://manoptjl.org/stable/solvers/gradient_descent/">gradient descent</a></p><pre><code class="language-julia hljs">s = gradient_descent(M, f, grad_f, p0; objective_type=:Euclidean,
+norm(M, p0, X-Y)</code></pre><pre><code class="nohighlight hljs">0.0</code></pre><p>Now we can use a few different variants of solvers to approaach this and this tutorial will walk you through a few of them.</p><p>First of all let’s construct the actual result – since Rayleigh quotient minimization is not necessarily the best way to compute the smallest Eigenvalue. We can also compute</p><pre><code class="language-julia hljs">λ = min(eigvals(A)...)</code></pre><pre><code class="nohighlight hljs">-0.08924035897103727</code></pre><h3 id="A-Solver-based-on-gradient-information"><a class="docs-heading-anchor" href="#A-Solver-based-on-gradient-information">A Solver based on gradient information</a><a id="A-Solver-based-on-gradient-information-1"></a><a class="docs-heading-anchor-permalink" href="#A-Solver-based-on-gradient-information" title="Permalink"></a></h3><p>Let’s first just use first-order information and since we are just starting, maybe we only derived the Euclidean gradient <span>$\nabla \tilde f$</span>. We can “tell” the solver, that the provided function and the gradient are defined as the Euclidean variants in the embedding. internally, <code>Manopt.jl</code> then issues the conversion for Euclidean gradients to the corresponding Riemannian one, cf. e.g. <a href="https://manoptjl.org/stable/tutorials/AutomaticDifferentiation/#EmbeddedGradient">this tutorial section</a> or Section 3.8 or more precisely Example 3.62 in [<a href="../../references/#Boumal:2023">Bou23</a>].</p><p>But instead of diving into all the tecnical details, we can just specify <code>objective_type=:Euclidean</code> to trigger the conversion. We start with a simple <a href="https://manoptjl.org/stable/solvers/gradient_descent/">gradient descent</a></p><pre><code class="language-julia hljs">s = gradient_descent(M, f, grad_f, p0; objective_type=:Euclidean,
     debug = [:Iteration, :Cost, :GradientNorm, 50, &quot;\n&quot;],
     return_state=true,
 )
 q1 = get_solver_result(s)
 s</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.000727
-# 50    f(x): -0.088415|grad f(p)|:0.004530500043902619
-# 100   f(x): -0.089097|grad f(p)|:0.004589417101266096
-# 150   f(x): -0.089530|grad f(p)|:0.0026028331895358247
-# 200   f(x): -0.089650|grad f(p)|:0.0012359084298719039
+# 50    f(x): -0.088242|grad f(p)|:0.003870474326981599
+# 100   f(x): -0.088680|grad f(p)|:0.0034956568288634616
+# 150   f(x): -0.089026|grad f(p)|:0.0026514781676923237
+# 200   f(x): -0.089178|grad f(p)|:0.001531160335922979
 
 # Solver state for `Manopt.jl`s Gradient Descent
 After 200 iterations
@@ -36,11 +36,12 @@ After 200 iterations
 * retraction method: ExponentialRetraction()
 
 ## Stepsize
-ArmijoLinesearch() with keyword parameters
-  * initial_stepsize    = 1.0
-  * retraction_method   = ExponentialRetraction()
-  * contraction_factor  = 0.95
-  * sufficient_decrease = 0.1
+ArmijoLinesearch(;
+    initial_stepsize=1.0
+    retraction_method=ExponentialRetraction()
+    contraction_factor=0.95
+    sufficient_decrease=0.1
+)
 
 ## Stopping criterion
 
@@ -56,180 +57,180 @@ This indicates convergence: No
 )
 #Test that both are the same
 isapprox(M, q1,q2)</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.000727
-# 50    f(x): -0.088415|grad f(p)|:0.004530500043902567
-# 100   f(x): -0.089097|grad f(p)|:0.004589417101266063
-# 150   f(x): -0.089530|grad f(p)|:0.002602833189535808
-# 200   f(x): -0.089650|grad f(p)|:0.0012359084298719097
+# 50    f(x): -0.088242|grad f(p)|:0.0038704743269815734
+# 100   f(x): -0.088680|grad f(p)|:0.0034956568288633714
+# 150   f(x): -0.089026|grad f(p)|:0.002651478167692353
+# 200   f(x): -0.089178|grad f(p)|:0.0015311603359229782
 
-true</code></pre><p>We can also benchmark both</p><pre><code class="language-julia hljs">@benchmark gradient_descent($M, $f, $grad_f, $p0; objective_type=:Euclidean)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 14 samples with 1 evaluation.
- Range (min … max):  355.946 ms … 370.656 ms  ┊ GC (min … max): 6.85% … 6.91%
- Time  (median):     360.446 ms               ┊ GC (median):    6.83%
- Time  (mean ± σ):   361.917 ms ±   5.628 ms  ┊ GC (mean ± σ):  6.88% ± 0.24%
+true</code></pre><p>We can also benchmark both</p><pre><code class="language-julia hljs">@benchmark gradient_descent($M, $f, $grad_f, $p0; objective_type=:Euclidean)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 15 samples with 1 evaluation per sample.
+ Range (min … max):  338.265 ms … 362.217 ms  ┊ GC (min … max): 9.61% … 9.80%
+ Time  (median):     347.848 ms               ┊ GC (median):    9.79%
+ Time  (mean ± σ):   348.597 ms ±   7.903 ms  ┊ GC (mean ± σ):  9.58% ± 0.81%
 
-  ▁  █  █▁          █▁        ▁                           ▁▁▁ ▁  
-  █▁▁█▁▁██▁▁▁▁▁▁▁▁▁▁██▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁███▁█ ▁
-  356 ms           Histogram: frequency by time          371 ms &lt;
+  ▁    █ █  ▁        ▁    ▁    ▁     ▁       █▁           ▁   ▁  
+  █▁▁▁▁█▁█▁▁█▁▁▁▁▁▁▁▁█▁▁▁▁█▁▁▁▁█▁▁▁▁▁█▁▁▁▁▁▁▁██▁▁▁▁▁▁▁▁▁▁▁█▁▁▁█ ▁
+  338 ms           Histogram: frequency by time          362 ms &lt;
 
- Memory estimate: 1.13 GiB, allocs estimate: 3607.</code></pre><pre><code class="language-julia hljs">@benchmark gradient_descent($M, $f, $grad_f, $p0)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 154 samples with 1 evaluation.
- Range (min … max):  29.847 ms … 165.114 ms  ┊ GC (min … max): 0.00% … 79.59%
- Time  (median):     30.309 ms               ┊ GC (median):    0.00%
- Time  (mean ± σ):   32.522 ms ±  11.051 ms  ┊ GC (mean ± σ):  3.40% ±  6.96%
+ Memory estimate: 1.13 GiB, allocs estimate: 7964.</code></pre><pre><code class="language-julia hljs">@benchmark gradient_descent($M, $f, $grad_f, $p0)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 160 samples with 1 evaluation per sample.
+ Range (min … max):  29.575 ms … 44.511 ms  ┊ GC (min … max): 0.00% … 2.26%
+ Time  (median):     30.583 ms              ┊ GC (median):    1.89%
+ Time  (mean ± σ):   31.379 ms ±  2.418 ms  ┊ GC (mean ± σ):  2.40% ± 2.53%
 
-  ▃█                                                            
-  ██▄▃▄▃▃▃▃▂▃▂▃▂▃▃▁▃▁▁▁▂▆▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂ ▂
-  29.8 ms         Histogram: frequency by time         44.6 ms &lt;
+     ▃█                                                        
+  ▇█▃████▇▅▃▄▄▃▂▂▁▁▁▂▁▂▂▁▁▁▁▁▃▂▂▁▃▂▂▁▂▂▁▁▂▁▁▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂ ▂
+  29.6 ms         Histogram: frequency by time        41.5 ms &lt;
 
- Memory estimate: 11.38 MiB, allocs estimate: 3000.</code></pre><p>From these results we see, that the conversion from the Euclidean to the Riemannian gradient does require a small amount of effort and hence reduces the performance slighly. Still, if the Euclidean Gradient is easier to compute or already available, this is in terms of coding the faster way. Finally this is a tradeoff between derivation and implementation efforts for the Riemannian gradient and a slight performance reduction when using the Euclidean one.</p><h3 id="A-Solver-based-(also)-on-(approximate)-Hessian-information"><a class="docs-heading-anchor" href="#A-Solver-based-(also)-on-(approximate)-Hessian-information">A Solver based (also) on (approximate) Hessian information</a><a id="A-Solver-based-(also)-on-(approximate)-Hessian-information-1"></a><a class="docs-heading-anchor-permalink" href="#A-Solver-based-(also)-on-(approximate)-Hessian-information" title="Permalink"></a></h3><p>To also involve the Hessian, we consider the <a href="https://manoptjl.org/stable/solvers/trust_regions/">trust regions</a> solver with three cases:</p><ol><li>Euclidean, approximating the Hessian</li><li>Euclidean, providing the Hessian</li><li>Riemannian, providing the Hessian but also using in-place evaluations.</li></ol><pre><code class="language-julia hljs">q3 = trust_regions(M, f, grad_f, p0; objective_type=:Euclidean,
+ Memory estimate: 11.20 MiB, allocs estimate: 8750.</code></pre><p>From these results we see, that the conversion from the Euclidean to the Riemannian gradient does require a small amount of effort and hence reduces the performance slighly. Still, if the Euclidean Gradient is easier to compute or already available, this is in terms of coding the faster way. Finally this is a tradeoff between derivation and implementation efforts for the Riemannian gradient and a slight performance reduction when using the Euclidean one.</p><h3 id="A-Solver-based-(also)-on-(approximate)-Hessian-information"><a class="docs-heading-anchor" href="#A-Solver-based-(also)-on-(approximate)-Hessian-information">A Solver based (also) on (approximate) Hessian information</a><a id="A-Solver-based-(also)-on-(approximate)-Hessian-information-1"></a><a class="docs-heading-anchor-permalink" href="#A-Solver-based-(also)-on-(approximate)-Hessian-information" title="Permalink"></a></h3><p>To also involve the Hessian, we consider the <a href="https://manoptjl.org/stable/solvers/trust_regions/">trust regions</a> solver with three cases:</p><ol><li>Euclidean, approximating the Hessian</li><li>Euclidean, providing the Hessian</li><li>Riemannian, providing the Hessian but also using in-place evaluations.</li></ol><pre><code class="language-julia hljs">q3 = trust_regions(M, f, grad_f, p0; objective_type=:Euclidean,
     debug = [:Iteration, :Cost, :GradientNorm, 10, &quot;\n&quot;],
 );</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.000727
-# 10    f(x): -0.088106|grad f(p)|:0.01903913659588686
-# 20    f(x): -0.089023|grad f(p)|:0.007792334296299116
-# 30    f(x): -0.089501|grad f(p)|:0.008034300330026467
-# 40    f(x): -0.089842|grad f(p)|:0.008125526728200166
-# 50    f(x): -0.089890|grad f(p)|:0.0031244752821335416
-# 60    f(x): -0.089925|grad f(p)|:0.0029682862637714163
-# 70    f(x): -0.089962|grad f(p)|:0.002811722437216778
-# 80    f(x): -0.089997|grad f(p)|:0.0026658493010157363
-# 90    f(x): -0.090032|grad f(p)|:0.0025418974797659266
-# 100   f(x): -0.090067|grad f(p)|:0.0024485809550738955
-# 110   f(x): -0.090108|grad f(p)|:0.0023894008071780747
-# 120   f(x): -0.090155|grad f(p)|:0.002362317662908117
-# 130   f(x): -0.090208|grad f(p)|:0.0023611301647631484
-# 140   f(x): -0.090262|grad f(p)|:0.00237797866404072
-# 150   f(x): -0.090314|grad f(p)|:0.002405563029627607
-# 160   f(x): -0.090362|grad f(p)|:0.002438250821406204
-# 170   f(x): -0.090404|grad f(p)|:0.002472221074327323
-# 180   f(x): -0.090441|grad f(p)|:0.0025051377726827166
-# 190   f(x): -0.090472|grad f(p)|:0.002535721310831389
-# 200   f(x): -0.090498|grad f(p)|:0.0025633813700434637
-# 210   f(x): -0.090513|grad f(p)|:0.0025832821804127513
-# 220   f(x): -0.090513|grad f(p)|:0.0025832821804127513
-# 230   f(x): -0.090513|grad f(p)|:0.0025832821792817493
-# 240   f(x): -0.090513|grad f(p)|:0.0025832821770197098
-# 250   f(x): -0.090513|grad f(p)|:0.0025832821747576924
-# 260   f(x): -0.090513|grad f(p)|:0.002583282172495683
-# 270   f(x): -0.090513|grad f(p)|:0.0025832821702336567
-# 280   f(x): -0.090513|grad f(p)|:0.002583282167971658
-# 290   f(x): -0.090513|grad f(p)|:0.002583282165709656
-# 300   f(x): -0.090513|grad f(p)|:0.002583282163447637
-# 310   f(x): -0.090513|grad f(p)|:0.0025832821611855928
-# 320   f(x): -0.090513|grad f(p)|:0.0025832821589235814
-# 330   f(x): -0.090513|grad f(p)|:0.002583282156661572
-# 340   f(x): -0.090513|grad f(p)|:0.0025832821543995727
-# 350   f(x): -0.090513|grad f(p)|:0.002583282152137569
-# 360   f(x): -0.090513|grad f(p)|:0.0025832821498755487
-# 370   f(x): -0.090513|grad f(p)|:0.0025832821476135036
-# 380   f(x): -0.090513|grad f(p)|:0.0025832821453515035
-# 390   f(x): -0.090513|grad f(p)|:0.0025832821430894675
-# 400   f(x): -0.090513|grad f(p)|:0.0025832821408274405
-# 410   f(x): -0.090513|grad f(p)|:0.002583282138565445
-# 420   f(x): -0.090513|grad f(p)|:0.002583282136303441
-# 430   f(x): -0.090513|grad f(p)|:0.00258328213404143
-# 440   f(x): -0.090513|grad f(p)|:0.002583282131779385
-# 450   f(x): -0.090513|grad f(p)|:0.0025832821295174104
-# 460   f(x): -0.090513|grad f(p)|:0.002583282127255372
-# 470   f(x): -0.090513|grad f(p)|:0.002583282124993372
-# 480   f(x): -0.090513|grad f(p)|:0.0025832821227313313
-# 490   f(x): -0.090513|grad f(p)|:0.0025832821204693065
-# 500   f(x): -0.090513|grad f(p)|:0.002583282118207321
-# 510   f(x): -0.090513|grad f(p)|:0.0025832821159453034
-# 520   f(x): -0.090513|grad f(p)|:0.0025832821136832665
-# 530   f(x): -0.090513|grad f(p)|:0.0025832821114212673
-# 540   f(x): -0.090513|grad f(p)|:0.002583282109159243
-# 550   f(x): -0.090513|grad f(p)|:0.002583282106897217
-# 560   f(x): -0.090513|grad f(p)|:0.002583282104635213
-# 570   f(x): -0.090513|grad f(p)|:0.0025832821023731955
-# 580   f(x): -0.090513|grad f(p)|:0.0025832821001112094
-# 590   f(x): -0.090513|grad f(p)|:0.002583282097849167
-# 600   f(x): -0.090513|grad f(p)|:0.0025832820955871503
-# 610   f(x): -0.090513|grad f(p)|:0.0025832820933251325
-# 620   f(x): -0.090513|grad f(p)|:0.002583282091063122
-# 630   f(x): -0.090513|grad f(p)|:0.0025832820888010873
-# 640   f(x): -0.090513|grad f(p)|:0.0025832820865390785
-# 650   f(x): -0.090513|grad f(p)|:0.0025832820842770442
-# 660   f(x): -0.090513|grad f(p)|:0.0025832820820150576
-# 670   f(x): -0.090513|grad f(p)|:0.0025832820797530767
-# 680   f(x): -0.090513|grad f(p)|:0.0025832820774910523
-# 690   f(x): -0.090513|grad f(p)|:0.0025832820752290362
-# 700   f(x): -0.090513|grad f(p)|:0.002583282072966992
-# 710   f(x): -0.090513|grad f(p)|:0.002583282070704973
-# 720   f(x): -0.090513|grad f(p)|:0.0025832820684429532
-# 730   f(x): -0.090513|grad f(p)|:0.002583282066180946
-# 740   f(x): -0.090513|grad f(p)|:0.0025832820639189306
-# 750   f(x): -0.090513|grad f(p)|:0.0025832820616569214
-# 760   f(x): -0.090513|grad f(p)|:0.00258328205939488
-# 770   f(x): -0.090513|grad f(p)|:0.002583282057132884
-# 780   f(x): -0.090513|grad f(p)|:0.0025832820548708406
-# 790   f(x): -0.090513|grad f(p)|:0.002583282052608873
-# 800   f(x): -0.090513|grad f(p)|:0.002583282050346837
-# 810   f(x): -0.090513|grad f(p)|:0.0025832820480848214
-# 820   f(x): -0.090513|grad f(p)|:0.0025832820458228205
-# 830   f(x): -0.090513|grad f(p)|:0.0025832820435608087
-# 840   f(x): -0.090513|grad f(p)|:0.0025832820412987944
-# 850   f(x): -0.090513|grad f(p)|:0.0025832820390367726
-# 860   f(x): -0.090513|grad f(p)|:0.002583282036774768
-# 870   f(x): -0.090513|grad f(p)|:0.002583282034512706
-# 880   f(x): -0.090513|grad f(p)|:0.002583282032250709
-# 890   f(x): -0.090513|grad f(p)|:0.0025832820299886896
-# 900   f(x): -0.090513|grad f(p)|:0.002583282027726701
-# 910   f(x): -0.090513|grad f(p)|:0.002583282025464682
-# 920   f(x): -0.090513|grad f(p)|:0.0025832820232026517
-# 930   f(x): -0.090513|grad f(p)|:0.002583282020940619
-# 940   f(x): -0.090513|grad f(p)|:0.0025832820186786334
-# 950   f(x): -0.090513|grad f(p)|:0.002583282016416595
-# 960   f(x): -0.090513|grad f(p)|:0.0025832820141545986
-# 970   f(x): -0.090513|grad f(p)|:0.0025832820118925717
-# 980   f(x): -0.090513|grad f(p)|:0.0025832820096305525
-# 990   f(x): -0.090513|grad f(p)|:0.002583282007368543
-# 1000  f(x): -0.090513|grad f(p)|:0.0025832820051065217</code></pre><p>To provide the Hessian in the high-level interface we need to prodive it as an anonymous function, since any <code>struct</code> is considered to (eventually) be the also optional starting point. For space reasons, let’s also shorten the debug print to only iterations 7 and 14.</p><pre><code class="language-julia hljs">q4 = trust_regions(M, f, grad_f, (E, p, X) -&gt; Hess_f(E, p, X), p0; objective_type=:Euclidean,
+# 10    f(x): -0.088412|grad f(p)|:0.020989167846023046
+# 20    f(x): -0.089079|grad f(p)|:0.007420373217153763
+# 30    f(x): -0.089095|grad f(p)|:0.0022962557538450884
+# 40    f(x): -0.089095|grad f(p)|:0.0022962557538450884
+# 50    f(x): -0.089095|grad f(p)|:0.002296255752372694
+# 60    f(x): -0.089095|grad f(p)|:0.002296255750900326
+# 70    f(x): -0.089095|grad f(p)|:0.002296255749427973
+# 80    f(x): -0.089095|grad f(p)|:0.0022962557479555895
+# 90    f(x): -0.089095|grad f(p)|:0.002296255746483256
+# 100   f(x): -0.089095|grad f(p)|:0.002296255745010824
+# 110   f(x): -0.089095|grad f(p)|:0.0022962557435384336
+# 120   f(x): -0.089095|grad f(p)|:0.0022962557420660814
+# 130   f(x): -0.089095|grad f(p)|:0.0022962557405937175
+# 140   f(x): -0.089095|grad f(p)|:0.0022962557391213406
+# 150   f(x): -0.089095|grad f(p)|:0.0022962557376489472
+# 160   f(x): -0.089095|grad f(p)|:0.0022962557361765603
+# 170   f(x): -0.089095|grad f(p)|:0.0022962557347042086
+# 180   f(x): -0.089095|grad f(p)|:0.0022962557332318594
+# 190   f(x): -0.089095|grad f(p)|:0.002296255731759444
+# 200   f(x): -0.089095|grad f(p)|:0.0022962557302870605
+# 210   f(x): -0.089095|grad f(p)|:0.002296255728814736
+# 220   f(x): -0.089095|grad f(p)|:0.0022962557273423162
+# 230   f(x): -0.089095|grad f(p)|:0.002296255725869944
+# 240   f(x): -0.089095|grad f(p)|:0.002296255724397584
+# 250   f(x): -0.089095|grad f(p)|:0.0022962557229252085
+# 260   f(x): -0.089095|grad f(p)|:0.0022962557214528346
+# 270   f(x): -0.089095|grad f(p)|:0.0022962557199804855
+# 280   f(x): -0.089095|grad f(p)|:0.0022962557185080726
+# 290   f(x): -0.089095|grad f(p)|:0.002296255717035685
+# 300   f(x): -0.089095|grad f(p)|:0.0022962557155633144
+# 310   f(x): -0.089095|grad f(p)|:0.0022962557140909605
+# 320   f(x): -0.089095|grad f(p)|:0.002296255712618571
+# 330   f(x): -0.089095|grad f(p)|:0.0022962557111461876
+# 340   f(x): -0.089095|grad f(p)|:0.002296255709673808
+# 350   f(x): -0.089095|grad f(p)|:0.0022962557082014416
+# 360   f(x): -0.089095|grad f(p)|:0.00229625570672907
+# 370   f(x): -0.089095|grad f(p)|:0.002296255705256684
+# 380   f(x): -0.089095|grad f(p)|:0.0022962557037843165
+# 390   f(x): -0.089095|grad f(p)|:0.002296255702311948
+# 400   f(x): -0.089095|grad f(p)|:0.0022962557008395722
+# 410   f(x): -0.089095|grad f(p)|:0.002296255699367198
+# 420   f(x): -0.089095|grad f(p)|:0.0022962556978947854
+# 430   f(x): -0.089095|grad f(p)|:0.002296255696422434
+# 440   f(x): -0.089095|grad f(p)|:0.0022962556949500715
+# 450   f(x): -0.089095|grad f(p)|:0.002296255693477701
+# 460   f(x): -0.089095|grad f(p)|:0.0022962556920053264
+# 470   f(x): -0.089095|grad f(p)|:0.002296255690532953
+# 480   f(x): -0.089095|grad f(p)|:0.0022962556890605674
+# 490   f(x): -0.089095|grad f(p)|:0.002296255687588196
+# 500   f(x): -0.089095|grad f(p)|:0.002296255686115812
+# 510   f(x): -0.089095|grad f(p)|:0.0022962556846434557
+# 520   f(x): -0.089095|grad f(p)|:0.00229625568317109
+# 530   f(x): -0.089095|grad f(p)|:0.0022962556816987227
+# 540   f(x): -0.089095|grad f(p)|:0.002296255680226299
+# 550   f(x): -0.089095|grad f(p)|:0.0022962556787539364
+# 560   f(x): -0.089095|grad f(p)|:0.0022962556772815833
+# 570   f(x): -0.089095|grad f(p)|:0.0022962556758091917
+# 580   f(x): -0.089095|grad f(p)|:0.0022962556743368473
+# 590   f(x): -0.089095|grad f(p)|:0.0022962556728644322
+# 600   f(x): -0.089095|grad f(p)|:0.002296255671392082
+# 610   f(x): -0.089095|grad f(p)|:0.0022962556699197066
+# 620   f(x): -0.089095|grad f(p)|:0.002296255668447314
+# 630   f(x): -0.089095|grad f(p)|:0.002296255666974941
+# 640   f(x): -0.089095|grad f(p)|:0.002296255665502539
+# 650   f(x): -0.089095|grad f(p)|:0.002296255664030171
+# 660   f(x): -0.089095|grad f(p)|:0.002296255662557798
+# 670   f(x): -0.089095|grad f(p)|:0.0022962556610854248
+# 680   f(x): -0.089095|grad f(p)|:0.002296255659613032
+# 690   f(x): -0.089095|grad f(p)|:0.0022962556581407082
+# 700   f(x): -0.089095|grad f(p)|:0.002296255656668318
+# 710   f(x): -0.089095|grad f(p)|:0.0022962556551958985
+# 720   f(x): -0.089095|grad f(p)|:0.002296255653723546
+# 730   f(x): -0.089095|grad f(p)|:0.002296255652251183
+# 740   f(x): -0.089095|grad f(p)|:0.0022962556507788168
+# 750   f(x): -0.089095|grad f(p)|:0.0022962556493064516
+# 760   f(x): -0.089095|grad f(p)|:0.002296255647834051
+# 770   f(x): -0.089095|grad f(p)|:0.002296255646361663
+# 780   f(x): -0.089095|grad f(p)|:0.0022962556448893287
+# 790   f(x): -0.089095|grad f(p)|:0.0022962556434169014
+# 800   f(x): -0.089095|grad f(p)|:0.0022962556419445497
+# 810   f(x): -0.089095|grad f(p)|:0.0022962556404721797
+# 820   f(x): -0.089095|grad f(p)|:0.0022962556389998293
+# 830   f(x): -0.089095|grad f(p)|:0.002296255637527417
+# 840   f(x): -0.089095|grad f(p)|:0.0022962556360550538
+# 850   f(x): -0.089095|grad f(p)|:0.00229625563458268
+# 860   f(x): -0.089095|grad f(p)|:0.002296255633110347
+# 870   f(x): -0.089095|grad f(p)|:0.0022962556316379126
+# 880   f(x): -0.089095|grad f(p)|:0.0022962556301655314
+# 890   f(x): -0.089095|grad f(p)|:0.0022962556286931957
+# 900   f(x): -0.089095|grad f(p)|:0.002296255627220805
+# 910   f(x): -0.089095|grad f(p)|:0.0022962556257484328
+# 920   f(x): -0.089095|grad f(p)|:0.0022962556242760554
+# 930   f(x): -0.089095|grad f(p)|:0.0022962556228036954
+# 940   f(x): -0.089095|grad f(p)|:0.002296255621331309
+# 950   f(x): -0.089095|grad f(p)|:0.0022962556198589204
+# 960   f(x): -0.089095|grad f(p)|:0.0022962556183865473
+# 970   f(x): -0.089095|grad f(p)|:0.002296255616914149
+# 980   f(x): -0.089095|grad f(p)|:0.0022962556154418005
+# 990   f(x): -0.089095|grad f(p)|:0.0022962556139694153
+# 1000  f(x): -0.089095|grad f(p)|:0.0022962556124970193</code></pre><p>To provide the Hessian in the high-level interface we need to prodive it as an anonymous function, since any <code>struct</code> is considered to (eventually) be the also optional starting point. For space reasons, let’s also shorten the debug print to only iterations 7 and 14.</p><pre><code class="language-julia hljs">q4 = trust_regions(M, f, grad_f, (E, p, X) -&gt; Hess_f(E, p, X), p0; objective_type=:Euclidean,
     debug = [:Iteration, :Cost, :GradientNorm, 10, &quot;\n&quot;],
 );</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.000727
-# 10    f(x): -0.089673|grad f(p)|:0.0033633987039373655</code></pre><pre><code class="language-julia hljs">q5 = trust_regions(M, f, grad_f, (M, Y, p, X) -&gt; Hess_f(M, Y, p, X), p0;
+# 10    f(x): -0.089234|grad f(p)|:0.0013561755210368023</code></pre><pre><code class="language-julia hljs">q5 = trust_regions(M, f, grad_f, (M, Y, p, X) -&gt; Hess_f(M, Y, p, X), p0;
     evaluation=InplaceEvaluation(),
     debug = [:Iteration, :Cost, :GradientNorm, 10, &quot;\n&quot;],
 );</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.000727
-# 10    f(x): -0.089673|grad f(p)|:0.00336339870393737</code></pre><p>Let’s also here compare them in benchmarks. Let’s here compare all variants in their (more performant) in-place versions.</p><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $p0;
+# 10    f(x): -0.089234|grad f(p)|:0.0013561755210368012</code></pre><p>Let’s also here compare them in benchmarks. Let’s here compare all variants in their (more performant) in-place versions.</p><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $p0;
   objective_type=:Euclidean,
   evaluation=InplaceEvaluation(),
-)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 10 samples with 1 evaluation.
- Range (min … max):  513.921 ms … 563.088 ms  ┊ GC (min … max): 3.07% … 3.44%
- Time  (median):     519.632 ms               ┊ GC (median):    3.15%
- Time  (mean ± σ):   527.367 ms ±  17.648 ms  ┊ GC (mean ± σ):  3.14% ± 0.13%
+)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 8 samples with 1 evaluation per sample.
+ Range (min … max):  626.868 ms … 723.111 ms  ┊ GC (min … max): 7.44% … 6.05%
+ Time  (median):     635.973 ms               ┊ GC (median):    8.17%
+ Time  (mean ± σ):   645.791 ms ±  31.647 ms  ┊ GC (mean ± σ):  7.80% ± 0.77%
 
-  █▁▁  ▁  ▁        ▁▁                                ▁        ▁  
-  ███▁▁█▁▁█▁▁▁▁▁▁▁▁██▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁█ ▁
-  514 ms           Histogram: frequency by time          563 ms &lt;
+  █ ███  ███                                                  █  
+  █▁███▁▁███▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█ ▁
+  627 ms           Histogram: frequency by time          723 ms &lt;
 
- Memory estimate: 1.97 GiB, allocs estimate: 29451.</code></pre><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $((E, Y, p, X) -&gt; Hess_f(E, Y, p, X)), $p0;
+ Memory estimate: 1.96 GiB, allocs estimate: 75417.</code></pre><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $((E, Y, p, X) -&gt; Hess_f(E, Y, p, X)), $p0;
   evaluation=InplaceEvaluation(),
   objective_type=:Euclidean
-)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 320 samples with 1 evaluation.
- Range (min … max):  12.772 ms … 148.595 ms  ┊ GC (min … max): 0.00% … 87.13%
- Time  (median):     14.542 ms               ┊ GC (median):    2.89%
- Time  (mean ± σ):   15.625 ms ±   7.867 ms  ┊ GC (mean ± σ):  5.66% ±  5.75%
+)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 225 samples with 1 evaluation per sample.
+ Range (min … max):  18.936 ms … 38.344 ms  ┊ GC (min … max): 0.00% … 0.00%
+ Time  (median):     21.878 ms              ┊ GC (median):    9.72%
+ Time  (mean ± σ):   22.276 ms ±  2.463 ms  ┊ GC (mean ± σ):  9.19% ± 3.05%
 
-   ▁▄▅█▆▆▃▃▆▅▃                                                  
-  ████████████▆▄▄▇▇▆▄▁█▆▄▄▁▄▁▄▁▄▄▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▄▁▁▄▁▁▁▄▆ ▇
-  12.8 ms       Histogram: log(frequency) by time      29.8 ms &lt;
+  ▂    ▄▄▄▇██▇▅▄                                               
+  █▅▁▅▁███████████▅▁▁▁▅▅▅▁▅▅▁▅▁▁▁▅▁▁▁▁▅▁▁▁▁▅▁▁▁▅▁▁▅▁▁▁▁▁▁▁▁▁▅ ▆
+  18.9 ms      Histogram: log(frequency) by time      36.2 ms &lt;
 
- Memory estimate: 37.42 MiB, allocs estimate: 2788.</code></pre><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $((M, Y, p, X) -&gt; Hess_f(M, Y, p, X)), $p0;
+ Memory estimate: 44.92 MiB, allocs estimate: 12651.</code></pre><pre><code class="language-julia hljs">@benchmark trust_regions($M, $f, $grad_f, $((M, Y, p, X) -&gt; Hess_f(M, Y, p, X)), $p0;
     evaluation=InplaceEvaluation(),
-)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 527 samples with 1 evaluation.
- Range (min … max):  8.393 ms … 142.952 ms  ┊ GC (min … max): 0.00% … 92.18%
- Time  (median):     8.568 ms               ┊ GC (median):    0.00%
- Time  (mean ± σ):   9.497 ms ±   6.007 ms  ┊ GC (mean ± σ):  4.74% ±  5.78%
+)</code></pre><pre><code class="nohighlight hljs">BenchmarkTools.Trial: 339 samples with 1 evaluation per sample.
+ Range (min … max):  12.741 ms … 27.930 ms  ┊ GC (min … max): 0.00% … 27.68%
+ Time  (median):     14.477 ms              ┊ GC (median):    7.50%
+ Time  (mean ± σ):   14.761 ms ±  1.996 ms  ┊ GC (mean ± σ):  7.25% ±  5.24%
 
-  ██▄▁   ▂▃▁  ▂                                                
-  ████▆▆▅██████▇▇▇▇▇▄▄▁▅▄▆▅▆▁▆▆▆▄▆▆▅▁▁▄▁▄▁▁▁██▄▄▄▄▄▁▁▁▁▁▁▄▄▁▄ ▇
-  8.39 ms      Histogram: log(frequency) by time      14.9 ms &lt;
+  ▁▂ ▂▄▅▃  ▇█ ▁▃▃                                              
+  ███████▇▆██████▇▄▄▃▄▅▁▁▁▄▁▁▁▂▁▁▁▁▁▁▁▁▁▃▃▃▃▁▁▁▂▁▁▁▁▁▁▂▂▁▁▂▂▂ ▃
+  12.7 ms         Histogram: frequency by time        23.3 ms &lt;
 
- Memory estimate: 10.75 MiB, allocs estimate: 2767.</code></pre><p>We see that Hessian approximation is quite costly, and Gradient and Hessian conversion somewhat costly; still, they also might serve as a good starting point, before deciding to delve into computing Riemannian gradients and Hessians.</p><p>Of course all 5 runs obtained solutions close by; one might consider the gradient based runs to not have fully converged.</p><pre><code class="language-julia hljs">[distance(M, q1, q) for q ∈ [q2,q3] ]</code></pre><pre><code class="nohighlight hljs">2-element Vector{Float64}:
- 4.471485799821605e-15
- 0.048047538209352994</code></pre><pre><code class="language-julia hljs">[distance(M, q3, q) for q ∈ [q4,q5] ]</code></pre><pre><code class="nohighlight hljs">2-element Vector{Float64}:
- 0.08269488012454579
- 0.08269488012454579</code></pre><p>Which we can also see in the final cost, comparing it to the Eigenvalue</p><pre><code class="language-julia hljs">[f(M, q) - λ for q ∈ [q1, q2, q3, q4, q5] ]</code></pre><pre><code class="nohighlight hljs">5-element Vector{Float64}:
-  2.76900562450888e-5
-  2.769005624428389e-5
- -0.000836208332542443
-  3.191891195797325e-16
-  3.191891195797325e-16</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>We illustrated several possibilities to call solvers, with both Euclidean gradient and Hessian and Riemannian gradient and Hessian, allocating and in-place function. While the performance is better for the Riemannian case, the Euclidean one is a worthy alternative, when those are easier to compute.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[Bou23]</dt><dd><div>N. Boumal. <a href="https://www.nicolasboumal.net/#book"><em>An Introduction to Optimization on Smooth Manifolds</em></a>. First Edition (<a href="https://doi.org/10.1017/9781009166164">Cambridge University Press, 2023</a>).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../HyperparameterOptimization/">« Hyperparameter optimziation</a><a class="docs-footer-nextpage" href="../Riemannian-mean/">Riemannian Mean »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Friday 18 October 2024 13:41">Friday 18 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ Memory estimate: 16.35 MiB, allocs estimate: 12633.</code></pre><p>We see that Hessian approximation is quite costly, and Gradient and Hessian conversion somewhat costly; still, they also might serve as a good starting point, before deciding to delve into computing Riemannian gradients and Hessians.</p><p>Of course all 5 runs obtained solutions close by; one might consider the gradient based runs to not have fully converged.</p><pre><code class="language-julia hljs">[distance(M, q1, q) for q ∈ [q2,q3] ]</code></pre><pre><code class="nohighlight hljs">2-element Vector{Float64}:
+ 8.835276992173579e-16
+ 0.8953986994946139</code></pre><pre><code class="language-julia hljs">[distance(M, q3, q) for q ∈ [q4,q5] ]</code></pre><pre><code class="nohighlight hljs">2-element Vector{Float64}:
+ 1.1159334410358788
+ 1.1159334410358788</code></pre><p>Which we can also see in the final cost, comparing it to the Eigenvalue</p><pre><code class="language-julia hljs">[f(M, q) - λ for q ∈ [q1, q2, q3, q4, q5] ]</code></pre><pre><code class="nohighlight hljs">5-element Vector{Float64}:
+  6.211293387550776e-5
+  6.211293387559103e-5
+  0.0001451688142172225
+ -5.551115123125783e-17
+ -5.551115123125783e-17</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>We illustrated several possibilities to call solvers, with both Euclidean gradient and Hessian and Riemannian gradient and Hessian, allocating and in-place function. While the performance is better for the Riemannian case, the Euclidean one is a worthy alternative, when those are easier to compute.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[Bou23]</dt><dd><div>N. Boumal. <a href="https://www.nicolasboumal.net/#book"><em>An Introduction to Optimization on Smooth Manifolds</em></a>. First Edition (<a href="https://doi.org/10.1017/9781009166164">Cambridge University Press, 2023</a>).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../HyperparameterOptimization/">« Hyperparameter optimziation</a><a class="docs-footer-nextpage" href="../Riemannian-mean/">Riemannian Mean »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Tuesday 11 February 2025 15:41">Tuesday 11 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
