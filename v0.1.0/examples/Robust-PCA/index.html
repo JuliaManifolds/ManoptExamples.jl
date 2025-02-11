@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Robust PCA · ManoptExamples.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li class="is-active"><a class="tocitem" href>Robust PCA</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Computing-a-Robust-PCA"><span>Computing a Robust PCA</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Robust PCA</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Robust PCA</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/Robust-PCA.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="The-Robust-PCA-computed-on-the-Grassmann-manifold"><a class="docs-heading-anchor" href="#The-Robust-PCA-computed-on-the-Grassmann-manifold">The Robust PCA computed on the Grassmann manifold</a><a id="The-Robust-PCA-computed-on-the-Grassmann-manifold-1"></a><a class="docs-heading-anchor-permalink" href="#The-Robust-PCA-computed-on-the-Grassmann-manifold" title="Permalink"></a></h1><p>Ronny Bergmann, Laura Weigl 7/2/23</p><p>For this example we first load the necessary packages.</p><pre><code class="language-julia hljs">using Pkg;
+Pkg.activate(&quot;.&quot;); # use the example environment,</code></pre><pre><code class="language-julia hljs">using LinearAlgebra, Random, Statistics
+using Manifolds, Manopt, ManoptExamples
+using Plots
+Random.seed!(42)</code></pre><h1 id="Computing-a-Robust-PCA"><a class="docs-heading-anchor" href="#Computing-a-Robust-PCA">Computing a Robust PCA</a><a id="Computing-a-Robust-PCA-1"></a><a class="docs-heading-anchor-permalink" href="#Computing-a-Robust-PCA" title="Permalink"></a></h1><p>For a given matrix <span>$D ∈ ℝ^{d×n}$</span> whose columns represent points in <span>$ℝ^d$</span>, a matrix <span>$p ∈ ℝ^{d×m}$</span> is computed for a given dimension <span>$m &lt; n$</span>: <span>$p$</span> represents an ONB of <span>$ℝ^{d×m}$</span> such that the column space of <span>$p$</span> approximates the points (columns of <span>$D$</span>), i.e. the vectors <span>$D_i$</span> as well as possible.</p><p>We compute <span>$p$</span> as a minimizer over the Grassmann manifold of the cost function:</p><p class="math-container">\[\begin{split}
+f(p)
+&amp; = \frac{1}{n}\sum_{i=1}^{n}{\operatorname{dist}(D_i, \operatorname{span}(p))}
+\\
+&amp; = \frac{1}{n} \sum_{i=1}^{n}\lVert pp^TD_i - D_i\rVert
+\end{split}\]</p><p>The output cost represents the average distance achieved with the returned <span>$p$</span>, an orthonormal basis (or a point on the Stiefel manifold) representing the subspace (a point on the Grassmann manifold). Notice that norms are not squared, so we have a robust cost function. This means that <span>$f$</span> is nonsmooth, therefore we regularize with a pseudo-Huber loss function of smoothing parameter <span>$ε$</span>.</p><p class="math-container">\[f_ϵ(p) = \frac{1}{n} \sum_{i=1}^n{ℓ_ϵ(\lVert pp^{\mathrm{T}}D_i - D_i\rVert)},\]</p><p>where <span>$ℓ_ϵ(x) = \sqrt{x^2 + ϵ^2} - ϵ$</span>.</p><p>The smoothing parameter is iteratively reduced in the final optimisation runs(with warm starts).</p><p>First, we generate random data. For illustration purposes we take points in <span>$\mathbb R^2$</span> and <span>$m=1$</span>, that is we aim to find a robust regression line.</p><pre><code class="language-julia hljs">n = 40
+d = 2
+outliers = 15
+data = randn(d, 1) * (1:n)&#39; + 0.05 * randn(2, n) .* [1:n 1:n]&#39;
+# Outliers:
+permute = shuffle(1:size(data, 2))&#39;
+data[:, permute[1:outliers]] = 30 * randn(2, outliers)
+# We are looking for a line here so we set
+m = 1</code></pre><p>We use the Manopt toolbox to optimize the regularized cost function over the Grassmann manifold. To do this, we first need to define the problem structure.</p><pre><code class="language-julia hljs">M = Grassmann(d,m);</code></pre><p>For the initial matrix <span>$p_0$</span> we use classical PCA via singular value decomposition. Thus, we use the first <span>$d$</span> left singular vectors.</p><p>Then, we compute an optimum of the cost function over the Grassmann manifold. We use a trust-region method which is implemented in <code>Manopt.jl</code>.</p><p>Furthermore the cost and gradient are implemented in <code>ManoptExamples.jl</code>. Since these are Huber regularized, both functors have the <code>ϵ</code> as a parameter. To compute the Riemannian gradient we first compute the Euclidian gradient. Afterwards it is projected onto the tangent space by using the orthogonal projection <span>$pp^T - I$</span>, which converts the Euclidean to the Riemannian gradient.</p><p>The trust-region method also requires the Hessian Matrix. By using <a href="https://manoptjl.org/stable/solvers/trust_regions/#Manopt.ApproxHessianFiniteDifference"><code>ApproxHessianFiniteDifference</code></a> using a finite difference scheme we get an approximation of the Hessian Matrix.</p><p>We run the procedure several times, where the smoothing parameter <span>$ε$</span> is reduced iteratively.</p><pre><code class="language-julia hljs">ε = 1.0
+iterations = 6
+reduction = 0.5
+U, S, V = svd(data);
+p0 = U[:, 1:m]</code></pre><pre><code class="nohighlight hljs">2×1 Matrix{Float64}:
+ -0.7494248652139394
+  0.6620893983436593</code></pre><p>Let’s generate the cost and gradient we aim to use here</p><pre><code class="language-julia hljs">f = ManoptExamples.RobustPCACost(M, data, ε)
+grad_f = ManoptExamples.RobustPCAGrad!!(M, data, ε)</code></pre><pre><code class="nohighlight hljs">ManoptExamples.RobustPCAGrad!!{Matrix{Float64}, Float64}([9.537606557855465 1.6583418797018163 … 30.833523701909474 30.512999245062304; -45.34339972619071 -1.7120433539256108 … -35.85943792458936 -32.93976007215313], 1.0, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0])</code></pre><p>and check the initial cost</p><pre><code class="language-julia hljs">f(M, p0)</code></pre><pre><code class="nohighlight hljs">9.43069094790552</code></pre><p>Now we iterate the opimization with reducing <code>ε</code> after every iteration, which we update in <code>f</code> and <code>grad_f</code>.</p><pre><code class="language-julia hljs">q = copy(M, p0)
+εi = ε
+for i in 1:iterations
+    f.ε = εi
+    grad_f.ε = εi
+    global q = trust_regions(
+        M,
+        f,
+        grad_f,
+        ApproxHessianFiniteDifference(
+            M, q, f;
+            vector_transport_method=ProjectionTransport(),
+            retraction_method=PolarRetraction(),
+        ),
+        q;
+        (project!)=project!,
+    )
+    global εi *= reduction
+end</code></pre><p>When finally setting <code>ε</code> we can investigate the final cost</p><pre><code class="language-julia hljs">f.ε = 0.0
+f(M, q)</code></pre><pre><code class="nohighlight hljs">9.412965075156471</code></pre><p>Finally, the results are presented visually. The data points are visualized in a scatter plot. The result of the robust PCA and (for comparison) the standard SVD solution are plotted as straight lines.</p><pre><code class="language-julia hljs">fig = plot(data[1, :], data[2, :]; seriestype=:scatter, label=&quot;Data points&quot;);
+plot!(
+    fig,
+    q[1] * [-1, 1] * 100,
+    q[2] * [-1, 1] * 100;
+    linecolor=:red,
+    linewidth=2,
+    label=&quot;Robust PCA&quot;,
+);
+plot!(
+    fig,
+    p0[1] * [-1, 1] * 100,
+    p0[2] * [-1, 1] * 100;
+    xlims=1.1 * [minimum(data[1, :]), maximum(data[1, :])],
+    ylims=1.1 * [minimum(data[2, :]), maximum(data[2, :])],
+    linewidth=2,
+    linecolor=:black,
+    label=&quot;Standard SVD&quot;,
+)</code></pre><p><img src="../Robust-PCA_files/figure-commonmark/fig-pca-output-1.png" alt="Figure 1: The result of the robust PCA vs. SVD"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Riemannian-mean/">« Riemannian Mean</a><a class="docs-footer-nextpage" href="../../objectives/">Objectives »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Tuesday 21 February 2023 20:24">Tuesday 21 February 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
