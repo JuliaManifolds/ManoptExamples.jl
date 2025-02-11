@@ -240,7 +240,7 @@ c = cyclic_proximal_point(
     proxes,
     p0;
     stopping_criterion=StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(10.0^-8)
+        StopAfterIteration(max_iters), StopWhenChangeLess(Hn, 10.0^-8)
     ),
     debug=[
         :Iteration,
@@ -327,7 +327,7 @@ if benchmarking
         $proxes,
         $p0;
         stopping_criterion=StopWhenAny(
-            StopAfterIteration($max_iters), StopWhenChangeLess(10.0^-8)
+            StopAfterIteration($max_iters), StopWhenChangeLess($Hn, 10.0^-8)
         ),
     )
     #

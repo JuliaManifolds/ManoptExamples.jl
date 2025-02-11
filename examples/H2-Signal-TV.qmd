@@ -275,7 +275,7 @@ sgm_bm_kwargs = [
 ]
 cppa_kwargs = [
     :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
+        StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)
     ),
     :debug => [
         :Iteration,
@@ -294,7 +294,7 @@ cppa_kwargs = [
 ]
 cppa_bm_kwargs = [
     :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(atol)
+        StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)
     ),
 ]
 ```
