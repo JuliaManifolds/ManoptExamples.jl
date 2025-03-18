@@ -2,6 +2,7 @@
 title: "A comparison of the RPGM with the CPPA on Hadamard manifolds"
 author: "Hajg Jasa"
 date: 03/18/2025
+engine: julia
 ---
 
 ## Introduction
@@ -35,7 +36,6 @@ using PrettyTables
 using BenchmarkTools
 using CSV, DataFrames
 using ColorSchemes, Plots
-using QuadraticModels, RipQP
 using Random, LinearAlgebra, LRUCache
 using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 ```
@@ -91,9 +91,10 @@ results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 
 atol = 1e-8
+max_iters = 5000
 initial_stepsize = 1.5 # initial stepsize for the proximal gradient method backtracking
 N = 1000 # number of data points
-α = 3/2N # weight for the mean component (h)
+α = 3/2N # weight for the median component (h)
 hn_dims = [1, 2, 5, 10, 15]
 spd_dims = [2, 5, 10, 15]
 ```
@@ -105,10 +106,10 @@ g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 h(M, p, q) = α * distance(M, p, q)
 f(M, p, data, q) = g(M, p, data) + h(M, p, q)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
-# CPPA needs the proximal operators for g
-function proxes_g(M, λ, p, data, q)
-    proxes = Function[(M, λ, p, data) -> ManifoldDiff.prox_distance(M, λ / length(data), di, p, 2) for di in data]
-    push!(proxes, (M, λ, p, q) -> ManifoldDiff.prox_distance(M, α * λ, q, p, 1))
+# CPPA needs the proximal operators for the total objective
+function proxes_f(data, q)
+    proxes = Function[(M, λ, p) -> ManifoldDiff.prox_distance(M, λ / length(data), di, p, 2) for di in data]
+    push!(proxes, (M, λ, p) -> ManifoldDiff.prox_distance(M, α * λ, q, p, 1))
     return proxes
 end
 prox_h(M, λ, p, q) = ManifoldDiff.prox_distance(M, α * λ, q, p, 1)
@@ -210,21 +211,21 @@ function initialize_dataframes(results_folder, experiment_name, subexperiment_na
     CSV.write(
         joinpath(
             results_folder,
-            experiment_name * "_$subexperiment_name" * "-Comparisons-Convex-Prox.csv",
+            experiment_name * "_$subexperiment_name" * "-Comparisons.csv",
         ),
         A1;
         header=false,
     )
-    A2 = DataFrame(named_tuple_2)
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name * "_$subexperiment_name" * "-Comparisons-Subgrad.csv",
-        ),
-        A2;
-        header=false,
-    )
-    return A1, A2
+    # A2 = DataFrame(named_tuple_2)
+    # CSV.write(
+    #     joinpath(
+    #         results_folder,
+    #         experiment_name * "_$subexperiment_name" * "-Comparisons-Subgrad.csv",
+    #     ),
+    #     A2;
+    #     header=false,
+    # )
+    return A1#, A2
 end
 ```
 
@@ -240,15 +241,21 @@ function export_dataframes(M, records, times, results_folder, experiment_name, s
         Time_2=times[2],
         Objective_2=minimum([r[2] for r in records[2]]),
     )
-    B2 = DataFrame(;
-        Dimension=manifold_dimension(M),
-        Iterations=maximum(first.(records[3])),
-        Time=times[3],
-        Objective=minimum([r[2] for r in records[3]]),
-    )
-    return B1, B2
+    # B2 = DataFrame(;
+    #     Dimension=manifold_dimension(M),
+    #     Iterations=maximum(first.(records[3])),
+    #     Time=times[3],
+    #     Objective=minimum([r[2] for r in records[3]]),
+    # )
+    return B1#, B2
 end
-function write_dataframes(B1, B2, results_folder, experiment_name, subexperiment_name)
+function write_dataframes(
+    B1, 
+    # B2, 
+    results_folder, 
+    experiment_name, 
+    subexperiment_name
+)
     CSV.write(
         joinpath(
             results_folder,
@@ -259,16 +266,16 @@ function write_dataframes(B1, B2, results_folder, experiment_name, subexperiment
         B1;
         append=true,
     )
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name *
-            "_$subexperiment_name" *
-            "-Comparisons-Subgrad.csv",
-        ),
-        B2;
-        append=true,
-    )
+    # CSV.write(
+    #     joinpath(
+    #         results_folder,
+    #         experiment_name *
+    #         "_$subexperiment_name" *
+    #         "-Comparisons-Subgrad.csv",
+    #     ),
+    #     B2;
+    #     append=true,
+    # )
 end
 ```
 
@@ -276,7 +283,7 @@ end
 ```{julia}
 #| output: false
 subexperiment_name = "Hn"
-global A1, A2 = initialize_dataframes(
+global A1 = initialize_dataframes(
     results_folder,
     experiment_name,
     subexperiment_name,
@@ -288,13 +295,13 @@ for n in hn_dims
 
     M = Hyperbolic(Int(2^n))
     data = [rand(M) for _ in 1:N]
-    q = rand(M) # we can artificially craft a point for the mean component, i.e. h
+    q = rand(M) # we can artificially craft a point for the median component, i.e. h
     p0 = rand(M) #data[minimum(Tuple(findmax(dists)[2]))]
 
     g_hn(M, p) = g(M, p, data)
     # h_hn(M, p) = h(M, p, q)
     grad_g_hn(M, p) = grad_g(M, p, data)
-    proxes_g_hn(M, λ, p) = proxes_g(M, λ, p, data, q)
+    proxes_f_hn = proxes_f(data, q)
     prox_h_hn(M, λ, p) = prox_h(M, λ, p, q)
     f_hn(M, p) = f(M, p, data, q)
 
@@ -303,7 +310,7 @@ for n in hn_dims
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
 
-    cppa = cyclic_proximal_point(M, f_hn, proxes_g_hn, p0; cppa_kwargs(M)...)
+    cppa = cyclic_proximal_point(M, f_hn, proxes_f_hn, p0; cppa_kwargs(M)...)
     cppa_result = get_solver_result(cppa)
     cppa_record = get_record(cppa)
 
@@ -314,14 +321,14 @@ for n in hn_dims
 
     if benchmarking
         pgm_bm = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $prox_h_hn, $p0; $pgm_bm_kwargs...)
-        cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_g_hn, $p0; cppa_bm_kwargs($M)...)
+        cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_f_hn, $p0; cppa_bm_kwargs($M)...)
         
         times = [
             median(pgm_bm).time * 1e-9,
             median(cppa_bm).time * 1e-9,
         ]
 
-        B1, B2 = export_dataframes(
+        B1 = export_dataframes(
             M,
             records,
             times,
@@ -333,23 +340,24 @@ for n in hn_dims
         )
 
         append!(A1, B1)
-        append!(A2, B2)
-        (export_table) && (write_dataframes(B1, B2, results_folder, experiment_name, subexperiment_name))
+        # append!(A2, B2)
+        (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
     end
 end
 ```
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
+
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RPGM, while columns 5 to 7 refer to the CPPA...
 ```{julia}
 #| echo: false
 #| code-fold: true
 benchmarking && pretty_table(A1, tf = tf_markdown, header=col_names_1)
 ```
-... Whereas the following table refers to the SGM
+<!-- ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
 benchmarking && pretty_table(A2, tf = tf_markdown, header=col_names_2)
-```
+``` -->
 
 
 ## The Median on the Symmetric Positive Definite Matrix Space
@@ -358,7 +366,7 @@ benchmarking && pretty_table(A2, tf = tf_markdown, header=col_names_2)
 subexperiment_name = "SPD"
 k_max_spd = 0.0
 diameter_spd = floatmax(Float64)
-global A1_SPD, A2_SPD = initialize_dataframes(
+global A1_SPD = initialize_dataframes(
     results_folder,
     experiment_name,
     subexperiment_name,
@@ -370,13 +378,13 @@ for n in spd_dims
 
     M = SymmetricPositiveDefinite(Int(n))
     data = [rand(M) for _ in 1:N]
-    q = rand(M) # we can artificially craft a point for the mean component, i.e. h
+    q = rand(M) # we can artificially craft a point for the median component, i.e. h
     p0 = rand(M) #data[minimum(Tuple(findmax(dists)[2]))]
 
     g_spd(M, p) = g(M, p, data)
     # h_spd(M, p) = h(M, p, q)
     grad_g_spd(M, p) = grad_g(M, p, data)
-    proxes_g_spd(M, λ, p) = proxes_g(M, λ, p, data, q)
+    proxes_f_spd = proxes_f(data, q)
     prox_h_spd(M, λ, p) = prox_h(M, λ, p, q)
     f_spd(M, p) = f(M, p, data, q)
 
@@ -385,7 +393,7 @@ for n in spd_dims
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
 
-    cppa = cyclic_proximal_point(M, f_spd, proxes_g_spd, p0; cppa_kwargs(M)...)
+    cppa = cyclic_proximal_point(M, f_spd, proxes_f_spd, p0; cppa_kwargs(M)...)
     cppa_result = get_solver_result(cppa)
     cppa_record = get_record(cppa)
 
@@ -396,14 +404,14 @@ for n in spd_dims
 
     if benchmarking
         pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g_spd, $grad_g_spd, $prox_h_spd, $p0; $pgm_bm_kwargs...)
-        cppa_bm = @benchmark cyclic_proximal_point($M, $f_spd, $proxes_g_spd, $p0; cppa_bm_kwargs($M)...)
+        cppa_bm = @benchmark cyclic_proximal_point($M, $f_spd, $proxes_f_spd, $p0; cppa_bm_kwargs($M)...)
         
         times = [
             median(pgm_bm).time * 1e-9,
             median(cppa_bm).time * 1e-9,
         ]
 
-        B1, B2 = export_dataframes(
+        B1 = export_dataframes(
             M,
             records,
             times,
@@ -415,25 +423,25 @@ for n in spd_dims
         )
 
         append!(A1, B1)
-        append!(A2, B2)
-        (export_table) && (write_dataframes(B1, B2, results_folder, experiment_name, subexperiment_name))
+        # append!(A2, B2)
+        (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
     end
 end
 ```
 
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA...
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RPGM, while columns 5 to 7 refer to the CPPA...
 ```{julia}
 #| echo: false
 #| code-fold: true
 benchmarking && pretty_table(A1_SPD, tf = tf_markdown, header=col_names_1)
 ```
 
-... Whereas the following table refers to the SGM
+<!-- ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
 benchmarking && pretty_table(A2_SPD, tf = tf_markdown, header=col_names_2)
-```
+``` -->
 
 ## Literature
 
