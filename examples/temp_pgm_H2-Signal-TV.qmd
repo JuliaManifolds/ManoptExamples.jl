@@ -165,6 +165,8 @@ proxes = (
     (M, λ, p) -> ManifoldDiff.prox_distance(M, λ, data, p, 2),
     (M, λ, p) -> ManoptExamples.prox_Total_Variation(M, α * λ, p),
 )
+grad_g(M, p) = ManifoldDiff.grad_distance(M, noise, p)
+prox_h(M, λ, p) = ManoptExamples.prox_Total_Variation(M, α * λ, p)
 ```
 
 We can now plot the initial setting.
@@ -297,6 +299,17 @@ cppa_bm_kwargs = [
         StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)
     ),
 ]
+pgm_kwargs = [
+    :λ => i->1/i,
+    :debug => [:Iteration, (:Cost, "F(p): %1.8f "), :Stop, 1000, "\n"],
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+    :stopping_criterion => StopWhenAny(StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)),
+]
+pgm_bm_kwargs = [
+    :λ => i->1/i,
+    :stopping_criterion => StopWhenAny(StopAfterIteration(max_iters), Manopt.StopWhenGradientMappingNormLess(atol)),
+]
 ```
 
 Finally, we run the optimization algorithms...
@@ -317,6 +330,10 @@ sgm_record = get_record(sgm)
 cppa = cyclic_proximal_point(Hn, f, proxes, p0; cppa_kwargs...)
 cppa_result = get_solver_result(cppa)
 cppa_record = get_record(cppa)
+#
+pgm = proximal_gradient_method(Hn, f, grad_g, prox_h, noise; pgm_kwargs...)
+pgm_result = get_solver_result(pgm)
+pgm_record = get_record(pgm)
 ```
 
 ... And we benchmark their performance.
@@ -328,14 +345,15 @@ if benchmarking
     sgm_bm = @benchmark subgradient_method($Hn, $f, $∂f, $p0; $sgm_bm_kwargs...)
     cppa_bm = @benchmark cyclic_proximal_point($Hn, $f, $proxes, $p0; $cppa_bm_kwargs...)
     #
-    experiments = ["RCBM", "PBA", "SGM", "CPPA"]
-    records = [rcbm_record, pba_record, sgm_record, cppa_record]
-    results = [rcbm_result, pba_result, sgm_result, cppa_result]
+    experiments = ["CPPA", "PGM"]#["RCBM", "PBA", "SGM", "CPPA", "PGM"]
+    records = [cppa_record, pgm_record]#[rcbm_record, pba_record, sgm_record, cppa_record, pgm_record]
+    results = [cppa_result, pgm_result]#[rcbm_result, pba_result, sgm_result, cppa_result, pgm_result]
     times = [
-        median(rcbm_bm).time * 1e-9,
-        median(pba_bm).time * 1e-9,
-        median(sgm_bm).time * 1e-9,
+        # median(rcbm_bm).time * 1e-9,
+        # median(pba_bm).time * 1e-9,
+        # median(sgm_bm).time * 1e-9,
         median(cppa_bm).time * 1e-9,
+        median(pgm_bm).time * 1e-9,
     ]
     #
     global B = cat(
@@ -352,7 +370,7 @@ if benchmarking
     # Finalize - export costs
     if export_table
         for (time, record, result, experiment) in zip(times, records, results, experiments)
-            A = cat(first.(record), [r[2] for r in record]; dims=2)
+            A = cat(first.(record), [r[2]/length(noise) for r in record]; dims=2)
             CSV.write(
                 joinpath(results_folder, experiment_name * "_" * experiment * "-result.csv"),
                 DataFrame(A, :auto);
@@ -381,6 +399,7 @@ if export_result
     ball_p = convert.(PoincareBallPoint, pba_result)
     ball_s = convert.(PoincareBallPoint, sgm_result)
     ball_c = convert.(PoincareBallPoint, cppa_result)
+    ball_pgm = convert.(PoincareBallPoint, pgm_result)
     #
     # Plot results
     plot!(
@@ -397,6 +416,12 @@ if export_result
     CSV.write(
         joinpath(results_folder, experiment_name * "-bundle_optimum.csv"),
         DataFrame(matrix_b, :auto);
+        header=["x", "y"],
+    )
+    matrix_pgm = matrixify_Poincare_ball(ball_pgm)
+    CSV.write(
+        joinpath(results_folder, experiment_name * "-pgm_optimum.csv"),
+        DataFrame(matrix_pgm, :auto);
         header=["x", "y"],
     )
     #
