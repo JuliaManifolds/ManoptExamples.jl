@@ -349,12 +349,12 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table…
 
-    | Algorithm | Iterations | Time (s) | Objective |     Error |
-    |-----------|------------|----------|-----------|-----------|
-    |      RCBM |       5000 |  13.8923 |  0.140232 | 0.0136919 |
-    |       PBA |       5000 |   9.5191 |  0.142887 | 0.0130322 |
-    |       SGM |       5000 |  7.89653 |  0.146216 | 0.0124605 |
-    |      CPPA |       5000 |  3.73857 |  0.131913 | 0.0173612 |
+| Algorithm | Iterations | Time (s) | Objective |     Error |
+|-----------|------------|----------|-----------|-----------|
+|      RCBM |       5000 |  13.8923 |  0.140232 | 0.0136919 |
+|       PBA |       5000 |   9.5191 |  0.142887 | 0.0130322 |
+|       SGM |       5000 |  7.89653 |  0.146216 | 0.0124605 |
+|      CPPA |       5000 |  3.73857 |  0.131913 | 0.0173612 |
 
 Lastly, we plot the results.
 

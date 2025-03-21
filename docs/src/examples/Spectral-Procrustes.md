@@ -241,11 +241,11 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table…
 
-    | Algorithm | Iterations | Time (s) | Objective |
-    |-----------|------------|----------|-----------|
-    |      RCBM |         99 |  102.036 |    235.46 |
-    |       PBA |         31 |   5.8049 |    235.46 |
-    |       SGM |       5000 |  402.739 |    235.46 |
+| Algorithm | Iterations | Time (s) | Objective |
+|-----------|------------|----------|-----------|
+|      RCBM |         99 |  102.036 |    235.46 |
+|       PBA |         31 |   5.8049 |    235.46 |
+|       SGM |       5000 |  402.739 |    235.46 |
 
 … and this cost versus iterations plot
 
