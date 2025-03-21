@@ -34,24 +34,12 @@ using ManifoldDiff:
     differential_shortest_geodesic_endpoint,
     differential_shortest_geodesic_endpoint!,
     grad_distance
-using Requires
 
 const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
 
-function __init__()
-    #
-    # Requires fallback for Julia < 1.9
-    #
-    @static if !isdefined(Base, :get_extension)
-        @require Manopt = "0fc0a36d-df90-57f3-8f93-d78a9fc72bb5" begin
-            include("../ext/ManoptExamplesManoptExt.jl")
-        end
-    end
-end
+# Common collection of functions useful for several problems
 
-# Common ollection of functions useful for several problems
-
-# Objetives
+# Objectives
 include("objectives/BezierCurves.jl")
 include("objectives/RayleighQuotient.jl")
 include("objectives/RiemannianMean.jl")

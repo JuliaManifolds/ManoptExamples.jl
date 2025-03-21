@@ -9,7 +9,7 @@ date: 07/02/2023
 Each of the example objectives or problems stated in this package should
 be accompanied by a [Quarto](https://quarto.org) notebook that illustrates their usage, like this one.
 
-For this first example, the objective is a very common one, for example also used in the [Get started: optimize!](https://manoptjl.org/stable/tutorials/Optimize!/) tutorial of [Manopt.jl](https://manoptjl.org/).
+For this first example, the objective is a very common one, for example also used in the [🏔️ Get started with Manopt.jl](https://manoptjl.org/stable/tutorials/getstarted.html) tutorial of [Manopt.jl](https://manoptjl.org/).
 
 The second goal of this tutorial is to also illustrate how this package provides these examples, namely in both an easy-to-use and a performant way.
 
@@ -44,7 +44,7 @@ data = [exp(M, p,  σ * rand(M; vector_at=p)) for i in 1:n];
 
 We can define both the cost and gradient, ``[`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost)``{=commonmark} and ``[`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!)``{=commonmark}, respectively.
 For their mathematical derivation and further explanations,
-we again refer to [Get started: optimize!](https://manoptjl.org/stable/tutorials/Optimize!/).
+we again refer to [🏔️ Get started with Manopt.jl](https://manoptjl.org/stable/tutorials/getstarted.html).
 
 ```{julia}
 #| output: false
@@ -83,7 +83,7 @@ rmp = DefaultManoptProblem(M, rmo)
 This enables us to for example solve the task with different, gradient based, solvers. The first is the same as above, just not using the high-level interface
 
 ```{julia}
-s1 = GradientDescentState(M, copy(M, first(data)))
+s1 = GradientDescentState(M; p=copy(M, first(data)))
 solve!(rmp, s1)
 x2 = get_solver_result(s1)
 ```
@@ -92,12 +92,27 @@ but we can easily use a conjugate gradient instead
 
 ```{julia}
 s2 = ConjugateGradientDescentState(
-    M,
-    copy(M, first(data)),
-    StopAfterIteration(100),
-    ArmijoLinesearch(M),
-    FletcherReevesCoefficient(),
+    M;
+    p=copy(M, first(data)),
+    stopping_criterion=StopAfterIteration(100),
+    stepsize=ArmijoLinesearch(M)(),
+    coefficient=FletcherReevesCoefficient(),
 )
 solve!(rmp, s2)
 x3 = get_solver_result(s2)
+```
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+using Dates
+now()
 ```

@@ -42,7 +42,7 @@ minimizer(f::RosenbrockCost) = [f.b, f.b^2]
 @doc raw"""
     RosenbrockGradient
 
-Provide Eclidean GRadient fo the Rosenbrock function in 2D, i.e. for some ``a,b ∈ ℝ``
+Provide Euclidean gradient fo the Rosenbrock function in 2D, i.e. for some ``a,b ∈ ℝ``
 
 ```math
 \nabla f(\mathcal M, p) = \begin{pmatrix}
@@ -121,7 +121,7 @@ struct RosenbrockMetric <: AbstractMetric end
     Y = change_representer(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, ::EuclideanMetric, p, X)
     change_representer!(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, Y, ::EuclideanMetric, p, X)
 
-Given the Euclidan gradient `X` at `p`, this function computes the corresponting Riesz representer `Y``
+Given the Euclidean gradient `X` at `p`, this function computes the corresponding Riesz representer `Y``
 such that ``⟨X,Z⟩ = ⟨ Y, Z ⟩_{\mathrm{Rb},p}`` holds for all ``Z``, in other words ``Y = G(p)^{-1}X``.
 
 this function is used in `riemannian_gradient` to convert a Euclidean into a Riemannian gradient.
@@ -157,7 +157,7 @@ Compute the exponential map with respect to the [`RosenbrockMetric`](@ref Manopt
     q = \begin{pmatrix} p_1 + X_1 \\ p_2+X_2+X_1^2\end{pmatrix}
 ```
 """
-function exp(
+function expt(
     ::MetricManifold{
         ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
     },
@@ -174,9 +174,9 @@ function exp(
     p,
     X,
 )
-    return exp(M, p, X, 1.0)
+    return ManifoldsBase.exp_fused(M, p, X, 1.0)
 end
-function exp!(
+function ManifoldsBase.exp_fused!(
     ::MetricManifold{
         ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
     },
@@ -190,7 +190,7 @@ function exp!(
     return q
 end
 # Overwrite default to not dispatch on ODESolver
-function exp!(
+function ManifoldsBase.exp!(
     M::MetricManifold{
         ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
     },
@@ -198,7 +198,7 @@ function exp!(
     p,
     X,
 )
-    exp!(M, q, p, X, 1.0)
+    ManifoldsBase.exp_fused!(M, q, p, X, 1.0)
     return q
 end
 

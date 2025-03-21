@@ -126,7 +126,7 @@ end
 ```
 
 Which is the following cure, which clearly starts and ends slower than its speed in the middle,
-which can be seen by the increasing length of the gangent vectors in the middle.
+which can be seen by the increasing length of the tangent vectors in the middle.
 
 ![The original curve](img/bezier/bezier-acceleration-orig.png)
 
@@ -174,7 +174,7 @@ pB_opt = gradient_descent(
         contraction_factor=0.5,
         sufficient_decrease=0.001,
     ),
-    stopping_criterion=StopWhenChangeLess(1e-5) |
+    stopping_criterion=StopWhenChangeLess(N, 1e-5) |
                        StopWhenGradientNormLess(1e-7) |
                        StopAfterIteration(300),
     debug=[
