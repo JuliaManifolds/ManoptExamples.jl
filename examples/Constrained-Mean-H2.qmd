@@ -10,7 +10,6 @@ In this example we compare the Projected Gradient Algorithm (PGA) as introduced 
 
 ```{julia}
 #| echo: false
-#| code-fold: true
 #| output: false
 using Pkg;
 cd(@__DIR__)
@@ -29,21 +28,19 @@ Canonical=false
 ```
 ````
 
-<details><summary>Technical details</summary>
-
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
 ```{julia}
 #| code-fold: true
+#| code-summary: "Package versions"
 #| echo: false
 using Pkg
 Pkg.status()
 ```
-</details>
+
 ```{julia}
-#| code-fold: true
 #| echo: false
 #| output: asis
 using Dates
