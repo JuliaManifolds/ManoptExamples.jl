@@ -73,7 +73,7 @@ data_pts = [
 #| output: false
 experiment_name = "C2Dball-mean-$(N)"
 folder = (@__DIR__)*"/projected-gradient-results/"
-write_csv = true;
+write_csv = false;
 (!isdir(folder) && write_csv) && mkpath(folder)
 ```
 ## Cost, gradient and projection
