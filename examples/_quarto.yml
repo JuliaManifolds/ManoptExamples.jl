@@ -5,6 +5,7 @@ project:
   render:
     - "*.qmd"
     - "!Constrained-Mean-H2.qmd"
+    - "!Constrained-Mean-Hn.qmd"
     - "!Difference-of-Convex-Benchmark.qmd"
     - "!HyperparameterOptimization.qmd"
     - "!RCBM-Median.qmd"

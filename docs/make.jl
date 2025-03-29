@@ -108,6 +108,10 @@ examples_menu =
             "Hyperbolic Signal Denoising" => "examples/H2-Signal-TV.md",
             "Spectral Procrustes" => "examples/Spectral-Procrustes.md",
         ],
+        "Projected Gradient Algorithm" => [
+            raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",
+            raw"Mean on $\mathbb H^n$" => "examples/Constrained-Mean-Hn.md",
+        ],
         "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",

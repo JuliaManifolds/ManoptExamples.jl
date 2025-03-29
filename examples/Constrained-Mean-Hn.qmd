@@ -124,17 +124,22 @@ For the projected mean we obtain ``g(p) = 0`` since the original mean is outside
 
 We first generate all data
 ```{julia}
+#| output: false
 centers = [[zeros(n)..., 1.0] for n in n_range]
 begin
-Random.seed!(5)
-data = [
-    [ exp(M,c,
-            get_vector(M, c,
-                σ * randn(n) .+ 2 * r .* ones(n),DefaultOrthonormalBasis(),
-            ),
-        ) for _ = 1:N
-    ] for (c, r, n, N, M, σ) ∈ zip(centers, radius_range, n_range, N_range, M_range, σ_range)
-]
+    Random.seed!(5)
+    data = [
+        [
+            exp(
+                M,
+                c,
+                get_vector(
+                    M, c, σ * randn(n) .+ 2 * r .* ones(n), DefaultOrthonormalBasis()
+                ),
+            ) for _ in 1:N
+        ] for
+        (c, r, n, N, M, σ) in zip(centers, radius_range, n_range, N_range, M_range, σ_range)
+    ]
 end
 ```
 
@@ -178,7 +183,7 @@ function bench_aep(Manifold, center, radius, data)
     # first runs
     # println(manifold_dimension(Manifold), ": ")
     mean_pga = copy(Manifold, center)
-    @time pgas = projected_gradient_method!(
+    pgas = projected_gradient_method!(
         Manifold,
         _f,
         _grad_f!,
@@ -192,7 +197,7 @@ function bench_aep(Manifold, center, radius, data)
     )
     stats[:PGA][:Iter] = length(get_record(pgas, :Iteration))
     mean_alm = copy(Manifold, center)
-    @time alms = augmented_Lagrangian_method!(
+    alms = augmented_Lagrangian_method!(
         Manifold,
         _f,
         _grad_f!,
@@ -205,7 +210,7 @@ function bench_aep(Manifold, center, radius, data)
     )
     stats[:ALM][:Iter] = length(get_record(alms, :Iteration))
     mean_epm = copy(Manifold, center)
-    @time epms = exact_penalty_method!(
+    epms = exact_penalty_method!(
         Manifold, _f, _grad_f!, mean_epm;
         evaluation=InplaceEvaluation(), return_state=true,
         g=[_g], grad_g=[_grad_g!], record=[:Cost],
@@ -283,6 +288,8 @@ fig2
 ```
 
 ```{julia}
+#| output: false
+#| echo: false
 write_csv && CSV.write(
     "$(fn)iterations.csv",
     DataFrame(;
