@@ -242,6 +242,8 @@ end
 
 and run these
 ```{julia}
+#| output: false
+#| echo: false
 b = [bench_aep(M, c, r, d) for (M, c, r, d) in zip(M_range, centers, radius_range, data)]
 ```
 
