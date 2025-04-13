@@ -4,9 +4,9 @@ Ronny Bergmann
 
 ## Introduction
 
-In this Benchmark we compare the Difference of Convex Algprithm (DCA) [BergmannFerreiraSantosSouza:2023](@cite)
+In this Benchmark we compare the Difference of Convex Algprithm (DCA) [BergmannFerreiraSantosSouza:2024](@cite)
 and the Difference of Convex Proximal Point Algorithm (DCPPA) [SouzaOliveira:2015](@cite) which solve
-Difference of Convex (DC) problems of the form. This Benchmark reproduces the results from [BergmannFerreiraSantosSouza:2023](@cite), Section 7.1.
+Difference of Convex (DC) problems of the form. This Benchmark reproduces the results from [BergmannFerreiraSantosSouza:2024](@cite), Section 7.1.
 
 ``` math
 \operatorname*{arg\,min}_{p\in\mathcal M}\ \  g(p) - h(p)
@@ -177,7 +177,7 @@ Similarly the DCPPA performs
 );
 ```
 
-    Initial f(p): 137.679053470 
+    Initial f(p): 137.679053470
     # 5     f(p): -0.248491803 |grad_f(p)|: 0.2793140152|δp|: 0.2753827692
     # 10    f(p): -0.249998655 |grad_f(p)|: 0.0080437374|δp|: 0.0050891316
     # 15    f(p): -0.249999999 |grad_f(p)|: 0.0002507329|δp|: 0.0001567676
@@ -333,4 +333,3 @@ where we can see that the DCA needs less iterations than the DCPPA.
 Pages = ["Difference-of-Convex-Benchmark.md"]
 Canonical=false
 ```
-
