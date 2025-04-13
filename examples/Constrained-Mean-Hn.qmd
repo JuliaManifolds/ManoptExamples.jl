@@ -13,8 +13,7 @@ In this example we compare the Pprojected Gradient Algorithm (PGA) as introduced
 #| output: false
 using Pkg;
 cd(@__DIR__)
-Pkg.activate(); #TODO: replace by local env once ProjGrad is released.
-#Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
 Pkg.develop(path="../") # a trick to work on the local dev version of ManoptExamples
 ENV["GKSwstype"] = "100"
 ```
@@ -28,14 +27,15 @@ Consider the constrained Riemannian center of mass
 for a given set of points ``q_i \in \mathcal M$ $i=1,\ldots,N$
 given by
 
-```
-\operatorname*{arg\,min}_{p\in\mathcal C} d_{\mathrm{M}}^2(p,d_i)
+```math
+\operatorname*{arg\,min}_{p\in\mathcal C}
+\sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i)
 ```
 
-constrained to a set ``\mathcal C \subset \mathcal M``.
+constrained to a set $\mathcal C \subset \mathcal M$.
 
-For this experiment set ``\mathcal M = \mathbb H^d`` for ``d=2,\ldots,200``, the ``[Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)``{=commonmark}
-and the constrained set ``\mathcal C = C_{c,r}`` as the ball of radius ``r`` around the center point ``c``, where we choose here ``r=\frac{1}{\sqrt{n}}`` and ``c = (0,\ldots,0,1)^{\mathrm{T}}`` and a ``σ = \frac{3}{2}n^{1/4}``
+For this experiment set $\mathcal M = \mathbb H^d$ for $d=2,\ldots,200$, the ``[Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)``{=commonmark}
+and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around the center point $c$, where we choose here $r=\frac{1}{\sqrt{n}}$ and $c = (0,\ldots,0,1)^{\mathrm{T}}$ and a $σ = \frac{3}{2}n^{1/4}$.
 
 ```{julia}
 #| output: false
@@ -46,7 +46,7 @@ M_range = [Hyperbolic(n) for n ∈ n_range]
 σ_range = [ 1.5/sqrt(sqrt(n-1)) for n ∈ n_range]
 ```
 
-Our data consists of ``N=200`` points, where we skew the data a bit to force the mean to be outside of the constrained set ``\mathcal C``.
+The data consists of $N=200$ points, where we skew the data a bit to force the mean to be outside of the constrained set $\mathcal C$.
 
 
 ```{julia}
@@ -83,7 +83,7 @@ function grad_f!(M, X, p; pts=[])
 end
 ```
 
-We can model the constrained either with an inequality constraint ``g(p) \geq 0`` or using a projection onto the set. For the gradient of ``g`` and the projection we again also provide mutating variants.
+We can model the constrained either with an inequality constraint $g(p) \geq 0$ or using a projection onto the set. For the gradient of $g$ and the projection we again also provide mutating variants.
 
 ```{julia}
 #| output: false
@@ -116,11 +116,11 @@ function grad_g!(M, X, p; op=[])
 end
 ```
 
-## the mean
+## The mean
 
-For comparison, we first compute the Riemannian center of mass, that is the minimization above but not constrained to ``\mathcal C``. We can then
-project this onto ``\mathcal C``.
-For the projected mean we obtain ``g(p) = 0`` since the original mean is outside of the set, the projected one lies on the bounday.
+For comparison, we first compute the Riemannian center of mass, that is the minimization above but not constrained to $\mathcal C$. We can then
+project this onto $\mathcal C$.
+For the projected mean we obtain $g(p) = 0$ since the original mean is outside of the set, the projected one lies on the boundary.
 
 We first generate all data
 ```{julia}
@@ -241,6 +241,7 @@ end
 ```
 
 and run these
+
 ```{julia}
 #| output: false
 #| echo: false

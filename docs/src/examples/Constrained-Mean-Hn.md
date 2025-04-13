@@ -14,12 +14,15 @@ Consider the constrained Riemannian center of mass
 for a given set of points \`\`q_i M\$ $i=1,\ldots,N$
 given by
 
-    \operatorname*{arg\,min}_{p\in\mathcal C} d_{\mathrm{M}}^2(p,d_i)
+```math
+\operatorname*{arg\,min}_{p\in\mathcal C}
+\sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i)
+```
 
-constrained to a set `\mathcal C \subset \mathcal M`.
+constrained to a set $\mathcal C \subset \mathcal M$.
 
-For this experiment set `\mathcal M = \mathbb H^d` for `d=2,\ldots,200`, the [Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)
-and the constrained set `\mathcal C = C_{c,r}` as the ball of radius `r` around the center point `c`, where we choose here `r=\frac{1}{\sqrt{n}}` and `c = (0,\ldots,0,1)^{\mathrm{T}}` and a `σ = \frac{3}{2}n^{1/4}`
+For this experiment set $\mathcal M = \mathbb H^d$ for $d=2,\ldots,200$, the [Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)
+and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around the center point $c$, where we choose here $r=\frac{1}{\sqrt{n}}$ and $c = (0,\ldots,0,1)^{\mathrm{T}}$ and a $σ = \frac{3}{2}n^{1/4}$.
 
 ``` julia
 n_range = Vector(2:200)
@@ -29,7 +32,7 @@ M_range = [Hyperbolic(n) for n ∈ n_range]
 σ_range = [ 1.5/sqrt(sqrt(n-1)) for n ∈ n_range]
 ```
 
-Our data consists of `N=200` points, where we skew the data a bit to force the mean to be outside of the constrained set `\mathcal C`.
+Our data consists of $N=200$ points, where we skew the data a bit to force the mean to be outside of the constrained set $\mathcal C$.
 
 ## Cost, gradient and projection
 
@@ -53,7 +56,7 @@ function grad_f!(M, X, p; pts=[])
 end
 ```
 
-We can model the constrained either with an inequality constraint `g(p) \geq 0` or using a projection onto the set. For the gradient of `g` and the projection we again also provide mutating variants.
+We can model the constrained either with an inequality constraint $g(p) \geq 0$ or using a projection onto the set. For the gradient of $g$ and the projection we again also provide mutating variants.
 
 ``` julia
 g(M, p; op=[], radius=1) = distance(M, op, p)^2 - radius^2;
@@ -87,9 +90,9 @@ end
 
 ## the mean
 
-For comparison, we first compute the Riemannian center of mass, that is the minimization above but not constrained to `\mathcal C`. We can then
-project this onto `\mathcal C`.
-For the projected mean we obtain `g(p) = 0` since the original mean is outside of the set, the projected one lies on the bounday.
+For comparison, we first compute the Riemannian center of mass, that is the minimization above but not constrained to $\mathcal C$. We can then
+project this onto $\mathcal C$.
+For the projected mean we obtain $g(p) = 0$ since the original mean is outside of the set, the projected one lies on the bounday.
 
 We first generate all data
 
@@ -231,9 +234,6 @@ axislegend(axis; position=:lt)
 fig
 ```
 
-    ┌ Warning: Found `resolution` in the theme when creating a `Scene`. The `resolution` keyword for `Scene`s and `Figure`s has been deprecated. Use `Figure(; size = ...` or `Scene(; size = ...)` instead, which better reflects that this is a unitless size and not a pixel resolution. The key could also come from `set_theme!` calls or related theming functions.
-    └ @ Makie ~/.julia/packages/Makie/ux0Te/src/scenes.jl:238
-
 ![](Constrained-Mean-Hn_files/figure-commonmark/cell-13-output-2.png)
 
 and the number of iterations reads
@@ -250,9 +250,6 @@ axislegend(axis2; position=:lt)
 fig2
 ```
 
-    ┌ Warning: Found `resolution` in the theme when creating a `Scene`. The `resolution` keyword for `Scene`s and `Figure`s has been deprecated. Use `Figure(; size = ...` or `Scene(; size = ...)` instead, which better reflects that this is a unitless size and not a pixel resolution. The key could also come from `set_theme!` calls or related theming functions.
-    └ @ Makie ~/.julia/packages/Makie/ux0Te/src/scenes.jl:238
-
 ![](Constrained-Mean-Hn_files/figure-commonmark/cell-15-output-2.png)
 
 ## Literature
@@ -266,68 +263,30 @@ Canonical=false
 
 This tutorial is cached. It was last run on the following package versions.
 
-    Status `~/.julia/environments/v1.11/Project.toml`
-      [d1e3940c] AlgorithmsInterface v0.1.0 `../../../Repositories/Julia/IterativeAlgorithmsInterface.jl`
-      [4c88cf16] Aqua v0.8.11
+    Status `/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
       [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.13.2
+      [13f3f980] CairoMakie v0.13.4
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.29.0
-      [5ae59095] Colors v0.13.0
-      [8f4d0f93] Conda v1.10.2
-      [d38c429a] Contour v0.6.3
-      [acf6eb54] DFTK v0.7.11
-      [f07c2035] DOI2BibTeX v0.1.7
+    ⌅ [5ae59095] Colors v0.12.11
       [a93c6f00] DataFrames v1.7.0
-    ⌃ [a0c0ee7d] DifferentiationInterface v0.6.48
-      [31c24e10] Distributions v0.25.118
-      [e30172f5] Documenter v1.9.0
-      [daee34ce] DocumenterCitations v1.3.6
-      [d12716ef] DocumenterInterLinks v1.0.0
-      [35a29f4d] DocumenterTools v0.1.20
-      [497a8b3b] DoubleFloats v1.4.3
-      [5789e2e9] FileIO v1.17.0
-      [26cc04aa] FiniteDifferences v0.12.32
-    ⌅ [f6369f11] ForwardDiff v0.10.38
-      [713c75ef] Franklin v0.10.95
-      [e9467ef8] GLMakie v0.11.3
-      [4d00f742] GeometryTypes v0.8.5
-      [86223c79] Graphs v1.12.0
-      [7073ff75] IJulia v1.26.0
-      [98e50ef6] JuliaFormatter v1.0.62
+      [7073ff75] IJulia v1.27.0
+      [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
-      [b4f0291d] LazySets v3.1.0
-      [6774de46] LieGroups v0.0.3 `../../../Repositories/Julia/LieGroups.jl`
-      [ee78f7c6] Makie v0.22.2
-      [af67fdf4] ManifoldDiff v0.4.2 `../../../Repositories/Julia/ManifoldDiff.jl`
-      [21be47e3] ManifoldExamples v0.1.0 `../../../Repositories/Julia/ManifoldExamples.jl`
-      [1cead3c2] Manifolds v0.10.15 `../../../Repositories/Julia/Manifolds.jl`
-      [3362f125] ManifoldsBase v1.0.1 `../../../Repositories/Julia/ManifoldsBase.jl`
-      [0fc0a36d] Manopt v0.5.9 `../../../Repositories/Julia/Manopt.jl`
-      [5b8d5e80] ManoptExamples v0.1.13 `../../../Repositories/Julia/ManoptExamples.jl`
-      [2774e3e8] NLsolve v4.5.1
+      [d3d80556] LineSearches v7.3.0
+      [ee78f7c6] Makie v0.22.4
+      [af67fdf4] ManifoldDiff v0.4.2
+      [1cead3c2] Manifolds v0.10.16
+      [3362f125] ManifoldsBase v1.0.3
+      [0fc0a36d] Manopt v0.5.12
+      [5b8d5e80] ManoptExamples v0.1.14 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [6fe1bfb0] OffsetArrays v1.16.0
-      [5fb14364] OhMyREPL v0.5.29
-      [8314cec4] PGFPlotsX v1.6.2
-      [91a5bcdd] Plots v1.40.11
-      [c3e4b0f8] Pluto v0.20.5
-      [33c8b6b6] ProgressLogging v0.1.4
-      [94ee1d12] Quaternions v0.7.6
-    ⌃ [731186ca] RecursiveArrayTools v3.31.1
-    ⌃ [37e2e3b7] ReverseDiff v1.15.3
-      [295af30f] Revise v3.7.3
-      [6038ab10] Rotations v1.7.1
-      [47aef6b3] SimpleWeightedGraphs v1.5.0
-      [90137ffa] StaticArrays v1.9.13
-      [2913bbd2] StatsBase v0.34.4
-      [0c5d862f] Symbolics v6.34.0
-      [d6d074c3] VideoIO v1.1.1
-      [276b4fcb] WGLMakie v0.11.2
-      [952999c0] WatchJuliaBurn v0.2.0
-      [e88e6eb3] Zygote v0.7.5
-      [9a3f8284] Random v1.11.0
-    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
+      [91a5bcdd] Plots v1.40.12
+      [08abe8d2] PrettyTables v2.4.0
+      [6099a3de] PythonCall v0.9.24
+      [f468eda6] QuadraticModels v0.9.8
+      [1e40b3f8] RipQP v0.6.4
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered March 29, 2025, 17:39:0.
+This tutorial was last rendered April 13, 2025, 15:12:24.
