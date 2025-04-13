@@ -146,6 +146,6 @@ makedocs(;
         "Changelog" => "changelog.md",
         "References" => "references.md",
     ],
-    plugins=[bib,links],
+    plugins=[bib, links],
 )
 deploydocs(; repo="github.com/JuliaManifolds/ManoptExamples.jl", push_preview=true)
