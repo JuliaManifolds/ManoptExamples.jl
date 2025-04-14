@@ -1,5 +1,5 @@
 ---
-title: "A comparison of the RPGM with the CPPA on Hadamard manifolds"
+title: "A comparison of the CRPG with the CPPA on Hadamard manifolds"
 author: "Hajg Jasa"
 date: 03/18/2025
 engine: julia
@@ -7,7 +7,7 @@ engine: julia
 
 ## Introduction
 
-In this example we compare the Riemannian Proximal Gradient Method (RPGM) [BergmannJasaJohnPfeffer:2025](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the space of symmetric positive definite matrices and on hyperbolic space.
+In this example we compare the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the space of symmetric positive definite matrices and on hyperbolic space.
 This example reproduces the results from [BergmannJasaJohnPfeffer:2025](@cite), Section 6.
 
 ```{julia}
@@ -85,52 +85,42 @@ The goal is to find the minimizer of $f$ on $\mathcal M$, which heuristically is
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-Random.seed!(100)
-experiment_name = "Hadamard-RPGM"
+random_seed = 100
+experiment_name = "Hadamard-CRPG"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 
 atol = 1e-8
 max_iters = 5000
-initial_stepsize = 1.5 # initial stepsize for the proximal gradient method backtracking
+initial_stepsize = 1.0 # initial stepsize for the proximal gradient method backtracking
 N = 1000 # number of data points
-α = 3/2N # weight for the median component (h)
-hn_dims = [1, 2, 5, 10, 15]
-spd_dims = [2, 5, 10, 15]
+α = 3/2 # weight for the median component (h)
+hn_dims = [1, 5, 7, 10]
+spd_dims = [2, 3, 4, 5]
 ```
 
 ```{julia}
 #| output: false
 # Objective, gradient, and proxes
 g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
-h(M, p, q) = α * distance(M, p, q)
-f(M, p, data, q) = g(M, p, data) + h(M, p, q)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
+# 
+h(M, p, q) = α * distance(M, p, q)
+prox_h(M, λ, p, q) = ManifoldDiff.prox_distance(M, α * λ, q, p, 1)
+# 
+f(M, p, data, q) = g(M, p, data) + h(M, p, q)
 # CPPA needs the proximal operators for the total objective
 function proxes_f(data, q)
     proxes = Function[(M, λ, p) -> ManifoldDiff.prox_distance(M, λ / length(data), di, p, 2) for di in data]
     push!(proxes, (M, λ, p) -> ManifoldDiff.prox_distance(M, α * λ, q, p, 1))
     return proxes
 end
-prox_h(M, λ, p, q) = ManifoldDiff.prox_distance(M, α * λ, q, p, 1)
 ```
 
 We introduce some keyword arguments for the solvers we will use in this experiment
 ```{julia}
 #| output: false
 pgm_kwargs = [
-    :count => [:Cost, :Gradient],
-    :cache => (:LRU, [:Cost, :Gradient], 50),
-    :debug => [
-        :Iteration,
-        (:Cost, "F(p): %1.16f "),
-        " ", 
-        (:Change, " last change: %1.8f "),
-        (:last_stepsize, " last step size: %1.8f "),
-        100, 
-        :Stop,
-        "\n", 
-    ],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stepsize => ProxGradBacktracking(; strategy=:convex, initial_stepsize=initial_stepsize),
@@ -139,25 +129,12 @@ pgm_kwargs = [
     ),
 ]
 pgm_bm_kwargs = [
-    :cache => (:LRU, [:Cost, :Gradient], 50),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ), 
 ]
 
 cppa_kwargs(M) = [
-    :debug => [
-        :Iteration,
-        " | ",
-        DebugProximalParameter(),
-        " | ",
-        (:Cost, "F(p): %1.16f "),
-        " | ",
-        :Change,
-        "\n",
-        1000,
-        :Stop,
-    ],
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stopping_criterion => StopWhenAny(
@@ -261,7 +238,8 @@ function write_dataframes(
             results_folder,
             experiment_name *
             "_$subexperiment_name" *
-            "-Comparisons-Convex-Prox.csv",
+            "-Comparisons.csv",
+            # -Convex-Prox.csv",
         ),
         B1;
         append=true,
@@ -292,6 +270,8 @@ global A1 = initialize_dataframes(
 )
 
 for n in hn_dims
+
+    Random.seed!(random_seed)
 
     M = Hyperbolic(Int(2^n))
     data = [rand(M) for _ in 1:N]
@@ -346,7 +326,7 @@ for n in hn_dims
 end
 ```
 
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RPGM, while columns 5 to 7 refer to the CPPA...
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the CRPG, while columns 5 to 7 refer to the CPPA...
 ```{julia}
 #| echo: false
 #| code-fold: true
@@ -375,6 +355,8 @@ global A1_SPD = initialize_dataframes(
 )
 
 for n in spd_dims
+
+    Random.seed!(random_seed)
 
     M = SymmetricPositiveDefinite(Int(n))
     data = [rand(M) for _ in 1:N]
@@ -422,14 +404,14 @@ for n in spd_dims
             col_names_2,
         )
 
-        append!(A1, B1)
-        # append!(A2, B2)
+        append!(A1_SPD, B1)
+        # append!(A2_SPD, B2)
         (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
     end
 end
 ```
 
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RPGM, while columns 5 to 7 refer to the CPPA...
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the CRPG, while columns 5 to 7 refer to the CPPA...
 ```{julia}
 #| echo: false
 #| code-fold: true
@@ -443,11 +425,28 @@ benchmarking && pretty_table(A1_SPD, tf = tf_markdown, header=col_names_1)
 benchmarking && pretty_table(A2_SPD, tf = tf_markdown, header=col_names_2)
 ``` -->
 
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
+
 ## Literature
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["Hadamard-RPGM.md"]
+Pages = ["Hadamard-CRPG.md"]
 Canonical=false
 ```
 ````
