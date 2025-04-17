@@ -1,5 +1,5 @@
 ---
-title: "A Geodesically Convex Example on Hyperbolic Space"
+title: "Proximal Gradient Method: A Geodesically Convex Example on Hyperbolic Space"
 author: "Hajg Jasa"
 date: 04/14/2025
 engine: julia
@@ -47,17 +47,17 @@ Let $\mathcal M = \mathcal H^2$ be the $2$-dimensional hyperbolic space.
 
 Let $q_1 \in \mathcal M$ and $g \colon \mathcal M \to \mathbb R$ be defined by
 
-$$
+```math
 g(p) = \mathrm{dist}(p, q_1),
-$$
+```
 
 Observe that the function $g$ is geodesically convex with respect to the Riemannian metric on $\mathcal M$.
 
 Let now $q_2 \neq q_1$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
 
-$$
+```math
 h(p) = \tau \mathrm{dist}(p, q_2),
-$$ 
+```
 
 for some $\tau > 0$.
 We define our total objective function as $f = g + h$.
@@ -102,7 +102,7 @@ p0 = exp(M, q2, 2X2)
 # Closed-form solution
 γ(t) = geodesic(M, q1, log(M, q1, q2), t)
 p_star = τ > 1 ? q2 : (τ < 1 ? q1 : γ(rand()))
-# Diameter of the set containing all points
+# Estimate of the diameter of the set containing all points
 D = 2maximum([distance(M, p0, a) for a in [q1, q2, p_star]])
 ```
 
@@ -126,11 +126,32 @@ end
 λ_min = 1/g(M, p_star)
 λ_max = coth(g(M, p_star))
 λ_r = 2*g(M, p_star)/(g(M, p_star)*coth(g(M, p_star)) + 1)
-ζ_D = ζ_1(k_min, D)
-λ_D = 1/ζ_D
 ```
 
-We now take a look at how the inequality in [Theorem 1](@cite) behaves in practice.
+```{julia}
+#| output: false
+# Function to generate points close to the given point p
+function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
+    X = rand(M; vector_at = p)
+    X .= tol * rand() * X / norm(M, p, X)
+    return retract(M, p, X, retraction_method)
+end
+# Estimate Lipschitz constant of the gradient of g
+function estimate_lipschitz_constant(M, g, anchor, R=D, N=100_000)
+    constants = []
+    for i in 1:N
+        p = close_point(M, anchor, R)
+        q = close_point(M, anchor, R)
+
+        push!(constants, 2/distance(M, q, p)^2 * (g(M, q) - g(M, p) - inner(M, p, grad_g(M, p), log(M, p, q))))
+    end
+    return maximum(constants)
+end
+L_g = 2estimate_lipschitz_constant(M, g, p0)
+λ_D = 3/(2estimate_lipschitz_constant(M, g, p0))
+```
+
+We now take a look at how the inequality in Theorem 4.10 in [BergmannJasaJohnPfeffer:2025:2](@cite) behaves in practice.
 ```{julia}
 #| output: false
 #| code-fold: true
@@ -202,7 +223,7 @@ begin
     end
 	vline!([λ_r], label="λ = 2r/(rcoth(r)+1)", ls=:dot, lw=1.5, c=:green)
 	vline!([r/τ], label="λ = r/τ", ls=:dot, lw=1.5, c=:orange)
-	vline!([1/ζ_D], label="λ = 1/ζ_D", ls=:dot, lw=1.5, c=:red)
+	vline!([λ_D], label="λ = 1/L_g", ls=:dot, lw=1.5, c=:red)
     
     # Enforce y-axis limits 
     plot!(ylim=(0, max(1.5, maximum(inequality_values) * 1.1)))
@@ -210,9 +231,9 @@ end
 ```
 
 ### Constant Stepsize
-We can now run the optimization, first using a constant stepsize $\lambda = 1/\zeta_{1, k_min}(D)$.
+We can now run the optimization, first using a constant stepsize $\lambda = 1/L_g$.
 ```{julia}
-pg = proximal_gradient_method(
+@time pg = proximal_gradient_method(
 	M, 
 	f, 
 	g, 
@@ -292,7 +313,7 @@ plot!(
     linestyle=:solid,
     linewidth=1.5,
     color=:green,
-    label="O(1/2^k)"
+    label="O(1/2ᵏ)"
 )
 ```
 
@@ -343,14 +364,14 @@ plot!(
 ### Backtracked Stepsize
 We now run the optimization using a backtracked stepsize.
 ```{julia}
-pg = proximal_gradient_method(
+@time pg = proximal_gradient_method(
 	M, 
 	f, 
 	g, 
 	grad_g, 
 	prox_h, 
 	p0;
-	stepsize=ProxGradBacktracking(; strategy=:convex, initial_stepsize=1/λ_max),
+	stepsize=ProxGradBacktracking(; strategy=:convex, initial_stepsize=3/2*λ_D),
 	record=[:Iteration, :Cost, :Iterate],
 	return_state=true,
 	stopping_criterion=StopWhenGradientMappingNormLess(atol),
@@ -470,229 +491,6 @@ plot!(
     label="O(1/k²)"
 )
 ```
-
-<!-- We introduce some keyword arguments for the solvers we will use in this experiment
-```{julia}
-#| output: false
-pgm_kwargs = [
-    :record => [:Iteration, :Cost, :Iterate],
-    :return_state => true,
-    :stepsize => ProxGradBacktracking(; strategy=:convex, initial_stepsize=initial_stepsize),
-    :stopping_criterion => StopWhenAny(
-        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ),
-]
-pgm_bm_kwargs = [
-    :stopping_criterion => StopWhenAny(
-        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
-]
-
-cppa_kwargs(M) = [
-    :record => [:Iteration, :Cost, :Iterate],
-    :return_state => true,
-    :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
-    ),
-]
-cppa_bm_kwargs(M) = [
-    :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
-    ),
-]
-```
-
-Before running the experiments, we initialize data collection functions that we will use later
-```{julia}
-#| output: false
-global col_names_1 = [
-    :Dimension,
-    :Iterations_1,
-    :Time_1,
-    :Objective_1,
-    :Iterations_2,
-    :Time_2,
-    :Objective_2,
-]
-col_types_1 = [
-    Int64,
-    Int64,
-    Float64,
-    Float64,
-    Int64,
-    Float64,
-    Float64,
-]
-named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
-global col_names_2 = [
-    :Dimension,
-    :Iterations,
-    :Time,
-    :Objective,
-]
-col_types_2 = [
-    Int64,
-    Int64,
-    Float64,
-    Float64,
-]
-named_tuple_2 = (; zip(col_names_2, type[] for type in col_types_2 )...)
-function initialize_dataframes(results_folder, experiment_name, subexperiment_name, named_tuple_1, named_tuple_2)
-    A1 = DataFrame(named_tuple_1)
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name * "_$subexperiment_name" * "-Comparisons.csv",
-        ),
-        A1;
-        header=false,
-    )
-    # A2 = DataFrame(named_tuple_2)
-    # CSV.write(
-    #     joinpath(
-    #         results_folder,
-    #         experiment_name * "_$subexperiment_name" * "-Comparisons-Subgrad.csv",
-    #     ),
-    #     A2;
-    #     header=false,
-    # )
-    return A1#, A2
-end
-```
-
-```{julia}
-#| output: false
-function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1, col_names_2)
-    B1 = DataFrame(;
-        Dimension=manifold_dimension(M),
-        Iterations_1=maximum(first.(records[1])),
-        Time_1=times[1],
-        Objective_1=minimum([r[2] for r in records[1]]),
-        Iterations_2=maximum(first.(records[2])),
-        Time_2=times[2],
-        Objective_2=minimum([r[2] for r in records[2]]),
-    )
-    # B2 = DataFrame(;
-    #     Dimension=manifold_dimension(M),
-    #     Iterations=maximum(first.(records[3])),
-    #     Time=times[3],
-    #     Objective=minimum([r[2] for r in records[3]]),
-    # )
-    return B1#, B2
-end
-function write_dataframes(
-    B1, 
-    # B2, 
-    results_folder, 
-    experiment_name, 
-    subexperiment_name
-)
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name *
-            "_$subexperiment_name" *
-            "-Comparisons.csv",
-            # -Convex-Prox.csv",
-        ),
-        B1;
-        append=true,
-    )
-    # CSV.write(
-    #     joinpath(
-    #         results_folder,
-    #         experiment_name *
-    #         "_$subexperiment_name" *
-    #         "-Comparisons-Subgrad.csv",
-    #     ),
-    #     B2;
-    #     append=true,
-    # )
-end
-```
-
-## On Hyperbolic Space
-```{julia}
-#| output: false
-subexperiment_name = "Hn"
-global A1 = initialize_dataframes(
-    results_folder,
-    experiment_name,
-    subexperiment_name,
-    named_tuple_1,
-    named_tuple_2
-)
-
-for n in hn_dims
-
-    Random.seed!(random_seed)
-
-    M = Hyperbolic(Int(2^n))
-    data = [rand(M) for _ in 1:N]
-    q = rand(M) # we can artificially craft a point for the median component, i.e. h
-    p0 = rand(M) #data[minimum(Tuple(findmax(dists)[2]))]
-
-    g_hn(M, p) = g(M, p, data)
-    # h_hn(M, p) = h(M, p, q)
-    grad_g_hn(M, p) = grad_g(M, p, data)
-    proxes_f_hn = proxes_f(data, q)
-    prox_h_hn(M, λ, p) = prox_h(M, λ, p, q)
-    f_hn(M, p) = f(M, p, data, q)
-
-    # Optimization
-    pgm = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, prox_h_hn, p0; pgm_kwargs...)
-    pgm_result = get_solver_result(pgm)
-    pgm_record = get_record(pgm)
-
-    cppa = cyclic_proximal_point(M, f_hn, proxes_f_hn, p0; cppa_kwargs(M)...)
-    cppa_result = get_solver_result(cppa)
-    cppa_record = get_record(cppa)
-
-    records = [
-        pgm_record,
-        cppa_record,
-    ]
-
-    if benchmarking
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $prox_h_hn, $p0; $pgm_bm_kwargs...)
-        cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_f_hn, $p0; cppa_bm_kwargs($M)...)
-        
-        times = [
-            median(pgm_bm).time * 1e-9,
-            median(cppa_bm).time * 1e-9,
-        ]
-
-        B1 = export_dataframes(
-            M,
-            records,
-            times,
-            results_folder,
-            experiment_name,
-            subexperiment_name,
-            col_names_1,
-            col_names_2,
-        )
-
-        append!(A1, B1)
-        # append!(A2, B2)
-        (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
-    end
-end
-```
-
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the CRPG, while columns 5 to 7 refer to the CPPA... -->
-
-<!-- ```{julia}
-#| echo: false
-#| code-fold: true
-benchmarking && pretty_table(A1, tf = tf_markdown, header=col_names_1)
-``` -->
-<!-- ... Whereas the following table refers to the SGM
-```{julia}
-#| echo: false
-#| code-fold: true
-benchmarking && pretty_table(A2, tf = tf_markdown, header=col_names_2)
-``` -->
 
 ## Technical details
 

@@ -110,6 +110,11 @@ examples_menu =
         "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",
+        "Riemannian Proximal Gradient Methods" => [
+            "Local Convergence Analysis" => "examples/Hyperbolic-Convex-Example.md",
+            "SPD Convex Example" => "examples/SPD-Convex-Example.md",    
+            "Strongly Convex Example" => "examples/Hadamard-CRPG.md",
+        ],
         "Robust PCA" => "examples/Robust-PCA.md",
         "Rosenbrock" => "examples/Rosenbrock.md",
         "Total Variation" => "examples/Total-Variation.md",
