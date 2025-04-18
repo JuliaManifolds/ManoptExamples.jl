@@ -2,7 +2,7 @@
 title: "Proximal Gradient Method: A Geodesically Convex Example on Hyperbolic Space"
 author: "Hajg Jasa"
 date: 04/14/2025
-engine: julia
+# engine: julia
 ---
 
 ## Introduction
@@ -72,7 +72,7 @@ We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
 Random.seed!(42)
-experiment_name = "Hyperbolic-Convex-Example"
+experiment_name = "CRPG-Convex-Stepsize"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 
@@ -147,8 +147,7 @@ function estimate_lipschitz_constant(M, g, anchor, R=D, N=100_000)
     end
     return maximum(constants)
 end
-L_g = 2estimate_lipschitz_constant(M, g, p0)
-λ_D = 3/(2estimate_lipschitz_constant(M, g, p0))
+L_g = 3/2 * estimate_lipschitz_constant(M, g, p0)
 ```
 
 We now take a look at how the inequality in Theorem 4.10 in [BergmannJasaJohnPfeffer:2025:2](@cite) behaves in practice.
@@ -240,7 +239,7 @@ We can now run the optimization, first using a constant stepsize $\lambda = 1/L_
 	grad_g, 
 	prox_h, 
 	p0;
-	stepsize=ConstantLength(λ_D),
+	stepsize=ConstantLength(1/L_g),
 	record=[:Iteration, :Cost, :Iterate],
 	return_state=true,
 	stopping_criterion=StopWhenGradientMappingNormLess(atol),
@@ -254,6 +253,7 @@ pg_result = get_solver_result(pg)
 pg_record = get_record(pg)
 all(x -> x == true, [distance(M, p0, q[3]) ≤ D for q in pg_record])
 ```
+
 ... and that the final iterate is approximately the closed-form solution
 ```{julia}
 pg_result ≈ p_star
@@ -261,7 +261,8 @@ pg_result ≈ p_star
 
 We now plot the decay of the function values
 ```{julia}
-#| code-fold: true
+# | code-fold: true
+# | echo: false
 # Calculate the minimum cost for relative error
 min_cost_pg = minimum(record[2] for record in pg_record)
 iterations = [record[1] for record in pg_record]
@@ -319,7 +320,8 @@ plot!(
 
 And the convergence rate of the iterates
 ```{julia}
-#| code-fold: true
+# | code-fold: true
+# | echo: false 
 distances_pg = [max(distance(M, p_star, record[3]), eps()) for record in pg_record]
 # Get initial error for scaling reference lines
 initial_distance_pg = distances_pg[1]
@@ -361,8 +363,22 @@ plot!(
 )
 ```
 
+We can write the recorded values to a CSV file
+```{julia}
+# | output: false
+# Create a DataFrame from the recorded values
+df_pg = DataFrame(
+    Iterations = [record[1] for record in pg_record],
+    Cost = [record[2] for record in pg_record],
+    Distances = distances_pg
+)
+# Write the DataFrame to a CSV file
+csv_file_pg = joinpath(results_folder, "constant-stepsize.csv")
+CSV.write(csv_file_pg, df_pg)
+```
+
 ### Backtracked Stepsize
-We now run the optimization using a backtracked stepsize.
+We now run the optimization using a backtracked stepsize starting from $\frac{3}{2 L_g}$.
 ```{julia}
 @time pg = proximal_gradient_method(
 	M, 
@@ -371,7 +387,7 @@ We now run the optimization using a backtracked stepsize.
 	grad_g, 
 	prox_h, 
 	p0;
-	stepsize=ProxGradBacktracking(; strategy=:convex, initial_stepsize=3/2*λ_D),
+	stepsize=ProxGradBacktracking(; strategy=:convex, initial_stepsize=3/(2*L_g)),
 	record=[:Iteration, :Cost, :Iterate],
 	return_state=true,
 	stopping_criterion=StopWhenGradientMappingNormLess(atol),
@@ -385,6 +401,7 @@ pg_result = get_solver_result(pg)
 pg_record = get_record(pg)
 all(x -> x == true, [distance(M, p0, q[3]) ≤ D for q in pg_record])
 ```
+
 ... and that the final iterate is approximately the closed-form solution
 ```{julia}
 pg_result ≈ p_star
@@ -392,7 +409,8 @@ pg_result ≈ p_star
 
 We now plot the decay of the function values
 ```{julia}
-#| code-fold: true
+# | code-fold: true
+# | echo: false
 # Calculate the minimum cost for relative error
 min_cost_pg = minimum(record[2] for record in pg_record)
 iterations = [record[1] for record in pg_record]
@@ -450,7 +468,8 @@ plot!(
 
 And the convergence rate of the iterates
 ```{julia}
-#| code-fold: true
+# | code-fold: true
+# | echo: false
 distances_pg = [max(distance(M, p_star, record[3]), eps()) for record in pg_record]
 # Get initial error for scaling reference lines
 initial_distance_pg = distances_pg[1]
@@ -492,6 +511,20 @@ plot!(
 )
 ```
 
+We can write the recorded values to a CSV file
+```{julia}
+# | output: false
+# Create a DataFrame from the recorded values
+df_pg = DataFrame(
+    Iterations = [record[1] for record in pg_record],
+    Cost = [record[2] for record in pg_record],
+    Distances = distances_pg
+)
+# Write the DataFrame to a CSV file
+csv_file_pg = joinpath(results_folder, "backtracked-stepsize.csv")
+CSV.write(csv_file_pg, df_pg)
+```
+
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
@@ -513,7 +546,7 @@ println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S"))
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["Hadamard-CRPG.md"]
+Pages = ["CRPG-Convex-Stepsize.md"]
 Canonical=false
 ```
 ````

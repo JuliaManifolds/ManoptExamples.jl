@@ -71,7 +71,7 @@ We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
 random_seed = 42
-experiment_name = "SPD-Convex-Example"
+experiment_name = "CRPG-Convex-SPD"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 
@@ -194,7 +194,7 @@ end
 function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1, col_names_2)
     B1 = DataFrame(;
         Dimension=manifold_dimension(M),
-        Iterations_1=mean(first.(records[1])),
+        Iterations_1=maximum(first.(records[1])),
         Time_1=times[1],
         Objective_1=minimum([r[2] for r in records[1]]),
         # Iterations_2=maximum(first.(records[2])),
@@ -359,7 +359,7 @@ println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S"))
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["Hadamard-CRPG.md"]
+Pages = ["CRPG-Convex-SPD.md"]
 Canonical=false
 ```
 ````

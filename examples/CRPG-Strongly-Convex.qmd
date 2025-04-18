@@ -2,7 +2,7 @@
 title: "A comparison of the CRPG with the CPPA on Hadamard manifolds"
 author: "Hajg Jasa"
 date: 03/18/2025
-engine: julia
+# engine: julia
 ---
 
 ## Introduction
@@ -86,13 +86,12 @@ We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
 random_seed = 100
-experiment_name = "Hadamard-CRPG"
+experiment_name = "CRPG-Strongly-Convex"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 
 atol = 1e-8
 max_iters = 5000
-initial_stepsize = 1.0 # initial stepsize for the proximal gradient method backtracking
 N = 1000 # number of data points
 α = 3/2 # weight for the median component (h)
 hn_dims = [1, 5, 7, 10]
@@ -115,6 +114,23 @@ function proxes_f(data, q)
     push!(proxes, (M, λ, p) -> ManifoldDiff.prox_distance(M, α * λ, q, p, 1))
     return proxes
 end
+# Function to generate points close to the given point p
+function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
+    X = rand(M; vector_at = p)
+    X .= tol * rand() * X / norm(M, p, X)
+    return retract(M, p, X, retraction_method)
+end
+# Estimate Lipschitz constant of the gradient of g
+function estimate_lipschitz_constant(M, g, grad_g, anchor, R, N=10_000)
+    constants = []
+    for i in 1:N
+        p = close_point(M, anchor, R)
+        q = close_point(M, anchor, R)
+
+        push!(constants, 2/distance(M, q, p)^2 * (g(M, q) - g(M, p) - inner(M, p, grad_g(M, p), log(M, p, q))))
+    end
+    return maximum(constants)
+end
 ```
 
 We introduce some keyword arguments for the solvers we will use in this experiment
@@ -129,6 +145,8 @@ pgm_kwargs(initial_stepsize) = [
     ),
 ]
 pgm_bm_kwargs(initial_stepsize) = [
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
     :stepsize => ProxGradBacktracking(; strategy=:convex,   
         initial_stepsize=initial_stepsize),
     :stopping_criterion => StopWhenAny(
@@ -144,6 +162,8 @@ cppa_kwargs(M) = [
     ),
 ]
 cppa_bm_kwargs(M) = [
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
     :stopping_criterion => StopWhenAny(
         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
     ),
@@ -167,7 +187,7 @@ col_types_1 = [
     Int64,
     Float64,
     Float64,
-    Int64,
+    Float64,
     Float64,
     Float64,
 ]
@@ -222,7 +242,7 @@ function export_dataframes(M, records, times, results_folder, experiment_name, s
     )
     # B2 = DataFrame(;
     #     Dimension=manifold_dimension(M),
-    #     Iterations=maximum(first.(records[3])),
+    #     Iterations=median(last.(records[3])),
     #     Time=times[3],
     #     Objective=minimum([r[2] for r in records[3]]),
     # )
@@ -281,14 +301,17 @@ for n in hn_dims
     p0 = rand(M) #data[minimum(Tuple(findmax(dists)[2]))]
 
     g_hn(M, p) = g(M, p, data)
-    # h_hn(M, p) = h(M, p, q)
     grad_g_hn(M, p) = grad_g(M, p, data)
     proxes_f_hn = proxes_f(data, q)
     prox_h_hn(M, λ, p) = prox_h(M, λ, p, q)
     f_hn(M, p) = f(M, p, data, q)
 
+    D = 5/2 * maximum([distance(M, p0, di) for di in vcat(data, [q])])
+    L_g = 2 * estimate_lipschitz_constant(M, g_hn, grad_g_hn, p0, D)
+    initial_stepsize = 3/(2 * L_g)
+
     # Optimization
-    pgm = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, prox_h_hn, p0; pgm_kwargs...)
+    pgm = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, prox_h_hn, p0; pgm_kwargs(initial_stepsize)...)
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
 
@@ -302,7 +325,7 @@ for n in hn_dims
     ]
 
     if benchmarking
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $prox_h_hn, $p0; $pgm_bm_kwargs...)
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $prox_h_hn, $p0; $pgm_bm_kwargs($initial_stepsize)...)
         cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_f_hn, $p0; cppa_bm_kwargs($M)...)
         
         times = [
@@ -364,8 +387,12 @@ for n in spd_dims
     prox_h_spd(M, λ, p) = prox_h(M, λ, p, q)
     f_spd(M, p) = f(M, p, data, q)
 
+     D = 5/2 * maximum([distance(M, p0, di) for di in vcat(data, [q])])
+    L_g = 2 * estimate_lipschitz_constant(M, g_spd, grad_g_spd, p0, D)
+    initial_stepsize = 3/(2 * L_g)
+
     # Optimization
-    pgm = proximal_gradient_method(M, f_spd, g_spd, grad_g_spd, prox_h_spd, p0; pgm_kwargs...)
+    pgm = proximal_gradient_method(M, f_spd, g_spd, grad_g_spd, prox_h_spd, p0; pgm_kwargs(initial_stepsize)...)
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
 
@@ -379,7 +406,7 @@ for n in spd_dims
     ]
 
     if benchmarking
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g_spd, $grad_g_spd, $prox_h_spd, $p0; $pgm_bm_kwargs...)
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g_spd, $grad_g_spd, $prox_h_spd, $p0; $pgm_bm_kwargs($initial_stepsize)...)
         cppa_bm = @benchmark cyclic_proximal_point($M, $f_spd, $proxes_f_spd, $p0; cppa_bm_kwargs($M)...)
         
         times = [
@@ -433,7 +460,7 @@ println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S"))
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["Hadamard-CRPG.md"]
+Pages = ["CRPG-Strongly-Convex.md"]
 Canonical=false
 ```
 ````

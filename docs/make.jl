@@ -111,9 +111,9 @@ examples_menu =
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",
         "Riemannian Proximal Gradient Methods" => [
-            "Local Convergence Analysis" => "examples/Hyperbolic-Convex-Example.md",
-            "SPD Convex Example" => "examples/SPD-Convex-Example.md",    
-            "Strongly Convex Example" => "examples/Hadamard-CRPG.md",
+            "Local Convergence Analysis" => "examples/CRPG-Convex-Stepsize.md",
+            "SPD Convex Example" => "examples/CRPG-Convex-SPD.md",    
+            "Strongly Convex Example" => "examples/CRPG-Strongly-Convex.md",
         ],
         "Robust PCA" => "examples/Robust-PCA.md",
         "Rosenbrock" => "examples/Rosenbrock.md",
