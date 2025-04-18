@@ -6,9 +6,9 @@ date: 11/06/2023
 
 ## Introduction
 
-In this example we compare the Difference of Convex Algorithm (DCA) [BergmannFerreiraSantosSouza:2023](@cite)
+In this example we compare the Difference of Convex Algorithm (DCA) [BergmannFerreiraSantosSouza:2024](@cite)
 with the Frank-Wolfe Algorithm, which was introduced in [WeberSra:2022](@cite).
-This example reproduces the results from [BergmannFerreiraSantosSouza:2023](@cite), Section 7.3.
+This example reproduces the results from [BergmannFerreiraSantosSouza:2024](@cite), Section 7.3.
 
 ```{julia}
 #| echo: false

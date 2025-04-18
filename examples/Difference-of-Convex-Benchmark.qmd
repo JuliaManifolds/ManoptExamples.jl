@@ -6,9 +6,9 @@ date: 06/06/2023
 
 ## Introduction
 
-In this Benchmark we compare the Difference of Convex Algprithm (DCA) [BergmannFerreiraSantosSouza:2023](@cite)
+In this Benchmark we compare the Difference of Convex Algprithm (DCA) [BergmannFerreiraSantosSouza:2024](@cite)
 and the Difference of Convex Proximal Point Algorithm (DCPPA) [SouzaOliveira:2015](@cite) which solve
-Difference of Convex (DC) problems of the form. This Benchmark reproduces the results from [BergmannFerreiraSantosSouza:2023](@cite), Section 7.1.
+Difference of Convex (DC) problems of the form. This Benchmark reproduces the results from [BergmannFerreiraSantosSouza:2024](@cite), Section 7.1.
 
 ```math
 \operatorname*{arg\,min}_{p∈\mathcal M}\ \  g(p) - h(p)
