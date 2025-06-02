@@ -10,7 +10,11 @@ project:
     - "!HyperparameterOptimization.qmd"
     - "!RCBM-Median.qmd"
     - "!Spectral-Procrustes.qmd"
-    # - "!H2-Signal-TV.qmd"
+    - "!H2-Signal-TV.qmd"
+    # - "!CRPG-Convex-SPD.qmd"
+    - "!CRPG-Convex-Stepsize.qmd"
+    # - "!CRPG-Strongly-Convex.qmd"
+
 
 crossref:
   fig-prefix: Figure

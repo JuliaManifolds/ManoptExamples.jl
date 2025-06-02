@@ -432,6 +432,80 @@ for n in spd_dims
 end
 ```
 
+## On the Grassmann Manifold
+```{julia}
+#| output: false
+subexperiment_name = "Gr"
+k_max_gr = 2.0
+global A1_Gr = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    subexperiment_name,
+    named_tuple_1,
+    named_tuple_2
+)
+
+for (n, m) in gr_dims
+
+    Random.seed!(random_seed)
+
+    M = Grassmann(Int(n), Int(m))
+    data = [rand(M) for _ in 1:N]
+    q = rand(M) # we can artificially craft a point for the median component, i.e. h
+    p0 = rand(M) #data[minimum(Tuple(findmax(dists)[2]))]
+
+    g_gr(M, p) = g(M, p, data)
+    # h_gr(M, p) = h(M, p, q)
+    grad_g_gr(M, p) = grad_g(M, p, data)
+    proxes_f_gr = proxes_f(data, q)
+    prox_h_gr(M, λ, p) = prox_h(M, λ, p, q)
+    f_gr(M, p) = f(M, p, data, q)
+
+     D = 5/2 * maximum([distance(M, p0, di) for di in vcat(data, [q])])
+    L_g = 2 * estimate_lipschitz_constant(M, g_gr, grad_g_gr, p0, D)
+    initial_stepsize = 3/(2 * L_g)
+
+    # Optimization
+    pgm = proximal_gradient_method(M, f_gr, g_gr, grad_g_gr, prox_h_gr, p0; pgm_kwargs(initial_stepsize)...)
+    pgm_result = get_solver_result(pgm)
+    pgm_record = get_record(pgm)
+
+    cppa = cyclic_proximal_point(M, f_gr, proxes_f_gr, p0; cppa_kwargs(M)...)
+    cppa_result = get_solver_result(cppa)
+    cppa_record = get_record(cppa)
+
+    records = [
+        pgm_record,
+        cppa_record,
+    ]
+
+    if benchmarking
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $prox_h_gr, $p0; $pgm_bm_kwargs($initial_stepsize)...)
+        cppa_bm = @benchmark cyclic_proximal_point($M, $f_gr, $proxes_f_gr, $p0; cppa_bm_kwargs($M)...)
+        
+        times = [
+            median(pgm_bm).time * 1e-9,
+            median(cppa_bm).time * 1e-9,
+        ]
+
+        B1 = export_dataframes(
+            M,
+            records,
+            times,
+            results_folder,
+            experiment_name,
+            subexperiment_name,
+            col_names_1,
+            col_names_2,
+        )
+
+        append!(A1_Gr, B1)
+        # append!(A2_Gr, B2)
+        (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
+    end
+end
+```
+
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the CRPG, while columns 5 to 7 refer to the CPPA...
 ```{julia}
 #| echo: false
