@@ -432,8 +432,8 @@ for n in spd_dims
 end
 ```
 
-## On the Grassmann Manifold
-```{julia}
+<!-- ## On the Grassmann Manifold -->
+<!-- ```{julia}
 #| output: false
 subexperiment_name = "Gr"
 k_max_gr = 2.0
@@ -504,14 +504,14 @@ for (n, m) in gr_dims
         (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
     end
 end
-```
+``` -->
 
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the CRPG, while columns 5 to 7 refer to the CPPA...
-```{julia}
+<!-- We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the CRPG, while columns 5 to 7 refer to the CPPA... -->
+<!-- ```{julia}
 #| echo: false
 #| code-fold: true
 benchmarking && pretty_table(A1_SPD, tf = tf_markdown, header=col_names_1)
-```
+``` -->
 
 ## Technical details
 

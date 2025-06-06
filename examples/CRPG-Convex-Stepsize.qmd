@@ -2,7 +2,7 @@
 title: "Proximal Gradient Method: A Geodesically Convex Example on Hyperbolic Space"
 author: "Hajg Jasa"
 date: 04/14/2025
-# engine: julia
+engine: julia
 ---
 
 ## Introduction

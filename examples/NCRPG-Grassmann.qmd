@@ -164,7 +164,11 @@ We introduce some keyword arguments for the solvers we will use in this experime
 pgm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProxGradBacktracking(; strategy=:nonconvex, initial_stepsize=initial_stepsize),
+    :stepsize => ProxGradBacktracking(; 
+        strategy=:nonconvex, 
+        initial_stepsize=initial_stepsize,
+        stop_when_stepsize_less=atol,
+        ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ),
@@ -172,8 +176,11 @@ pgm_kwargs(initial_stepsize) = [
 pgm_bm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProxGradBacktracking(; strategy=:nonconvex,   
-        initial_stepsize=initial_stepsize),
+    :stepsize => ProxGradBacktracking(; 
+        strategy=:nonconvex,   
+        initial_stepsize=initial_stepsize,
+        stop_when_stepsize_less=atol,
+        ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ), 
@@ -223,9 +230,9 @@ global col_names_1 = [
     :Time_2,
     :Iterations_2,
     :Objective_2,
-    :Time_3,
-    :Iterations_3,
-    :Objective_3,
+    # :Time_3,
+    # :Iterations_3,
+    # :Objective_3,
 ]
 col_types_1 = [
     Int64,
@@ -235,9 +242,9 @@ col_types_1 = [
     Float64,
     Int64,
     Float64,
-    Float64,
-    Int64,
-    Float64,
+    # Float64,
+    # Int64,
+    # Float64,
 ]
 named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
 # global col_names_2 = [
@@ -293,9 +300,9 @@ function export_dataframes(M, records, times, results_folder, experiment_name, s
     # )
     # B2 = DataFrame(;
     #     Dimension=manifold_dimension(M),
-        Time_3=times[3],
-        Iterations_3=maximum(first.(records[3])),
-        Objective_3=minimum([r[2] for r in records[3]]),
+        # Time_3=times[3],
+        # Iterations_3=maximum(first.(records[3])),
+        # Objective_3=minimum([r[2] for r in records[3]]),
     )
     return B1#, B2
 end
@@ -375,25 +382,25 @@ for (n, m) in gr_dims
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
 
-    cppa = cyclic_proximal_point(M, f_gr, proxes_f_gr, p0; cppa_kwargs(M)...)
-    cppa_result = get_solver_result(cppa)
-    cppa_record = get_record(cppa)
+    # cppa = cyclic_proximal_point(M, f_gr, proxes_f_gr, p0; cppa_kwargs(M)...)
+    # cppa_result = get_solver_result(cppa)
+    # cppa_record = get_record(cppa)
 
     records = [
         pgm_constant_record,
         pgm_record,
-        cppa_record,
+        # cppa_record,
     ]
 
     if benchmarking
         pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $prox_h_gr, $p0; $pgm_bm_kwargs_constant($constant_stepsize)...)
         pgm_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $prox_h_gr, $p0; $pgm_bm_kwargs($initial_stepsize)...)
-        cppa_bm = @benchmark cyclic_proximal_point($M, $f_gr, $proxes_f_gr, $p0; cppa_bm_kwargs($M)...)
+        # cppa_bm = @benchmark cyclic_proximal_point($M, $f_gr, $proxes_f_gr, $p0; cppa_bm_kwargs($M)...)
         
         times = [
             median(pgm_constant_bm).time * 1e-9,
             median(pgm_bm).time * 1e-9,
-            median(cppa_bm).time * 1e-9,
+            # median(cppa_bm).time * 1e-9,
         ]
 
         B1 = export_dataframes(

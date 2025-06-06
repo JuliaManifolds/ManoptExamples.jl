@@ -75,10 +75,10 @@ experiment_name = "CRPG-Convex-SPD"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 
-atol = 1e-6
-max_iters = 15000
+atol = 1e-8
+max_iters = 150000
 τ = 1/2 # weight for the component h
-spd_dims = [2]#, 3, 4, 5]
+spd_dims = [2, 3, 4, 5]
 ```
 
 ```{julia}
@@ -97,151 +97,6 @@ f(M, p, q) = g(M, p) + h(M, p, q)
 #     push!(proxes, (M, λ, p) -> ManifoldDiff.prox_distance(M, α * λ, q, p, 1))
 #     return proxes
 # end
-```
-
-We introduce some keyword arguments for the solvers we will use in this experiment
-```{julia}
-#| output: false
-pgm_kwargs(initial_stepsize) = [
-    :record => [:Iteration, :Cost, :Iterate],
-    :return_state => true,
-    :stepsize => ProxGradBacktracking(; strategy=:convex, initial_stepsize=initial_stepsize),
-    :stopping_criterion => StopWhenAny(
-        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ),
-]
-pgm_bm_kwargs(initial_stepsize) = [
-    :stepsize => ProxGradBacktracking(; strategy=:convex, initial_stepsize=initial_stepsize),
-    :stopping_criterion => StopWhenAny(
-        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
-]
-
-# cppa_kwargs(M) = [
-#     :record => [:Iteration, :Cost, :Iterate],
-#     :return_state => true,
-#     :stopping_criterion => StopWhenAny(
-#         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
-#     ),
-# ]
-# cppa_bm_kwargs(M) = [
-#     :stopping_criterion => StopWhenAny(
-#         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
-#     ),
-# ]
-```
-
-Before running the experiments, we initialize data collection functions that we will use later
-```{julia}
-#| output: false
-global col_names_1 = [
-    :Dimension,
-    :Iterations_1,
-    :Time_1,
-    :Objective_1,
-    # :Iterations_2,
-    # :Time_2,
-    # :Objective_2,
-]
-col_types_1 = [
-    Int64,
-    Float64,
-    Float64,
-    Float64,
-    # Int64,
-    # Float64,
-    # Float64,
-]
-named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
-global col_names_2 = [
-    :Dimension,
-    :Iterations,
-    :Time,
-    :Objective,
-]
-col_types_2 = [
-    Int64,
-    Float64,
-    Float64,
-    Float64,
-]
-named_tuple_2 = (; zip(col_names_2, type[] for type in col_types_2 )...)
-function initialize_dataframes(results_folder, experiment_name, subexperiment_name, named_tuple_1, named_tuple_2)
-    A1 = DataFrame(named_tuple_1)
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name * "_$subexperiment_name" * "-Comparisons.csv",
-        ),
-        A1;
-        header=false,
-    )
-    # A2 = DataFrame(named_tuple_2)
-    # CSV.write(
-    #     joinpath(
-    #         results_folder,
-    #         experiment_name * "_$subexperiment_name" * "-Comparisons-Subgrad.csv",
-    #     ),
-    #     A2;
-    #     header=false,
-    # )
-    return A1#, A2
-end
-```
-
-```{julia}
-#| output: false
-function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1, col_names_2)
-    B1 = DataFrame(;
-        Dimension=manifold_dimension(M),
-        Iterations_1=maximum(first.(records[1])),
-        Time_1=times[1],
-        Objective_1=minimum([r[2] for r in records[1]]),
-        # Iterations_2=maximum(first.(records[2])),
-        # Time_2=times[2],
-        # Objective_2=minimum([r[2] for r in records[2]]),
-    )
-    # B2 = DataFrame(;
-    #     Dimension=manifold_dimension(M),
-    #     Iterations=maximum(first.(records[3])),
-    #     Time=times[3],
-    #     Objective=minimum([r[2] for r in records[3]]),
-    # )
-    return B1#, B2
-end
-function write_dataframes(
-    B1, 
-    # B2, 
-    results_folder, 
-    experiment_name, 
-    subexperiment_name
-)
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name *
-            "_$subexperiment_name" *
-            "-Comparisons.csv",
-            # -Convex-Prox.csv",
-        ),
-        B1;
-        append=true,
-    )
-    # CSV.write(
-    #     joinpath(
-    #         results_folder,
-    #         experiment_name *
-    #         "_$subexperiment_name" *
-    #         "-Comparisons-Subgrad.csv",
-    #     ),
-    #     B2;
-    #     append=true,
-    # )
-end
-```
-
-```{julia}
-#| output: false
 # Function to generate points close to the given point p
 function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
     X = rand(M; vector_at = p)
@@ -261,6 +116,147 @@ function estimate_lipschitz_constant(M, g, anchor, R=D, N=100_000)
 end
 ```
 
+We introduce some keyword arguments for the solvers we will use in this experiment
+```{julia}
+#| output: false
+# Solver arguments for backtracking
+pgm_kwargs(initial_stepsize) = [
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+    :stepsize => ProxGradBacktracking(; 
+        strategy=:convex, 
+        initial_stepsize=initial_stepsize,
+        stop_when_stepsize_less=atol,
+    ),
+    :stopping_criterion => StopWhenAny(
+        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
+    ),
+]
+pgm_bm_kwargs(initial_stepsize) = [
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+    :stepsize => ProxGradBacktracking(; 
+        strategy=:convex,   
+        initial_stepsize=initial_stepsize,
+        stop_when_stepsize_less=atol,
+    ),
+    :stopping_criterion => StopWhenAny(
+        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
+    ), 
+]
+# Solver arguments for constant stepsize 
+pgm_kwargs_constant(stepsize) = [
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+    :stepsize => ConstantLength(stepsize),
+    :stopping_criterion => StopWhenAny(
+        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
+    ),
+]
+pgm_bm_kwargs_constant(stepsize) = [
+    :record => [:Iteration, :Cost, :Iterate],
+    :return_state => true,
+    :stepsize => ConstantLength(stepsize),
+    :stopping_criterion => StopWhenAny(
+        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
+    ), 
+]
+# cppa_kwargs(M) = [
+#     :record => [:Iteration, :Cost, :Iterate],
+#     :return_state => true,
+#     :stopping_criterion => StopWhenAny(
+#         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
+#     ),
+# ]
+# cppa_bm_kwargs(M) = [
+#     :stopping_criterion => StopWhenAny(
+#         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
+#     ),
+# ]
+```
+
+Before running the experiments, we initialize data collection functions that we will use later
+```{julia}
+#| output: false
+# Header for the dataframe
+global col_names_1 = [
+    :Dimension,
+    :Iterations_1,
+    :Time_1,
+    :Objective_1,
+    :Iterations_2,
+    :Time_2,
+    :Objective_2,
+]
+col_types_1 = [
+    Int64,
+    Int64,
+    Float64,
+    Float64,
+    Int64,
+    Float64,
+    Float64,
+]
+named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
+# Function for initializing the dataframe
+function initialize_dataframes(
+    results_folder, 
+    experiment_name, 
+    subexperiment_name,
+    named_tuple_1,
+)
+    A1 = DataFrame(named_tuple_1)
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name * 
+            "_$subexperiment_name" *
+            "-Comparisons.csv",
+        ),
+        A1;
+        header=false,
+    )
+    return A1
+end
+```
+
+```{julia}
+#| output: false
+function export_dataframes(
+    M, 
+    records, 
+    times, 
+)
+    B1 = DataFrame(;
+        Dimension=manifold_dimension(M),
+        Iterations_1=maximum(first.(records[1])),
+        Time_1=times[1],
+        Objective_1=minimum([r[2] for r in records[1]]),
+        Iterations_2=maximum(first.(records[2])),
+        Time_2=times[2],
+        Objective_2=minimum([r[2] for r in records[2]]),
+    )
+    return B1
+end
+function write_dataframes(
+    B1, 
+    results_folder, 
+    experiment_name, 
+    subexperiment_name
+)
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name *
+            "_$subexperiment_name" *
+            "-Comparisons.csv",
+        ),
+        B1;
+        append=true,
+    )
+end
+```
+
 ```{julia}
 subexperiment_name = "SPD"
 k_max_spd = 0.0
@@ -269,7 +265,6 @@ global A1_SPD = initialize_dataframes(
     experiment_name,
     subexperiment_name,
     named_tuple_1,
-    named_tuple_2
 )
 
 for n in spd_dims
@@ -284,12 +279,16 @@ for n in spd_dims
     f_spd(M, p) = f(M, p, q)
 
     D = 4*distance(M, p0, q)
-    # Coseravative estimate of the Lipschitz constant for grad_g
+    # Conseravative estimate of the Lipschitz constant for grad_g
     L_g = 3/2 * estimate_lipschitz_constant(M, g, p0, D)
     initial_stepsize = 1/L_g
     println(initial_stepsize)
 
     # Optimization
+    pgm_constant = proximal_gradient_method(M, f_spd, g, grad_g, prox_h_spd, p0; pgm_bm_kwargs_constant(initial_stepsize)...)
+    pgm_constant_result = get_solver_result(pgm_constant)
+    pgm_constant_record = get_record(pgm_constant) 
+    # We can also use a backtracked stepsize
     pgm = proximal_gradient_method(M, f_spd, g, grad_g, prox_h_spd, p0; pgm_kwargs(initial_stepsize)...)
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
@@ -299,32 +298,29 @@ for n in spd_dims
     # cppa_record = get_record(cppa)
 
     records = [
+        pgm_constant_record,
         pgm_record,
         # cppa_record,
     ]
 
+    # Benchmarking
     if benchmarking
+        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $prox_h_spd, $p0; $pgm_bm_kwargs_constant($initial_stepsize)...)
         pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $prox_h_spd, $p0; $pgm_bm_kwargs($initial_stepsize)...)
         # cppa_bm = @benchmark cyclic_proximal_point($M, $f_spd, $proxes_f_spd, $p0; cppa_bm_kwargs($M)...)
         
         times = [
+            median(pgm_constant_bm).time * 1e-9,
             median(pgm_bm).time * 1e-9,
             # median(cppa_bm).time * 1e-9,
         ]
-
+        # Export the results
         B1 = export_dataframes(
             M,
             records,
             times,
-            results_folder,
-            experiment_name,
-            subexperiment_name,
-            col_names_1,
-            col_names_2,
         )
-
         append!(A1_SPD, B1)
-        # append!(A2_SPD, B2)
         (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
     end
 end
