@@ -78,6 +78,7 @@ end
 end
 
 """
+eval: function that evaluates y at left and right intverval point of i-th interval, signature: eval(y, i, scaling)
  A:      Matrix to be written into\\
 row_idx: row index of block inside system\\
 detT:    degree of test function: 1: linear, 0: constant\\
@@ -88,15 +89,15 @@ nCell:    total number of intervals\\
 y:       iterate\\
 ...
 """
-function get_Jac!(A,row_idx,degT,col_idx,degB,h, nCells,y,integrand,transport)
+function get_Jac!(eval,A,row_idx,degT,col_idx,degB,h, nCells,y,integrand,transport)
 	M = integrand.domain
 	N = integrand.precodomain
 	# loop: time intervals
 	for i in 1:nCells
 
 		# Evaluation of the current iterate. This routine has to be provided from outside, because knowledge about the basis functions is needed
-		yl=evaluate(y,i,0.0)
-		yr=evaluate(y,i,1.0)
+		yl=eval(y,i,0.0)
+		yr=eval(y,i,1.0)
 
 		Bcl=get_basis(M,yl.x[col_idx],DefaultOrthonormalBasis())
 	    Bl = get_vectors(M,yl.x[col_idx], Bcl)
@@ -159,12 +160,12 @@ function assemble_local_rhs!(b,row_idx, h, i, yl, yr, T, tlf, trf, integrand)
 end
 
 
-function get_rhs_row!(b,row_idx,degT,h,nCells,y,integrand)
+function get_rhs_row!(eval,b,row_idx,degT,h,nCells,y,integrand)
 	CoDom = integrand.precodomain
 	# loop: time intervals
 	for i in 1:nCells
-		yl=evaluate(y,i,0.0)
-		yr=evaluate(y,i,1.0)
+		yl=eval(y,i,0.0)
+		yr=eval(y,i,1.0)
 
 		Tcl=get_basis(CoDom,yl.x[row_idx],DefaultOrthonormalBasis())
 	    Tl = get_vectors(CoDom, yl.x[row_idx], Tcl)
@@ -180,15 +181,15 @@ function get_rhs_row!(b,row_idx,degT,h,nCells,y,integrand)
 	end
 end
 
-function get_rhs_simplified!(b,row_idx,degT,h,nCells,y,y_trial,integrand,transport)
+function get_rhs_simplified!(eval, b,row_idx,degT,h,nCells,y,y_trial,integrand,transport)
 	S = integrand.precodomain
 	# loop: time intervals
 	for i in 1:nCells
-			yl=evaluate(y,i,0.0)
-		    yr=evaluate(y,i,1.0)
+			yl=eval(y,i,0.0)
+		    yr=eval(y,i,1.0)
 			
-			yl_trial=evaluate(y_trial,i,0.0)
-			yr_trial=evaluate(y_trial,i,1.0)
+			yl_trial=eval(y_trial,i,0.0)
+			yr_trial=eval(y_trial,i,1.0)
 		
 			Tcl=get_basis(S,yl.x[row_idx],DefaultOrthonormalBasis())
 			Tl=get_vectors(S, yl.x[row_idx],Tcl)
@@ -210,12 +211,4 @@ function get_rhs_simplified!(b,row_idx,degT,h,nCells,y,y_trial,integrand,transpo
         	assemble_local_rhs!(b,row_idx, h, i, yl_trial, yr_trial, Tr, 1, 1, integrand)		
 			end
 	end
-end
-
-function evaluate(y, i, tloc)
-	return ArrayPartition(
-		(1.0-tloc)*y.x[1][i-1]+tloc*y.x[1][i],
-		(1.0-tloc)*y.x[2][i-1]+tloc*y.x[2][i],
-		y.x[3][i]
-	)
 end
