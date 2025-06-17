@@ -118,6 +118,7 @@ examples_menu =
         "Riemannian Proximal Gradient Methods" => [
             "Local Convergence Analysis" => "examples/CRPG-Convex-Stepsize.md",
             "SPD Convex Example" => "examples/CRPG-Convex-SPD.md",    
+            raw"Mean on $\mathbb H^n$" => "examples/CRPG-Constrained-Mean-Hn.md",
             "Strongly Convex Example" => "examples/CRPG-Strongly-Convex.md",
         ],
         "Robust PCA" => "examples/Robust-PCA.md",

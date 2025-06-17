@@ -90,7 +90,7 @@ experiment_name = "NCRPG-Grassmann"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 
-atol = 1e-8
+atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
 α = 1/2 # weight for the median component (h)
@@ -145,17 +145,6 @@ function λ_δ(δ, M, h, grad_g, p1, k_max, D, N=100)
     π_k = π / √k_max
     return (√(4*(α_2 - α_1)^2 + π_k^2/(2+δ)^2 * α_g^2) - 2*(α_2 - α_1))/(2*α_g^2)
 end
-# # Estimate Lipschitz constant of the gradient of g
-# function estimate_lipschitz_constant(M, g, grad_g, anchor, R, N=1000)
-#     constants = []
-#     for i in 1:N
-#         p = close_point(M, anchor, R)
-#         q = close_point(M, anchor, R)
-
-#         push!(constants, 2/distance(M, q, p)^2 * (g(M, q) - g(M, p) - inner(M, p, grad_g(M, p), log(M, p, q))))
-#     end
-#     return maximum(constants)
-# end
 ```
 
 We introduce some keyword arguments for the solvers we will use in this experiment
@@ -164,7 +153,7 @@ We introduce some keyword arguments for the solvers we will use in this experime
 pgm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProxGradBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(; 
         strategy=:nonconvex, 
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
@@ -176,7 +165,7 @@ pgm_kwargs(initial_stepsize) = [
 pgm_bm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProxGradBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(; 
         strategy=:nonconvex,   
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
@@ -230,9 +219,6 @@ global col_names_1 = [
     :Time_2,
     :Iterations_2,
     :Objective_2,
-    # :Time_3,
-    # :Iterations_3,
-    # :Objective_3,
 ]
 col_types_1 = [
     Int64,
@@ -242,53 +228,26 @@ col_types_1 = [
     Float64,
     Int64,
     Float64,
-    # Float64,
-    # Int64,
-    # Float64,
 ]
 named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
-# global col_names_2 = [
-#     :Dimension,
-#     :Iterations,
-#     :Time,
-#     :Objective,
-# ]
-# col_types_2 = [
-#     Int64,
-#     Int64,
-#     Float64,
-#     Float64,
-# ]
-# named_tuple_2 = (; zip(col_names_2, type[] for type in col_types_2 )...)
-function initialize_dataframes(results_folder, experiment_name, subexperiment_name, named_tuple_1)#, named_tuple_2)
+function initialize_dataframes(results_folder, experiment_name, subexperiment_name, named_tuple_1)
     A1 = DataFrame(named_tuple_1)
     CSV.write(
         joinpath(
             results_folder,
             experiment_name * 
-            # "_$subexperiment_name" * 
             "-Comparisons.csv",
         ),
         A1;
         header=false,
     )
-    # A2 = DataFrame(named_tuple_2)
-    # CSV.write(
-    #     joinpath(
-    #         results_folder,
-    #         experiment_name * 
-    #         "-Comparisons-CPPA.csv",
-    #     ),
-    #     A2;
-    #     header=false,
-    # )
-    return A1#, A2
+    return A1
 end
 ```
 
 ```{julia}
 #| output: false
-function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1)#, col_names_2)
+function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1)
     B1 = DataFrame(;
         Dimension=manifold_dimension(M),
         Time_1=times[1],
@@ -297,18 +256,11 @@ function export_dataframes(M, records, times, results_folder, experiment_name, s
         Time_2=times[2],
         Iterations_2=maximum(first.(records[2])),
         Objective_2=minimum([r[2] for r in records[2]]),   
-    # )
-    # B2 = DataFrame(;
-    #     Dimension=manifold_dimension(M),
-        # Time_3=times[3],
-        # Iterations_3=maximum(first.(records[3])),
-        # Objective_3=minimum([r[2] for r in records[3]]),
     )
-    return B1#, B2
+    return B1
 end
 function write_dataframes(
     B1, 
-    # B2, 
     results_folder, 
     experiment_name, 
     subexperiment_name
@@ -317,22 +269,11 @@ function write_dataframes(
         joinpath(
             results_folder,
             experiment_name *
-            # "_$subexperiment_name" *
             "-Comparisons.csv",
         ),
         B1;
         append=true,
     )
-    # CSV.write(
-    #     joinpath(
-    #         results_folder,
-    #         experiment_name *
-    #         # "_$subexperiment_name" *
-    #         "-Comparisons-CPPA.csv",
-    #     ),
-    #     B2;
-    #     append=true,
-    # )
 end
 ```
 
@@ -344,7 +285,6 @@ global A1_Gr = initialize_dataframes(
     experiment_name,
     subexperiment_name,
     named_tuple_1,
-    # named_tuple_2
 )
 
 for (n, m) in gr_dims
@@ -373,34 +313,27 @@ for (n, m) in gr_dims
     initial_stepsize = 1.0
 
     # Optimization
-    pgm_constant = proximal_gradient_method(M, f_gr, g_gr, grad_g_gr, prox_h_gr, p0; pgm_kwargs_constant(constant_stepsize)...)
+    pgm_constant = proximal_gradient_method(M, f_gr, g_gr, grad_g_gr, p0; prox_nonsmooth=prox_h_gr, pgm_kwargs_constant(constant_stepsize)...)
     pgm_constant_result = get_solver_result(pgm_constant)
     pgm_constant_record = get_record(pgm_constant)
 
     # We can also use a backtracked stepsize
-    pgm = proximal_gradient_method(M, f_gr, g_gr, grad_g_gr, prox_h_gr, p0; pgm_kwargs(initial_stepsize)...)
+    pgm = proximal_gradient_method(M, f_gr, g_gr, grad_g_gr, p0; prox_nonsmooth=prox_h_gr, pgm_kwargs(initial_stepsize)...)
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
-
-    # cppa = cyclic_proximal_point(M, f_gr, proxes_f_gr, p0; cppa_kwargs(M)...)
-    # cppa_result = get_solver_result(cppa)
-    # cppa_record = get_record(cppa)
 
     records = [
         pgm_constant_record,
         pgm_record,
-        # cppa_record,
     ]
 
     if benchmarking
-        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $prox_h_gr, $p0; $pgm_bm_kwargs_constant($constant_stepsize)...)
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $prox_h_gr, $p0; $pgm_bm_kwargs($initial_stepsize)...)
-        # cppa_bm = @benchmark cyclic_proximal_point($M, $f_gr, $proxes_f_gr, $p0; cppa_bm_kwargs($M)...)
+        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs_constant($constant_stepsize)...)
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs($initial_stepsize)...)
         
         times = [
             median(pgm_constant_bm).time * 1e-9,
             median(pgm_bm).time * 1e-9,
-            # median(cppa_bm).time * 1e-9,
         ]
 
         B1 = export_dataframes(
@@ -411,11 +344,9 @@ for (n, m) in gr_dims
             experiment_name,
             subexperiment_name,
             col_names_1,
-            # col_names_2,
         )
 
         append!(A1_Gr, B1)
-        # append!(A2_Gr, B2)
         (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
     end
 end

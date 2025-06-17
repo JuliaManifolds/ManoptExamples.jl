@@ -387,7 +387,7 @@ We now run the optimization using a backtracked stepsize starting from $\frac{3}
 	grad_g, 
 	prox_h, 
 	p0;
-	stepsize=ProxGradBacktracking(; strategy=:convex, initial_stepsize=3/(2*L_g)),
+	stepsize=ProximalGradientMethodBacktracking(; strategy=:convex, initial_stepsize=3/(2*L_g)),
 	record=[:Iteration, :Cost, :Iterate],
 	return_state=true,
 	stopping_criterion=StopWhenGradientMappingNormLess(atol),

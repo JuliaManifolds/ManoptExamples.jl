@@ -1,0 +1,553 @@
+---
+title: "The Constrained mean on high-dimensional Hyperbolic space."
+author: "Hajg Jasa, Ronny Bergmann"
+date: 16/06/2025
+engine: julia
+---
+
+## Introduction
+
+This example is to be thought of as a continuation of the [Constrained Mean on Hyperbolic Space](https://juliamanifolds.github.io/ManoptExamples.jl/stable/examples/Constrained-Mean-Hn/), where we compare the Intrinsic Convex Riemannian Proximal Gradient Method (CRPG) from [BergmannJasaJohnPfeffer:2025:2](@cite) with the Projected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite).
+For CRPG, we test performances of both constant and backtracked stepsize strategies.
+
+```{julia}
+#| echo: false
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(path="../") # a trick to work on the local dev version of ManoptExamples
+ENV["GKSwstype"] = "100"
+```
+
+```{julia}
+#| output: false
+using Chairmarks, CSV, DataFrames, Manifolds, Manopt, CairoMakie, Random
+import ColorSchemes.tol_vibrant
+```
+
+Consider the constrained Riemannian center of mass
+for a given set of points ``q_i \in \mathcal M$ $i=1,\ldots,N$
+given by
+
+```math
+\operatorname*{arg\,min}_{p\in\mathcal C}
+\sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i)
+```
+
+constrained to a set $\mathcal C \subset \mathcal M$.
+
+The same problem can be formulated as an unconstrained optimization problem by introducing the characteristic function for the set $\mathcal C$:
+
+```math
+\operatorname*{arg\,min}_{p\in\mathcal M}
+\sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i) + \chi_{\mathcal C}(p)
+```
+
+where $\chi_{\mathcal C}(p) = 0$ if $p \in \mathcal C$ and $\chi_{\mathcal C}(p) = \infty$ otherwise.
+This formulation allows us to use CRPG to solve the problem.
+
+For this experiment set $\mathcal M = \mathbb H^d$ for $d=2,\ldots,200$, the ``[Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)``{=commonmark}
+and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around the center point $c$, where we choose here $r=\frac{1}{\sqrt{n}}$ and $c = (0,\ldots,0,1)^{\mathrm{T}}$ and a $σ = \frac{3}{2}n^{1/4}$.
+
+```{julia}
+#| output: false
+n_range = Vector(2:10)
+radius_range = [1 / sqrt(n) for n in n_range]
+N_range = [400 for n ∈ n_range]
+M_range = [Hyperbolic(n) for n ∈ n_range]
+σ_range = [ 1.5/sqrt(sqrt(n-1)) for n ∈ n_range]
+```
+
+The data consists of $N=200$ points, where we skew the data a bit to force the mean to be outside of the constrained set $\mathcal C$.
+
+
+```{julia}
+#| echo: false
+#| output: false
+experiment_name = "CRPG-CnBallConstrMean-$(minimum(n_range))-$(maximum(n_range))-"
+folder = (@__DIR__) * "/crpg-projected-gradient-results/"
+fn = folder * experiment_name
+write_csv = true;
+(!isdir(folder) && write_csv) && mkpath(folder)
+op= [];
+```
+
+## Cost, gradient and projection
+
+We can formulate the constrained problem above in two different forms.
+Both share a cost and require a gradient. For performance reasons, we also provide a mutating variant of the gradient
+
+```{julia}
+#| output: false
+f(M, p; pts=[]) = 1 / (2 * length(pts)) .* sum(distance(M, p, q)^2 for q in pts)
+
+grad_f(M, p; pts=[]) = -1 / length(pts) .* sum(log(M, p, q) for q in pts)
+
+function grad_f!(M, X, p; pts=[])
+    zero_vector!(M, X, p)
+    Y = zero_vector(M, p)
+    for q in pts
+        log!(M, Y, p, q)
+        X .+= Y
+    end
+    X .*= -1 / length(pts)
+    return X
+end
+```
+
+We can model the constraint either with an inequality constraint $g(p) \geq 0$ or using a projection onto the set. For the gradient of $g$ and the projection we again also provide mutating variants.
+Lastly, we define the cost function $F$ as the sum of the original cost and the characteristic function for the set $\mathcal C$.
+
+```{julia}
+#| output: false
+g(M, p; op=[], radius=1) = distance(M, op, p)^2 - radius^2;
+# The characteristic function for the set C is defined with 2eps() to avoid numerical issues
+characteristic_C(M, p; op=[], radius=1) = (g(M, p; op=op, radius=radius) ≤ 2eps()) ? 0 : Inf;
+
+function project_C(M, p; op=[], radius=1)
+    X = log(M, op, p)
+    n = norm(M, op, X)
+    q = (n > radius) ? exp(M, op, (radius / n) * X) : copy(M, p)
+    return q
+end;
+
+function project_C!(M, q, p; radius=1, op=[], X=zero_vector(M, op))
+    log!(M, X, op, p)
+    n = norm(M, op, X)
+    if (n > radius)
+        exp!(M, q, op, (radius / n) * X)
+    else
+        copyto!(M, q, p)
+    end
+    return q
+end;
+
+grad_g(M, p; op=[]) = -2 * log(M, p, op)
+function grad_g!(M, X, p; op=[])
+    log!(M, X, p, op)
+    X .*= -2
+    return X
+end
+
+F(M, p; pts=[], radius=1, op=[]) = f(M, p; pts=pts) + characteristic_C(M, p; op=op, radius=radius)
+```
+
+## The mean
+
+For comparison, we first compute the Riemannian center of mass, that is the minimization above but not constrained to $\mathcal C$. We can then project this onto $\mathcal C$.
+For the projected mean we obtain $g(p) = 0$ since the original mean is outside of the set, the projected one lies on the boundary.
+
+We first generate all data
+```{julia}
+#| output: false
+centers = [[zeros(n)..., 1.0] for n in n_range]
+begin
+    Random.seed!(5)
+    data = [
+        [
+            exp(
+                M,
+                c,
+                get_vector(
+                    M, c, σ * randn(n) .+ 2 * r .* ones(n), DefaultOrthonormalBasis()
+                ),
+            ) for _ in 1:N
+        ] for
+        (c, r, n, N, M, σ) in zip(centers, radius_range, n_range, N_range, M_range, σ_range)
+    ]
+end
+```
+
+```{julia}
+means = [mean(M, d) for (M, d) in zip(M_range, data)]
+dc = [
+    characteristic_C(M, m; op=c, radius=r) for
+    (M, m, c, r) in zip(M_range, means, centers, radius_range)
+]
+minimum(dc) # Sanity Check, this should be inf
+```
+
+```{julia}
+Proj_means = [
+    project_C(M, m; op=c, radius=r) for
+    (M, m, c, r) in zip(M_range, means, centers, radius_range)
+]
+# Samll sanity check, these should all be about zero
+ds = [distance(M, m, c) - r for (M, m, c, r) in zip(M_range, Proj_means, centers, radius_range)]
+maximum(abs.(ds))
+```
+
+## The experiment
+
+First, we define a single test function for one set of data for a manifold
+
+```{julia}
+function bench_aep(Manifold, center, radius, data)
+    # local functions
+    _f(M, p) = f(M, p; pts=data)
+    _grad_f!(M, X, p) = grad_f!(M, X, p; pts=data)
+    _proj_C!(M, q, p) = project_C!(M, q, p; radius=radius, op=center)
+    _F(M, p) = F(M, p; pts=data, radius=radius, op=center)
+    _prox_I!(M, q, λ, p) = _proj_C!(M, q, p)
+    # Copmute the Lipschitz constant of the gradient of f for the stepsize
+    D = 2 * maximum([distance(Manifold, center, pt) for pt in data])
+    L_f = Manopt.ζ_1(-1, D)
+    constant_stepsize = 1 / L_f
+    initial_stepsize = 3/2 * L_f
+    #
+    # returns
+    stats = Dict(:CRPG_CN => Dict(), :CRPG_BT => Dict(), :PGA => Dict())
+    #
+    mean_crpg_cn = copy(Manifold, center)
+    crpg_cn = proximal_gradient_method!(
+        Manifold, 
+        _F, 
+        _f, 
+        _grad_f!, 
+        mean_crpg_cn;
+        prox_nonsmooth=_prox_I!,
+        evaluation=InplaceEvaluation(), return_state=true,
+        record=[:Iteration, :Cost],
+        stepsize=ConstantLength(
+            constant_stepsize,
+        ),
+        stopping_criterion=StopWhenGradientMappingNormLess(1e-7)|StopAfterIteration(5000),
+    )
+    stats[:CRPG_CN][:Iter] = length(get_record(crpg_cn, :Iteration))
+    stats[:CRPG_CN][:Cost] = get_record(crpg_cn)
+    # 
+    # Backtracked stepsize
+    mean_crpg_bt = copy(Manifold, center)
+    crpg_bt = proximal_gradient_method!(
+        Manifold, 
+        _F, 
+        _f, 
+        _grad_f!, 
+        mean_crpg_bt;
+        prox_nonsmooth=_prox_I!,
+        evaluation=InplaceEvaluation(), return_state=true,
+        record=[:Iteration, :Cost],
+        stepsize=ProximalGradientMethodBacktracking(; 
+            strategy=:convex,   
+            initial_stepsize=initial_stepsize,
+            stop_when_stepsize_less=1e-7,
+            contraction_factor=0.9,
+        ),
+        stopping_criterion=StopWhenGradientMappingNormLess(1e-7)|StopAfterIteration(5000),
+    )
+    stats[:CRPG_BT][:Iter] = length(get_record(crpg_bt, :Iteration)) 
+    stats[:CRPG_BT][:Cost] = get_record(crpg_bt)
+    # 
+    mean_pga = copy(Manifold, center)
+    pgas = projected_gradient_method!(
+        Manifold,
+        _f,
+        _grad_f!,
+        _proj_C!,
+        mean_pga;
+        evaluation=InplaceEvaluation(),
+        record=[:Iteration, :Cost],
+        stopping_criterion=StopAfterIteration(150) |
+                           StopWhenProjectedGradientStationary(Manifold, 1e-7),
+        return_state=true,
+    )
+    stats[:PGA][:Iter] = length(get_record(pgas, :Iteration))
+    stats[:PGA][:Cost] = get_record(pgas)
+    #
+    #
+    # Benchmarks
+    crpg_b_cn = @be proximal_gradient_method!($Manifold, $_F, $_f, $_grad_f!,
+        $(copy(Manifold, center)); prox_nonsmooth=$_prox_I!, evaluation=$(InplaceEvaluation()),
+        stepsize=$(ConstantLength(
+            constant_stepsize,
+        )),
+        stopping_criterion=$(StopWhenGradientMappingNormLess(1e-7)|StopAfterIteration(5000)),
+    ) evals = 1 samples = 10 seconds = 100
+    stats[:CRPG_CN][:time] = mean(crpg_b_cn).time
+    crpg_b_bt = @be proximal_gradient_method!($Manifold, $_F, $_f, $_grad_f!,
+        $(copy(Manifold, center)); prox_nonsmooth=$_prox_I!, evaluation=$(InplaceEvaluation()),
+        stepsize=$(ProximalGradientMethodBacktracking(; 
+            strategy=:convex,   
+            initial_stepsize=initial_stepsize,
+            stop_when_stepsize_less=1e-7,
+            contraction_factor=0.9,
+        )),
+        stopping_criterion=$(StopWhenGradientMappingNormLess(1e-7)|StopAfterIteration(5000)),
+    ) evals = 1 samples = 10 seconds = 100
+    stats[:CRPG_BT][:time] = mean(crpg_b_bt).time
+    # 
+    pga_b = @be projected_gradient_method!($Manifold, $_f, $_grad_f!, $_proj_C!,
+        $(copy(Manifold, center)); evaluation=$(InplaceEvaluation()),
+        stopping_criterion=$(
+            StopAfterIteration(150) | StopWhenProjectedGradientStationary(Manifold, 1e-7)
+        ),
+    ) evals = 1 samples = 10 seconds = 100
+    stats[:PGA][:time] = mean(pga_b).time
+    return stats
+end
+```
+
+and run these
+
+```{julia}
+#| output: false
+#| echo: false
+b = [bench_aep(M, c, r, d) for (M, c, r, d) in zip(M_range, centers, radius_range, data)]
+```
+
+The resulting plot of runtime is
+
+```{julia}
+fig = Figure()
+axis = Axis(fig[1, 1]; title=L"\text{Time needed per dimension }$\mathbb{H}^d$")
+lines!(axis, n_range, [bi[:CRPG_CN][:time] for bi in b]; label="CRPG, constant step")
+lines!(axis, n_range, [bi[:CRPG_BT][:time] for bi in b]; label="CRPG, backtracked step")
+lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label="PGA")
+axis.xlabel = "Manifold dimension d"
+axis.ylabel = "runtime (sec.)"
+axislegend(axis; position=:lt)
+fig
+```
+
+```{julia}
+#| output: false
+#| echo: false
+write_csv && CSV.write(
+    "$(fn)times.csv",
+    DataFrame(;
+        d=n_range,
+        crpg_cn=[bi[:CRPG_CN][:time] for bi in b],
+        crpg_bt=[bi[:CRPG_BT][:time] for bi in b],
+        pga=[bi[:PGA][:time] for bi in b],
+    ),
+)
+```
+
+and the number of iterations reads
+
+```{julia}
+fig2 = Figure()
+axis2 = Axis(fig2[1, 1]; title=L"\text{Iterations needed per dimension }$\mathbb{H}^d$")
+lines!(axis2, n_range, [bi[:CRPG_CN][:Iter] for bi in b]; label="CRPG constant step")
+lines!(axis2, n_range, [bi[:CRPG_BT][:Iter] for bi in b]; label="CRPG backtracked step")
+lines!(axis2, n_range, [bi[:PGA][:Iter] for bi in b]; label="PGA")
+axis2.xlabel = "Manifold dimension d"
+axis2.ylabel = "# Iterations"
+axislegend(axis2; position=:lt)
+fig2
+```
+
+Lastly, we showcase the convergence rates in both functions values and distances to the minimizer for $d \in \{2, 10, 100\}$.
+```{julia}
+# | output: false
+function plot_convergence(
+    benchmarks,
+    dimensions=[2, 3, 100]
+)
+    # Extract the results for the specified dimensions
+    crpg_cn = [bi[:CRPG_CN] for (d, bi) in enumerate(benchmarks) if (d+1) in dimensions]
+    crpg_bt = [bi[:CRPG_BT] for (d, bi) in enumerate(benchmarks) if (d+1) in dimensions]
+    pga = [bi[:PGA] for (d, bi) in enumerate(benchmarks) if (d+1) in dimensions]
+
+    figs = Vector{Figure}()
+
+    for i in 1:length(crpg_cn)
+
+        # Get the solvers' results and records
+        # crpg_cn_result = crpg_cn[i][:Result]
+        crpg_cn_record = crpg_cn[i][:Cost]
+
+        # crpg_bt_result = crpg_bt[i][:Result]
+        crpg_bt_record = crpg_bt[i][:Cost]
+
+        # pga_result = pga[i][:Result]
+        pga_record = pga[i][:Cost]
+
+        # Calculate the minimum cost for relative error
+        min_cost_crpg_cn = minimum(record[2] for record in crpg_cn_record)
+        min_cost_crpg_bt = minimum(record[2] for record in crpg_bt_record)
+        min_cost_pga = minimum(record[2] for record in pga_record)
+
+        # Create vectors for plotting
+        iterations_crpg_cn = [record[1] for record in crpg_cn_record]
+        iterations_crpg_bt = [record[1] for record in crpg_bt_record]
+        iterations_pga = [record[1] for record in pga_record]
+
+        # Get initial error for scaling reference lines
+        relative_errors_crpg_cn = [max(record[2] - min_cost_crpg_cn, √eps()) for record in crpg_cn_record]
+        initial_error_crpg_cn = relative_errors_crpg_cn[1]
+
+        relative_errors_crpg_bt = [max(record[2] - min_cost_crpg_bt, √eps()) for record in crpg_bt_record]
+        initial_error_crpg_bt = relative_errors_crpg_bt[1]
+
+        relative_errors_pga = [max(record[2] - min_cost_pga, √eps()) for record in pga_record]
+        initial_error_pga = relative_errors_pga[1]
+
+        initial_error = max(
+            initial_error_crpg_cn,
+            initial_error_crpg_bt,
+            initial_error_pga
+        )
+        iterations = max(
+            iterations_crpg_cn,
+            iterations_crpg_bt,
+            iterations_pga
+        )
+
+        # Create reference trajectories
+        # O(1/√k)
+        ref_rate_sqrt = [initial_error/√k for k in iterations]
+        # O(1/k)
+        ref_rate_1 = [initial_error/k for k in iterations]
+        # O(1/k²)
+        ref_rate_2 = [initial_error/k^2 for k in iterations]
+        # O(1/2^k)
+        ref_rate_2k = [initial_error/2^k for k in iterations]
+
+        # Create the convergence plot
+        fig = Figure()
+        ax = Axis(fig[1, 1],
+            title =L"\mathbb{H}^{%$(dimensions[i])}",
+            xlabel =L"\text{Iterations }(k)",
+            ylabel =L"f(p_k) - f_*",
+            xscale=log10,
+            yscale=log10,
+            yminorticksvisible = true, 
+            yminorgridvisible = true,
+            yminorticks = IntervalsBetween(8),
+        )
+        lines!(
+            ax,
+            iterations_crpg_cn,
+            relative_errors_crpg_cn;
+            label="CRPG, constant step",
+            linewidth=2,
+            color=tol_vibrant[1],
+        )
+        lines!(
+            ax,
+            iterations_crpg_bt,
+            relative_errors_crpg_bt;
+            label="CRPG, backtracked step",
+            linewidth=2,
+            color=tol_vibrant[2],
+        )
+        lines!(
+            ax,
+            iterations_pga,
+            relative_errors_pga;
+            label="PGA",
+            linewidth=2,
+            color=tol_vibrant[3],
+        )
+
+        # Add reference lines
+        lines!(
+            ax,
+            iterations_crpg_cn,
+            ref_rate_sqrt;
+            linestyle=:dash,
+            linewidth=1.5,
+            color=:black,
+            label=L"O\left(k^{-1/2}\right)"
+        )
+        lines!(
+            ax,
+            iterations_crpg_cn,
+            ref_rate_1;
+            linestyle=:dashdot,
+            linewidth=1.5,
+            color=:black,
+            label=L"O\left(k^{-1}\right)"
+        )
+        lines!(
+            ax,
+            iterations_crpg_cn,
+            ref_rate_2;
+            linestyle=:dot,
+            linewidth=1.5,
+            color=:black,
+            label=L"O\left(k^{-2}\right)"
+        )
+        lines!(
+            ax,
+            iterations_crpg_cn,
+            ref_rate_2k;
+            linestyle=:solid,
+            linewidth=1.5,
+            color=:black,
+            label=L"O\left(2^{-k}\right)"
+        )
+        # axislegend(ax, position = :lb)
+        fig[1, 2] = Legend(fig, ax, framevisible = true)
+        fig
+
+        # Save the figure
+        # if write_csv
+        #     CSV.write(
+        #         "$(fn)convergence-$(dimensions[i]).csv",
+        #         DataFrame(;
+        #             Iterations=iterations_crpg_cn,
+        #             RelativeErrors=relative_errors_crpg_cn,
+        #             IterationsPGA=iterations_pga,
+        #             RelativeErrorsPGA=relative_errors_pga,
+        #         ),
+        #     )
+        # end
+
+        push!(figs, fig)
+    end
+    return figs
+end
+figs = plot_convergence(b, [2, 10, 100])
+```
+
+```{julia}
+# | code-fold: true
+for fig in figs
+    display(fig)
+end
+```
+
+```{julia}
+#| output: false
+#| echo: false
+write_csv && CSV.write(
+    "$(fn)iterations.csv",
+    DataFrame(;
+        d=n_range,
+        crpg_cn=[bi[:CRPG_CN][:Iter] for bi in b],
+        crpg_bt=[bi[:CRPG_BT][:Iter] for bi in b],
+        pga=[bi[:PGA][:Iter] for bi in b],
+    ),
+)
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["CRPG-Constrained-Mean-Hn.md"]
+Canonical=false
+```
+````
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```

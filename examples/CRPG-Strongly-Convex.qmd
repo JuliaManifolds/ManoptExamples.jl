@@ -139,7 +139,7 @@ We introduce some keyword arguments for the solvers we will use in this experime
 pgm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProxGradBacktracking(; strategy=:convex, initial_stepsize=initial_stepsize),
+    :stepsize => ProximalGradientMethodBacktracking(; strategy=:convex, initial_stepsize=initial_stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ),
@@ -147,7 +147,7 @@ pgm_kwargs(initial_stepsize) = [
 pgm_bm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProxGradBacktracking(; strategy=:convex,   
+    :stepsize => ProximalGradientMethodBacktracking(; strategy=:convex,   
         initial_stepsize=initial_stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
