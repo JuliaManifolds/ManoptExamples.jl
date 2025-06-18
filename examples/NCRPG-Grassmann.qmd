@@ -1,5 +1,5 @@
 ---
-title: "A comparison of the NCRPG with the CPPA on the Grassmann manifold"
+title: "An NCRPG run on the Grassmann manifold"
 author: "Hajg Jasa"
 date: 05/09/2025
 engine: julia

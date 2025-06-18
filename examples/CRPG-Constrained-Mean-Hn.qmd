@@ -52,11 +52,12 @@ and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around 
 
 ```{julia}
 #| output: false
-n_range = Vector(2:10)
+n_range = Vector(2:200)
 radius_range = [1 / sqrt(n) for n in n_range]
 N_range = [400 for n ∈ n_range]
 M_range = [Hyperbolic(n) for n ∈ n_range]
 σ_range = [ 1.5/sqrt(sqrt(n-1)) for n ∈ n_range]
+tol = 1e-7
 ```
 
 The data consists of $N=200$ points, where we skew the data a bit to force the mean to be outside of the constrained set $\mathcal C$.
@@ -102,8 +103,8 @@ Lastly, we define the cost function $F$ as the sum of the original cost and the 
 ```{julia}
 #| output: false
 g(M, p; op=[], radius=1) = distance(M, op, p)^2 - radius^2;
-# The characteristic function for the set C is defined with 2eps() to avoid numerical issues
-characteristic_C(M, p; op=[], radius=1) = (g(M, p; op=op, radius=radius) ≤ 2eps()) ? 0 : Inf;
+# The characteristic function for the set C is defined with tol^2 to avoid numerical issues
+characteristic_C(M, p; op=[], radius=1) = (g(M, p; op=op, radius=radius) ≤ tol^2) ? 0 : Inf;
 
 function project_C(M, p; op=[], radius=1)
     X = log(M, op, p)
@@ -195,6 +196,7 @@ function bench_aep(Manifold, center, radius, data)
     L_f = Manopt.ζ_1(-1, D)
     constant_stepsize = 1 / L_f
     initial_stepsize = 3/2 * L_f
+    contraction_factor = 0.99
     #
     # returns
     stats = Dict(:CRPG_CN => Dict(), :CRPG_BT => Dict(), :PGA => Dict())
@@ -212,7 +214,7 @@ function bench_aep(Manifold, center, radius, data)
         stepsize=ConstantLength(
             constant_stepsize,
         ),
-        stopping_criterion=StopWhenGradientMappingNormLess(1e-7)|StopAfterIteration(5000),
+        stopping_criterion=StopWhenGradientMappingNormLess(tol)|StopAfterIteration(5000),
     )
     stats[:CRPG_CN][:Iter] = length(get_record(crpg_cn, :Iteration))
     stats[:CRPG_CN][:Cost] = get_record(crpg_cn)
@@ -231,10 +233,10 @@ function bench_aep(Manifold, center, radius, data)
         stepsize=ProximalGradientMethodBacktracking(; 
             strategy=:convex,   
             initial_stepsize=initial_stepsize,
-            stop_when_stepsize_less=1e-7,
-            contraction_factor=0.9,
+            stop_when_stepsize_less=tol,
+            contraction_factor=contraction_factor,
         ),
-        stopping_criterion=StopWhenGradientMappingNormLess(1e-7)|StopAfterIteration(5000),
+        stopping_criterion=StopWhenGradientMappingNormLess(tol)|StopAfterIteration(5000),
     )
     stats[:CRPG_BT][:Iter] = length(get_record(crpg_bt, :Iteration)) 
     stats[:CRPG_BT][:Cost] = get_record(crpg_bt)
@@ -249,7 +251,7 @@ function bench_aep(Manifold, center, radius, data)
         evaluation=InplaceEvaluation(),
         record=[:Iteration, :Cost],
         stopping_criterion=StopAfterIteration(150) |
-                           StopWhenProjectedGradientStationary(Manifold, 1e-7),
+                           StopWhenProjectedGradientStationary(Manifold, tol),
         return_state=true,
     )
     stats[:PGA][:Iter] = length(get_record(pgas, :Iteration))
@@ -262,7 +264,7 @@ function bench_aep(Manifold, center, radius, data)
         stepsize=$(ConstantLength(
             constant_stepsize,
         )),
-        stopping_criterion=$(StopWhenGradientMappingNormLess(1e-7)|StopAfterIteration(5000)),
+        stopping_criterion=$(StopWhenGradientMappingNormLess(tol)|StopAfterIteration(5000)),
     ) evals = 1 samples = 10 seconds = 100
     stats[:CRPG_CN][:time] = mean(crpg_b_cn).time
     crpg_b_bt = @be proximal_gradient_method!($Manifold, $_F, $_f, $_grad_f!,
@@ -270,17 +272,17 @@ function bench_aep(Manifold, center, radius, data)
         stepsize=$(ProximalGradientMethodBacktracking(; 
             strategy=:convex,   
             initial_stepsize=initial_stepsize,
-            stop_when_stepsize_less=1e-7,
-            contraction_factor=0.9,
+            stop_when_stepsize_less=tol,
+            contraction_factor=contraction_factor,
         )),
-        stopping_criterion=$(StopWhenGradientMappingNormLess(1e-7)|StopAfterIteration(5000)),
+        stopping_criterion=$(StopWhenGradientMappingNormLess(tol)|StopAfterIteration(5000)),
     ) evals = 1 samples = 10 seconds = 100
     stats[:CRPG_BT][:time] = mean(crpg_b_bt).time
     # 
     pga_b = @be projected_gradient_method!($Manifold, $_f, $_grad_f!, $_proj_C!,
         $(copy(Manifold, center)); evaluation=$(InplaceEvaluation()),
         stopping_criterion=$(
-            StopAfterIteration(150) | StopWhenProjectedGradientStationary(Manifold, 1e-7)
+            StopAfterIteration(150) | StopWhenProjectedGradientStationary(Manifold, tol)
         ),
     ) evals = 1 samples = 10 seconds = 100
     stats[:PGA][:time] = mean(pga_b).time
@@ -301,9 +303,9 @@ The resulting plot of runtime is
 ```{julia}
 fig = Figure()
 axis = Axis(fig[1, 1]; title=L"\text{Time needed per dimension }$\mathbb{H}^d$")
-lines!(axis, n_range, [bi[:CRPG_CN][:time] for bi in b]; label="CRPG, constant step")
-lines!(axis, n_range, [bi[:CRPG_BT][:time] for bi in b]; label="CRPG, backtracked step")
-lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label="PGA")
+lines!(axis, n_range, [bi[:CRPG_CN][:time] for bi in b]; label="CRPG, constant step", color=tol_vibrant[1],)
+lines!(axis, n_range, [bi[:CRPG_BT][:time] for bi in b]; label="CRPG, backtracked step", color=tol_vibrant[5],)
+lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label="PGA", color=tol_vibrant[2],)
 axis.xlabel = "Manifold dimension d"
 axis.ylabel = "runtime (sec.)"
 axislegend(axis; position=:lt)
@@ -329,12 +331,12 @@ and the number of iterations reads
 ```{julia}
 fig2 = Figure()
 axis2 = Axis(fig2[1, 1]; title=L"\text{Iterations needed per dimension }$\mathbb{H}^d$")
-lines!(axis2, n_range, [bi[:CRPG_CN][:Iter] for bi in b]; label="CRPG constant step")
-lines!(axis2, n_range, [bi[:CRPG_BT][:Iter] for bi in b]; label="CRPG backtracked step")
-lines!(axis2, n_range, [bi[:PGA][:Iter] for bi in b]; label="PGA")
+lines!(axis2, n_range, [bi[:CRPG_CN][:Iter] for bi in b]; label="CRPG constant step", color=tol_vibrant[1])
+lines!(axis2, n_range, [bi[:CRPG_BT][:Iter] for bi in b]; label="CRPG backtracked step", color=tol_vibrant[5],)
+lines!(axis2, n_range, [bi[:PGA][:Iter] for bi in b]; label="PGA", color=tol_vibrant[2],)
 axis2.xlabel = "Manifold dimension d"
 axis2.ylabel = "# Iterations"
-axislegend(axis2; position=:lt)
+axislegend(axis2; position=:rt)
 fig2
 ```
 
@@ -343,7 +345,7 @@ Lastly, we showcase the convergence rates in both functions values and distances
 # | output: false
 function plot_convergence(
     benchmarks,
-    dimensions=[2, 3, 100]
+    dimensions=[50, 100, 150, 200],
 )
     # Extract the results for the specified dimensions
     crpg_cn = [bi[:CRPG_CN] for (d, bi) in enumerate(benchmarks) if (d+1) in dimensions]
@@ -431,7 +433,7 @@ function plot_convergence(
             relative_errors_crpg_bt;
             label="CRPG, backtracked step",
             linewidth=2,
-            color=tol_vibrant[2],
+            color=tol_vibrant[5],
         )
         lines!(
             ax,
@@ -439,36 +441,7 @@ function plot_convergence(
             relative_errors_pga;
             label="PGA",
             linewidth=2,
-            color=tol_vibrant[3],
-        )
-
-        # Add reference lines
-        lines!(
-            ax,
-            iterations_crpg_cn,
-            ref_rate_sqrt;
-            linestyle=:dash,
-            linewidth=1.5,
-            color=:black,
-            label=L"O\left(k^{-1/2}\right)"
-        )
-        lines!(
-            ax,
-            iterations_crpg_cn,
-            ref_rate_1;
-            linestyle=:dashdot,
-            linewidth=1.5,
-            color=:black,
-            label=L"O\left(k^{-1}\right)"
-        )
-        lines!(
-            ax,
-            iterations_crpg_cn,
-            ref_rate_2;
-            linestyle=:dot,
-            linewidth=1.5,
-            color=:black,
-            label=L"O\left(k^{-2}\right)"
+            color=tol_vibrant[2],
         )
         lines!(
             ax,
@@ -479,28 +452,14 @@ function plot_convergence(
             color=:black,
             label=L"O\left(2^{-k}\right)"
         )
-        # axislegend(ax, position = :lb)
         fig[1, 2] = Legend(fig, ax, framevisible = true)
         fig
-
-        # Save the figure
-        # if write_csv
-        #     CSV.write(
-        #         "$(fn)convergence-$(dimensions[i]).csv",
-        #         DataFrame(;
-        #             Iterations=iterations_crpg_cn,
-        #             RelativeErrors=relative_errors_crpg_cn,
-        #             IterationsPGA=iterations_pga,
-        #             RelativeErrorsPGA=relative_errors_pga,
-        #         ),
-        #     )
-        # end
 
         push!(figs, fig)
     end
     return figs
 end
-figs = plot_convergence(b, [2, 10, 100])
+figs = plot_convergence(b)
 ```
 
 ```{julia}
