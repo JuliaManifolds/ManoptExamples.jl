@@ -195,8 +195,8 @@ function bench_aep(Manifold, center, radius, data)
     D = 2 * maximum([distance(Manifold, center, pt) for pt in data])
     L_f = Manopt.ζ_1(-1, D)
     constant_stepsize = 1 / L_f
-    initial_stepsize = 3/2 * L_f
-    contraction_factor = 0.99
+    initial_stepsize = constant_stepsize
+    contraction_factor = 0.995
     #
     # returns
     stats = Dict(:CRPG_CN => Dict(), :CRPG_BT => Dict(), :PGA => Dict())
@@ -445,7 +445,7 @@ function plot_convergence(
         )
         lines!(
             ax,
-            iterations_crpg_cn,
+            iterations,
             ref_rate_2k;
             linestyle=:solid,
             linewidth=1.5,

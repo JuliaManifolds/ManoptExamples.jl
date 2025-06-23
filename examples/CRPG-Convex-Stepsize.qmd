@@ -76,7 +76,7 @@ experiment_name = "CRPG-Convex-Stepsize"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 
-atol = 1e-8
+tol = 1e-7
 max_iters = 5000
 τ = 3/2 # weight for the component h
 ```
@@ -92,18 +92,20 @@ q1 = rand(M)
 # Initialize the second point
 X1 = rand(M; vector_at=q1)
 X1 /= norm(M, q1, X1)
-q2 = exp(M, q1, 2X1)
+q2 = exp(M, q1, 4X1)
 r = distance(M, q1, q2)
 # Initialize the starting point for the algorithm
 # can be random
 X2 = rand(M; vector_at=q2)
 X2 /=norm(M, q2, X2)
-p0 = exp(M, q2, 2X2)
+p0 = exp(M, q2, X2)
 # Closed-form solution
 γ(t) = geodesic(M, q1, log(M, q1, q2), t)
 p_star = τ > 1 ? q2 : (τ < 1 ? q1 : γ(rand()))
 # Estimate of the diameter of the set containing all points
-D = 2maximum([distance(M, p0, a) for a in [q1, q2, p_star]])
+# D = 2maximum([distance(M, p0, a) for a in [q1, q2, p_star]])
+# Diameter of the set containing p0 and p_star
+D = 4 #2 * distance(M, p0, p_star)
 ```
 
 We can now define the functions we need for the optimization
@@ -122,10 +124,6 @@ function ζ_1(k_min, dist)
     (k_min < zero(k_min)) && return sqrt(-k_min) * dist * coth(sqrt(-k_min) * dist)
     (k_min ≥ zero(k_min)) && return one(k_min)
 end
-# Smallest and largest eigenvalues of the Hessian of g at the minimum of f
-λ_min = 1/g(M, p_star)
-λ_max = coth(g(M, p_star))
-λ_r = 2*g(M, p_star)/(g(M, p_star)*coth(g(M, p_star)) + 1)
 ```
 
 ```{julia}
@@ -137,7 +135,7 @@ function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_m
     return retract(M, p, X, retraction_method)
 end
 # Estimate Lipschitz constant of the gradient of g
-function estimate_lipschitz_constant(M, g, anchor, R=D, N=100_000)
+function estimate_lipschitz_constant(M, g, anchor, R=D/2, N=100_000)
     constants = []
     for i in 1:N
         p = close_point(M, anchor, R)
@@ -147,7 +145,29 @@ function estimate_lipschitz_constant(M, g, anchor, R=D, N=100_000)
     end
     return maximum(constants)
 end
-L_g = 3/2 * estimate_lipschitz_constant(M, g, p0)
+ function theoretical_lipschitz_constant(M, g, anchor, R=D/2, N=100_00)
+    constants = []
+    for i in 1:N
+        p = close_point(M, anchor, R)
+        push!(constants, max(coth(g(M,p)), 1/g(M,p)))
+        end
+    return maximum(constants)
+end
+est_1 = [estimate_lipschitz_constant(M, g, p0, D/2) for _ in 1:1000]
+est_2 = [theoretical_lipschitz_constant(M, g, p0, D/2) for _ in 1:1000]
+# Conservative estimate of the Lipschitz constant
+L_g = 1.05 * max(maximum(est_1), maximum(est_2))
+```
+
+And check that the stepsize is valid
+```{julia}
+# Smallest and largest eigenvalues of the Hessian of g at the minimum of f
+λ_min = 1/g(M, p_star)
+λ_max = coth(g(M, p_star))
+λ_r = 2*g(M, p_star)/(g(M, p_star)*coth(g(M, p_star)) + 1)
+λ_D = 1/L_g
+# Check if the stepsize is valid
+(λ_D ≤ min(r/τ, λ_r)) && print("true")
 ```
 
 We now take a look at how the inequality in Theorem 4.10 in [BergmannJasaJohnPfeffer:2025:2](@cite) behaves in practice.
@@ -179,7 +199,8 @@ end
 #| code-fold: true
 begin
     # Generate data points for the plot
-    λ_values = range(1e-6, max(g(M, p_star)/τ, 1/λ_min, 2/λ_max) + 1e-6, length=200)
+    λ_values = range(1e-6, r/τ + 1e-6, length=200)
+    # max(g(M, p_star)/τ, 1/λ_min, 2/λ_max) + 1e-6, length=200)
 
     inequality_values = [calculate_inequality_value(λ, 1.0, k_min, λ_max, λ_min) for λ in λ_values]
     
@@ -217,9 +238,9 @@ begin
         vline!([1/λ_max], label="λ = 1/λ_{max}", ls=:dot, lw=1.5, c=:blue)
 		vline!([2/λ_max], label="λ = 2/λ_{max}", ls=:dot, lw=1.5, c=:black)
     end
-    if λ_min > 0
-        vline!([1/λ_min], label="λ = 1/λ_{min}", ls=:dot, lw=1.5, c=:purple)
-    end
+    # if λ_min > 0
+    #     vline!([1/λ_min], label="λ = 1/λ_{min}", ls=:dot, lw=1.5, c=:purple)
+    # end
 	vline!([λ_r], label="λ = 2r/(rcoth(r)+1)", ls=:dot, lw=1.5, c=:green)
 	vline!([r/τ], label="λ = r/τ", ls=:dot, lw=1.5, c=:orange)
 	vline!([λ_D], label="λ = 1/L_g", ls=:dot, lw=1.5, c=:red)
@@ -237,12 +258,14 @@ We can now run the optimization, first using a constant stepsize $\lambda = 1/L_
 	f, 
 	g, 
 	grad_g, 
-	prox_h, 
 	p0;
+	prox_nonsmooth=prox_h, 
 	stepsize=ConstantLength(1/L_g),
 	record=[:Iteration, :Cost, :Iterate],
 	return_state=true,
-	stopping_criterion=StopWhenGradientMappingNormLess(atol),
+	stopping_criterion=StopWhenAny(
+        StopWhenGradientMappingNormLess(tol), StopAfterIteration(max_iters)
+    ),
 )
 ```
 
@@ -251,7 +274,7 @@ Let's first check that all iterates are within the set of points we are interest
 # Extract recorded values
 pg_result = get_solver_result(pg)
 pg_record = get_record(pg)
-all(x -> x == true, [distance(M, p0, q[3]) ≤ D for q in pg_record])
+all(x -> x == true, [distance(M, p0, q[3]) ≤ D/2 for q in pg_record])
 ```
 
 ... and that the final iterate is approximately the closed-form solution
@@ -265,13 +288,15 @@ We now plot the decay of the function values
 # | echo: false
 # Calculate the minimum cost for relative error
 min_cost_pg = minimum(record[2] for record in pg_record)
-iterations = [record[1] for record in pg_record]
+iterations = [Float64(record[1]) for record in pg_record]
+pushfirst!(iterations, 0.5) # Add 0 for the initial point
 relative_errors_pg = [max(record[2] - min_cost_pg, eps()) for record in pg_record]
+pushfirst!(relative_errors_pg, f(M, p0) - min_cost_pg) # Add initial error for the initial point
 # Get initial error for scaling reference lines
 initial_error_pg = relative_errors_pg[1]
 # Create reference trajectories
 ref_rate_1_pg = [initial_error_pg/k for k in iterations]
-ref_rate_2_pg = [initial_error_pg/k^2 for k in iterations]
+# ref_rate_2_pg = [initial_error_pg/k^2 for k in iterations]
 ref_rate_2k_pg = [initial_error_pg/2^k for k in iterations]
 # Create the convergence plot
 convergence_plot_pg = plot(
@@ -297,15 +322,6 @@ plot!(
     linewidth=1.5,
     color=:black,
     label="O(1/k)"
-)
-plot!(
-    convergence_plot_pg,
-    iterations,
-    ref_rate_2_pg;
-    linestyle=:dot,
-    linewidth=1.5,
-    color=:blue,
-    label="O(1/k²)"
 )
 plot!(
     convergence_plot_pg,
@@ -323,6 +339,7 @@ And the convergence rate of the iterates
 # | code-fold: true
 # | echo: false 
 distances_pg = [max(distance(M, p_star, record[3]), eps()) for record in pg_record]
+pushfirst!(distances_pg, distance(M, p_star, p0)) # Add initial distance for the initial point
 # Get initial error for scaling reference lines
 initial_distance_pg = distances_pg[1]
 # Create reference trajectories
@@ -355,11 +372,11 @@ plot!(
 plot!(
     distances_plot_pg,
     iterations,
-    dist_ref_rate_2_pg;
-    linestyle=:dot,
+    ref_rate_2k_pg;
+    linestyle=:solid,
     linewidth=1.5,
-    color=:blue,
-    label="O(1/k²)"
+    color=:green,
+    label="O(1/2ᵏ)"
 )
 ```
 
@@ -368,8 +385,8 @@ We can write the recorded values to a CSV file
 # | output: false
 # Create a DataFrame from the recorded values
 df_pg = DataFrame(
-    Iterations = [record[1] for record in pg_record],
-    Cost = [record[2] for record in pg_record],
+    Iterations = iterations,
+    CostDiff = relative_errors_pg,
     Distances = distances_pg
 )
 # Write the DataFrame to a CSV file
@@ -385,12 +402,18 @@ We now run the optimization using a backtracked stepsize starting from $\frac{3}
 	f, 
 	g, 
 	grad_g, 
-	prox_h, 
 	p0;
-	stepsize=ProximalGradientMethodBacktracking(; strategy=:convex, initial_stepsize=3/(2*L_g)),
+	prox_nonsmooth=prox_h, 
+	stepsize=ProximalGradientMethodBacktracking(; 
+        strategy=:convex, 
+        initial_stepsize=3/2 * λ_D,
+        stop_when_stepsize_less=tol,
+    ),
 	record=[:Iteration, :Cost, :Iterate],
 	return_state=true,
-	stopping_criterion=StopWhenGradientMappingNormLess(atol),
+	stopping_criterion=StopWhenAny(
+        StopWhenGradientMappingNormLess(tol), StopAfterIteration(max_iters)
+    ),
 )
 ```
 
@@ -399,7 +422,7 @@ Let's first check that all iterates are within the set of points we are interest
 # Extract recorded values
 pg_result = get_solver_result(pg)
 pg_record = get_record(pg)
-all(x -> x == true, [distance(M, p0, q[3]) ≤ D for q in pg_record])
+all(x -> x == true, [distance(M, p0, q[3]) ≤ D/2 for q in pg_record])
 ```
 
 ... and that the final iterate is approximately the closed-form solution
@@ -413,8 +436,10 @@ We now plot the decay of the function values
 # | echo: false
 # Calculate the minimum cost for relative error
 min_cost_pg = minimum(record[2] for record in pg_record)
-iterations = [record[1] for record in pg_record]
+iterations = [Float64(record[1]) for record in pg_record]
+pushfirst!(iterations, 0.5) # Add 0 for the initial point
 relative_errors_pg = [max(record[2] - min_cost_pg, eps()) for record in pg_record]
+pushfirst!(relative_errors_pg, f(M, p0) - min_cost_pg) # Add initial error for the initial point
 # Get initial error for scaling reference lines
 initial_error_pg = relative_errors_pg[1]
 # Create reference trajectories
@@ -449,15 +474,6 @@ plot!(
 plot!(
     convergence_plot_pg,
     iterations,
-    ref_rate_2_pg;
-    linestyle=:dot,
-    linewidth=1.5,
-    color=:blue,
-    label="O(1/k²)"
-)
-plot!(
-    convergence_plot_pg,
-    iterations,
     ref_rate_2k_pg;
     linestyle=:solid,
     linewidth=1.5,
@@ -471,6 +487,7 @@ And the convergence rate of the iterates
 # | code-fold: true
 # | echo: false
 distances_pg = [max(distance(M, p_star, record[3]), eps()) for record in pg_record]
+pushfirst!(distances_pg, distance(M, p_star, p0)) # Add initial distance for the initial point
 # Get initial error for scaling reference lines
 initial_distance_pg = distances_pg[1]
 # Create reference trajectories
@@ -503,11 +520,11 @@ plot!(
 plot!(
     distances_plot_pg,
     iterations,
-    dist_ref_rate_2_pg;
-    linestyle=:dot,
+    ref_rate_2k_pg;
+    linestyle=:solid,
     linewidth=1.5,
-    color=:blue,
-    label="O(1/k²)"
+    color=:green,
+    label="O(1/2^k)"
 )
 ```
 
@@ -516,9 +533,9 @@ We can write the recorded values to a CSV file
 # | output: false
 # Create a DataFrame from the recorded values
 df_pg = DataFrame(
-    Iterations = [record[1] for record in pg_record],
-    Cost = [record[2] for record in pg_record],
-    Distances = distances_pg
+    Iterations = iterations,
+    CostDiff = relative_errors_pg,
+    Distances = distances_pg,
 )
 # Write the DataFrame to a CSV file
 csv_file_pg = joinpath(results_folder, "backtracked-stepsize.csv")
