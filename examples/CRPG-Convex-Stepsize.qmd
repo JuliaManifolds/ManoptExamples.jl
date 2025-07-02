@@ -119,15 +119,12 @@ h(M, p) = τ * distance(M, p, q2)
 prox_h(M, λ, p) = ManifoldDiff.prox_distance(M, τ * λ, q2, p, 1)
 # Total objective function
 f(M, p) = g(M, p) + h(M, p)
-# Curvature function
-function ζ_1(k_min, dist)
-    (k_min < zero(k_min)) && return sqrt(-k_min) * dist * coth(sqrt(-k_min) * dist)
-    (k_min ≥ zero(k_min)) && return one(k_min)
-end
+# Gradient norm at p_star
+gn = norm(M, p_star, grad_g(M, p_star))
 ```
 
 ```{julia}
-#| output: false
+#| output: true
 # Function to generate points close to the given point p
 function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
     X = rand(M; vector_at = p)
@@ -135,7 +132,7 @@ function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_m
     return retract(M, p, X, retraction_method)
 end
 # Estimate Lipschitz constant of the gradient of g
-function estimate_lipschitz_constant(M, g, anchor, R=D/2, N=100_000)
+function estimate_lipschitz_constant(M, g, grad_g, anchor, R=D/2, N=10_000)
     constants = []
     for i in 1:N
         p = close_point(M, anchor, R)
@@ -145,7 +142,7 @@ function estimate_lipschitz_constant(M, g, anchor, R=D/2, N=100_000)
     end
     return maximum(constants)
 end
- function theoretical_lipschitz_constant(M, g, anchor, R=D/2, N=100_00)
+ function theoretical_lipschitz_constant(M, g, anchor, R=D/2, N=10_000)
     constants = []
     for i in 1:N
         p = close_point(M, anchor, R)
@@ -153,7 +150,7 @@ end
         end
     return maximum(constants)
 end
-est_1 = [estimate_lipschitz_constant(M, g, p0, D/2) for _ in 1:1000]
+est_1 = [estimate_lipschitz_constant(M, g, grad_g, p0, D/2) for _ in 1:1000]
 est_2 = [theoretical_lipschitz_constant(M, g, p0, D/2) for _ in 1:1000]
 # Conservative estimate of the Lipschitz constant
 L_g = 1.05 * max(maximum(est_1), maximum(est_2))
@@ -166,8 +163,6 @@ And check that the stepsize is valid
 λ_max = coth(g(M, p_star))
 λ_r = 2*g(M, p_star)/(g(M, p_star)*coth(g(M, p_star)) + 1)
 λ_D = 1/L_g
-# Check if the stepsize is valid
-(λ_D ≤ min(r/τ, λ_r)) && print("true")
 ```
 
 We now take a look at how the inequality in Theorem 4.10 in [BergmannJasaJohnPfeffer:2025:2](@cite) behaves in practice.
@@ -176,21 +171,24 @@ We now take a look at how the inequality in Theorem 4.10 in [BergmannJasaJohnPfe
 #| code-fold: true
 # Function to calculate the inequality value
 function calculate_inequality_value(λ, gradient_norm, k_min, λ_max, λ_min)
-    if λ == 0 || gradient_norm == 0 || k_min == 0
-        return 0.0
-    end
     
     argument = λ * gradient_norm * √(-k_min)
     
     # For small arguments, use Taylor expansion to avoid precision issues
-    sinh_term = if abs(argument) < 1e-12
+    sinh_term = if abs(argument) < tol^2
         1.0
     else
         sinh(argument) / argument
     end
     
-    max_term = max(abs(1 - λ_max * λ), abs(1 - λ_min * λ))
+    coth_term = if abs(argument) < tol^2
+        1.0
+    else
+        coth(argument) * argument
+    end
     
+	max_term = max(abs(coth_term - λ_max * λ), abs(coth_term - λ_min * λ)) 
+
     return sinh_term * max_term
 end
 ```
@@ -211,7 +209,6 @@ begin
         label="Inequality Value",
         xlabel="λ",
         ylabel="Value",
-        # title="Inequality Analysis",
         lw=2,
         legend=:topright,
         size=(800, 500),
@@ -234,14 +231,8 @@ begin
     end
     
     # Add specific vertical lines
-    if λ_max > 0
-        vline!([1/λ_max], label="λ = 1/λ_{max}", ls=:dot, lw=1.5, c=:blue)
-		vline!([2/λ_max], label="λ = 2/λ_{max}", ls=:dot, lw=1.5, c=:black)
-    end
-    # if λ_min > 0
-    #     vline!([1/λ_min], label="λ = 1/λ_{min}", ls=:dot, lw=1.5, c=:purple)
-    # end
-	vline!([λ_r], label="λ = 2r/(rcoth(r)+1)", ls=:dot, lw=1.5, c=:green)
+    vline!([1/λ_max], label="λ = 1/λ_{max}", ls=:dot, lw=1.5, c=:blue)
+    vline!([2/λ_max], label="λ = 2/λ_{max}", ls=:dot, lw=1.5, c=:black)
 	vline!([r/τ], label="λ = r/τ", ls=:dot, lw=1.5, c=:orange)
 	vline!([λ_D], label="λ = 1/L_g", ls=:dot, lw=1.5, c=:red)
     
@@ -250,8 +241,19 @@ begin
 end
 ```
 
+Hence, we see that the inequality is not satisfied for $\lambda = 1/L_g$.
+We thus reduce it to satisfy the inequality
+
+```{julia}
+#| output: true
+while calculate_inequality_value(λ_D, 1.0, k_min, λ_max, λ_min) ≥ 1.0
+    λ_D *= 0.9
+end
+λ_D
+```
+
 ### Constant Stepsize
-We can now run the optimization, first using a constant stepsize $\lambda = 1/L_g$.
+We can now run the optimization, first using a constant stepsize $\lambda = \lambda_D$.
 ```{julia}
 @time pg = proximal_gradient_method(
 	M, 
@@ -260,7 +262,7 @@ We can now run the optimization, first using a constant stepsize $\lambda = 1/L_
 	grad_g, 
 	p0;
 	prox_nonsmooth=prox_h, 
-	stepsize=ConstantLength(1/L_g),
+	stepsize=ConstantLength(λ_D),
 	record=[:Iteration, :Cost, :Iterate],
 	return_state=true,
 	stopping_criterion=StopWhenAny(
@@ -395,7 +397,7 @@ CSV.write(csv_file_pg, df_pg)
 ```
 
 ### Backtracked Stepsize
-We now run the optimization using a backtracked stepsize starting from $\frac{3}{2 L_g}$.
+We now run the optimization using a backtracked stepsize starting from $\lambda_D$.
 ```{julia}
 @time pg = proximal_gradient_method(
 	M, 
@@ -406,7 +408,7 @@ We now run the optimization using a backtracked stepsize starting from $\frac{3}
 	prox_nonsmooth=prox_h, 
 	stepsize=ProximalGradientMethodBacktracking(; 
         strategy=:convex, 
-        initial_stepsize=3/2 * λ_D,
+        initial_stepsize=λ_D,
         stop_when_stepsize_less=tol,
     ),
 	record=[:Iteration, :Cost, :Iterate],
@@ -541,6 +543,133 @@ df_pg = DataFrame(
 csv_file_pg = joinpath(results_folder, "backtracked-stepsize.csv")
 CSV.write(csv_file_pg, df_pg)
 ```
+
+<!-- ### Large Stepsize
+We can also run the optimization using a large constant stepsize $\lambda = 4.0$ -->
+<!-- ```{julia}
+@time pg = proximal_gradient_method(
+    M, 
+    f, 
+    g, 
+    grad_g, 
+    p0;
+    prox_nonsmooth=prox_h, 
+    stepsize=ConstantLength(4.0),
+    record=[:Iteration, :Cost, :Iterate],
+    return_state=true,
+    stopping_criterion=StopWhenAny(
+        StopWhenGradientMappingNormLess(tol), StopAfterIteration(max_iters)
+    ),
+)
+``` -->
+<!-- Let's first check that all iterates are within the set of points we are interested in... -->
+<!-- ```{julia}
+# Extract recorded values
+pg_result = get_solver_result(pg)
+pg_record = get_record(pg)
+all(x -> x == true, [distance(M, p0, q[3]) ≤ D/2 for q in pg_record])
+``` -->
+<!-- ... and that the final iterate is approximately the closed-form solution -->
+<!-- ```{julia}
+pg_result ≈ p_star
+``` -->
+<!-- We now plot the decay of the function values -->
+<!-- ```{julia}
+# | code-fold: true
+# | echo: false
+# Calculate the minimum cost for relative error
+min_cost_pg = minimum(record[2] for record in pg_record)
+iterations = [Float64(record[1]) for record in pg_record]
+pushfirst!(iterations, 0.5) # Add 0 for the initial point
+relative_errors_pg = [max(record[2] - min_cost_pg, eps()) for record in pg_record]
+pushfirst!(relative_errors_pg, f(M, p0) - min_cost_pg) # Add initial error for the initial point
+# Get initial error for scaling reference lines
+initial_error_pg = relative_errors_pg[1]
+# Create reference trajectories
+ref_rate_1_pg = [initial_error_pg/k for k in iterations]
+# ref_rate_2_pg = [initial_error_pg/k^2 for k in iterations]
+ref_rate_2k_pg = [initial_error_pg/2^k for k in iterations]
+# Create the convergence plot
+convergence_plot_pg = plot(
+    iterations,
+    relative_errors_pg;
+    xscale=:log10,
+    yscale=:log10,
+    xlabel="Iteration (k)",
+    ylabel="f(pₖ) - f*",
+    label="Proximal Gradient",
+    linewidth=2,
+    color=:orange,
+    marker=:none,
+    grid=true,
+    legend=:bottomleft
+)
+# Add reference lines
+plot!(
+    convergence_plot_pg,
+    iterations,
+    ref_rate_1_pg;
+    linestyle=:dashdot,
+    linewidth=1.5,
+    color=:black,
+    label="O(1/k)"
+)
+plot!(
+    convergence_plot_pg,
+    iterations,
+    ref_rate_2k_pg;
+    linestyle=:solid,
+    linewidth=1.5,
+    color=:green,
+    label="O(1/2ᵏ)"
+)
+``` -->
+
+<!-- And the convergence rate of the iterates -->
+<!-- ```{julia}
+# | code-fold: true
+# | echo: false 
+distances_pg = [max(distance(M, p_star, record[3]), eps()) for record in pg_record]
+pushfirst!(distances_pg, distance(M, p_star, p0)) # Add initial distance for the initial point
+# Get initial error for scaling reference lines
+initial_distance_pg = distances_pg[1]
+# Create reference trajectories
+dist_ref_rate_1_pg = [initial_distance_pg/k for k in iterations]
+dist_ref_rate_2_pg = [initial_distance_pg/k^2 for k in iterations]
+# Create the convergence plot
+distances_plot_pg = plot(
+    iterations,
+    distances_pg;
+    xscale=:log10,
+    yscale=:log10,
+    xlabel="Iteration (k)",
+    ylabel="dist(pₖ, p*)",
+    label="Proximal Gradient",
+    linewidth=2,
+    color=:orange,
+    marker=:none,
+    grid=true,
+    legend=:bottomleft
+)
+plot!(
+    distances_plot_pg,
+    iterations,
+    dist_ref_rate_1_pg;
+    linestyle=:dashdot,
+    linewidth=1.5,
+    color=:black,
+    label="O(1/k)"
+)
+plot!(
+    distances_plot_pg,
+    iterations,
+    ref_rate_2k_pg;
+    linestyle=:solid,
+    linewidth=1.5,
+    color=:green,
+    label="O(1/2ᵏ)"
+)
+``` -->
 
 ## Technical details
 

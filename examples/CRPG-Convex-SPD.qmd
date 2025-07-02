@@ -285,11 +285,17 @@ for n in spd_dims
     println(initial_stepsize)
 
     # Optimization
-    pgm_constant = proximal_gradient_method(M, f_spd, g, grad_g, prox_h_spd, p0; pgm_bm_kwargs_constant(initial_stepsize)...)
+    pgm_constant = proximal_gradient_method(M, f_spd, g, grad_g, p0;
+        prox_nonsmooth=prox_h_spd, 
+        pgm_bm_kwargs_constant(initial_stepsize)...
+    )
     pgm_constant_result = get_solver_result(pgm_constant)
     pgm_constant_record = get_record(pgm_constant) 
     # We can also use a backtracked stepsize
-    pgm = proximal_gradient_method(M, f_spd, g, grad_g, prox_h_spd, p0; pgm_kwargs(initial_stepsize)...)
+    pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0; 
+        prox_nonsmooth=prox_h_spd,
+        pgm_kwargs(initial_stepsize)...
+    )
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
 
@@ -305,8 +311,14 @@ for n in spd_dims
 
     # Benchmarking
     if benchmarking
-        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $prox_h_spd, $p0; $pgm_bm_kwargs_constant($initial_stepsize)...)
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $prox_h_spd, $p0; $pgm_bm_kwargs($initial_stepsize)...)
+        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
+            prox_nonsmooth=$prox_h_spd,
+            $pgm_bm_kwargs_constant($initial_stepsize)...
+        )
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
+            prox_nonsmooth=$prox_h_spd,
+            $pgm_bm_kwargs($initial_stepsize)...
+        )
         # cppa_bm = @benchmark cyclic_proximal_point($M, $f_spd, $proxes_f_spd, $p0; cppa_bm_kwargs($M)...)
         
         times = [
