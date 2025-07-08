@@ -8,7 +8,7 @@ date: 06/06/2023
 
 This example illustrates how the [📖 Rosenbrock](https://en.wikipedia.org/wiki/Rosenbrock_function)
 problem can be rephrased as a difference of convex problem and with a new metric on Euclidean space.
-This example is the code that produces the results in [BergmannFerreiraSantosSouza:2023](@cite), Section 7.2.
+This example is the code that produces the results in [BergmannFerreiraSantosSouza:2024](@cite), Section 7.2.
 
 Both the Rosenbrock problem
 
@@ -78,7 +78,7 @@ ENV["GKSwstype"] = "100"
 using LinearAlgebra, Random, Statistics
 using Manifolds, Manopt, ManoptExamples
 using NamedColors, Plots
-import Manopt: set_manopt_parameter!
+import Manopt: set_parameter!
 Random.seed!(42)
 ```
 
@@ -139,7 +139,7 @@ and call the [gradient descent algorithm](https://manoptjl.org/stable/solvers/gr
 Eucl_GD_state = gradient_descent(M, f, ∇f!!, p0;
     evaluation=InplaceEvaluation(),
     debug=[debug_vec...,10^7],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M, 1e-16),
     record=[:Iteration, :Cost],
     return_state=true,
 )
@@ -172,7 +172,7 @@ end
 R_GD_state = gradient_descent(M_rb, f, grad_f!, p0;
     evaluation=InplaceEvaluation(),
     debug=[debug_vec...,10^6],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M_rb, 1e-16),
     record=[:Iteration, :Cost],
     return_state=true,
 )
@@ -243,7 +243,7 @@ E_doc_state = difference_of_convex_algorithm(
     debug=[debug_vec..., 10^4],
     evaluation=InplaceEvaluation(),
     record=[:Iteration, :Cost],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M, 1e-16),
     sub_hess=nothing, # Use gradient descent
     sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
     return_state=true,
@@ -333,12 +333,12 @@ function (ϕ::SubGrad)(M, X, p)
 end
 ```
 
-And in orer to update the subsolvers gradient correctly, we have to overwrite
+And in orer to update the sub solvers gradient correctly, we have to overwrite
 
 ```{julia}
 #| output: false
-set_manopt_parameter!(ϕ::SubGrad, ::Val{:p}, p) = (ϕ.pk .= p)
-set_manopt_parameter!(ϕ::SubGrad, ::Val{:X}, X) = (ϕ.Xk .= X)
+set_parameter!(ϕ::SubGrad, ::Val{:p}, p) = (ϕ.pk .= p)
+set_parameter!(ϕ::SubGrad, ::Val{:X}, X) = (ϕ.Xk .= X)
 ```
 
 And we again introduce for ease of use
@@ -370,7 +370,7 @@ R_doc_state = difference_of_convex_algorithm(
     debug=[debug_vec..., 10^6],
     evaluation=InplaceEvaluation(),
     record=[:Iteration, :Cost],
-    stopping_criterion=StopAfterIteration(10^8) | StopWhenChangeLess(1e-16),
+    stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M_rb, 1e-16),
     sub_grad=docR_sub_grad,
     sub_hess = nothing, # Use gradient descent
     sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
@@ -387,7 +387,7 @@ fig = plot(;
     yaxis=:log,
     ylims=(1e-16, 5*1e5),
     xaxis=:log,
-    xlims=(1,10^8),
+    xlims=(1,10^7),
 )
 scatter!(fig, [1,], [f(M,p0),], label=raw"$f(p_0)$", markercolor=grey)
 egi = get_record(Eucl_GD_state, :Iteration, :Iteration)[1:10000:end] #5308 entries

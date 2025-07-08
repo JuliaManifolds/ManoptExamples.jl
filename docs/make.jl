@@ -7,14 +7,14 @@ if "--help" ∈ ARGS
         """
     docs/make.jl
 
-Render the `Manopt.jl` documenation with optinal arguments
+Render the `ManoptExamples.jl` documenation with optional arguments
 
 Arguments
 * `--exclude-examples` - exclude the examples from the menu of Documenter,
   this can be used if you do not have Quarto installed to still be able to render the docs
   locally on this machine. This option should not be set on CI.
 * `--help`         - print this help and exit without rendering the documentation
-* `--prettyurls`   – toggle the prettyurls part to true (which is otherwise only true on CI)
+* `--prettyurls`   – toggle the pretty urls part to true (which is otherwise only true on CI)
 * `--quarto`       – run the Quarto notebooks from the `tutorials/` folder before generating the documentation
   this has to be run locally at least once for the `tutorials/*.md` files to exist that are included in
   the documentation (see `--exclude-tutorials`) for the alternative.
@@ -68,6 +68,7 @@ end
 # (c) load necessary packages for the docs
 using Documenter
 using ManoptExamples
+using DocumenterInterLinks
 using DocumenterCitations
 
 # (d) add contributing.md to docs
@@ -107,6 +108,10 @@ examples_menu =
             "Hyperbolic Signal Denoising" => "examples/H2-Signal-TV.md",
             "Spectral Procrustes" => "examples/Spectral-Procrustes.md",
         ],
+        "Projected Gradient Algorithm" => [
+            raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",
+            raw"Mean on $\mathbb H^n$" => "examples/Constrained-Mean-Hn.md",
+        ],
         "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",
@@ -114,8 +119,14 @@ examples_menu =
         "Rosenbrock" => "examples/Rosenbrock.md",
         "Total Variation" => "examples/Total-Variation.md",
     ]
-# (e) ...finally! make docs
 bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:alpha)
+links = InterLinks(
+    "ManifoldDiff" => ("https://juliamanifolds.github.io/ManifoldDiff.jl/stable/"),
+    "ManifoldsBase" => ("https://juliamanifolds.github.io/ManifoldsBase.jl/stable/"),
+    "Manifolds" => ("https://juliamanifolds.github.io/Manifolds.jl/stable/"),
+    "Manopt" => ("https://juliamanifolds.github.io/Manopt.jl/stable/"),
+)
+# (e) ...finally! make docs
 makedocs(;
     format=Documenter.HTML(;
         prettyurls=(get(ENV, "CI", nothing) == "true") || ("--prettyurls" ∈ ARGS),
@@ -135,6 +146,6 @@ makedocs(;
         "Changelog" => "changelog.md",
         "References" => "references.md",
     ],
-    plugins=[bib],
+    plugins=[bib, links],
 )
 deploydocs(; repo="github.com/JuliaManifolds/ManoptExamples.jl", push_preview=true)

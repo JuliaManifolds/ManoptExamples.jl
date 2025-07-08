@@ -1,0 +1,333 @@
+---
+title: "The Constrained mean on high-dimensional Hyperbolic space."
+author: "Ronny Bergmann"
+date: 27/03/2025
+---
+
+## Introduction
+
+In this example we compare the Pprojected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite) with both the Augmented Lagrangian Method (ALM) and the Exact Penalty Method (EPM) [LiuBoumal:2019](@cite).
+
+```{julia}
+#| echo: false
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(path="../") # a trick to work on the local dev version of ManoptExamples
+ENV["GKSwstype"] = "100"
+```
+
+```{julia}
+#| output: false
+using Chairmarks, CSV, DataFrames, Manifolds, Manopt, CairoMakie, Random
+```
+
+Consider the constrained Riemannian center of mass
+for a given set of points ``q_i \in \mathcal M$ $i=1,\ldots,N$
+given by
+
+```math
+\operatorname*{arg\,min}_{p\in\mathcal C}
+\sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i)
+```
+
+constrained to a set $\mathcal C \subset \mathcal M$.
+
+For this experiment set $\mathcal M = \mathbb H^d$ for $d=2,\ldots,200$, the ``[Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)``{=commonmark}
+and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around the center point $c$, where we choose here $r=\frac{1}{\sqrt{n}}$ and $c = (0,\ldots,0,1)^{\mathrm{T}}$ and a $σ = \frac{3}{2}n^{1/4}$.
+
+```{julia}
+#| output: false
+n_range = Vector(2:200)
+radius_range = [1 / sqrt(n) for n in n_range]
+N_range = [400 for n ∈ n_range]
+M_range = [Hyperbolic(n) for n ∈ n_range]
+σ_range = [ 1.5/sqrt(sqrt(n-1)) for n ∈ n_range]
+```
+
+The data consists of $N=200$ points, where we skew the data a bit to force the mean to be outside of the constrained set $\mathcal C$.
+
+
+```{julia}
+#| echo: false
+#| output: false
+experiment_name = "CnBallConstrMean-$(minimum(n_range))-$(maximum(n_range))-"
+folder = (@__DIR__) * "/projected-gradient-results/"
+fn = folder * experiment_name
+write_csv = true;
+(!isdir(folder) && write_csv) && mkpath(folder)
+op= [];
+```
+
+## Cost, gradient and projection
+
+We can formulate the constrained problem above in two different forms.
+Both share a cost adn require a gradient. For performance reasons, we also provide a mutating variant of the gradient
+
+```{julia}
+#| output: false
+f(M, p; pts=[]) = 1 / (2 * length(pts)) .* sum(distance(M, p, q)^2 for q in pts)
+
+grad_f(M, p; pts=[]) = -1 / length(pts) .* sum(log(M, p, q) for q in pts)
+
+function grad_f!(M, X, p; pts=[])
+    zero_vector!(M, X, p)
+    Y = zero_vector(M, p)
+    for q in pts
+        log!(M, Y, p, q)
+        X .+= Y
+    end
+    X .*= -1 / length(pts)
+    return X
+end
+```
+
+We can model the constrained either with an inequality constraint $g(p) \geq 0$ or using a projection onto the set. For the gradient of $g$ and the projection we again also provide mutating variants.
+
+```{julia}
+#| output: false
+g(M, p; op=[], radius=1) = distance(M, op, p)^2 - radius^2;
+indicator_C(M, p; op=[], radius=1) = (g(M, p; op=op, radius=radius) ≤ 0) ? 0 : Inf;
+
+function project_C(M, p; op=[], radius=1)
+    X = log(M, op, p)
+    n = norm(M, op, X)
+    q = (n > radius) ? exp(M, op, (radius / n) * X) : copy(M, p)
+    return q
+end;
+
+function project_C!(M, q, p; radius=1, op=[], X=zero_vector(M, op))
+    log!(M, X, op, p)
+    n = norm(M, op, X)
+    if (n > radius)
+        exp!(M, q, op, (radius / n) * X)
+    else
+        copyto!(M, q, p)
+    end
+    return q
+end;
+
+grad_g(M, p; op=[]) = -2 * log(M, p, op)
+function grad_g!(M, X, p; op=[])
+    log!(M, X, p, op)
+    X .*= -2
+    return X
+end
+```
+
+## The mean
+
+For comparison, we first compute the Riemannian center of mass, that is the minimization above but not constrained to $\mathcal C$. We can then
+project this onto $\mathcal C$.
+For the projected mean we obtain $g(p) = 0$ since the original mean is outside of the set, the projected one lies on the boundary.
+
+We first generate all data
+```{julia}
+#| output: false
+centers = [[zeros(n)..., 1.0] for n in n_range]
+begin
+    Random.seed!(5)
+    data = [
+        [
+            exp(
+                M,
+                c,
+                get_vector(
+                    M, c, σ * randn(n) .+ 2 * r .* ones(n), DefaultOrthonormalBasis()
+                ),
+            ) for _ in 1:N
+        ] for
+        (c, r, n, N, M, σ) in zip(centers, radius_range, n_range, N_range, M_range, σ_range)
+    ]
+end
+```
+
+```{julia}
+means = [mean(M, d) for (M, d) in zip(M_range, data)]
+dc = [
+    indicator_C(M, m; op=c, radius=r) for
+    (M, m, c, r) in zip(M_range, means, centers, radius_range)
+]
+minimum(dc) # Sanity Check, this should be inf
+```
+
+```{julia}
+Proj_means = [
+    project_C(M, m; op=c, radius=r) for
+    (M, m, c, r) in zip(M_range, means, centers, radius_range)
+]
+# Samll sanity check, these should all be about zero
+ds = [distance(M, m, c) - r for (M, m, c, r) in zip(M_range, Proj_means, centers, radius_range)]
+maximum(abs.(ds))
+```
+
+## The experiment
+
+We first define a single test function for one set of data for a manifold
+
+```{julia}
+function bench_aep(Manifold, center, radius, data)
+    # local functions
+    _f(M, p) = f(M, p; pts=data)
+    _grad_f!(M, X, p) = grad_f!(M, X, p; pts=data)
+    _proj_C!(M, q, p) = project_C!(M, q, p; radius=radius, op=center)
+    _g(M, p) = g(M, p; radius=radius, op=center)
+    _grad_g!(M, X, p) = grad_g!(M, X, p; op=center)
+    #
+    #
+    # returns
+    stats = Dict(:PGA => Dict(), :ALM => Dict(), :EPM => Dict())
+    #
+    #
+    # first runs
+    # println(manifold_dimension(Manifold), ": ")
+    mean_pga = copy(Manifold, center)
+    pgas = projected_gradient_method!(
+        Manifold,
+        _f,
+        _grad_f!,
+        _proj_C!,
+        mean_pga;
+        evaluation=InplaceEvaluation(),
+        record=[:Cost],
+        stopping_criterion=StopAfterIteration(150) |
+                           StopWhenProjectedGradientStationary(Manifold, 1e-7),
+        return_state=true,
+    )
+    stats[:PGA][:Iter] = length(get_record(pgas, :Iteration))
+    mean_alm = copy(Manifold, center)
+    alms = augmented_Lagrangian_method!(
+        Manifold,
+        _f,
+        _grad_f!,
+        mean_alm;
+        evaluation=InplaceEvaluation(),
+        g=[_g],
+        grad_g=[_grad_g!],
+        record=[:Cost],
+        return_state=true,
+    )
+    stats[:ALM][:Iter] = length(get_record(alms, :Iteration))
+    mean_epm = copy(Manifold, center)
+    epms = exact_penalty_method!(
+        Manifold, _f, _grad_f!, mean_epm;
+        evaluation=InplaceEvaluation(), return_state=true,
+        g=[_g], grad_g=[_grad_g!], record=[:Cost],
+    )
+    stats[:EPM][:Iter] = length(get_record(epms, :Iteration))
+    #
+    #
+    # Benchmarks
+    pga_b = @be projected_gradient_method!($Manifold, $_f, $_grad_f!, $_proj_C!,
+        $(copy(Manifold, center)); evaluation=$(InplaceEvaluation()),
+        stopping_criterion=$(
+            StopAfterIteration(150) | StopWhenProjectedGradientStationary(Manifold, 1e-7)
+        ),
+    ) evals = 1 samples = 10 seconds = 100
+    stats[:PGA][:time] = mean(pga_b).time
+    alm_b = @be augmented_Lagrangian_method!($Manifold, $_f, $_grad_f!,
+        $(copy(Manifold, center)); evaluation=$(InplaceEvaluation()),
+        g=$([_g]), grad_g=$([_grad_g!]),
+    ) evals = 1 samples = 10 seconds = 100
+    stats[:ALM][:time] = mean(alm_b).time
+    epm_b = @be exact_penalty_method!($Manifold, $_f, $_grad_f!,
+        $(copy(Manifold, center)); evaluation=$(InplaceEvaluation()),
+        g=$([_g]), grad_g=$([_grad_g!]),
+    ) evals = 1 samples = 10 seconds = 100
+    stats[:EPM][:time] = mean(epm_b).time
+    return stats
+end
+```
+
+and run these
+
+```{julia}
+#| output: false
+#| echo: false
+b = [bench_aep(M, c, r, d) for (M, c, r, d) in zip(M_range, centers, radius_range, data)]
+```
+
+The resulting plot of runtime is
+
+```{julia}
+fig = Figure()
+axis = Axis(fig[1, 1]; title=raw"Time needed per dimension $\mathbb H^d$")
+lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label="PGA")
+lines!(axis, n_range, [bi[:ALM][:time] for bi in b]; label="ALM")
+lines!(axis, n_range, [bi[:EPM][:time] for bi in b]; label="EPM")
+axis.xlabel = "Manifold dimension d"
+axis.ylabel = "runtime (sec.)"
+axislegend(axis; position=:lt)
+fig
+```
+
+```{julia}
+#| output: false
+#| echo: false
+write_csv && CSV.write(
+    "$(fn)times.csv",
+    DataFrame(;
+        d=n_range,
+        pga=[bi[:PGA][:time] for bi in b],
+        alm=[bi[:ALM][:time] for bi in b],
+        epm=[bi[:EPM][:time] for bi in b],
+    ),
+)
+```
+
+and the number of iterations reads
+
+```{julia}
+fig2 = Figure()
+axis2 = Axis(fig2[1, 1]; title=raw"Iterations needed per dimension $\mathbb H^d$")
+lines!(axis2, n_range, [bi[:PGA][:Iter] for bi in b]; label="PGA")
+lines!(axis2, n_range, [bi[:ALM][:Iter] for bi in b]; label="ALM")
+lines!(axis2, n_range, [bi[:EPM][:Iter] for bi in b]; label="EPM")
+axis2.xlabel = "Manifold dimension d"
+axis2.ylabel = "# Iterations"
+axislegend(axis2; position=:lt)
+fig2
+```
+
+```{julia}
+#| output: false
+#| echo: false
+write_csv && CSV.write(
+    "$(fn)iterations.csv",
+    DataFrame(;
+        d=n_range,
+        pga=[bi[:PGA][:Iter] for bi in b],
+        alm=[bi[:ALM][:Iter] for bi in b],
+        epm=[bi[:EPM][:Iter] for bi in b],
+    ),
+)
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["Constrained-Mean-Hn.md"]
+Canonical=false
+```
+````
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```

@@ -2,6 +2,7 @@
 title: "A comparison of the RCBM with the PBA, the SGM for solving the spectral Procrustes problem"
 author: "Hajg Jasa"
 date: 06/27/2024
+# engine: julia
 ---
 
 ## Introduction
@@ -85,6 +86,7 @@ d = 250
 A = rand(n, d)
 B = randn(n, d)
 tol = 1e-8
+max_iters = 5000
 #
 # Compute the orthogonal Procrustes minimizer given A and B
 function orthogonal_procrustes(A, B)
@@ -94,16 +96,13 @@ function orthogonal_procrustes(A, B)
 end
 #
 # Algorithm parameters
-bundle_cap = 25
-max_iters = 5000
-δ = 0.#1e-2 # Update parameter for μ
-μ = 50. # Initial proxiaml parameter for the proximal bundle method
 k_max = 1/4
-diameter = π/(3*√k_max)
+k_min = 0.0
+diameter = π/(3 * √k_max)
 #
 # Manifolds and data
 M = SpecialOrthogonal(d)
-p0 = orthogonal_procrustes(A, B) #rand(M)
+p0 = orthogonal_procrustes(A, B)
 project!(M, p0, p0)
 ```
 
@@ -127,12 +126,8 @@ We introduce some keyword arguments for the solvers we will use in this experime
 ```{julia}
 #| output: false
 rcbm_kwargs = [
-    :bundle_cap => bundle_cap,
-    :k_max => k_max,
-    :domain => domf,
-    :diameter => diameter,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+    :diameter => diameter,
     :debug => [
         :Iteration,
         (:Cost, "F(p): %1.16f "),
@@ -144,20 +139,21 @@ rcbm_kwargs = [
         10,
         "\n",
     ],
+    :domain => domf,
+    :k_max => k_max,
+    :k_min => k_min,
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
 ]
 rcbm_bm_kwargs = [
-    :k_max => k_max,
-    :domain => domf,
-    :diameter => diameter,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) | StopAfterIteration(max_iters),
+    :diameter => diameter,
+    :domain => domf,
+    :k_max => k_max,
+    :k_min => k_min,
 ]
 pba_kwargs = [
-    :bundle_size => bundle_cap,
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol)|StopAfterIteration(max_iters),
     :debug =>[
         :Iteration,
         :Stop,
@@ -175,21 +171,19 @@ pba_kwargs = [
 ]
 pba_bm_kwargs = [
     :cache =>(:LRU, [:Cost, :SubGradient], 50),
-    :stopping_criterion => StopWhenLagrangeMultiplierLess(tol) |                                   StopAfterIteration(max_iters),
 ]
 sgm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
     :debug => [:Iteration, (:Cost, "F(p): %1.16f "), :Stop, 1000, "\n"],
     :record => [:Iteration, :Cost, :p_star],
     :return_state => true,
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
 ]
 sgm_bm_kwargs = [
     :cache => (:LRU, [:Cost, :SubGradient], 50),
-    :stepsize => DecreasingStepsize(1, 1, 0, 1, 0, :absolute),
-    :stopping_criterion => StopWhenSubgradientNormLess(√tol) |
-                           StopAfterIteration(max_iters),
+    :stepsize => DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion => StopWhenSubgradientNormLess(√tol) | StopAfterIteration(max_iters),
 ]
 global header = ["Algorithm", "Iterations", "Time (s)", "Objective"]
 ```
@@ -275,6 +269,21 @@ benchmarking && pretty_table(DataFrame(D, :auto); tf = tf_markdown, header=heade
 #| echo: false
 #| code-fold: true
 (show_plot && benchmarking) && fig
+```
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+using Dates
+now()
 ```
 
 ## Literature
