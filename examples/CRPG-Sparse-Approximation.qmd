@@ -113,7 +113,7 @@ function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
     return y
 end
 h(M, p, μ) = μ * norm(p, 1)
-prox_h(M, λ, p, μ) = prox_l1_Hn(M, λ * μ, p) # hcat([prox_l1_Hn(M.manifold, λ * μ, p[:, i]) for i in 1:M.size[1]]...)
+prox_h(M, λ, p, μ) = prox_l1_Hn(M, λ * μ, p)
 # 
 f(M, p, data, μ) = g(M, p, data) + h(M, p, μ)
 # CPPA needs the proximal operators for the total objective
@@ -237,13 +237,12 @@ for n in dims
     Random.seed!(random_seed)
     
     # Define manifold
-    M = Hyperbolic(n) #PowerManifold(Hyperbolic(n - 1), ArrayPowerRepresentation(), m)#
+    M = Hyperbolic(n)
 
     for test in 1:n_tests
         # Generate random data
         anchor = rand(M)
         data = [exp(M, anchor, rand(M; vector_at=anchor, σ=σ)) for _ in 1:N]
-        # data = [rand(M) for _ in 1:N]
 
         for (c, μ) in enumerate(μs)
             # Initialize starting point for the optimization
@@ -261,7 +260,7 @@ for n in dims
             L_g = Manopt.ζ_1(-1.0, D)
             constant_stepsize = 1/L_g
             initial_stepsize = 3/2 * constant_stepsize
-            contraction_factor = 0.9 #0.999999
+            contraction_factor = 0.9
             warm_start_factor = 2.0
             #
             # Optimization
@@ -282,9 +281,9 @@ for n in dims
             pgm_record_bt = get_record(pgm_bt)
             #
             # CPPA
-            # cppa = cyclic_proximal_point(M, f_hn, proxes_f_hn, p0; cppa_kwargs(M)...)
-            # cppa_result = get_solver_result(cppa)
-            # cppa_record = get_record(cppa)
+            cppa = cyclic_proximal_point(M, f_hn, proxes_f_hn, p0; cppa_kwargs(M)...)
+            cppa_result = get_solver_result(cppa)
+            cppa_record = get_record(cppa)
             #
             # Benchmark the algorithms
             # Constant stepsize
@@ -298,54 +297,39 @@ for n in dims
                 $pgm_bm_kwargs_bt($contraction_factor, $initial_stepsize, $warm_start_factor)...
             )
             # CPPA
-            # cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_f_hn, $p0; cppa_bm_kwargs($M)...)
+            cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_f_hn, $p0; cppa_bm_kwargs($M)...)
             #
             # Collect times
             time_pgm_cn = time(median(pgm_bm_cn)) * 1e-9
             time_pgm_bt = time(median(pgm_bm_bt)) * 1e-9
-            # time_cppa = time(median(cppa_bm)) * 1e-9
+            time_cppa = time(median(cppa_bm)) * 1e-9
             time_pgm_cn_means[c] += time_pgm_cn
             time_pgm_bt_means[c] += time_pgm_bt
-            # time_cppa_means[c] += time_cppa
+            time_cppa_means[c] += time_cppa
             #
             # Collect sparsities
             sparsity_pgm_cn = sum(abs.(pgm_result_cn) .< 1e-8)/n
             sparsity_pgm_bt = sum(abs.(pgm_result_bt) .< 1e-8)/n
-            # sparsity_cppa = sum(abs.(cppa_result) .< 1e-8)/n
+            sparsity_cppa = sum(abs.(cppa_result) .< 1e-8)/n
             sparsity_pgm_cn_means[c] += sparsity_pgm_cn
             sparsity_pgm_bt_means[c] += sparsity_pgm_bt
-            # sparsity_cppa_means[c] += sparsity_cppa
+            sparsity_cppa_means[c] += sparsity_cppa
             #
             # Collect objective values
             objective_pgm_cn = f_hn(M, pgm_result_cn)
             objective_pgm_bt = f_hn(M, pgm_result_bt)
-            # objective_cppa = f_hn(M, cppa_result)
+            objective_cppa = f_hn(M, cppa_result)
             objective_pgm_cn_means[c] += objective_pgm_cn
             objective_pgm_bt_means[c] += objective_pgm_bt
-            # objective_cppa_means[c] += objective_cppa
+            objective_cppa_means[c] += objective_cppa
             #
             # Collect iterations
             iterations_pgm_cn = length(pgm_record_cn)
             iterations_pgm_bt = length(pgm_record_bt)
-            # iterations_cppa = length(cppa_record)
+            iterations_cppa = length(cppa_record)
             iterations_pgm_cn_means[c] += iterations_pgm_cn
             iterations_pgm_bt_means[c] += iterations_pgm_bt
-            # iterations_cppa_means[c] += iterations_cppa      
-            #
-            # B1 = export_dataframes(
-            #     M,
-            #     records,
-            #     times,
-            #     results_folder,
-            #     experiment_name,
-            #     subexperiment_name,
-            #     col_names_1,
-            #     col_names_2,
-            # )
-
-            # append!(A1, B1)
-            # # append!(A2, B2)
-            # (export_table) && (write_dataframes(B1, results_folder, experiment_name, subexperiment_name))
+            iterations_cppa_means[c] += iterations_cppa      
         end
     end
     for (c, μ) in enumerate(μs)
@@ -359,26 +343,26 @@ for n in dims
                 μ, n, iterations_pgm_bt_means[c]/n_tests, time_pgm_bt_means[c]/n_tests, objective_pgm_bt_means[c]/n_tests, sparsity_pgm_bt_means[c]/n_tests
             ]
         )
-        # push!(df_cppa, 
-        #     [
-        #         μ, n, iterations_cppa_means[c]/n_tests, time_cppa_means[c]/n_tests, objective_cppa_means[c]/n_tests, sparsity_cppa_means[c]/n_tests
-        #     ]
-        # )
+        push!(df_cppa, 
+            [
+                μ, n, iterations_cppa_means[c]/n_tests, time_cppa_means[c]/n_tests, objective_cppa_means[c]/n_tests, sparsity_cppa_means[c]/n_tests
+            ]
+        )
     end
     #
     # Reset data collection variables
     iterations_pgm_cn_means .= zeros(length(μs))
     iterations_pgm_bt_means .= zeros(length(μs))
-    # iterations_cppa_means .= zeros(length(μs))
+    iterations_cppa_means .= zeros(length(μs))
     time_pgm_cn_means .= zeros(length(μs))
     time_pgm_bt_means .= zeros(length(μs))
-    # time_cppa_means .= zeros(length(μs))
+    time_cppa_means .= zeros(length(μs))
     sparsity_pgm_cn_means .= zeros(length(μs))
     sparsity_pgm_bt_means .= zeros(length(μs))
-    # sparsity_cppa_means .= zeros(length(μs))
+    sparsity_cppa_means .= zeros(length(μs))
     objective_pgm_cn_means .= zeros(length(μs))
     objective_pgm_bt_means .= zeros(length(μs))
-    # objective_cppa_means .= zeros(length(μs)) 
+    objective_cppa_means .= zeros(length(μs)) 
 end
 ```
 
@@ -388,7 +372,7 @@ We export the results to CSV files
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
 df_pgm_bt = sort(df_pgm_bt, :μ)
-# df_cppa = sort(df_cppa, :μ)
+df_cppa = sort(df_cppa, :μ)
 df_results_time_iter = DataFrame(
     μ             = df_pgm_cn.μ,
     n             = Int.(df_pgm_cn.n), 
@@ -396,8 +380,8 @@ df_results_time_iter = DataFrame(
     CRPG_time     = df_pgm_cn.time, 
     CRPG_bt_iter  = Int.(round.(df_pgm_bt.iterations, digits = 0)),
     CRPG_bt_time  = df_pgm_bt.time, 
-    # CPPA_it_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
-    # CPPA_time     = df_cppa.time, 
+    CPPA_it_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
+    CPPA_time     = df_cppa.time, 
 )
 df_results_obj_spar = DataFrame(
     μ               = df_pgm_cn.μ,
@@ -406,12 +390,29 @@ df_results_obj_spar = DataFrame(
     CRPG_sparsity  = df_pgm_cn.sparsity,  
     CRPG_bt_obj    = df_pgm_bt.objective, 
     CRPG_bt_sparsity = df_pgm_bt.sparsity,  
-    # CPPA_obj         = df_cppa.objective, 
-    # CPPA_sparsity    = df_cppa.sparsity, 
+    CPPA_obj         = df_cppa.objective, 
+    CPPA_sparsity    = df_cppa.sparsity, 
 )
 # Write the results to CSV files
 CSV.write(joinpath(results_folder, "results-Hnm-time-iter-$(n_tests)-$(dims[end]).csv"), df_results_time_iter)
 CSV.write(joinpath(results_folder, "results-Hnm-obj-spar-$(n_tests)-$(dims[end]).csv"), df_results_obj_spar)
+```
+
+We can take a look at how the algorithms compare to each other in their performance with the following tables.
+First, we look at the time and number of iterations for each algorithm.
+```{julia}
+# | echo: false
+# | code-fold: true
+# | output: asis
+benchmarking && pretty_table(df_results_time_iter; tf = tf_markdown, header = column_names)
+```
+
+Second, we look at the objective values and sparsity of the solutions found by each algorithm.
+```{julia}
+# | echo: false
+# | code-fold: true
+# | output: asis
+benchmarking && pretty_table(df_results_obj_spar; tf = tf_markdown, header = column_names)
 ```
 
 ## Technical details
