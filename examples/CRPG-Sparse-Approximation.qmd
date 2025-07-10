@@ -7,9 +7,8 @@ engine: julia
 
 ## Introduction
 
-In this example we use the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025:2](@cite) 
-<!-- with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the space of symmetric positive definite matrices and on hyperbolic space.
-This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 5.4. -->
+In this example we use the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025:2](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the hyperbolic space.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.2.
 
 ```{julia}
 #| echo: false
@@ -77,7 +76,7 @@ n_tests = 10 # number of tests for each parameter setting
 atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-dims = [2, 10, 100]#, 200] #[(10, 5), (100, 5), (200, 5)]
+dims = [2, 10, 100] 
 μs = [0.1, 0.5, 1.0]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```
@@ -188,7 +187,7 @@ pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ), 
 ]
-
+# Keyword arguments for CPPA
 cppa_kwargs(M) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -403,7 +402,6 @@ First, we look at the time and number of iterations for each algorithm.
 ```{julia}
 # | echo: false
 # | code-fold: true
-# | output: asis
 benchmarking && pretty_table(df_results_time_iter; tf = tf_markdown, header = column_names)
 ```
 
@@ -411,7 +409,6 @@ Second, we look at the objective values and sparsity of the solutions found by e
 ```{julia}
 # | echo: false
 # | code-fold: true
-# | output: asis
 benchmarking && pretty_table(df_results_obj_spar; tf = tf_markdown, header = column_names)
 ```
 
@@ -436,7 +433,7 @@ println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S"))
 
 ````{=commonmark}
 ```@bibliography
-Pages = ["CRPG-Strongly-Convex.md"]
+Pages = ["CRPG-Sparse-Approximation.md"]
 Canonical=false
 ```
 ````
