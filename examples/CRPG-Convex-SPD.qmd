@@ -25,7 +25,7 @@ export_table = true
 export_result = true
 benchmarking = true
 
-experiment_name = ""
+experiment_name = "CRPG-Convex-SPD"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 ```
@@ -71,12 +71,9 @@ We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
 random_seed = 42
-experiment_name = "CRPG-Convex-SPD"
-results_folder = joinpath(@__DIR__, experiment_name)
-!isdir(results_folder) && mkdir(results_folder)
 
-atol = 1e-8
-max_iters = 150000
+atol = 1e-7
+max_iters = 20000
 τ = 1/2 # weight for the component h
 spd_dims = [2, 3, 4, 5]
 ```
@@ -114,31 +111,44 @@ function estimate_lipschitz_constant(M, g, anchor, R=D, N=100_000)
     end
     return maximum(constants)
 end
+function theoretical_lipschitz_constant(M, anchor, n, R=D, N=100_000)
+    constants = []
+    for i in 1:N
+        p = close_point(M, anchor, R)
+
+        push!(constants, 12n * log(det(p))^2)
+    end
+    return maximum(constants)
+end
 ```
 
 We introduce some keyword arguments for the solvers we will use in this experiment
 ```{julia}
 #| output: false
 # Solver arguments for backtracking
-pgm_kwargs(initial_stepsize) = [
+pgm_kwargs(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stepsize => ProximalGradientMethodBacktracking(; 
+        contraction_factor=contraction_factor,
         strategy=:convex, 
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
+        warm_start_factor=warm_start_factor,
     ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ),
 ]
-pgm_bm_kwargs(initial_stepsize) = [
+pgm_bm_kwargs(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
+        contraction_factor=contraction_factor, 
         strategy=:convex,   
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
+        warm_start_factor=warm_start_factor,
     ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
@@ -258,8 +268,9 @@ end
 ```
 
 ```{julia}
+# | echo: false
+# | output: false
 subexperiment_name = "SPD"
-k_max_spd = 0.0
 global A1_SPD = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -272,29 +283,31 @@ for n in spd_dims
     Random.seed!(random_seed)
 
     M = SymmetricPositiveDefinite(Int(n))
-    q = rand(M) # we can artificially craft a point for the median component, i.e. h
-    p0 = rand(M) #data[minimum(Tuple(findmax(dists)[2]))]
+    q = rand(M)
+    p0 = rand(M)
 
     prox_h_spd(M, λ, p) = prox_h(M, λ, p, q)
     f_spd(M, p) = f(M, p, q)
 
     D = 4*distance(M, p0, q)
     # Conseravative estimate of the Lipschitz constant for grad_g
-    L_g = 3/2 * estimate_lipschitz_constant(M, g, p0, D)
-    initial_stepsize = 1/L_g
-    println(initial_stepsize)
+    L_g = 1.05 * theoretical_lipschitz_constant(M, p0, n, D/2)
+    constant_stepsize = 1/L_g
+    initial_stepsize = 3/2 * constant_stepsize
+    contraction_factor = 0.9#n < maximum(spd_dims) ? 0.999999 : 0.9
+    warm_start_factor = 2.0
 
     # Optimization
     pgm_constant = proximal_gradient_method(M, f_spd, g, grad_g, p0;
         prox_nonsmooth=prox_h_spd, 
-        pgm_bm_kwargs_constant(initial_stepsize)...
+        pgm_bm_kwargs_constant(constant_stepsize)...
     )
     pgm_constant_result = get_solver_result(pgm_constant)
     pgm_constant_record = get_record(pgm_constant) 
     # We can also use a backtracked stepsize
     pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0; 
         prox_nonsmooth=prox_h_spd,
-        pgm_kwargs(initial_stepsize)...
+        pgm_kwargs(contraction_factor, initial_stepsize, warm_start_factor)...
     )
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
@@ -313,11 +326,11 @@ for n in spd_dims
     if benchmarking
         pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
             prox_nonsmooth=$prox_h_spd,
-            $pgm_bm_kwargs_constant($initial_stepsize)...
+            $pgm_bm_kwargs_constant($constant_stepsize)...
         )
         pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
             prox_nonsmooth=$prox_h_spd,
-            $pgm_bm_kwargs($initial_stepsize)...
+            $pgm_bm_kwargs($contraction_factor, $initial_stepsize, $warm_start_factor)...
         )
         # cppa_bm = @benchmark cyclic_proximal_point($M, $f_spd, $proxes_f_spd, $p0; cppa_bm_kwargs($M)...)
         
@@ -341,8 +354,8 @@ end
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to CRPG, while columns 5 to 7 refer to the CPPA...
 ```{julia}
 # | echo: false
-# | label: tbl-algo
-# | tbl-cap: Algorithm performance
+# | code-fold: true
+# | output: asis
 benchmarking && pretty_table(A1_SPD; tf = tf_markdown, header = col_names_1)
 ```
 

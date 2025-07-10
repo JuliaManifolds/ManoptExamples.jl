@@ -1,5 +1,5 @@
 ---
-title: "A Sparse PCA-like Problem on Hadamard Manifolds"
+title: "A Sparse Approximation Problem on Hadamard Manifolds"
 author: "Hajg Jasa, Paula John"
 date: 07/02/2025
 engine: julia
@@ -26,7 +26,7 @@ export_table = true
 export_result = true
 benchmarking = true
 
-experiment_name = "CRPG-Sparse-PCA"
+experiment_name = "CRPG-Sparse-Approximation"
 results_folder = joinpath(@__DIR__, experiment_name)
 !isdir(results_folder) && mkdir(results_folder)
 ```
@@ -43,7 +43,7 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 
 ## The Problem
 
-Let $\mathcal M = (\mathcal H^n)^m$ be the power manifold given by $m$ copies of the hyperbolic space $\mathcal H^n$, which is a Hadamard manifold, and $\{q_1,\ldots,q_N\} \in \mathcal M$ denote $N = 1000$ Gaussian random data points.
+Let $\mathcal M = \mathcal H^n$ be the Hadamard manifold given by the hyperbolic space, and $\{q_1,\ldots,q_N\} \in \mathcal M$ denote $N = 1000$ Gaussian random data points.
 Let $g \colon \mathcal M \to \mathbb R$ be defined by
 
 ```math
@@ -57,7 +57,7 @@ Observe that the function $g$ is strongly convex with respect to the Riemannian 
 Let $h \colon \mathcal M \to \mathbb R$ be defined by
 
 ```math
-h(p) = \μ \Vert p \Vert_1
+h(p) = \mu \Vert p \Vert_1
 ``` 
 be the sparsity-enforcing term given by the $\ell_1$-norm, where $\μ > 0$ is a regularization parameter.
 
@@ -71,15 +71,15 @@ The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-random_seed = 33
+random_seed = 42
 n_tests = 10 # number of tests for each parameter setting
 
-atol = 1e-8
+atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-α = 3/2 # weight for the median component (h)
-dims = [(100,5), (200,5), (300, 5)]
+dims = [2, 10, 100]#, 200] #[(10, 5), (100, 5), (200, 5)]
 μs = [0.1, 0.5, 1.0]
+σ = 1.0 # standard deviation for the Gaussian random data points
 ```
 
 ```{julia}
@@ -89,7 +89,7 @@ g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
 # 
 # Proximal map for the $\ell_1$-norm on the hyperbolic space
-function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-8)
+function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
     n = manifold_dimension(Hn)
     t = t_0
     y = zeros(n+1)
@@ -99,11 +99,7 @@ function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-8)
     end 
     y /= sqrt(abs(minkowski_metric(y, y)))
     for k in 1:max_it 
-        # (minkowski_metric(x, y)^2 - 1 == -1.0) && println(minkowski_metric(x, y))
-        s = 0 ≥ minkowski_metric(x, y)^2 - 1 ≥ -tol^2 ? 0 : minkowski_metric(x, y)^2 - 1 
-        # s = sqrt(Complex(minkowski_metric(x, y)^2 - 1))
-        # t_new = μ * real(sqrt(Complex(s)))/acosh(-minkowski_metric(x,y))#distance(Hn, x, y)
-        t_new = μ * sqrt(s)/distance(Hn, x, y)
+        t_new = μ * sqrt(abs(minkowski_metric(x, y)^2 - 1 ))/distance(Hn, x, y)
         if abs(t_new - t) ≤ tol
             return y
         end 
@@ -117,7 +113,7 @@ function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-8)
     return y
 end
 h(M, p, μ) = μ * norm(p, 1)
-prox_h(M, λ, p, μ) = hcat([prox_l1_Hn(M.manifold, λ * μ, p[:, i]) for i in 1:M.size[1]]...)
+prox_h(M, λ, p, μ) = prox_l1_Hn(M, λ * μ, p) # hcat([prox_l1_Hn(M.manifold, λ * μ, p[:, i]) for i in 1:M.size[1]]...)
 # 
 f(M, p, data, μ) = g(M, p, data) + h(M, p, μ)
 # CPPA needs the proximal operators for the total objective
@@ -166,19 +162,28 @@ pgm_bm_kwargs_cn(constant_stepsize) = [
     ), 
 ]
 # Keyword arguments for CRPG with a backtracked stepsize
-pgm_kwargs_bt(initial_stepsize) = [
+pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; strategy=:convex, initial_stepsize=initial_stepsize),
+    :stepsize => ProximalGradientMethodBacktracking(; 
+        contraction_factor=contraction_factor,
+        initial_stepsize=initial_stepsize,
+        strategy=:convex, 
+        warm_start_factor=warm_start_factor,
+    ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ),
 ]
-pgm_bm_kwargs_bt(initial_stepsize) = [
+pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; strategy=:convex,   
-        initial_stepsize=initial_stepsize),
+    :stepsize => ProximalGradientMethodBacktracking(; 
+        contraction_factor=contraction_factor,
+        initial_stepsize=initial_stepsize,
+        strategy=:convex,
+        warm_start_factor=warm_start_factor,
+    ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ), 
@@ -200,120 +205,11 @@ cppa_bm_kwargs(M) = [
 ]
 ```
 
-Before running the experiments, we initialize data collection functions that we will use later
-```{julia}
-#| output: false
-global col_names_1 = [
-    :Dimension,
-    :Iterations_1,
-    :Time_1,
-    :Objective_1,
-    :Iterations_2,
-    :Time_2,
-    :Objective_2,
-]
-col_types_1 = [
-    Int64,
-    Int64,
-    Float64,
-    Float64,
-    Float64,
-    Float64,
-    Float64,
-]
-named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
-global col_names_2 = [
-    :Dimension,
-    :Iterations,
-    :Time,
-    :Objective,
-]
-col_types_2 = [
-    Int64,
-    Int64,
-    Float64,
-    Float64,
-]
-named_tuple_2 = (; zip(col_names_2, type[] for type in col_types_2 )...)
-function initialize_dataframes(results_folder, experiment_name, subexperiment_name, named_tuple_1, named_tuple_2)
-    A1 = DataFrame(named_tuple_1)
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name * "_$subexperiment_name" * "-Comparisons.csv",
-        ),
-        A1;
-        header=false,
-    )
-    # A2 = DataFrame(named_tuple_2)
-    # CSV.write(
-    #     joinpath(
-    #         results_folder,
-    #         experiment_name * "_$subexperiment_name" * "-Comparisons-Subgrad.csv",
-    #     ),
-    #     A2;
-    #     header=false,
-    # )
-    return A1#, A2
-end
-```
-
-```{julia}
-#| output: false
-function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1, col_names_2)
-    B1 = DataFrame(;
-        Dimension=manifold_dimension(M),
-        Iterations_1=maximum(first.(records[1])),
-        Time_1=times[1],
-        Objective_1=minimum([r[2] for r in records[1]]),
-        Iterations_2=maximum(first.(records[2])),
-        Time_2=times[2],
-        Objective_2=minimum([r[2] for r in records[2]]),
-    )
-    # B2 = DataFrame(;
-    #     Dimension=manifold_dimension(M),
-    #     Iterations=median(last.(records[3])),
-    #     Time=times[3],
-    #     Objective=minimum([r[2] for r in records[3]]),
-    # )
-    return B1#, B2
-end
-function write_dataframes(
-    B1, 
-    # B2, 
-    results_folder, 
-    experiment_name, 
-    subexperiment_name
-)
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name *
-            "_$subexperiment_name" *
-            "-Comparisons.csv",
-            # -Convex-Prox.csv",
-        ),
-        B1;
-        append=true,
-    )
-    # CSV.write(
-    #     joinpath(
-    #         results_folder,
-    #         experiment_name *
-    #         "_$subexperiment_name" *
-    #         "-Comparisons-Subgrad.csv",
-    #     ),
-    #     B2;
-    #     append=true,
-    # )
-end
-```
-
 We set up some variables to collect the results of the experiments and initialize the dataframes
 ```{julia}
 #| output: false
 #| echo: false
-column_names = ["μ", "n", "m", "iterations", "time", "objective", "sparsity"]
+column_names = ["μ", "n", "iterations", "time", "objective", "sparsity"]
 df_pgm_cn = DataFrame([name => Float64[] for name in column_names], makeunique=true)
 df_pgm_bt = DataFrame([name => Float64[] for name in column_names], makeunique=true)
 df_cppa = DataFrame([name => Float64[] for name in column_names], makeunique=true)
@@ -336,16 +232,18 @@ objective_cppa_means = zeros(length(μs))
 And run the experiments
 ```{julia}
 #| output: false
-for (n, m) in dims
+for n in dims
     # Set random seed for reproducibility
     Random.seed!(random_seed)
     
     # Define manifold
-    M = PowerManifold(Hyperbolic(n - 1), ArrayPowerRepresentation(), m)
+    M = Hyperbolic(n) #PowerManifold(Hyperbolic(n - 1), ArrayPowerRepresentation(), m)#
 
     for test in 1:n_tests
         # Generate random data
-        data = [rand(M) for _ in 1:N]
+        anchor = rand(M)
+        data = [exp(M, anchor, rand(M; vector_at=anchor, σ=σ)) for _ in 1:N]
+        # data = [rand(M) for _ in 1:N]
 
         for (c, μ) in enumerate(μs)
             # Initialize starting point for the optimization
@@ -359,10 +257,12 @@ for (n, m) in dims
             f_hn(M, p) = f(M, p, data, μ)
             #
             # Estimate stepsizes
-            D = 2.05 * maximum([distance(M, p0, di) for di in data])
-            L_g = 1.05 * Manopt.ζ_1(-1.0, D)
+            D = 2.05 * maximum([distance(M, p0, di) for di in vcat(data, [anchor])])
+            L_g = Manopt.ζ_1(-1.0, D)
             constant_stepsize = 1/L_g
             initial_stepsize = 3/2 * constant_stepsize
+            contraction_factor = 0.9 #0.999999
+            warm_start_factor = 2.0
             #
             # Optimization
             # Constant stepsize
@@ -376,15 +276,15 @@ for (n, m) in dims
             # Backtracked stepsize
             pgm_bt = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
                 prox_nonsmooth=prox_h_hn,
-                pgm_kwargs_bt(initial_stepsize)...
+                pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor)...
             )
             pgm_result_bt = get_solver_result(pgm_bt)
             pgm_record_bt = get_record(pgm_bt)
             #
             # CPPA
-            cppa = cyclic_proximal_point(M, f_hn, proxes_f_hn, p0; cppa_kwargs(M)...)
-            cppa_result = get_solver_result(cppa)
-            cppa_record = get_record(cppa)
+            # cppa = cyclic_proximal_point(M, f_hn, proxes_f_hn, p0; cppa_kwargs(M)...)
+            # cppa_result = get_solver_result(cppa)
+            # cppa_record = get_record(cppa)
             #
             # Benchmark the algorithms
             # Constant stepsize
@@ -395,42 +295,42 @@ for (n, m) in dims
             # Backtracked stepsize
             pgm_bm_bt = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
                 prox_nonsmooth=$prox_h_hn,
-                $pgm_bm_kwargs_bt($initial_stepsize)...
+                $pgm_bm_kwargs_bt($contraction_factor, $initial_stepsize, $warm_start_factor)...
             )
             # CPPA
-            cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_f_hn, $p0; cppa_bm_kwargs($M)...)
+            # cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_f_hn, $p0; cppa_bm_kwargs($M)...)
             #
             # Collect times
             time_pgm_cn = time(median(pgm_bm_cn)) * 1e-9
             time_pgm_bt = time(median(pgm_bm_bt)) * 1e-9
-            time_cppa = time(median(cppa_bm)) * 1e-9
+            # time_cppa = time(median(cppa_bm)) * 1e-9
             time_pgm_cn_means[c] += time_pgm_cn
             time_pgm_bt_means[c] += time_pgm_bt
-            time_cppa_means[c] += time_cppa
+            # time_cppa_means[c] += time_cppa
             #
             # Collect sparsities
-            sparsity_pgm_cn = sum(abs.(pgm_result_cn) .< 1e-8)/n/m
-            sparsity_pgm_bt = sum(abs.(pgm_result_bt) .< 1e-8)/n/m
-            sparsity_cppa = sum(abs.(cppa_result) .< 1e-8)/n/m
+            sparsity_pgm_cn = sum(abs.(pgm_result_cn) .< 1e-8)/n
+            sparsity_pgm_bt = sum(abs.(pgm_result_bt) .< 1e-8)/n
+            # sparsity_cppa = sum(abs.(cppa_result) .< 1e-8)/n
             sparsity_pgm_cn_means[c] += sparsity_pgm_cn
             sparsity_pgm_bt_means[c] += sparsity_pgm_bt
-            sparsity_cppa_means[c] += sparsity_cppa
+            # sparsity_cppa_means[c] += sparsity_cppa
             #
             # Collect objective values
             objective_pgm_cn = f_hn(M, pgm_result_cn)
             objective_pgm_bt = f_hn(M, pgm_result_bt)
-            objective_cppa = f_hn(M, cppa_result)
+            # objective_cppa = f_hn(M, cppa_result)
             objective_pgm_cn_means[c] += objective_pgm_cn
             objective_pgm_bt_means[c] += objective_pgm_bt
-            objective_cppa_means[c] += objective_cppa
+            # objective_cppa_means[c] += objective_cppa
             #
             # Collect iterations
             iterations_pgm_cn = length(pgm_record_cn)
             iterations_pgm_bt = length(pgm_record_bt)
-            iterations_cppa = length(cppa_record)
+            # iterations_cppa = length(cppa_record)
             iterations_pgm_cn_means[c] += iterations_pgm_cn
             iterations_pgm_bt_means[c] += iterations_pgm_bt
-            iterations_cppa_means[c] += iterations_cppa      
+            # iterations_cppa_means[c] += iterations_cppa      
             #
             # B1 = export_dataframes(
             #     M,
@@ -451,34 +351,34 @@ for (n, m) in dims
     for (c, μ) in enumerate(μs)
         push!(df_pgm_cn, 
             [
-                μ, n, m, iterations_pgm_cn_means[c]/n_tests, time_pgm_cn_means[c]/n_tests, objective_pgm_cn_means[c]/n_tests, sparsity_pgm_cn_means[c]/n_tests
+                μ, n, iterations_pgm_cn_means[c]/n_tests, time_pgm_cn_means[c]/n_tests, objective_pgm_cn_means[c]/n_tests, sparsity_pgm_cn_means[c]/n_tests
             ]
         )
         push!(df_pgm_bt, 
             [
-                μ, n, m, iterations_pgm_bt_means[c]/n_tests, time_pgm_bt_means[c]/n_tests, objective_pgm_bt_means[c]/n_tests, sparsity_pgm_bt_means[c]/n_tests
+                μ, n, iterations_pgm_bt_means[c]/n_tests, time_pgm_bt_means[c]/n_tests, objective_pgm_bt_means[c]/n_tests, sparsity_pgm_bt_means[c]/n_tests
             ]
         )
-        push!(df_cppa, 
-            [
-                μ, n, m, iterations_cppa_means[c]/n_tests, time_cppa_means[c]/n_tests, objective_cppa_means[c]/n_tests, sparsity_cppa_means[c]/n_tests
-            ]
-        )
+        # push!(df_cppa, 
+        #     [
+        #         μ, n, iterations_cppa_means[c]/n_tests, time_cppa_means[c]/n_tests, objective_cppa_means[c]/n_tests, sparsity_cppa_means[c]/n_tests
+        #     ]
+        # )
     end
     #
     # Reset data collection variables
     iterations_pgm_cn_means .= zeros(length(μs))
     iterations_pgm_bt_means .= zeros(length(μs))
-    iterations_cppa_means .= zeros(length(μs))
+    # iterations_cppa_means .= zeros(length(μs))
     time_pgm_cn_means .= zeros(length(μs))
     time_pgm_bt_means .= zeros(length(μs))
-    time_cppa_means .= zeros(length(μs))
+    # time_cppa_means .= zeros(length(μs))
     sparsity_pgm_cn_means .= zeros(length(μs))
     sparsity_pgm_bt_means .= zeros(length(μs))
-    sparsity_cppa_means .= zeros(length(μs))
+    # sparsity_cppa_means .= zeros(length(μs))
     objective_pgm_cn_means .= zeros(length(μs))
     objective_pgm_bt_means .= zeros(length(μs))
-    objective_cppa_means .= zeros(length(μs)) 
+    # objective_cppa_means .= zeros(length(μs)) 
 end
 ```
 
@@ -488,7 +388,7 @@ We export the results to CSV files
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
 df_pgm_bt = sort(df_pgm_bt, :μ)
-df_cppa = sort(df_cppa, :μ)
+# df_cppa = sort(df_cppa, :μ)
 df_results_time_iter = DataFrame(
     μ             = df_pgm_cn.μ,
     n             = Int.(df_pgm_cn.n), 
@@ -496,8 +396,8 @@ df_results_time_iter = DataFrame(
     CRPG_time     = df_pgm_cn.time, 
     CRPG_bt_iter  = Int.(round.(df_pgm_bt.iterations, digits = 0)),
     CRPG_bt_time  = df_pgm_bt.time, 
-    CPPA_it_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
-    CPPA_time     = df_cppa.time, 
+    # CPPA_it_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
+    # CPPA_time     = df_cppa.time, 
 )
 df_results_obj_spar = DataFrame(
     μ               = df_pgm_cn.μ,
@@ -506,12 +406,12 @@ df_results_obj_spar = DataFrame(
     CRPG_sparsity  = df_pgm_cn.sparsity,  
     CRPG_bt_obj    = df_pgm_bt.objective, 
     CRPG_bt_sparsity = df_pgm_bt.sparsity,  
-    CPPA_obj         = df_cppa.objective, 
-    CPPA_sparsity    = df_cppa.sparsity, 
+    # CPPA_obj         = df_cppa.objective, 
+    # CPPA_sparsity    = df_cppa.sparsity, 
 )
 # Write the results to CSV files
-CSV.write(joinpath(results_folder, "results-Hnm-time-iter-$(n_tests).csv"), df_results_time_iter)
-CSV.write(joinpath(results_folder, "results-Hnm-obj-spar-$(n_tests).csv"), df_results_obj_spar)
+CSV.write(joinpath(results_folder, "results-Hnm-time-iter-$(n_tests)-$(dims[end]).csv"), df_results_time_iter)
+CSV.write(joinpath(results_folder, "results-Hnm-obj-spar-$(n_tests)-$(dims[end]).csv"), df_results_obj_spar)
 ```
 
 ## Technical details
