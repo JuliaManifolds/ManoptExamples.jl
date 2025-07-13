@@ -10,3 +10,6 @@ CondaPkg = "0.2"
 Documenter = "1"
 DocumenterCitations = "1.3.2"
 DocumenterInterLinks = "1"
+
+[sources]
+ManoptExamples = { path = ".." }

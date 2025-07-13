@@ -7,7 +7,7 @@ if "--help" ∈ ARGS
         """
     docs/make.jl
 
-Render the `ManoptExamples.jl` documenation with optional arguments
+Render the `ManoptExamples.jl` documentation with optional arguments
 
 Arguments
 * `--exclude-examples` - exclude the examples from the menu of Documenter,
@@ -24,6 +24,9 @@ Arguments
     )
     exit(0)
 end
+
+run_quarto = "--quarto" in ARGS
+run_on_CI = (get(ENV, "CI", nothing) == "true")
 
 #
 # (a) if docs is not the current active environment, switch to it
