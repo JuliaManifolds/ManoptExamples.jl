@@ -273,7 +273,6 @@ wireframe!(ax, sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
 π3(x) = 1.0*x[3]
 
 scatterlines!(ax, circx, circy, circz; markersize =2, color=:black, linewidth=2)
-
 scatterlines!(ax, π1.(y_star), π2.(y_star), π3.(y_star); markersize =8, color=:orange, linewidth=2)
 
 scatter!(ax, π1.([y0]), π2.([y0]), π3.([y0]); markersize = 10, color=:green)

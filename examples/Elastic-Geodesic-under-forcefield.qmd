@@ -234,7 +234,7 @@ wireframe!(ax, sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
 π1(x) = 1.02*x[1]
 π2(x) = 1.02*x[2]
 π3(x) = 1.02*x[3]
-scatterlines!(ax, π1.(geodesic_final), π2.(geodesic_final), π3.(geodesic_final); markersize =5, color=:orange, linewidth=2)
+scatterlines!(ax, π1.(geodesic_final), π2.(geodesic_final), π3.(geodesic_final);markersize =5, color=:orange, linewidth=2)
 scatterlines!(ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =5, color=:blue, linewidth=2)
 scatter!(ax, π1.([y0, yT]), π2.([y0, yT]), π3.([y0, yT]); markersize =5, color=:red)
 arrows!(ax, π1.(p_res), π2.(p_res), π3.(p_res), π1.(ws), π2.(ws), π3.(ws); color=:green, linewidth=0.01, arrowsize=Vec3f(0.03, 0.03, 0.05), transparency=true, lengthscale=0.07)
