@@ -38,3 +38,6 @@ NamedColors = "0.2.1"
 Plots = "1.38"
 PythonCall = "0.9"
 julia = "1.10"
+
+[sources]
+ManoptExamples = { path = ".." }

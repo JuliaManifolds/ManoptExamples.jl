@@ -34,23 +34,18 @@ run_on_CI = (get(ENV, "CI", nothing) == "true")
 if Base.active_project() != joinpath(@__DIR__, "Project.toml")
     using Pkg
     Pkg.activate(@__DIR__)
-    Pkg.develop(PackageSpec(; path=(@__DIR__) * "/../"))
-    Pkg.resolve()
     Pkg.instantiate()
 end
 
-# (b) Did someone say render? Then we render!
-if "--quarto" ∈ ARGS
+# (b) If quarto is set, or we are on CI, run quarto
+if run_quarto || run_on_CI
     using CondaPkg
-    CondaPkg.withenv() do
-        @info "Rendering Quarto"
+    CondaPkg.withenv() do # for optuna
+         @info "Rendering Quarto"
         examples_folder = (@__DIR__) * "/../examples"
         # instantiate the tutorials environment if necessary
         Pkg.activate(examples_folder)
-        Pkg.develop(PackageSpec(; path=(@__DIR__) * "/../")) # Before resolving set ManoptExamples to dev
-        Pkg.resolve()
         Pkg.instantiate()
-        Pkg.build("IJulia") # build IJulia to the right version.
         Pkg.activate(@__DIR__) # but return to the docs one before
         CondaPkg.add("optuna")
         run(`quarto render $(examples_folder)`)
