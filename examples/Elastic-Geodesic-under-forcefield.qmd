@@ -16,7 +16,7 @@ Pkg.develop(; path="../../Manopt.jl") # a trick to work on the local dev version
 ```{julia}
 using LinearAlgebra, SparseArrays, OffsetArrays
 using Manifolds, Manopt, ManoptExamples
-using WGLMakie, Makie, GeometryTypes, Colors, ColorSchemes, NamedColors
+using GLMakie, Makie, GeometryTypes, Colors, ColorSchemes, NamedColors
 using CSV, DataFrames
 ```
 
@@ -212,33 +212,65 @@ The starting geodesic (blue) is plotted as well. The force acting on each point 
 
 ```{julia}
 n = 25
-u = range(0,stop=2*π,length=n);
-v = range(0,stop=π,length=n);
-sx = zeros(n,n); sy = zeros(n,n); sz = zeros(n,n)
+u = range(0; stop=2 * π, length=n);
+v = range(0; stop=π, length=n);
+sx = zeros(n, n);
+sy = zeros(n, n);
+sz = zeros(n, n);
 
 ws = [-w(p, integrand.scaling) for p in p_res]
 ws_start = [-w(p, integrand.scaling) for p in discretized_y]
 for i in 1:n
     for j in 1:n
-        sx[i,j] = cos.(u[i]) * sin(v[j]);
-        sy[i,j] = sin.(u[i]) * sin(v[j]);
-        sz[i,j] = cos(v[j]);
+        sx[i, j] = cos.(u[i]) * sin(v[j])
+        sy[i, j] = sin.(u[i]) * sin(v[j])
+        sz[i, j] = cos(v[j])
     end
 end
-fig, ax, plt = meshscatter(sx,sy,sz;
-      color = RGBA(1.,1.,1.,0.), shading = Makie.automatic, transparency=true
+fig, ax, plt = meshscatter(
+    sx, sy, sz; color=RGBA(1.0, 1.0, 1.0, 0.0), shading=Makie.automatic, transparency=true
 )
-geodesic_final = [y0, p_res ..., yT]
+geodesic_start = [y0, discretized_y..., yT]
+geodesic_final = [y0, p_res..., yT]
 ax.show_axis = false
-wireframe!(ax, sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
-π1(x) = 1.02*x[1]
-π2(x) = 1.02*x[2]
-π3(x) = 1.02*x[3]
-scatterlines!(ax, π1.(geodesic_final), π2.(geodesic_final), π3.(geodesic_final);markersize =5, color=:orange, linewidth=2)
-scatterlines!(ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =5, color=:blue, linewidth=2)
-scatter!(ax, π1.([y0, yT]), π2.([y0, yT]), π3.([y0, yT]); markersize =5, color=:red)
-arrows!(ax, π1.(p_res), π2.(p_res), π3.(p_res), π1.(ws), π2.(ws), π3.(ws); color=:green, linewidth=0.01, arrowsize=Vec3f(0.03, 0.03, 0.05), transparency=true, lengthscale=0.07)
+wireframe!(ax, sx, sy, sz; color=RGBA(0.5, 0.5, 0.7, 0.1), transparency=true)
+π1(x) = 1.02 * x[1]
+π2(x) = 1.02 * x[2]
+π3(x) = 1.02 * x[3]
+scatterlines!(
+    ax,
+    π1.(geodesic_final),
+    π2.(geodesic_final),
+    π3.(geodesic_final);
+    markersize=5,
+    color=:orange,
+    linewidth=2,
+)
+scatterlines!(
+    ax,
+    π1.(geodesic_start),
+    π2.(geodesic_start),
+    π3.(geodesic_start);
+    markersize=5,
+    color=:blue,
+    linewidth=2,
+)
+scatter!(ax, π1.([y0, yT]), π2.([y0, yT]), π3.([y0, yT]); markersize=5, color=:red)
+arrows!(
+    ax,
+    π1.(p_res),
+    π2.(p_res),
+    π3.(p_res),
+    π1.(ws),
+    π2.(ws),
+    π3.(ws);
+    color=:green,
+    linewidth=0.01,
+    arrowsize=Vec3f(0.03, 0.03, 0.05),
+    transparency=true,
+    lengthscale=0.07,
+)
 cam = cameracontrols(ax.scene)
-cam.lookat[] =[-2.5, 2.5, 2]
+cam.lookat[] = [-2.5, 2.5, 2]
 fig
 ```

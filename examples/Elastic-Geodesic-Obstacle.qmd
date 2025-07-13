@@ -16,7 +16,7 @@ Pkg.develop(; path="../../Manopt.jl") # a trick to work on the local dev version
 ```{julia}
 using LinearAlgebra, SparseArrays, OffsetArrays
 using Manifolds, Manopt, ManoptExamples
-using WGLMakie, Makie, GeometryTypes, Colors, ColorSchemes, NamedColors
+using GLMakie, Makie, GeometryTypes, Colors, ColorSchemes, NamedColors
 using CSV, DataFrames
 ```
 
