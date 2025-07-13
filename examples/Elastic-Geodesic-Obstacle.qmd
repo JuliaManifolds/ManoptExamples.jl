@@ -8,7 +8,9 @@ date: 2025-07-13
 #| echo: false
 #| output: false
 # TODO: Change once `vectorbundle_newton` is released in `Manopt.jl`
-using Pkg; Pkg.activate();
+using Pkg;
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(; path="../../Manopt.jl") # a trick to work on the local dev version
 ```
 
 ```{julia}

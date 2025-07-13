@@ -5,15 +5,12 @@ date: 2025-07-13
 ---
 
 ```{julia}
-using Markdown
-using InteractiveUtils
-```
-
-```{julia}
 #| echo: false
 #| output: false
 # TODO: Change once `vectorbundle_newton` is released in `Manopt.jl`
-using Pkg; Pkg.activate();
+using Pkg;
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+Pkg.develop(; path="../../Manopt.jl") # a trick to work on the local dev version
 ```
 
 ```{julia}
@@ -47,7 +44,8 @@ For our example we set
     halt = pi - 0.4
     h = (halt-st)/(N+1)
     Omega = range(; start=st, stop = halt, length=N+2)[2:end-1]
-    y0 = [sin(st),0,cos(st)]     yT = [sin(halt),0,cos(halt)]
+    y0 = [sin(st),0,cos(st)];
+    yT = [sin(halt),0,cos(halt)]
 ```
 
 As a starting point, we use the geodesic connecting $\gamma_0$ and $\gamma_T$:
@@ -202,12 +200,11 @@ We extract the recorded values
 and plot the result, where we measure the norms of the Newton direction in each iteration,
 
 ```{julia}
-    f = Figure(;)
-    row, col = fldmod1(1, 2)
-    Axis(f[row, col], yscale = log10, title = string("Norms of the Newton directions (semilogarithmic)"), xminorgridvisible = true, xticks = (1:length(change)), xlabel = "Iteration", ylabel = "‖δx‖")
-    scatterlines!(change[1:end], color = :blue)
-    f
-end
+f = Figure(;)
+row, col = fldmod1(1, 2)
+Axis(f[row, col], yscale = log10, title = string("Norms of the Newton directions (semilogarithmic)"), xminorgridvisible = true, xticks = (1:length(change)), xlabel = "Iteration", ylabel = "‖δx‖")
+scatterlines!(change[1:end], color = :blue)
+f
 ```
 
 and the resulting geodesic under the force field (orange).
@@ -231,21 +228,17 @@ end
 fig, ax, plt = meshscatter(sx,sy,sz;
       color = RGBA(1.,1.,1.,0.), shading = Makie.automatic, transparency=true
 )
-```
-
-```{julia}
-geodesic_start = [y0, discretized_y ...,yT]
 geodesic_final = [y0, p_res ..., yT]
 ax.show_axis = false
 wireframe!(ax, sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
-    π1(x) = 1.02*x[1]
-    π2(x) = 1.02*x[2]
-    π3(x) = 1.02*x[3]
-    scatterlines!(ax, π1.(geodesic_final), π2.(geodesic_final), π3.(geodesic_final); markersize =5, color=:orange, linewidth=2)
-    scatterlines!(ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =5, color=:blue, linewidth=2)
-    scatter!(ax, π1.([y0, yT]), π2.([y0, yT]), π3.([y0, yT]); markersize =5, color=:red)
-    arrows!(ax, π1.(p_res), π2.(p_res), π3.(p_res), π1.(ws), π2.(ws), π3.(ws); color=:green, linewidth=0.01, arrowsize=Vec3f(0.03, 0.03, 0.05), transparency=true, lengthscale=0.07)
-    cam = cameracontrols(ax.scene)
-    cam.lookat[] =[-2.5, 2.5, 2]
-    fig
+π1(x) = 1.02*x[1]
+π2(x) = 1.02*x[2]
+π3(x) = 1.02*x[3]
+scatterlines!(ax, π1.(geodesic_final), π2.(geodesic_final), π3.(geodesic_final); markersize =5, color=:orange, linewidth=2)
+scatterlines!(ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =5, color=:blue, linewidth=2)
+scatter!(ax, π1.([y0, yT]), π2.([y0, yT]), π3.([y0, yT]); markersize =5, color=:red)
+arrows!(ax, π1.(p_res), π2.(p_res), π3.(p_res), π1.(ws), π2.(ws), π3.(ws); color=:green, linewidth=0.01, arrowsize=Vec3f(0.03, 0.03, 0.05), transparency=true, lengthscale=0.07)
+cam = cameracontrols(ax.scene)
+cam.lookat[] =[-2.5, 2.5, 2]
+fig
 ```
