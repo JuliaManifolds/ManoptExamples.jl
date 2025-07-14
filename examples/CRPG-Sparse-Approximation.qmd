@@ -118,7 +118,7 @@ f(M, p, data, μ) = g(M, p, data) + h(M, p, μ)
 # CPPA needs the proximal operators for the total objective
 function proxes_f(data, μ)
     proxes = Function[(M, λ, p) -> ManifoldDiff.prox_distance(M, λ / length(data), di, p, 2) for di in data]
-    push!(proxes, (M, λ, p) -> hcat([prox_l1_Hn(M.manifold, λ * μ, p[:, i]) for i in 1:M.size[1]]...))
+    push!(proxes, (M, λ, p) -> prox_l1_Hn(M, λ * μ, p))
     return proxes
 end
 # Function to generate points close to the given point p
@@ -194,6 +194,7 @@ cppa_kwargs(M) = [
     :stopping_criterion => StopWhenAny(
         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
     ),
+    :λ => i->manifold_dimension(M)/i,
 ]
 cppa_bm_kwargs(M) = [
     :record => [:Iteration, :Cost, :Iterate],
@@ -201,6 +202,7 @@ cppa_bm_kwargs(M) = [
     :stopping_criterion => StopWhenAny(
         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
     ),
+    :λ => i->manifold_dimension(M)/i,
 ]
 ```
 
@@ -307,9 +309,9 @@ for n in dims
             time_cppa_means[c] += time_cppa
             #
             # Collect sparsities
-            sparsity_pgm_cn = sum(abs.(pgm_result_cn) .< 1e-8)/n
-            sparsity_pgm_bt = sum(abs.(pgm_result_bt) .< 1e-8)/n
-            sparsity_cppa = sum(abs.(cppa_result) .< 1e-8)/n
+            sparsity_pgm_cn = sum(abs.(pgm_result_cn) .< atol)/n
+            sparsity_pgm_bt = sum(abs.(pgm_result_bt) .< atol)/n
+            sparsity_cppa = sum(abs.(cppa_result) .< atol)/n
             sparsity_pgm_cn_means[c] += sparsity_pgm_cn
             sparsity_pgm_bt_means[c] += sparsity_pgm_bt
             sparsity_cppa_means[c] += sparsity_cppa
@@ -379,7 +381,7 @@ df_results_time_iter = DataFrame(
     CRPG_time     = df_pgm_cn.time, 
     CRPG_bt_iter  = Int.(round.(df_pgm_bt.iterations, digits = 0)),
     CRPG_bt_time  = df_pgm_bt.time, 
-    CPPA_it_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
+    CPPA_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
     CPPA_time     = df_cppa.time, 
 )
 df_results_obj_spar = DataFrame(
@@ -393,8 +395,8 @@ df_results_obj_spar = DataFrame(
     CPPA_sparsity    = df_cppa.sparsity, 
 )
 # Write the results to CSV files
-CSV.write(joinpath(results_folder, "results-Hnm-time-iter-$(n_tests)-$(dims[end]).csv"), df_results_time_iter)
-CSV.write(joinpath(results_folder, "results-Hnm-obj-spar-$(n_tests)-$(dims[end]).csv"), df_results_obj_spar)
+CSV.write(joinpath(results_folder, "results-Hn-time-iter-$(n_tests)-$(dims[end]).csv"), df_results_time_iter)
+CSV.write(joinpath(results_folder, "results-Hn-obj-spar-$(n_tests)-$(dims[end]).csv"), df_results_obj_spar)
 ```
 
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
@@ -402,14 +404,16 @@ First, we look at the time and number of iterations for each algorithm.
 ```{julia}
 # | echo: false
 # | code-fold: true
-benchmarking && pretty_table(df_results_time_iter; tf = tf_markdown, header = column_names)
+header_1 = ["μ", "n", "CRPG_const_iter", "CRPG_const_time", "CRPG_bt_iter", "CRPG_bt_time", "CPPA_iter", "CPPA_time"]
+benchmarking && pretty_table(df_results_time_iter; tf = tf_markdown, header = header_1)
 ```
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 ```{julia}
 # | echo: false
 # | code-fold: true
-benchmarking && pretty_table(df_results_obj_spar; tf = tf_markdown, header = column_names)
+header_ = ["μ", "n", "CRPG_const_obj", "CRPG_const_spar", "CRPG_bt_obj", "CRPG_bt_spar", "CPPA_obj", "CPPA_spar"]
+benchmarking && pretty_table(df_results_obj_spar; tf = tf_markdown, header = header_2)
 ```
 
 ## Technical details
