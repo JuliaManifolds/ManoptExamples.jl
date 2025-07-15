@@ -1,5 +1,5 @@
 ---
-title: "Proximal Gradient Method: A Geodesically Convex Example on SPDs"
+title: "A Geodesically Convex Example on SPDs"
 author: "Hajg Jasa"
 date: 04/16/2025
 engine: julia
@@ -75,7 +75,7 @@ random_seed = 42
 atol = 1e-7
 max_iters = 20000
 τ = 1/2 # weight for the component h
-spd_dims = [2, 3, 4, 5]
+spd_dims = [2]#, 3], 4, 5]
 ```
 
 ```{julia}
@@ -171,18 +171,6 @@ pgm_bm_kwargs_constant(stepsize) = [
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ), 
 ]
-# cppa_kwargs(M) = [
-#     :record => [:Iteration, :Cost, :Iterate],
-#     :return_state => true,
-#     :stopping_criterion => StopWhenAny(
-#         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
-#     ),
-# ]
-# cppa_bm_kwargs(M) = [
-#     :stopping_criterion => StopWhenAny(
-#         StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
-#     ),
-# ]
 ```
 
 Before running the experiments, we initialize data collection functions that we will use later
@@ -277,7 +265,10 @@ global A1_SPD = initialize_dataframes(
     subexperiment_name,
     named_tuple_1,
 )
-
+total_records = []
+column_names = ["Iterations", "Objective"]
+df_pgm_cn = DataFrame([name => Float64[] for name in column_names], makeunique=true)
+df_pgm_bt = DataFrame([name => Float64[] for name in column_names], makeunique=true)
 for n in spd_dims
 
     Random.seed!(random_seed)
@@ -294,7 +285,7 @@ for n in spd_dims
     L_g = 1.05 * theoretical_lipschitz_constant(M, p0, n, D/2)
     constant_stepsize = 1/L_g
     initial_stepsize = 3/2 * constant_stepsize
-    contraction_factor = 0.9#n < maximum(spd_dims) ? 0.999999 : 0.9
+    contraction_factor = 0.9
     warm_start_factor = 2.0
 
     # Optimization
@@ -312,15 +303,11 @@ for n in spd_dims
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
 
-    # cppa = cyclic_proximal_point(M, f_spd, proxes_f_spd, p0; cppa_kwargs(M)...)
-    # cppa_result = get_solver_result(cppa)
-    # cppa_record = get_record(cppa)
-
     records = [
         pgm_constant_record,
         pgm_record,
-        # cppa_record,
     ]
+    push!(total_records, records)
 
     # Benchmarking
     if benchmarking
@@ -332,12 +319,10 @@ for n in spd_dims
             prox_nonsmooth=$prox_h_spd,
             $pgm_bm_kwargs($contraction_factor, $initial_stepsize, $warm_start_factor)...
         )
-        # cppa_bm = @benchmark cyclic_proximal_point($M, $f_spd, $proxes_f_spd, $p0; cppa_bm_kwargs($M)...)
         
         times = [
             median(pgm_constant_bm).time * 1e-9,
             median(pgm_bm).time * 1e-9,
-            # median(cppa_bm).time * 1e-9,
         ]
         # Export the results
         B1 = export_dataframes(
@@ -355,7 +340,21 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 # | echo: false
 # | code-fold: true
-benchmarking && pretty_table(A1_SPD; tf = tf_markdown, header = col_names_1)
+# | output: asis
+ENV["DATAFRAMES_COLUMNS"] = 0
+# benchmarking && pretty_table(A1_SPD; tf = tf_markdown, header = col_names_1, max_num_of_columns=0)
+
+struct DataFrameWrapper
+    df
+end
+
+Base.show(io::IO, mime::MIME"text/plain", w::DataFrameWrapper) = show(io, mime, w.df)
+
+# DataFrameWrapper(A1_SPD)
+show(A1_SPD)
+# show(DataFrameWrapper(pretty_table(A1_SPD; tf = tf_markdown, header = col_names_1)))
+# DataFrameWrapper(A1_SPD)
+# pretty_table(A1_SPD; tf = tf_markdown, header = col_names_1, limit_printing=false, max_num_of_columns=-1)
 ```
 
 ## Technical details

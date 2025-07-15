@@ -192,17 +192,15 @@ cppa_kwargs(M) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
+        StopAfterIteration(max_iters), StopWhenCriterionWithIterationCondition(StopWhenChangeLess(M, 1e-5*atol), 20)
     ),
-    :λ => i->manifold_dimension(M)/i,
 ]
 cppa_bm_kwargs(M) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stopping_criterion => StopWhenAny(
-        StopAfterIteration(max_iters), StopWhenChangeLess(M, atol)
+        StopAfterIteration(max_iters), StopWhenCriterionWithIterationCondition(StopWhenChangeLess(M, 1e-5*atol), 20)
     ),
-    :λ => i->manifold_dimension(M)/i,
 ]
 ```
 
@@ -369,7 +367,8 @@ end
 
 We export the results to CSV files
 ```{julia}
-#| code-fold: true
+# | output: false
+# | code-fold: true
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
 df_pgm_bt = sort(df_pgm_bt, :μ)
@@ -412,7 +411,7 @@ Second, we look at the objective values and sparsity of the solutions found by e
 ```{julia}
 # | echo: false
 # | code-fold: true
-header_ = ["μ", "n", "CRPG_const_obj", "CRPG_const_spar", "CRPG_bt_obj", "CRPG_bt_spar", "CPPA_obj", "CPPA_spar"]
+header_2 = ["μ", "n", "CRPG_const_obj", "CRPG_const_spar", "CRPG_bt_obj", "CRPG_bt_spar", "CPPA_obj", "CPPA_spar"]
 benchmarking && pretty_table(df_results_obj_spar; tf = tf_markdown, header = header_2)
 ```
 

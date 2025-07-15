@@ -297,7 +297,7 @@ for (n, m) in gr_dims
     shorten_vectors!(M, anchor, vectors)
     data = [exp(M, anchor, vectors[i]) for i in 1:N]
     q_bar = exp(M, anchor, vectors[N+1]) # point for the median component, i.e. h
-    p0 = exp(M, anchor, vectors[N+2]) #data[minimum(Tuple(findmax(dists)[2]))]
+    p0 = exp(M, anchor, vectors[N+2])
 
     g_gr(M, p) = g(M, p, data)
     h_gr(M, p) = h(M, p, q_bar)
