@@ -352,7 +352,7 @@ for (n, m) in gr_dims
 end
 ```
 
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the NCRPG with a constant stepsize, columns 5 to 7 refer to a backtracked stepsize, and columns 8 to 10 refer to the CPPA...
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the NCRPG with a constant stepsize, while columns 5 to 7 refer to a backtracked stepsize...
 ```{julia}
 #| echo: false
 #| code-fold: true
