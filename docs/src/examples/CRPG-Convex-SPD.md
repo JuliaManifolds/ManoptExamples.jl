@@ -209,14 +209,96 @@ function write_dataframes(
 end
 ```
 
+``` julia
+global A1_SPD = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    named_tuple_1,
+)
+stats = Dict(:CRPG_CN => Dict(), :CRPG_BT => Dict())
+for n in spd_dims
+
+    Random.seed!(random_seed)
+
+    M = SymmetricPositiveDefinite(Int(n))
+    q = rand(M)
+    p0 = rand(M)
+
+    prox_h_spd(M, λ, p) = prox_h(M, λ, p, q)
+    f_spd(M, p) = f(M, p, q)
+
+    D = 4*distance(M, p0, q)
+    # Conseravative estimate of the Lipschitz constant for grad_g
+    L_g = 1.05 * theoretical_lipschitz_constant(M, p0, n, D/2)
+    constant_stepsize = 1/L_g
+    initial_stepsize = 3/2 * constant_stepsize
+    contraction_factor = 0.9
+    warm_start_factor = 2.0
+
+    # Optimization
+    pgm_constant = proximal_gradient_method(M, f_spd, g, grad_g, p0;
+        prox_nonsmooth=prox_h_spd, 
+        pgm_bm_kwargs_constant(constant_stepsize)...
+    )
+    pgm_constant_result = get_solver_result(pgm_constant)
+    pgm_constant_record = get_record(pgm_constant) 
+    stats[:CRPG_CN][n] = Dict()
+    stats[:CRPG_CN][n][:Iteration] = length(get_record(pgm_constant, :Iteration)) + 1
+    stats[:CRPG_CN][n][:Cost] = get_record(pgm_constant, :Iteration, :Cost)
+    pushfirst!(stats[:CRPG_CN][n][:Cost], f_spd(M, p0))
+
+    # We can also use a backtracked stepsize
+    pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0; 
+        prox_nonsmooth=prox_h_spd,
+        pgm_kwargs(contraction_factor, initial_stepsize, warm_start_factor)...
+    )
+    pgm_result = get_solver_result(pgm)
+    pgm_record = get_record(pgm)
+    stats[:CRPG_BT][n] = Dict()
+    stats[:CRPG_BT][n][:Iteration] = length(get_record(pgm, :Iteration)) + 1 
+    stats[:CRPG_BT][n][:Cost] = get_record(pgm, :Iteration, :Cost)
+    pushfirst!(stats[:CRPG_BT][n][:Cost], f_spd(M, p0))
+
+    records = [
+        pgm_constant_record,
+        pgm_record,
+    ]
+
+    # Benchmarking
+    if benchmarking
+        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
+            prox_nonsmooth=$prox_h_spd,
+            $pgm_bm_kwargs_constant($constant_stepsize)...
+        )
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
+            prox_nonsmooth=$prox_h_spd,
+            $pgm_bm_kwargs($contraction_factor, $initial_stepsize, $warm_start_factor)...
+        )
+        
+        times = [
+            median(pgm_constant_bm).time * 1e-9,
+            median(pgm_bm).time * 1e-9,
+        ]
+        # Export the results
+        B1 = export_dataframes(
+            M,
+            records,
+            times,
+        )
+        append!(A1_SPD, B1)
+        (export_table) && (write_dataframes(B1, results_folder, experiment_name))
+    end
+end
+```
+
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to CRPG with a constant stepsize, while columns 5 to 7 refer to the backtracked case…
 
 | **Dimension** | **Iterations\_1** | **Time\_1** | **Cost\_1** | **Iterations\_2** | **Time\_2** | **Cost\_2** |
 |--------------:|------------------:|------------:|------------:|------------------:|------------:|------------:|
-| 3             | 367               | 0.00396658  | 0.18593     | 250               | 0.00872929  | 0.18593     |
-| 6             | 1944              | 0.0434505   | 0.27078     | 1313              | 0.0813215   | 0.27078     |
-| 10            | 8640              | 0.260675    | 0.371274    | 5878              | 0.516017    | 0.371274    |
-| 15            | 15535             | 0.600918    | 0.449625    | 12937             | 3.02218     | 0.449625    |
+| 3             | 367               | 0.00415113  | 0.18593     | 250               | 0.00888871  | 0.18593     |
+| 6             | 1944              | 0.0439392   | 0.27078     | 1313              | 0.0795954   | 0.27078     |
+| 10            | 8640              | 0.272177    | 0.371274    | 5878              | 0.522786    | 0.371274    |
+| 15            | 15535             | 0.618404    | 0.449625    | 12937             | 3.06766     | 0.449625    |
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 
@@ -260,6 +342,7 @@ function plot_convergence(
             initial_error_crpg_cn,
             initial_error_crpg_bt,
         )
+        
         iterations = max(
             iterations_crpg_cn,
             iterations_crpg_bt,
@@ -377,7 +460,7 @@ Pkg.status()
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered July 16, 2025, 14:0:39.
+This tutorial was last rendered July 16, 2025, 16:47:53.
 
 ## Literature
 

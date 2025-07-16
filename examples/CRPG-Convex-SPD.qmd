@@ -237,7 +237,6 @@ end
 ```
 
 ```{julia}
-# | echo: false
 # | output: false
 global A1_SPD = initialize_dataframes(
     results_folder,
@@ -272,8 +271,9 @@ for n in spd_dims
     pgm_constant_result = get_solver_result(pgm_constant)
     pgm_constant_record = get_record(pgm_constant) 
     stats[:CRPG_CN][n] = Dict()
-    stats[:CRPG_CN][n][:Iteration] = length(get_record(pgm_constant, :Iteration))
+    stats[:CRPG_CN][n][:Iteration] = length(get_record(pgm_constant, :Iteration)) + 1
     stats[:CRPG_CN][n][:Cost] = get_record(pgm_constant, :Iteration, :Cost)
+    pushfirst!(stats[:CRPG_CN][n][:Cost], f_spd(M, p0))
 
     # We can also use a backtracked stepsize
     pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0; 
@@ -283,8 +283,9 @@ for n in spd_dims
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
     stats[:CRPG_BT][n] = Dict()
-    stats[:CRPG_BT][n][:Iteration] = length(get_record(pgm, :Iteration))
+    stats[:CRPG_BT][n][:Iteration] = length(get_record(pgm, :Iteration)) + 1 
     stats[:CRPG_BT][n][:Cost] = get_record(pgm, :Iteration, :Cost)
+    pushfirst!(stats[:CRPG_BT][n][:Cost], f_spd(M, p0))
 
     records = [
         pgm_constant_record,
@@ -338,8 +339,9 @@ for n in spd_dims
             "-$n.csv",
         ), 
         DataFrame(;
-            Iteration=1:stats[:CRPG_CN][n][:Iteration],
+            Iteration=0:stats[:CRPG_CN][n][:Iteration]-1,
             Objective=stats[:CRPG_CN][n][:Cost],
+            Diff=stats[:CRPG_CN][n][:Cost] .- stats[:CRPG_CN][n][:Cost][end],
         ),
     )
     CSV.write(
@@ -350,8 +352,9 @@ for n in spd_dims
             "-$n.csv",
         ), 
         DataFrame(;
-            Iteration=1:stats[:CRPG_BT][n][:Iteration],
+            Iteration=0:stats[:CRPG_BT][n][:Iteration]-1,
             Objective=stats[:CRPG_BT][n][:Cost],
+            Diff=stats[:CRPG_BT][n][:Cost] .- stats[:CRPG_BT][n][:Cost][end],
         ),
     )
 end
@@ -399,6 +402,7 @@ function plot_convergence(
             initial_error_crpg_cn,
             initial_error_crpg_bt,
         )
+        
         iterations = max(
             iterations_crpg_cn,
             iterations_crpg_bt,
