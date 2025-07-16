@@ -1,37 +1,13 @@
----
-title: "An NCRPG run on the Grassmann manifold"
-author: "Hajg Jasa"
-date: 05/09/2025
-engine: julia
----
+# An NCRPG run on the Grassmann manifold
+Hajg Jasa
+2025-05-09
 
 ## Introduction
 
 In this example we compare the Nonconvex Riemannian Proximal Gradient (NCRPG) method [BergmannJasaJohnPfeffer:2025:1](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the space of symmetric positive definite matrices and on hyperbolic space.
 This example reproduces the results from [BergmannJasaJohnPfeffer:2025:1](@cite), Section 5.4.
 
-```{julia}
-#| echo: false
-#| code-fold: true
-#| output: false
-using Pkg;
-cd(@__DIR__)
-Pkg.activate("."); # for reproducibility use the local tutorial environment.
-
-Pkg.develop(path="../") # a trick to work on the local dev version
-
-export_orig = true
-export_table = true
-export_result = true
-benchmarking = true
-
-experiment_name = ""
-results_folder = joinpath(@__DIR__, experiment_name)
-!isdir(results_folder) && mkdir(results_folder)
-```
-
-```{julia}
-#| output: false
+``` julia
 using PrettyTables
 using BenchmarkTools
 using CSV, DataFrames
@@ -46,7 +22,7 @@ Let $\mathcal M$ be a Riemannian manifold and $\{q_1,\ldots,q_N\} \in \mathcal M
 Gaussian random data points.
 Let $g \colon \mathcal M \to \mathbb R$ be defined by
 
-```math
+``` math
 g(p) = \sum_{j = 1}^N w_j \, \mathrm{dist}(p, q_j)^2,
 ```
 
@@ -55,7 +31,7 @@ In our experiments, we choose the weights $w_j = \frac{1}{2N}$.
 Observe that the function $g$ is strongly convex with respect to the Riemannian metric on $\mathcal M$.
 The Riemannian geometric median $p^*$ of the dataset $\{q_1,\ldots,q_N\}$
 
-```math
+``` math
 \mathcal D = \{
     q_1,\ldots,q_N \, \vert \, q_j \in \mathcal M\text{ for all } j = 1,\ldots,N
 \}
@@ -63,28 +39,27 @@ The Riemannian geometric median $p^*$ of the dataset $\{q_1,\ldots,q_N\}$
 
 is then defined as
 
-```math
+``` math
     p^* \coloneqq \operatorname*{arg\,min}_{p \in \mathcal M} g(p),
 ```
 
-where equality is justified since $p^*$ is uniquely determined on Hadamard manifolds. 
+where equality is justified since $p^*$ is uniquely determined on Hadamard manifolds.
 
 Let now $\bar q \in \cM$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
 
-```math
+``` math
 h(p) = \alpha \mathrm{dist}(p, \bar q).
-``` 
+```
 
 We define our total objective function as $f = g + h$.
 Notice that this objective function is strongly convex with respect to the Riemannian metric on $\mathcal M$ thanks to $g$.
 The goal is to find the minimizer of $f$ on $\mathcal M$, which heuristically is an interpolation between the geometric median $p^*$ and $\bar q$.
 
-
 ## Numerical Experiment
 
 We initialize the experiment parameters, as well as some utility functions.
-```{julia}
-#| output: false
+
+``` julia
 random_seed = 100
 experiment_name = "NCRPG-Grassmann"
 results_folder = joinpath(@__DIR__, experiment_name)
@@ -100,8 +75,7 @@ k_max_gr = 2.0 # maximum curvature of the Grassmann manifold
 gr_dims = [(5, 2), (10, 4), (50, 10), (100, 20), (200, 40)] # dimensions of the Grassmann manifold
 ```
 
-```{julia}
-#| output: false
+``` julia
 # Objective, gradient, and proxes
 g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
@@ -148,8 +122,8 @@ end
 ```
 
 We introduce some keyword arguments for the solvers we will use in this experiment
-```{julia}
-#| output: false
+
+``` julia
 pgm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -209,8 +183,8 @@ cppa_bm_kwargs(M) = [
 ```
 
 Before running the experiments, we initialize data collection functions that we will use later
-```{julia}
-#| output: false
+
+``` julia
 global col_names_1 = [
     :Dimension,
     :Time_1,
@@ -245,8 +219,7 @@ function initialize_dataframes(results_folder, experiment_name, subexperiment_na
 end
 ```
 
-```{julia}
-#| output: false
+``` julia
 function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1)
     B1 = DataFrame(;
         Dimension=manifold_dimension(M),
@@ -277,8 +250,7 @@ function write_dataframes(
 end
 ```
 
-```{julia}
-#| output: false
+``` julia
 subexperiment_name = "Gr"
 global A1_Gr = initialize_dataframes(
     results_folder,
@@ -352,35 +324,57 @@ for (n, m) in gr_dims
 end
 ```
 
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the NCRPG with a constant stepsize, columns 5 to 7 refer to a backtracked stepsize, and columns 8 to 10 refer to the CPPA...
-```{julia}
-#| echo: false
-#| code-fold: true
-benchmarking && pretty_table(A1_Gr, backend = Val(:markdown), header=col_names_1)
-```
+We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the NCRPG with a constant stepsize, columns 5 to 7 refer to a backtracked stepsize, and columns 8 to 10 refer to the CPPA…
+
+| **Dimension** | **Time\_1** | **Iterations\_1** | **Objective\_1** | **Time\_2** | **Iterations\_2** | **Objective\_2** |
+|--------------:|------------:|------------------:|-----------------:|------------:|------------------:|-----------------:|
+| 6             | 0.389674    | 90                | 0.853678         | 0.0987565   | 12                | 0.853678         |
+| 24            | 0.583378    | 58                | 0.858344         | 0.180316    | 9                 | 0.858344         |
+| 400           | 2.37086     | 36                | 0.868749         | 0.70433     | 6                 | 0.868749         |
+| 1600          | 8.63405     | 35                | 0.871773         | 4.17984     | 6                 | 0.871773         |
+| 6400          | 33.6688     | 34                | 0.873426         | 9.63182     | 5                 | 0.873426         |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
-```{julia}
-#| code-fold: true
+``` julia
 using Pkg
 Pkg.status()
 ```
-```{julia}
-#| code-fold: true
-#| echo: false
-#| output: asis
-using Dates
-println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
-```
+
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.6.0
+      [336ed68f] CSV v0.10.15
+      [13f3f980] CairoMakie v0.15.3
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.30.0
+    ⌅ [5ae59095] Colors v0.12.11
+      [a93c6f00] DataFrames v1.7.0
+      [7073ff75] IJulia v1.29.0
+      [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.2
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.3
+      [af67fdf4] ManifoldDiff v0.4.4
+      [1cead3c2] Manifolds v0.10.22
+      [3362f125] ManifoldsBase v1.2.0
+      [0fc0a36d] Manopt v0.5.20
+      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [51fcb6bd] NamedColors v0.2.3
+    ⌃ [91a5bcdd] Plots v1.40.16
+      [08abe8d2] PrettyTables v2.4.0
+    ⌃ [6099a3de] PythonCall v0.9.25
+      [f468eda6] QuadraticModels v0.9.13
+      [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
+
+This tutorial was last rendered July 16, 2025, 13:37:16.
 
 ## Literature
 
-````{=commonmark}
 ```@bibliography
 Pages = ["NCRPG-Grassmann.md"]
 Canonical=false
 ```
-````

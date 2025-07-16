@@ -1,37 +1,13 @@
----
-title: "A Sparse Approximation Problem on Hadamard Manifolds"
-author: "Hajg Jasa, Paula John"
-date: 07/02/2025
-engine: julia
----
+# A Sparse Approximation Problem on Hadamard Manifolds
+Hajg Jasa, Paula John
+2025-07-02
 
 ## Introduction
 
 In this example we use the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025:2](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the hyperbolic space.
 This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.2.
 
-```{julia}
-#| echo: false
-#| code-fold: true
-#| output: false
-using Pkg;
-cd(@__DIR__)
-Pkg.activate("."); # for reproducibility use the local tutorial environment.
-
-Pkg.develop(path="../") # a trick to work on the local dev version
-
-export_orig = true
-export_table = true
-export_result = true
-benchmarking = true
-
-experiment_name = "CRPG-Sparse-Approximation"
-results_folder = joinpath(@__DIR__, experiment_name)
-!isdir(results_folder) && mkdir(results_folder)
-```
-
-```{julia}
-#| output: false
+``` julia
 using PrettyTables
 using BenchmarkTools
 using CSV, DataFrames
@@ -45,7 +21,7 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 Let $\mathcal M = \mathcal H^n$ be the Hadamard manifold given by the hyperbolic space, and $\{q_1,\ldots,q_N\} \in \mathcal M$ denote $N = 1000$ Gaussian random data points.
 Let $g \colon \mathcal M \to \mathbb R$ be defined by
 
-```math
+``` math
 g(p) = \frac{1}{2} \sum_{j = 1}^N w_j \, \mathrm{dist}(p, q_j)^2,
 ```
 
@@ -55,21 +31,21 @@ Observe that the function $g$ is strongly convex with respect to the Riemannian 
 
 Let $h \colon \mathcal M \to \mathbb R$ be defined by
 
-```math
+``` math
 h(p) = \mu \Vert p \Vert_1
-``` 
+```
+
 be the sparsity-enforcing term given by the $\ell_1$-norm, where $\mu > 0$ is a regularization parameter.
 
 We define our total objective function as $f = g + h$.
 Notice that this objective function is strongly convex with respect to the Riemannian metric on $\mathcal M$ thanks to $g$.
 The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically the point that is closest to the data points $q_j$ in the sense of the Riemannian metric on $\mathcal M$ and has a sparse representation.
 
-
 ## Numerical Experiment
 
 We initialize the experiment parameters, as well as some utility functions.
-```{julia}
-#| output: false
+
+``` julia
 random_seed = 42
 n_tests = 10 # number of tests for each parameter setting
 
@@ -81,8 +57,7 @@ dims = [2, 10, 100]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```
 
-```{julia}
-#| output: false
+``` julia
 # Objective, gradient, and proxes
 g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
@@ -141,8 +116,8 @@ end
 ```
 
 We introduce some keyword arguments for the solvers we will use in this experiment
-```{julia}
-#| output: false
+
+``` julia
 # Keyword arguments for CRPG with a constant stepsize 
 pgm_kwargs_cn(constant_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
@@ -205,32 +180,10 @@ cppa_bm_kwargs(M) = [
 ```
 
 We set up some variables to collect the results of the experiments and initialize the dataframes
-```{julia}
-#| output: false
-#| echo: false
-column_names = ["μ", "n", "iterations", "time", "objective", "sparsity"]
-df_pgm_cn = DataFrame([name => Float64[] for name in column_names], makeunique=true)
-df_pgm_bt = DataFrame([name => Float64[] for name in column_names], makeunique=true)
-df_cppa = DataFrame([name => Float64[] for name in column_names], makeunique=true)
-#
-# Set data collection variables
-iterations_pgm_cn_means = zeros(length(μs))
-iterations_pgm_bt_means = zeros(length(μs))
-iterations_cppa_means = zeros(length(μs))
-time_pgm_cn_means = zeros(length(μs))
-time_pgm_bt_means = zeros(length(μs))
-time_cppa_means = zeros(length(μs))
-sparsity_pgm_cn_means = zeros(length(μs))
-sparsity_pgm_bt_means = zeros(length(μs))
-sparsity_cppa_means = zeros(length(μs))
-objective_pgm_cn_means = zeros(length(μs))
-objective_pgm_bt_means = zeros(length(μs))
-objective_cppa_means = zeros(length(μs)) 
-``` 
 
 And run the experiments
-```{julia}
-#| output: false
+
+``` julia
 for n in dims
     # Set random seed for reproducibility
     Random.seed!(random_seed)
@@ -366,9 +319,8 @@ end
 ```
 
 We export the results to CSV files
-```{julia}
-# | output: false
-# | code-fold: true
+
+``` julia
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
 df_pgm_bt = sort(df_pgm_bt, :μ)
@@ -400,43 +352,73 @@ CSV.write(joinpath(results_folder, "results-Hn-obj-spar-$(n_tests)-$(dims[end]).
 
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
-```{julia}
-# | echo: false
-# | code-fold: true
-header_1 = ["μ", "n", "CRPG_const_iter", "CRPG_const_time", "CRPG_bt_iter", "CRPG_bt_time", "CPPA_iter", "CPPA_time"]
-benchmarking && pretty_table(df_results_time_iter; backend = Val(:markdown), header = header_1)
-```
+
+| **μ** | **n** | **CRPG\_const\_iter** | **CRPG\_const\_time** | **CRPG\_bt\_iter** | **CRPG\_bt\_time** | **CPPA\_iter** | **CPPA\_time** |
+|------:|------:|----------------------:|----------------------:|-------------------:|-------------------:|---------------:|---------------:|
+| 0.1   | 2     | 204                   | 0.055911              | 2181               | 1.1538             | 5000           | 2.70869        |
+| 0.1   | 10    | 101                   | 0.0366215             | 1636               | 1.9697             | 5000           | 3.40173        |
+| 0.1   | 100   | 49                    | 0.0382509             | 4144               | 19.185             | 5000           | 5.92673        |
+| 0.5   | 2     | 143                   | 0.0367069             | 586                | 0.485252           | 5000           | 2.67662        |
+| 0.5   | 10    | 83                    | 0.02751               | 491                | 0.412215           | 4004           | 2.72047        |
+| 0.5   | 100   | 48                    | 0.0365263             | 1974               | 8.39718            | 5000           | 6.19089        |
+| 1.0   | 2     | 104                   | 0.0257036             | 530                | 0.271966           | 3507           | 1.92153        |
+| 1.0   | 10    | 56                    | 0.016988              | 113                | 0.106215           | 3507           | 2.36858        |
+| 1.0   | 100   | 48                    | 0.0376193             | 2207               | 8.4336             | 4502           | 5.43228        |
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
-```{julia}
-# | echo: false
-# | code-fold: true
-header_2 = ["μ", "n", "CRPG_const_obj", "CRPG_const_spar", "CRPG_bt_obj", "CRPG_bt_spar", "CPPA_obj", "CPPA_spar"]
-benchmarking && pretty_table(df_results_obj_spar; backend = Val(:markdown), header = header_2)
-```
+
+| **μ** | **n** | **CRPG\_const\_obj** | **CRPG\_const\_spar** | **CRPG\_bt\_obj** | **CRPG\_bt\_spar** | **CPPA\_obj** | **CPPA\_spar** |
+|------:|------:|---------------------:|----------------------:|------------------:|-------------------:|--------------:|---------------:|
+| 0.1   | 2     | 3.74126              | 0.05                  | 3.74126           | 0.05               | 3.74126       | 0.05           |
+| 0.1   | 10    | 7.82812              | 0.08                  | 7.82812           | 0.08               | 7.82812       | 0.08           |
+| 0.1   | 100   | 54.2988              | 0.066                 | 54.2988           | 0.066              | 54.2988       | 0.066          |
+| 0.5   | 2     | 4.57092              | 0.2                   | 4.57092           | 0.2                | 4.57092       | 0.2            |
+| 0.5   | 10    | 9.00006              | 0.42                  | 9.00006           | 0.42               | 9.00007       | 0.44           |
+| 0.5   | 100   | 57.5651              | 0.369                 | 57.5651           | 0.369              | 57.5651       | 0.369          |
+| 1.0   | 2     | 5.23394              | 0.5                   | 5.23394           | 0.5                | 5.23394       | 0.55           |
+| 1.0   | 10    | 9.85087              | 0.71                  | 9.85087           | 0.71               | 9.85087       | 0.71           |
+| 1.0   | 100   | 59.5296              | 0.69                  | 59.5296           | 0.69               | 59.5298       | 0.693          |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
-```{julia}
-#| code-fold: true
+``` julia
 using Pkg
 Pkg.status()
 ```
-```{julia}
-#| code-fold: true
-#| echo: false
-#| output: asis
-using Dates
-println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
-```
+
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.6.0
+      [336ed68f] CSV v0.10.15
+      [13f3f980] CairoMakie v0.15.3
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.30.0
+    ⌅ [5ae59095] Colors v0.12.11
+      [a93c6f00] DataFrames v1.7.0
+      [7073ff75] IJulia v1.29.0
+      [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.2
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.3
+      [af67fdf4] ManifoldDiff v0.4.4
+      [1cead3c2] Manifolds v0.10.22
+      [3362f125] ManifoldsBase v1.2.0
+      [0fc0a36d] Manopt v0.5.20
+      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [51fcb6bd] NamedColors v0.2.3
+      [91a5bcdd] Plots v1.40.16
+      [08abe8d2] PrettyTables v2.4.0
+      [6099a3de] PythonCall v0.9.25
+      [f468eda6] QuadraticModels v0.9.13
+      [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
+
+This tutorial was last rendered July 15, 2025, 15:56:59.
 
 ## Literature
 
-````{=commonmark}
 ```@bibliography
 Pages = ["CRPG-Sparse-Approximation.md"]
 Canonical=false
 ```
-````

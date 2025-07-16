@@ -1,36 +1,22 @@
----
-title: "The Constrained mean on high-dimensional Hyperbolic space."
-author: "Hajg Jasa, Ronny Bergmann"
-date: 16/06/2025
-engine: julia
----
+# The Constrained mean on high-dimensional Hyperbolic space.
+Hajg Jasa, Ronny Bergmann
+2026-04-06
 
 ## Introduction
 
 This example is to be thought of as a continuation of the [Constrained Mean on Hyperbolic Space](https://juliamanifolds.github.io/ManoptExamples.jl/stable/examples/Constrained-Mean-Hn/), where we compare the Intrinsic Convex Riemannian Proximal Gradient Method (CRPG) from [BergmannJasaJohnPfeffer:2025:2](@cite) with the Projected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite).
 For CRPG, we test performances of both constant and backtracked stepsize strategies.
 
-```{julia}
-#| echo: false
-#| output: false
-using Pkg;
-cd(@__DIR__)
-Pkg.activate("."); # for reproducibility use the local tutorial environment.
-Pkg.develop(path="../") # a trick to work on the local dev version of ManoptExamples
-ENV["GKSwstype"] = "100"
-```
-
-```{julia}
-#| output: false
+``` julia
 using Chairmarks, CSV, DataFrames, Manifolds, Manopt, CairoMakie, Random
 import ColorSchemes.tol_vibrant
 ```
 
 Consider the constrained Riemannian center of mass
-for a given set of points ``q_i \in \mathcal M$ $i=1,\ldots,N$
+for a given set of points \`\`q_i M\$ $i=1,\ldots,N$
 given by
 
-```math
+``` math
 \operatorname*{arg\,min}_{p\in\mathcal C}
 \sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i)
 ```
@@ -39,7 +25,7 @@ constrained to a set $\mathcal C \subset \mathcal M$.
 
 The same problem can be formulated as an unconstrained optimization problem by introducing the characteristic function for the set $\mathcal C$:
 
-```math
+``` math
 \operatorname*{arg\,min}_{p\in\mathcal M}
 \sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i) + \chi_{\mathcal C}(p)
 ```
@@ -47,11 +33,10 @@ The same problem can be formulated as an unconstrained optimization problem by i
 where $\chi_{\mathcal C}(p) = 0$ if $p \in \mathcal C$ and $\chi_{\mathcal C}(p) = \infty$ otherwise.
 This formulation allows us to use CRPG to solve the problem.
 
-For this experiment set $\mathcal M = \mathbb H^d$ for $d=2,\ldots,200$, the ``[Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)``{=commonmark}
+For this experiment set $\mathcal M = \mathbb H^d$ for $d=2,\ldots,200$, the [Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)
 and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around the center point $c$, where we choose here $r=\frac{1}{\sqrt{n}}$ and $c = (0,\ldots,0,1)^{\mathrm{T}}$ and a $σ = \frac{3}{2}n^{1/4}$.
 
-```{julia}
-#| output: false
+``` julia
 n_range = Vector(2:200)
 radius_range = [1 / sqrt(n) for n in n_range]
 N_range = [400 for n ∈ n_range]
@@ -62,25 +47,12 @@ tol = 1e-7
 
 The data consists of $N=200$ points, where we skew the data a bit to force the mean to be outside of the constrained set $\mathcal C$.
 
-
-```{julia}
-#| echo: false
-#| output: false
-experiment_name = "CRPG-CnBallConstrMean-$(minimum(n_range))-$(maximum(n_range))-"
-folder = (@__DIR__) * "/crpg-projected-gradient-results/"
-fn = folder * experiment_name
-write_csv = true;
-(!isdir(folder) && write_csv) && mkpath(folder)
-op= [];
-```
-
 ## Cost, gradient and projection
 
 We can formulate the constrained problem above in two different forms.
 Both share a cost and require a gradient. For performance reasons, we also provide a mutating variant of the gradient
 
-```{julia}
-#| output: false
+``` julia
 f(M, p; pts=[]) = 1 / (2 * length(pts)) .* sum(distance(M, p, q)^2 for q in pts)
 
 grad_f(M, p; pts=[]) = -1 / length(pts) .* sum(log(M, p, q) for q in pts)
@@ -100,8 +72,7 @@ end
 We can model the constraint either with an inequality constraint $g(p) \geq 0$ or using a projection onto the set. For the gradient of $g$ and the projection we again also provide mutating variants.
 Lastly, we define the cost function $F$ as the sum of the original cost and the characteristic function for the set $\mathcal C$.
 
-```{julia}
-#| output: false
+``` julia
 g(M, p; op=[], radius=1) = distance(M, op, p)^2 - radius^2;
 # The characteristic function for the set C is defined with tol^2 to avoid numerical issues
 characteristic_C(M, p; op=[], radius=1) = (g(M, p; op=op, radius=radius) ≤ tol^2) ? 0 : Inf;
@@ -140,8 +111,8 @@ For comparison, we first compute the Riemannian center of mass, that is the mini
 For the projected mean we obtain $g(p) = 0$ since the original mean is outside of the set, the projected one lies on the boundary.
 
 We first generate all data
-```{julia}
-#| output: false
+
+``` julia
 centers = [[zeros(n)..., 1.0] for n in n_range]
 begin
     Random.seed!(5)
@@ -160,7 +131,7 @@ begin
 end
 ```
 
-```{julia}
+``` julia
 means = [mean(M, d) for (M, d) in zip(M_range, data)]
 dc = [
     characteristic_C(M, m; op=c, radius=r) for
@@ -169,7 +140,9 @@ dc = [
 minimum(dc) # Sanity Check, this should be inf
 ```
 
-```{julia}
+    Inf
+
+``` julia
 Proj_means = [
     project_C(M, m; op=c, radius=r) for
     (M, m, c, r) in zip(M_range, means, centers, radius_range)
@@ -179,11 +152,13 @@ ds = [distance(M, m, c) - r for (M, m, c, r) in zip(M_range, Proj_means, centers
 maximum(abs.(ds))
 ```
 
+    1.1102230246251565e-16
+
 ## The experiment
 
 First, we define a single test function for one set of data for a manifold
 
-```{julia}
+``` julia
 function bench_aep(Manifold, center, radius, data)
     # local functions
     _f(M, p) = f(M, p; pts=data)
@@ -290,17 +265,13 @@ function bench_aep(Manifold, center, radius, data)
 end
 ```
 
-and run these
+    bench_aep (generic function with 1 method)
 
-```{julia}
-#| output: false
-#| echo: false
-b = [bench_aep(M, c, r, d) for (M, c, r, d) in zip(M_range, centers, radius_range, data)]
-```
+and run these
 
 The resulting plot of runtime is
 
-```{julia}
+``` julia
 fig = Figure()
 axis = Axis(fig[1, 1]; title=L"\text{Time needed per dimension }$\mathbb{H}^d$")
 lines!(axis, n_range, [bi[:CRPG_CN][:time] for bi in b]; label="CRPG, constant step", color=tol_vibrant[1],)
@@ -312,23 +283,11 @@ axislegend(axis; position=:lt)
 fig
 ```
 
-```{julia}
-#| output: false
-#| echo: false
-write_csv && CSV.write(
-    "$(fn)times.csv",
-    DataFrame(;
-        d=n_range,
-        crpg_cn=[bi[:CRPG_CN][:time] for bi in b],
-        crpg_bt=[bi[:CRPG_BT][:time] for bi in b],
-        pga=[bi[:PGA][:time] for bi in b],
-    ),
-)
-```
+![](CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-13-output-1.png)
 
 and the number of iterations reads
 
-```{julia}
+``` julia
 fig2 = Figure()
 axis2 = Axis(fig2[1, 1]; title=L"\text{Iterations needed per dimension }$\mathbb{H}^d$")
 lines!(axis2, n_range, [bi[:CRPG_CN][:Iter] for bi in b]; label="CRPG constant step", color=tol_vibrant[1])
@@ -340,44 +299,43 @@ axislegend(axis2; position=:rt)
 fig2
 ```
 
-```{julia}
-#| output: false
-#| echo: false
-write_csv && CSV.write(
-    "$(fn)iterations.csv",
-    DataFrame(;
-        d=n_range,
-        crpg_cn=[bi[:CRPG_CN][:Iter] for bi in b],
-        crpg_bt=[bi[:CRPG_BT][:Iter] for bi in b],
-        pga=[bi[:PGA][:Iter] for bi in b],
-    ),
-)
-```
+![](CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-15-output-1.png)
 
 ## Literature
 
-````{=commonmark}
 ```@bibliography
 Pages = ["CRPG-Constrained-Mean-Hn.md"]
 Canonical=false
 ```
-````
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
-```{julia}
-#| code-fold: true
-#| code-summary: "Package versions"
-#| echo: false
-using Pkg
-Pkg.status()
-```
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.6.0
+      [336ed68f] CSV v0.10.15
+    ⌃ [13f3f980] CairoMakie v0.13.4
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.29.0
+    ⌅ [5ae59095] Colors v0.12.11
+      [a93c6f00] DataFrames v1.7.0
+    ⌃ [7073ff75] IJulia v1.27.0
+      [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.2
+    ⌃ [d3d80556] LineSearches v7.3.0
+    ⌅ [ee78f7c6] Makie v0.22.4
+      [af67fdf4] ManifoldDiff v0.4.2
+    ⌃ [1cead3c2] Manifolds v0.10.17
+      [3362f125] ManifoldsBase v1.2.0
+      [0fc0a36d] Manopt v0.5.18
+      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [51fcb6bd] NamedColors v0.2.3
+    ⌃ [91a5bcdd] Plots v1.40.13
+      [08abe8d2] PrettyTables v2.4.0
+    ⌃ [6099a3de] PythonCall v0.9.24
+    ⌃ [f468eda6] QuadraticModels v0.9.8
+    ⌃ [1e40b3f8] RipQP v0.6.4
+    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
 
-```{julia}
-#| echo: false
-#| output: asis
-using Dates
-println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
-```
+This tutorial was last rendered June 19, 2025, 15:32:46.
