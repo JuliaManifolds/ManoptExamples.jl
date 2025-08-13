@@ -196,7 +196,8 @@ function bench_aep(Manifold, center, radius, data)
     L_f = Manopt.ζ_1(-1, D)
     constant_stepsize = 1 / L_f
     initial_stepsize = constant_stepsize
-    contraction_factor = 0.995
+    contraction_factor = 0.9
+    warm_start_factor = 10.0
     #
     # returns
     stats = Dict(:CRPG_CN => Dict(), :CRPG_BT => Dict(), :PGA => Dict())
@@ -231,10 +232,11 @@ function bench_aep(Manifold, center, radius, data)
         evaluation=InplaceEvaluation(), return_state=true,
         record=[:Iteration, :Cost],
         stepsize=ProximalGradientMethodBacktracking(; 
-            strategy=:convex,   
+            contraction_factor=contraction_factor,
             initial_stepsize=initial_stepsize,
             stop_when_stepsize_less=tol,
-            contraction_factor=contraction_factor,
+            strategy=:convex,   
+            warm_start_factor=warm_start_factor,
         ),
         stopping_criterion=StopWhenGradientMappingNormLess(tol)|StopAfterIteration(5000),
     )
