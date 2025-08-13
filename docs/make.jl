@@ -117,7 +117,7 @@ examples_menu =
         "Riemannian Mean" => "examples/Riemannian-mean.md",
         "Proximal Gradient Methods" => [
             "Grassmann Experiment" => "examples/NCRPG-Grassmann.md",
-            "Convex Example on SPDs" => "examples/CRPG-Convex-SPD.md",    
+            "Convex Example on SPDs" => "examples/CRPG-Convex-SPD.md",
             raw"Sparse Approximation on $\mathbb H^n$" => "examples/CRPG-Sparse-Approximation.md",
             raw"Mean on $\mathbb H^n$" => "examples/CRPG-Constrained-Mean-Hn.md",
         ],
