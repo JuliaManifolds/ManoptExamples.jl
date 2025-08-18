@@ -5,7 +5,7 @@ Hajg Jasa
 ## Introduction
 
 In this example we compare the Nonconvex Riemannian Proximal Gradient (NCRPG) method [BergmannJasaJohnPfeffer:2025:1](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the space of symmetric positive definite matrices and on hyperbolic space.
-This example reproduces the results from [BergmannJasaJohnPfeffer:2025:1](@cite), Section 5.4.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:1](@cite), Section 6.2.
 
 ``` julia
 using PrettyTables
@@ -40,10 +40,8 @@ The Riemannian geometric median $p^*$ of the dataset $\{q_1,\ldots,q_N\}$
 is then defined as
 
 ``` math
-    p^* \coloneqq \operatorname*{arg\,min}_{p \in \mathcal M} g(p),
+    p^* \in \operatorname*{arg\,min}_{p \in \mathcal M} g(p).
 ```
-
-where equality is justified since $p^*$ is uniquely determined on Hadamard manifolds.
 
 Let now $\bar q \in \mathcal M$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
 
@@ -361,7 +359,7 @@ Pkg.status()
       [1cead3c2] Manifolds v0.10.22
       [3362f125] ManifoldsBase v1.2.0
       [0fc0a36d] Manopt v0.5.20
-      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [5b8d5e80] ManoptExamples v0.1.14
       [51fcb6bd] NamedColors v0.2.3
     ⌃ [91a5bcdd] Plots v1.40.16
       [08abe8d2] PrettyTables v2.4.0

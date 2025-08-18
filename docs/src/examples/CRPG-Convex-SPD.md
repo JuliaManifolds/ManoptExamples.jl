@@ -445,8 +445,8 @@ Pkg.status()
       [af67fdf4] ManifoldDiff v0.4.4
       [1cead3c2] Manifolds v0.10.22
       [3362f125] ManifoldsBase v1.2.0
-      [0fc0a36d] Manopt v0.5.20 `../../Manopt.jl`
-      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [0fc0a36d] Manopt v0.5.20
+      [5b8d5e80] ManoptExamples v0.1.14
       [51fcb6bd] NamedColors v0.2.3
     ⌃ [91a5bcdd] Plots v1.40.16
       [08abe8d2] PrettyTables v2.4.0
