@@ -45,7 +45,7 @@ is then defined as
 
 where equality is justified since $p^*$ is uniquely determined on Hadamard manifolds.
 
-Let now $\bar q \in \cM$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
+Let now $\bar q \in \mathcal M$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
 
 ``` math
 h(p) = \alpha \mathrm{dist}(p, \bar q).

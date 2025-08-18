@@ -53,7 +53,7 @@ g(p) = \log(\det(p))^4.
 
 Observe that the function $g$ is geodesically convex with respect to the Riemannian metric on $\mathcal M$.
 
-Let now $q_1 \neq q_1$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
+Let now $q_1$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
 
 ```math
 h(p) = \tau \mathrm{dist}(p, q_1),
@@ -408,12 +408,8 @@ function plot_convergence(
         )
 
         # Create reference trajectories
-        # O(1/√k)
-        ref_rate_sqrt = [initial_error/√k for k in iterations]
         # O(1/k)
         ref_rate_1 = [initial_error/k for k in iterations]
-        # O(1/k²)
-        ref_rate_2 = [initial_error/k^2 for k in iterations]
         # O(1/2^k)
         ref_rate_2k = [initial_error/2^k for k in iterations]
 
