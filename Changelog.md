@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.15] – 18/08/2025
 
 ### Added
+
 * Numerical experiments from the Proximal Gradient preprints.
+
+## [0.1.14] – 14/04/2025
+
+### Added
+
+* Projected Gradient example.
 
 ## [0.1.13] – 21/03/2025
 
