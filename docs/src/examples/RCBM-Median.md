@@ -5,7 +5,7 @@ Hajg Jasa
 ## Introduction
 
 In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
-with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in \[FerreiraOliveira:1998:1\], to find the Riemannian median.
+with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1](@cite), to find the Riemannian median.
 This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.
 The runtimes reported in the tables are measured in seconds.
 

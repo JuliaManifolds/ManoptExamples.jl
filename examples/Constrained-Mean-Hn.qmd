@@ -6,7 +6,7 @@ date: 27/03/2025
 
 ## Introduction
 
-In this example we compare the Pprojected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite) with both the Augmented Lagrangian Method (ALM) and the Exact Penalty Method (EPM) [LiuBoumal:2019](@cite).
+In this example we compare the Projected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite) with both the Augmented Lagrangian Method (ALM) and the Exact Penalty Method (EPM) [LiuBoumal:2019](@cite).
 
 ```{julia}
 #| echo: false
@@ -63,7 +63,7 @@ op= [];
 ## Cost, gradient and projection
 
 We can formulate the constrained problem above in two different forms.
-Both share a cost adn require a gradient. For performance reasons, we also provide a mutating variant of the gradient
+Both share a cost and require a gradient. For performance reasons, we also provide a mutating variant of the gradient
 
 ```{julia}
 #| output: false

@@ -115,6 +115,12 @@ examples_menu =
         "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
         "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
         "Riemannian Mean" => "examples/Riemannian-mean.md",
+        "Proximal Gradient Methods" => [
+            "Grassmann Experiment" => "examples/NCRPG-Grassmann.md",
+            "Convex Example on SPDs" => "examples/CRPG-Convex-SPD.md",
+            raw"Sparse Approximation on $\mathbb H^n$" => "examples/CRPG-Sparse-Approximation.md",
+            raw"Mean on $\mathbb H^n$" => "examples/CRPG-Constrained-Mean-Hn.md",
+        ],
         "Robust PCA" => "examples/Robust-PCA.md",
         "Rosenbrock" => "examples/Rosenbrock.md",
         "Total Variation" => "examples/Total-Variation.md",
