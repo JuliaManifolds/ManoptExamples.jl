@@ -29,7 +29,7 @@ g(p) = \log(\det(p))^4.
 
 Observe that the function $g$ is geodesically convex with respect to the Riemannian metric on $\mathcal M$.
 
-Let now $q_1 \neq q_1$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
+Let now $q_1$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
 
 ``` math
 h(p) = \tau \mathrm{dist}(p, q_1),
@@ -38,8 +38,7 @@ h(p) = \tau \mathrm{dist}(p, q_1),
 for some $\tau > 0$.
 We define our total objective function as $f = g + h$.
 Notice that this objective function is also geodesically convex with respect to the Riemannian metric on $\mathcal M$.
-The goal is to find the minimizer of $f$ on $\mathcal M$, which is an interpolation between the two points $q_1$ and $q_1$, depending on the value of $\tau$.
-Namely, if $\tau < 1$, the minimizer is $q_1$; if $\tau > 1$, the minimizer is $q_1$; and if $\tau = 1$, the minimizer is the geodesic segment between $q_1$ and $q_1$.
+The goal is to find the minimizer of $f$ on $\mathcal M$.
 
 ## Numerical Experiment
 
@@ -349,12 +348,8 @@ function plot_convergence(
         )
 
         # Create reference trajectories
-        # O(1/√k)
-        ref_rate_sqrt = [initial_error/√k for k in iterations]
         # O(1/k)
         ref_rate_1 = [initial_error/k for k in iterations]
-        # O(1/k²)
-        ref_rate_2 = [initial_error/k^2 for k in iterations]
         # O(1/2^k)
         ref_rate_2k = [initial_error/2^k for k in iterations]
 
@@ -450,7 +445,7 @@ Pkg.status()
       [af67fdf4] ManifoldDiff v0.4.4
       [1cead3c2] Manifolds v0.10.22
       [3362f125] ManifoldsBase v1.2.0
-      [0fc0a36d] Manopt v0.5.20 `../../Manopt.jl`
+      [0fc0a36d] Manopt v0.5.20
       [5b8d5e80] ManoptExamples v0.1.14 `..`
       [51fcb6bd] NamedColors v0.2.3
     ⌃ [91a5bcdd] Plots v1.40.16
