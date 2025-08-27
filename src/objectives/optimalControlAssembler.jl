@@ -9,15 +9,15 @@ nCell:    total number of intervals\\
 y:       iterate\\
 ...
 """
-function get_Jac_Lyy!(A,row_idx,col_idx,h, nCells,y,integrand,transport)
+function get_Jac_Lyy!(eval,A,row_idx,col_idx,h, nCells,y,integrand,transport)
 	M = integrand.domain
 	N = integrand.precodomain
 	# Schleife über Intervalle
 	for i in 1:nCells
 
 		# Evaluation of the current iterate. This routine has to be provided from outside, because Knowledge about the basis functions is needed
-		yl=evaluate(y,i,0.0)
-		yr=evaluate(y,i,1.0)
+		yl=eval(y,i,0.0)
+		yr=eval(y,i,1.0)
 
 		#yl=ArrayPartition(getindex.(y.x, (i-1...,)))
 		#yr=ArrayPartition(getindex.(y.x, (i...,)))
