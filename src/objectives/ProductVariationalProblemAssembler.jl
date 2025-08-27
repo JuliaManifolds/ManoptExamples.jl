@@ -56,18 +56,23 @@ end
 		# modification for covariant derivative:	
 		# derivative of the vector transport w.r.t. y at left quadrature point
 		# P'(yl)bfl*B[j] (tfl*T(k))
-		Pprime=transport.derivative(integrand.domain,yl.x[row_idx],bfl*B[j],tfl*T[k])
+
+		Pprimel=transport.derivative(integrand.domain,yl.x[row_idx],bfl*B[j],tfl*T[k])
+		Pprimer=transport.derivative(integrand.domain,yr.x[row_idx],bfr*B[j],tfr*T[k])
+
 		# approximation of the time derivative of the vector transport
-		Pprimedot=(bfr-bfl)*Pprime/h
+		#Pprimedot=(bfr-bfl)*Pprime/h
+		Pprimedot = (Pprimer - Pprimel)/h
 		# applying rhs at right and left quadrature point
-		tmp+=integrand.value(integrand,yl,ydot,bfl*Pprime,Pprimedot)
-		tmp+=integrand.value(integrand,yr,ydot,bfr*Pprime,Pprimedot)
+		tmp+=integrand.value(integrand,yl,ydot,bfl*Pprimel,Pprimedot)
+		tmp+=integrand.value(integrand,yr,ydot,bfr*Pprimer,Pprimedot)
 			
 		# derivative of the vector transport w.r.t. y at right quadrature point
-		Pprime=transport.derivative(integrand.domain,yr.x[row_idx],bfr*B[j],tfr*T[k])
-		Pprimedot=(bfr-bfl)*Pprime/h			
-		tmp+=integrand.value(integrand,yl,ydot,bfl*Pprime,Pprimedot)
-		tmp+=integrand.value(integrand,yr,ydot,bfr*Pprime,Pprimedot)
+		#Pprime=transport.derivative(integrand.domain,yr.x[row_idx],bfr*B[j],tfr*T[k])
+
+		#Pprimedot=(bfr-bfl)*Pprime/h			
+		#tmp+=integrand.value(integrand,yl,ydot,bfl*Pprime,Pprimedot)
+		#tmp+=integrand.value(integrand,yr,ydot,bfr*Pprime,Pprimedot)
 			
         # Update matrix entry
 			
