@@ -50,6 +50,7 @@ include("objectives/Rosenbrock.jl")
 include("objectives/TotalVariation.jl")
 include("objectives/VariationalProblemAssembler.jl")
 include("objectives/ProductVariationalProblemAssembler.jl")
+include("objectives/optimalControlAssembler.jl")
 
 include("data/artificial_signals.jl")
 include("data/artificial_images.jl")
