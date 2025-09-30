@@ -1,3 +1,4 @@
+#using RecursiveArrayTools
 """
  A:      Matrix to be written into\\
 row_idx: row index of block inside system\\
@@ -82,9 +83,11 @@ end
  end
 end
 
-"""
-eval: function that evaluates y at left and right intverval point of i-th interval, signature: eval(y, i, scaling)
- A:      Matrix to be written into\\
+@doc raw"""
+This function is called by Newton's method to compute the matrix for the Newton step
+
+eval: function that evaluates y at left and right intverval point of i-th interval, signature: eval(y, i, scaling), must return a ArrayPartition
+A:      Matrix to be written into\\
 row_idx: row index of block inside system\\
 detT:    degree of test function: 1: linear, 0: constant\\
 col_idx: column index of block inside system\\
@@ -92,6 +95,8 @@ detB:    degree of basis function: 1: linear, 0: constant\\
 h:       length of interval\\
 nCell:    total number of intervals\\
 y:       iterate\\
+integrand:	integrand of the functional as struct, must have a field value and a field derivative
+transport:	vectortransport used to compute the connection term (as a struct, must have a field value and a field derivative)
 ...
 """
 function get_Jac!(eval,A,row_idx,degT,col_idx,degB,h, nCells,y,integrand,transport)
@@ -118,19 +123,52 @@ function get_Jac!(eval,A,row_idx,degT,col_idx,degB,h, nCells,y,integrand,transpo
 		
 		# The case, where both test and basis functions are linear. We have 2x2=4 combinations, since there are two test/basis functions on each interval
 		if degT==1 && degB == 1
-    	    assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Bl,1,0,  			Tl,1,0, integrand, transport)		
-			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,0,1,  Tl,1,0, integrand, transport)		
-			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Bl,1,0,  Tr,0,1, integrand, transport)		
-			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,0,1,  Tr,0,1, integrand, transport)		
+    	    assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Bl,1,0, Tl,1,0, integrand, transport)		
+			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,0,1, Tl,1,0, integrand, transport)		
+			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Bl,1,0, Tr,0,1, integrand, transport)		
+			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,0,1, Tr,0,1, integrand, transport)		
 		end
 		# The case, where both test functions are linear and basis functions are piecewies constant. We have 1x2=2 combinations, since there are are two test functions and 1 basis function on each interval
-		if degT==1 && degB == 0
-			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,1,1,  Tl,1,0, integrand, transport)		
-			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,1,1,  Tr,0,1, integrand, transport)		
+		if degT==1 && degB == 0 
+			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,1,1, Tl,1,0, integrand, transport)		
+			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,1,1, Tr,0,1, integrand, transport)		
+		end
+		if degT==0 && degB == 1 
+			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Bl,1,0, Tr,1,1, integrand, transport)		
+			assemble_local_Jac_with_connection!(A,row_idx,col_idx,h,i,yl,yr, Br,0,1, Tr,1,1, integrand, transport)		
 		end
 		# Other cases could be added here. In the rod example I did not need them, thus I havent implemented them
 	end
 end
+
+# @doc raw"""
+# This function is called by Newton's method to assembly the matrix for the Newton step
+
+# Use this method in case the manifold is not a product manifold
+
+
+# A:      Matrix to be written into\\
+# h:      length of interval\\
+# y: 		iterate \\
+# integrand:	integrand of the functional as struct, must have a field value and a field derivative \\
+# transport:	vectortransport used to compute the connection term (as a struct, must have a field value and a field derivative)
+# """
+
+# function get_Jac!(A,h,y,integrand,transport)
+# 	function evaluate(p, i, tloc) 
+# 		return ArrayPartition((1.0-tloc)*p.x[1][i-1]+tloc*p.x[1][i])
+# 	end
+# 	y_ap = ArrayPartition(y)
+# 	ManoptExamples.get_Jac!(evaluate,A,1,1,1,1,h,length(y)-1,y_ap,integrand,transport)
+# end
+
+# function get_rhs!(b,h,y,integrand)
+# 	function evaluate(p, i, tloc) 
+# 		return ArrayPartition((1.0-tloc)*p.x[1][i-1]+tloc*p.x[1][i])
+# 	end
+# 	y_ap = ArrayPartition(y)
+# 	ManoptExamples.get_rhs_row!(evaluate,b,1,1,h,length(y)-1,y_ap,integrand)
+# end
 
 
 """
