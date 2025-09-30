@@ -126,8 +126,8 @@ begin
 	discretized_λ = [λ(Ωi) for Ωi in Omega_λ]
 
 	disc_point = ArrayPartition(discretized_y, discretized_v, discretized_λ)
-	
-end;
+
+end
 
 # ╔═╡ 7741a74f-0a73-47c8-9202-b8789782eb7b
 md"""
@@ -204,14 +204,13 @@ begin
 	F_prime_yλ_at(Integrand,y,ydot,B,Bdot,T,Tdot) = Tdot'*B # derivative of Fy_at w.r.t. λ (others are zero)
 
 	F_prime_vv_at(Integrand,y,ydot,B,Bdot,T,Tdot) = Bdot'*Tdot # derivative of Fv_at w.r.t. v (others are zero)
-	
-	F_prime_vλ_at(Integrand,y,ydot,B,Bdot,T,Tdot) = -T'*B # derivative of Fv_at w.r.t. λ (others are zero)
 
+	F_prime_λv_at(Integrand,y,ydot,B,Bdot,T,Tdot) = -B'*T # derivative of Fλ_at w.r.t. v (others are zero)
 	
 	integrand_vv = DifferentiableMapping(S,S,Fv_at,F_prime_vv_at)
 	integrand_yλ = DifferentiableMapping(R3,R3,Fy_at,F_prime_yλ_at)
-	integrand_vλ = DifferentiableMapping(R3,S,Fv_at,F_prime_vλ_at)
-	integrandb_λ = DifferentiableMapping(R3,R3,Fλ_at,F_prime_vλ_at) # needed for the third component of the right hand side, derivative is not used (thus F_prime_vλ_at is a dummy)
+	integrand_λv = DifferentiableMapping(S,R3,Fλ_at,F_prime_λv_at)
+	
 
 end;
 
@@ -262,18 +261,17 @@ end;
 
 # ╔═╡ ea3c49be-896c-4470-b6fe-587ebe009eab
 begin
-struct NewtonEquation{Fy, Fv, Fλ, Fbλ, T, Om, NM, Nrhs}
+struct NewtonEquation{Fy, Fv, Fλ, T, Om, NM, Nrhs}
 	integrand_y::Fy
 	integrand_v::Fv
 	integrand_λ::Fλ
-	integrand_bλ::Fbλ
 	vectortransport::T
 	omega_y::Om
 	omega_v::Om
 	omega_λ::Om
 	A13::NM
 	A22::NM
-	A23::NM
+	A32::NM
 	A::NM
 	b1::Nrhs
 	b2::Nrhs
@@ -281,7 +279,7 @@ struct NewtonEquation{Fy, Fv, Fλ, Fbλ, T, Om, NM, Nrhs}
 	b::Nrhs
 end
 
-function NewtonEquation(M, inty, intv, intλ, intbλ, VT, interval_y, interval_v, interval_λ)
+function NewtonEquation(M, inty, intv, intλ, VT, interval_y, interval_v, interval_λ)
 	n1 = Int(manifold_dimension(submanifold(M, 1)))
 	n2 = Int(manifold_dimension(submanifold(M, 2)))
 	n3 = Int(manifold_dimension(submanifold(M, 3)))
@@ -289,7 +287,7 @@ function NewtonEquation(M, inty, intv, intλ, intbλ, VT, interval_y, interval_v
 	# non-zero blocks of the Newton matrix
 	A13 = spzeros(n1,n3)
 	A22 = spzeros(n2,n2)
-	A23 = spzeros(n2,n3)
+	A32 = spzeros(n3,n2)
 	
 	A = spzeros(n1+n2+n3, n1+n2+n3)
 	
@@ -298,7 +296,7 @@ function NewtonEquation(M, inty, intv, intλ, intbλ, VT, interval_y, interval_v
 	b3 = zeros(n3)
 	b = zeros(n1+n2+n3)
 	
-	return NewtonEquation{typeof(inty), typeof(intv), typeof(intλ), typeof(intbλ), typeof(VT), typeof(interval_y), typeof(A13), typeof(b1)}(inty, intv, intλ, intbλ, VT, interval_y, interval_v, interval_λ, A13, A22, A23, A, b1, b2, b3, b)
+	return NewtonEquation{typeof(inty), typeof(intv), typeof(intλ), typeof(VT), typeof(interval_y), typeof(A13), typeof(b1)}(inty, intv, intλ, VT, interval_y, interval_v, interval_λ, A13, A22, A32, A, b1, b2, b3, b)
 end
 	
 function (ne::NewtonEquation)(M, VB, p)
@@ -308,7 +306,7 @@ function (ne::NewtonEquation)(M, VB, p)
 	
 	ne.A13 .= spzeros(n1,n3)
 	ne.A22 .= spzeros(n2,n2)
-	ne.A23 .= spzeros(n2,n3)
+	ne.A32 .= spzeros(n3,n2)
 	
 	ne.b1 .= zeros(n1)
 	ne.b2 .= zeros(n2)
@@ -326,15 +324,15 @@ function (ne::NewtonEquation)(M, VB, p)
 	
     get_Jac!(evaluate,ne.A13,1,1,3,0,h,nCells,Op,ne.integrand_y) # assemble (1,3)-block without connection
 
-	get_Jac!(evaluate,ne.A23,2,1,3,0,h,nCells,Op,ne.integrand_λ) # assemble (2,3)-block without connection
+	get_Jac!(evaluate,ne.A32,3,0,2,1,h,nCells,Op,ne.integrand_λ) # assemble (3,2)-block without connection
 
     ManoptExamples.get_rhs_row!(evaluate,ne.b1,1,1,h,nCells,Op,ne.integrand_y) 
 	ManoptExamples.get_rhs_row!(evaluate,ne.b2,2,1,h,nCells,Op,ne.integrand_v)
-	ManoptExamples.get_rhs_row!(evaluate,ne.b3,3,0,h,nCells,Op,ne.integrand_bλ)
+	ManoptExamples.get_rhs_row!(evaluate,ne.b3,3,0,h,nCells,Op,ne.integrand_λ)
 	
 	ne.A .= vcat(hcat(spzeros(n1,n1) , spzeros(n1,n2) , ne.A13), 
-			  hcat(spzeros(n2,n1), ne.A22 , ne.A23), 
-			  hcat(ne.A13', ne.A23', spzeros(n3,n3)))
+			  hcat(spzeros(n2,n1), ne.A22 , ne.A32'), 
+			  hcat(ne.A13', ne.A32, spzeros(n3,n3)))
 	ne.b .= vcat(ne.b1, ne.b2, ne.b3)
 	return
 end
@@ -364,9 +362,9 @@ function (ne::NewtonEquation)(M, VB, p, p_trial)
 
 	ManoptExamples.get_rhs_simplified!(evaluate, btrial_y,1,1,h,nCells,Op,Optrial,ne.integrand_y, id_transport)
 	ManoptExamples.get_rhs_simplified!(evaluate,btrial_v,2,1,h,nCells,Op,Optrial,ne.integrand_v,ne.vectortransport)
-	ManoptExamples.get_rhs_simplified!(evaluate,btrial_λ,3,0,h,nCells,Op,Optrial,ne.integrand_bλ, id_transport)
+	ManoptExamples.get_rhs_simplified!(evaluate,btrial_λ,3,0,h,nCells,Op,Optrial,ne.integrand_λ, id_transport)
 
-	return vcat(btrial_y,btrial_v, btrial_λ)
+	return vcat(btrial_y, btrial_v, btrial_λ)
 end
 end;
 
@@ -393,7 +391,7 @@ end;
 	begin
 	y_0 = copy(product, disc_point)
 	
-	NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_vλ, integrandb_λ, transport, Omega_y, Omega_v, Omega_λ)
+	NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_λv, transport, Omega_y, Omega_v, Omega_λ)
 		
 	st_res = vectorbundle_newton(product, TangentBundle(product), NE, y_0; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
 	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(product,1e-12; outer_norm=Inf, inverse_retraction_method=pr_inv)),
