@@ -19,6 +19,7 @@ begin
 	using GLMakie
 	using CairoMakie
 	using CSV, DataFrames
+	using RecursiveArrayTools
 	using FileIO, ProgressLogging
 end;
 
@@ -54,7 +55,7 @@ begin
 
 	S = Manifolds.Sphere(2)
 	power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
-	
+
 	st = 0.4
 	halt = pi - 0.4
 	#halt = pi/2
@@ -104,6 +105,7 @@ We define a structure that has to be filled for two purposes:
 # ╔═╡ bc449c2d-1f23-4c72-86ab-a46acbf64129
 mutable struct DifferentiableMapping{M<:AbstractManifold,F1<:Function,F2<:Function,T}
 	domain::M
+	precodomain::M
 	value::F1
 	derivative::F2
 	scaling::T
@@ -134,7 +136,7 @@ begin
 		return (- dq*p' - p*dq')*X
 	end
 
-	transport=DifferentiableMapping(S,transport_by_proj,transport_by_proj_prime,nothing)
+	transport=DifferentiableMapping(S,S,transport_by_proj,transport_by_proj_prime,nothing)
 	
 end;
 
@@ -179,7 +181,7 @@ begin
 		return B1dot'*B2dot+(w_prime(y,Integrand.scaling)*B1)'*B2
 	end
 
-	integrand=DifferentiableMapping(S,F_at,F_prime_at,3.0) 
+	integrand=DifferentiableMapping(S,S,F_at,F_prime_at,3.0) 
 
 end;
 
@@ -197,6 +199,38 @@ It returns the matrix and the right hand side in base representation.
 Moreover, for the computation of the simplified Newton direction (which is necessary for affine covariant damping) a method for assembling the right hand side for the simplified Newton equation is provided.
 	
 """
+
+# ╔═╡ 7332978a-2e17-45fa-89ad-1ca4e3c229a3
+begin
+@doc raw"""
+This function is called by Newton's method to assembly the matrix for the Newton step
+
+Use this method in case the manifold is not a product manifold
+
+
+A:      Matrix to be written into\\
+h:      length of interval\\
+y: 		iterate \\
+integrand:	integrand of the functional as struct, must have a field value and a field derivative \\
+transport:	vectortransport used to compute the connection term (as a struct, must have a field value and a field derivative)
+"""
+
+function get_Jac!(A,h,y,integrand,transport)
+	function evaluate(p, i, tloc) 
+		return ArrayPartition((1.0-tloc)*p.x[1][i-1]+tloc*p.x[1][i])
+	end
+	y_ap = ArrayPartition(y)
+	ManoptExamples.get_Jac!(evaluate,A,1,1,1,1,h,length(y)-1,y_ap,integrand,transport)
+end
+
+function get_rhs!(b,h,y,integrand)
+	function evaluate(p, i, tloc) 
+		return ArrayPartition((1.0-tloc)*p.x[1][i-1]+tloc*p.x[1][i])
+	end
+	y_ap = ArrayPartition(y)
+	ManoptExamples.get_rhs_row!(evaluate,b,1,1,h,length(y)-1,y_ap,integrand)
+end
+end;
 
 # ╔═╡ 6ce088e9-1aa0-4d44-98a3-2ab8b8ba5422
 begin
@@ -222,8 +256,10 @@ function (ne::NewtonEquation)(M, VB, p)
 
 	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
 	
-    @time ManoptExamples.get_rhs_Jac!(ne.b,ne.A,h,Oy,ne.integrand,ne.transport)
+	get_Jac!(ne.A,h,Oy,ne.integrand,ne.transport)
+	get_rhs!(ne.b,h,Oy,ne.integrand)
 
+	#ManoptExamples.get_rhs_Jac!(ne.b,ne.A,h,Oy,ne.integrand,ne.transport)
 	return
 end
 
@@ -366,6 +402,7 @@ end
 # ╠═288b9637-0500-40b8-a1f9-90cb9591402b
 # ╟─a0b939d5-40e7-4da4-baf1-8a297bb52fb7
 # ╠═6ce088e9-1aa0-4d44-98a3-2ab8b8ba5422
+# ╠═7332978a-2e17-45fa-89ad-1ca4e3c229a3
 # ╟─a3179c3a-cb5a-4fcb-bbdc-75ea693616d2
 # ╠═f78557e2-363e-4803-97d7-b57df115a619
 # ╠═9a2ebb9a-74c7-4efd-b042-23263bbf4235
