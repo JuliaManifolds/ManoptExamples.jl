@@ -323,8 +323,9 @@ And run the experiments
 for (r, m) in r_m_array
     # Set random seed for reproducibility
     Random.seed!(random_seed)
+    #
     # Define manifold
-    Matrices(M,N,r) #fixed rank manifold
+    Mr = FixedRankMatrices(M, N, r) #fixed rank manifold
     #
     # Generate rank r matrix with s non-zero rows
     Sol_mat, A, y, zero_rows = generate_data(M, N, r, s)
@@ -333,6 +334,12 @@ for (r, m) in r_m_array
     Y = rand(Normal(0, 0.01/sqrt(r)), M, N)
     start = SVDMPoint(Sol_mat + Y, r)
     dist_start_sol = distance(Mr, Sol, start, OrthographicInverseRetraction())
+    # Localize objectives
+    f(Mr, X) = f(Mr, X, A, c, y)
+    g(Mr, X) = g(Mr, X, A, c, y)
+    grad_g(Mr, X) = grad_g(Mr, X, A, c, y)
+    h(Mr, X) = h(Mr, X, A, c, y)
+    prox_norm12(Mr, prox_param, X) = prox_norm12(Mr, prox_param, X; c = c)
     #
     # Optimization
     # NCRPG

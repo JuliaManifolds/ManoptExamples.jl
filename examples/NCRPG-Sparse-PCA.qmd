@@ -460,8 +460,8 @@ df_results_obj_spar_orth = DataFrame(
     RPG_orth        = df_results_RPG.orthogonality,
 )
 # Write the results to CSV files
-CSV.write(joinpath(results_folder, "results-OB-time-iter-$(n_tests).csv"), df_results_time_iter)
-CSV.write(joinpath(results_folder, "results-OB-obj-spar-orth-$(n_tests).csv"), df_results_obj_spar_orth)
+CSV.write(joinpath(results_folder, "results-OB-time-iter-$(m_tests).csv"), df_results_time_iter)
+CSV.write(joinpath(results_folder, "results-OB-obj-spar-orth-$(m_tests).csv"), df_results_obj_spar_orth)
 ```
 
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
