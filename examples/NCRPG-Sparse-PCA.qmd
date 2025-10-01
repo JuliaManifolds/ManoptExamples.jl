@@ -1,0 +1,508 @@
+---
+title: "Sparse PCA"
+author: "Paula John, Hajg Jasa"
+date: 10/01/2025
+engine: julia
+---
+
+## Introduction
+
+In this example we use the Nonconvex Riemannian Proximal Gradient (NCRPG) method [BergmannJasaJohnPfeffer:2025:1](@cite) and compare it to the Riemannian Proximal Gradient (RPG) method [HuangWei:2021:1](@cite).
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:1](@cite), Section 6.1.
+The numbers may vary slightly due to having run this notebook on a different machine.
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+
+Pkg.develop(path="../") # a trick to work on the local dev version
+
+export_orig = true
+export_table = true
+export_result = true
+benchmarking = true
+
+experiment_name = "NCRPG-Sparse-PCA"
+results_folder = joinpath(@__DIR__, experiment_name)
+!isdir(results_folder) && mkdir(results_folder)
+```
+
+```{julia}
+#| output: false
+using PrettyTables
+using BenchmarkTools
+using CSV, DataFrames
+using ColorSchemes, Plots, LaTeXStrings
+using Random, LinearAlgebra, LRUCache, Distributions
+using ManifoldDiff, Manifolds, Manopt, ManoptExamples
+```
+
+## The Problem
+
+Let $\mathcal M = \mathrm{OB}(n,r)$ be the oblique manifold, i.e., the set of $n \times r$ matrices with unit-norm columns.
+Let $g \colon \mathcal M \to \mathbb R$ be defined by
+
+```math
+g(X) = \frac{1}{2} \norm{X^\top A^\top A X - D^2}^2,
+```
+
+where $A \in \mathbb R^{m \times n}$ is a data matrix, $D = \mathrm{diag}(d_1, \ldots, d_r)$ is a diagonal matrix containing the top $r$ singular values of $A$, and $\norm{\cdot}$ is the Frobenius norm.
+
+Let $h \colon \mathcal M \to \mathbb R$ be defined by
+
+```math
+h(X) = \μ \Vert X \Vert_1
+``` 
+be the sparsity-enforcing term given by the $\ell_1$-norm, where $\μ \ge 0$ is a regularization parameter.
+
+We define our total objective function as $f = g + h$.
+The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically the point that diagonalizes $A^\top A$ as much as possible while being sparse.
+
+
+## Numerical Experiment
+
+We initialize the experiment parameters, as well as some utility functions.
+```{julia}
+#| output: false
+# Set random seed for reproducibility
+random_seed = 1520
+Random.seed!(random_seed)
+BenchmarkTools.DEFAULT_PARAMETERS.seconds = 2.0 
+m_tests = 10 # number of tests for each parameter setting
+means = 20 # number of means to compute
+
+atol = 1e-7
+max_iters = 100000
+n_p_array = [(100,5), (200,5), (300, 5)]
+μs = [t for t in [0.1, 0.5, 1.0]]
+```
+
+We define a function to generate the test data for the Sparse PCA problem.
+```{julia}
+#| output: false
+function gen_test_data_SPCA(n, m, p)
+    A = rand(Normal(0, 1.0), (m, n))
+    for i in 1:n
+        A[:, i] = A[:, i] .- mean(A[:, i])
+        A[:, i] = A[:, i] / std(A[:, i])
+    end 
+    svdA = svd(A)
+    Vt = svdA.Vt
+    PCs = Vt[:, 1:p]
+    d = svdA.S[1:p]
+    return A, PCs, d
+end 
+```
+
+We define the proximal operator for the $\ell_1$-norm on the oblique manifold, following [BergmannJasaJohnPfeffer:2025:1](@cite).
+```{julia}
+#| output: false
+# Returns prox_{μ||.||_1}(M,x) on the Oblique Manifold OB(n,p) with respect to riemannian distance
+function prox_l1_OB(n, p, μ; tol = 1e-10, max_iters = 10)
+    return function prox_l1_OB_μ(M, λ, X)
+        μλ = μ * λ
+        prox_X = Array{Float64}(undef, n, p)
+        for k in 1:p 
+            x = X[:, k]
+            t = μλ
+            px_t = X[:, k]
+            for _ in 1:max_iters 
+                t_old = t
+
+                z = abs.(x) .- t 
+                prox_Rn_t = (z .> 0) .* sign.(x) .* z
+
+                px_t = prox_Rn_t/norm(prox_Rn_t)
+                xpx_t = x'px_t
+                if xpx_t < 1
+                    t = μλ * sqrt(1-(xpx_t)^2)/acos(xpx_t)
+                else
+                    px_t = x
+                    prox_X[:, k] = x
+                    break
+                end 
+                if abs(t - t_old) < tol 
+                    prox_X[:, k] = px_t
+                    break
+                end 
+            end 
+            prox_X[:, k] = px_t
+        end 
+        return prox_X
+    end 
+end 
+``` 
+
+```{julia}
+#| output: false
+# Objective, gradient, and proxes
+g(M, X, H, D) = 0.5 * norm(X'H * X - D)^2 
+function grad_g(M, X, H, D)
+    HX = H*X
+    return project(M, X, 2*HX*(X'HX - D))
+end
+h(M, X, μ) = μ * norm(X, 1)
+f(M, X, H, D, μ) = 0.5 * norm(X'H * X - D)^2 + μ * norm(X, 1)
+```
+
+We introduce an implementation of the RPG method for the Sparse PCA problem on the oblique manifold, following [HuangWei:2021:1](@cite).
+```{julia}
+#| output: false
+# Implementation of the proximal operator for the ℓ1-norm on the Oblique manifold
+function RPG_prox_OB(S, X, grad_fX, λ, L, n, p; max_iters  = 10, tol=1e-10)
+    λ̃ = λ/L
+    d = 0 
+    for k in 1:p
+        x = X[:,k] 
+        ξ_x = 1/L * grad_fX[:,k]
+        
+        neg∇h = (x-ξ_x)/λ̃
+        i_max = argmax(abs.(neg∇h))
+        if abs(neg∇h[i_max]) <= 1.0
+            y = sign(neg∇h[i_max])*(1:n .== i_max)
+        else
+            z = abs.(neg∇h) .- 1.0
+            Act_set = z .> 0  
+            y = Act_set .* sign.(neg∇h) .* z
+            y = y/norm(y)
+        end
+        for j in 1:max_iters  
+            xty = x'y 
+            if xty >= 1
+                sy = -1 
+                ty = 1
+            else 
+                ξty = ξ_x'y
+                acosxty = acos(xty)
+                α = 1-xty^2 
+                sy = - acosxty/sqrt(α) - ξty/α + acosxty * ξty * xty / sqrt(α^3)
+                ty = acosxty/sqrt(α)
+            end
+            neg∇h = -(sy*x+ty*ξ_x)/λ̃
+            
+            i_max = argmax(abs.(neg∇h))
+            if abs(neg∇h[i_max]) <= 1.0
+                y_new = sign(neg∇h[i_max])*(1:n .== i_max)
+            else
+                z = abs.(neg∇h) .- 1.0
+                Act_set = z .> 0  
+                y_new = Act_set .* sign.(neg∇h) .* z
+                y_new = y_new/norm(y_new)
+            end
+            
+            if max(abs(xty-x'y_new), abs(ξ_x'y-ξ_x'y_new)) < tol 
+                break 
+            end 
+            y = y_new 
+        end 
+
+        d += distance(S, x,y)^2
+        X[:,k] = y
+    end 
+    return sqrt(d)
+end
+#
+# RPG implementation for Sparse PCA on the Oblique manifold
+function RPG_SPCA_OB(M, H, D, μ, L, start, prox_fun; max_iters  = 1000, stop = 1e-8, record = false)
+    n, p = size(start)
+    S = Sphere(n-1)
+    cost_fun(M,X) =  0.5*norm(X'H*X-D)^2 + μ*norm(X,1)
+    function grad_f(M,X, D=D)
+        HX = H*X
+        return project(M, X, 2*HX*(X'HX-D))
+    end
+    X = copy(start) 
+    if !record 
+        for i in 1:max_iters 
+            change = prox_fun(S, X, grad_f(M,X,D), μ, L, n, p)
+            if L*change < stop
+                return X, i
+            end 
+        end 
+        return X, max_iters  
+    else 
+        Iterates = []
+        for i in 1:max_iters 
+            change = prox_fun(S, X, grad_f(M,X,D), μ, L, n, p)
+            push!(Iterates, copy(X))
+            if L*change < stop
+                return Iterates, i
+            end 
+        end 
+        return Iterates, max_iters  
+    end
+end
+```
+
+We set up some variables to collect the results of the experiments and initialize the dataframes
+```{julia}
+#| output: false
+#| echo: false
+list = ["μ", "n", "p", "time", "objective", "sparsity", "iterations", "orthogonality"]
+df_results_RPG      = DataFrame([name => Float64[] for name in list], makeunique=true)
+df_results_NCRPG    = DataFrame([name => Float64[] for name in list], makeunique=true)
+df_results_NCRPG_bt = DataFrame([name => Float64[] for name in list], makeunique=true)
+#
+# Set data collection variables
+time_RPG_tmp        = zeros(length(μs))
+time_NCRPG_tmp      = zeros(length(μs))
+time_NCRPG_bt_tmp   = zeros(length(μs))
+#
+obj_RPG_tmp         = zeros(length(μs))
+obj_NCRPG_tmp       = zeros(length(μs))
+obj_NCRPG_bt_tmp    = zeros(length(μs))
+#
+spar_RPG_tmp        = zeros(length(μs))
+spar_NCRPG_tmp      = zeros(length(μs))
+spar_NCRPG_bt_tmp   = zeros(length(μs))
+#
+it_RPG_tmp          = zeros(length(μs))
+it_NCRPG_tmp        = zeros(length(μs))
+it_NCRPG_bt_tmp     = zeros(length(μs))
+#
+orth_RPG_tmp        = zeros(length(μs))
+orth_NCRPG_tmp      = zeros(length(μs))
+orth_NCRPG_bt_tmp   = zeros(length(μs))
+``` 
+
+And run the experiments
+```{julia}
+#| output: false
+for (n, p) in n_p_array
+    # Define manifold
+    OB = Oblique(n, p)
+    for m in 1:m_tests
+        # Construct problem 
+        A, PCs, d = gen_test_data_SPCA(n, means, p)
+        H = A'A / norm(A'A) * 10
+        D = diagm(svd(H).S[1:p])
+        L = 2 * tr(H)
+
+        for (c, μ) in enumerate(μs)
+            # Localize functions
+            g(M, X) = g(M, X, H, D)
+            grad_g(M, X) = grad_g(M, X, H, D)
+            h(M, X) = h(M, X, μ)
+            prox_norm1_NCRPG = prox_l1_OB(n, p, μ)
+            f(M, X) = f(M, X, H, D, μ)
+            #
+            # Parameters
+            step_size = 1/L
+            init_step_size_bt = 10 * step_size
+            stop_step_size_bt = atol
+            stop_RPG = atol
+            stop_NCRPG = atol
+            stop_NCRPG_bt = atol
+            #
+            # Fix starting point
+            start = rand(OB)
+            #
+            # Optimization
+            # NCRPG
+            rec_NCRPG = proximal_gradient_method(OB, f, g, grad_g, start;
+                prox_nonsmooth = prox_norm1_NCRPG, 
+                stepsize = ConstantLength(step_size),
+                record = [:Iteration, :Iterate],
+                return_state = true,
+                stopping_criterion = StopAfterIteration(max_iters)| StopWhenGradientMappingNormLess(stop_NCRPG)
+            )
+            # Benchmark NCRPG
+            bm_NCRPG = @benchmark proximal_gradient_method($OB, $f, $g, $grad_g, $start;
+                prox_nonsmooth = $prox_norm1_NCRPG,  
+                stepsize = ConstantLength($step_size),
+                stopping_criterion = StopAfterIteration($max_iters)| StopWhenGradientMappingNormLess($stop_NCRPG)
+            )
+            # NCRPG with backtracking
+            rec_NCRPG_bt = proximal_gradient_method(OB, f, g, grad_g, start;
+                prox_nonsmooth = prox_norm1_NCRPG, 
+                stepsize = ProximalGradientMethodBacktracking(; 
+                    strategy = :nonconvex, 
+                    initial_stepsize = init_step_size_bt, 
+                    stop_when_stepsize_less = stop_step_size_bt
+                ),
+                record = [:Iteration, :Iterate],
+                return_state = true,
+                stopping_criterion = StopAfterIteration(max_iters)| StopWhenGradientMappingNormLess(stop_NCRPG_bt)
+            )
+            # Benchmark NCRPG with backtracking
+            bm_NCRPG_bt = @benchmark proximal_gradient_method($OB, $f, $g, $grad_g, $start;
+                prox_nonsmooth = $prox_norm1_NCRPG,  
+                stepsize = ProximalGradientMethodBacktracking(; 
+                    strategy = :nonconvex, 
+                    initial_stepsize = $init_step_size_bt, 
+                    stop_when_stepsize_less = $stop_step_size_bt
+                ),
+                stopping_criterion = StopAfterIteration($max_iters)| StopWhenGradientMappingNormLess($stop_NCRPG_bt)
+            )
+            # RPG 
+            Iterates_RPG, it_RPG = RPG_SPCA_OB(OB, H, D, μ, L, start, RPG_prox_OB;
+                max_iters = max_iters, 
+                stop = stop_RPG, 
+                record = true
+            )
+            bm_RPG = @benchmark RPG_SPCA_OB($OB, $H, $D, $μ, $L, $start, $RPG_prox_OB; 
+                max_iters = $max_iters, 
+                stop = $stop_RPG
+            )
+            #
+            # Collect test results
+            Iterates_NCRPG  = get_record(rec_NCRPG, :Iteration, :Iterate)
+            res_NCRPG       = Iterates_NCRPG[end]
+            time_NCRPG      = time(median(bm_NCRPG))/1e9
+            obj_NCRPG       = f(OB, res_NCRPG)
+            spar_NCRPG      = sum(abs.(res_NCRPG).< 1e-8)/n/p
+            it_NCRPG        = length(Iterates_NCRPG)
+            orth_NCRPG      = norm(res_NCRPG'*res_NCRPG - I(p))
+            # NCRPG with backtracking
+            Iterates_NCRPG_bt  = get_record(rec_NCRPG_bt, :Iteration, :Iterate)
+            res_NCRPG_bt       = Iterates_NCRPG_bt[end]
+            time_NCRPG_bt      = time(median(bm_NCRPG_bt))/1e9
+            obj_NCRPG_bt       = f(OB, res_NCRPG_bt)
+            spar_NCRPG_bt      = sum(abs.(res_NCRPG_bt).< 1e-8)/n/p
+            it_NCRPG_bt        = length(Iterates_NCRPG_bt)
+            orth_NCRPG_bt      = norm(res_NCRPG_bt'*res_NCRPG_bt - I(p))
+            # RPG
+            res_RPG         = Iterates_RPG[end]
+            time_RPG        = time(median(bm_RPG))/1e9
+            obj_RPG         = f(OB, res_RPG)
+            spar_RPG        = sum(abs.(res_RPG).< 1e-8)/n/p
+            orth_RPG        = norm(res_RPG'*res_RPG - I(p))
+            #
+            # Update results
+            # Time values
+            time_NCRPG_tmp[c]      += time_NCRPG
+            time_NCRPG_bt_tmp[c]   += time_NCRPG_bt
+            time_RPG_tmp[c]        += time_RPG
+            # Objective values
+            obj_NCRPG_tmp[c]       += obj_NCRPG
+            obj_NCRPG_bt_tmp[c]    += obj_NCRPG_bt
+            obj_RPG_tmp[c]         += obj_RPG
+            # Sparsity values
+            spar_NCRPG_tmp[c]      += spar_NCRPG
+            spar_NCRPG_bt_tmp[c]   += spar_NCRPG_bt
+            spar_RPG_tmp[c]        += spar_RPG
+            # Orthogonality values
+            orth_NCRPG_tmp[c]      += orth_NCRPG
+            orth_NCRPG_bt_tmp[c]   += orth_NCRPG_bt
+            orth_RPG_tmp[c]        += orth_RPG
+            # Iteration values
+            it_NCRPG_tmp[c]        += it_NCRPG
+            it_NCRPG_bt_tmp[c]     += it_NCRPG_bt
+            it_RPG_tmp[c]          += it_RPG
+        end 
+    end 
+    for (c, μ) in enumerate(μs)
+        push!(df_results_RPG, 
+            [μ, n, p, time_RPG_tmp[c]/m_tests, obj_RPG_tmp[c]/m_tests, spar_RPG_tmp[c]/m_tests, it_RPG_tmp[c]/m_tests, orth_RPG_tmp[c]/m_tests]
+        )
+        push!(df_results_NCRPG, 
+            [μ, n, p, time_NCRPG_tmp[c]/m_tests, obj_NCRPG_tmp[c]/m_tests, spar_NCRPG_tmp[c]/m_tests, it_NCRPG_tmp[c]/m_tests, orth_NCRPG_tmp[c]/m_tests]
+        )
+        push!(df_results_NCRPG_bt, 
+            [μ, n, p, time_NCRPG_bt_tmp[c]/m_tests, obj_NCRPG_bt_tmp[c]/m_tests, spar_NCRPG_bt_tmp[c]/m_tests, it_NCRPG_bt_tmp[c]/m_tests, orth_NCRPG_bt_tmp[c]/m_tests]
+        )
+    end
+    #
+    # Reset data collection variables
+    time_RPG_tmp      .= zeros(length(μs))
+    time_NCRPG_tmp    .= zeros(length(μs))
+    time_NCRPG_bt_tmp .= zeros(length(μs))
+    obj_RPG_tmp       .= zeros(length(μs))
+    obj_NCRPG_tmp     .= zeros(length(μs))
+    obj_NCRPG_bt_tmp  .= zeros(length(μs))
+    spar_RPG_tmp      .= zeros(length(μs))
+    spar_NCRPG_tmp    .= zeros(length(μs))
+    spar_NCRPG_bt_tmp .= zeros(length(μs))
+    it_RPG_tmp        .= zeros(length(μs))
+    it_NCRPG_tmp      .= zeros(length(μs))
+    it_NCRPG_bt_tmp   .= zeros(length(μs))
+    orth_RPG_tmp      .= zeros(length(μs))
+    orth_NCRPG_tmp    .= zeros(length(μs))
+    orth_NCRPG_bt_tmp .= zeros(length(μs))
+end
+```
+
+We export the results to CSV files
+```{julia}
+# | output: false
+# | code-fold: true
+# Sort the dataframes by the parameter μ and create the final results dataframes
+df_results_NCRPG = sort(df_results_NCRPG, :μ)
+df_results_NCRPG_bt = sort(df_results_NCRPG_bt, :μ)
+df_results_RPG = sort(df_results_RPG, :μ)
+df_results_time_iter = DataFrame(
+    μ             = df_results_NCRPG.μ,
+    n             = Int.(df_results_NCRPG.n), 
+    p             = Int.(df_results_NCRPG.p),
+    NCRPG_time     = df_results_NCRPG.time, 
+    NCRPG_iter     = Int.(round.(df_results_NCRPG.iterations, digits = 0)), 
+    NCRPG_bt_time  = df_results_NCRPG_bt.time, 
+    NCRPG_bt_iter  = Int.(round.(df_results_NCRPG_bt.iterations, digits = 0)),
+    RPG_time     = df_results_RPG.time, 
+    RPG_iter     = Int.(round.(df_results_RPG.iterations, digits = 0)),
+)
+df_results_obj_spar_orth = DataFrame(
+    μ               = df_results_NCRPG.μ,
+    n               = Int.(df_results_NCRPG.n), 
+    p               = Int.(df_results_NCRPG.p),
+    NCRPG_obj       = df_results_NCRPG.objective, 
+    NCRPG_sparsity  = df_results_NCRPG.sparsity,  
+    NCRPG_orth      = df_results_NCRPG.orthogonality,
+    NCRPG_bt_obj    = df_results_NCRPG_bt.objective, 
+    NCRPG_bt_sparsity = df_results_NCRPG_bt.sparsity,
+    NCRPG_bt_orth   = df_results_NCRPG_bt.orthogonality,  
+    RPG_obj         = df_results_RPG.objective, 
+    RPG_sparsity    = df_results_RPG.sparsity, 
+    RPG_orth        = df_results_RPG.orthogonality,
+)
+# Write the results to CSV files
+CSV.write(joinpath(results_folder, "results-OB-time-iter-$(n_tests).csv"), df_results_time_iter)
+CSV.write(joinpath(results_folder, "results-OB-obj-spar-orth-$(n_tests).csv"), df_results_obj_spar_orth)
+```
+
+We can take a look at how the algorithms compare to each other in their performance with the following tables.
+First, we look at the time and number of iterations for each algorithm.
+```{julia}
+# | echo: false
+# | code-fold: true
+header_1 = ["μ", "n", "p", "NCRPG_const_time", "NCRPG_const_iter", "NCRPG_bt_time", "NCRPG_bt_iter", "RPG_time", "RPG_iter"]
+benchmarking && pretty_table(df_results_time_iter; backend = Val(:markdown), header = header_1)
+```
+
+Second, we look at the objective values, sparsity, and orthogonality of the solutions found by each algorithm.
+```{julia}
+# | echo: false
+# | code-fold: true
+header_2 = ["μ", "n", "p", "NCRPG_const_obj", "NCRPG_const_spar", "NCRPG_const_orth", "NCRPG_bt_obj", "NCRPG_bt_spar", "NCRPG_bt_orth", "RPG_obj", "RPG_spar", "RPG_orth"]
+benchmarking && pretty_table(df_results_obj_spar_orth; backend = Val(:markdown), header = header_2)
+```
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["NCRPG-Sparse-PCA.md"]
+Canonical=false
+```
+````
