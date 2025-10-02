@@ -15,7 +15,7 @@ project:
     - "!CRPG-Sparse-Approximation.qmd"
     - "!CRPG-Constrained-Mean-Hn.qmd"
     - "!NCRPG-Grassmann.qmd"
-
+    - "!NCRPG-Sparse-PCA.qmd"
 
 crossref:
   fig-prefix: Figure

@@ -1,9 +1,6 @@
----
-title: "Sparse PCA"
-author: "Paula John, Hajg Jasa"
-date: 10/01/2025
-engine: julia
----
+# Sparse PCA
+Paula John, Hajg Jasa
+2025-10-01
 
 ## Introduction
 
@@ -11,28 +8,7 @@ In this example we use the Nonconvex Riemannian Proximal Gradient (NCRPG) method
 This example reproduces the results from [BergmannJasaJohnPfeffer:2025:1](@cite), Section 6.1.
 The numbers may vary slightly due to having run this notebook on a different machine.
 
-```{julia}
-#| echo: false
-#| code-fold: true
-#| output: false
-using Pkg;
-cd(@__DIR__)
-Pkg.activate("."); # for reproducibility use the local tutorial environment.
-
-Pkg.develop(path="../") # a trick to work on the local dev version
-
-export_orig = true
-export_table = true
-export_result = true
-benchmarking = true
-
-experiment_name = "NCRPG-Sparse-PCA"
-results_folder = joinpath(@__DIR__, experiment_name)
-!isdir(results_folder) && mkdir(results_folder)
-```
-
-```{julia}
-#| output: false
+``` julia
 using PrettyTables
 using BenchmarkTools
 using CSV, DataFrames
@@ -46,7 +22,7 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 Let ``\mathcal M = \mathrm{OB}(n,r)`` be the oblique manifold, i.e., the set of ``n \times r`` matrices with unit-norm columns.
 Let ``g \colon \mathcal M \to \mathbb R`` be defined by
 
-```math
+``` math
 g(X) = \frac{1}{2} \Vert X^\top A^\top A X - D^2 \Vert^2,
 ```
 
@@ -54,20 +30,20 @@ where ``A \in \mathbb R^{m \times n}`` is a data matrix, ``D = \mathrm{diag}(d_1
 
 Let ``h \colon \mathcal M \to \mathbb R`` be defined by
 
-```math
+``` math
 h(X) = \mu \Vert X \Vert_1
-``` 
+```
+
 be the sparsity-enforcing term given by the ``\ell_1``-norm, where ``\mu \ge 0`` is a regularization parameter.
 
 We define our total objective function as ``f = g + h``.
 The goal is to find the minimizer of ``f`` on ``\mathcal M``, which is heuristically the point that diagonalizes ``A^\top A`` as much as possible while being sparse.
 
-
 ## Numerical Experiment
 
 We initialize the experiment parameters, as well as some utility functions.
-```{julia}
-#| output: false
+
+``` julia
 # Set random seed for reproducibility
 random_seed = 1520
 Random.seed!(random_seed)
@@ -82,8 +58,8 @@ n_p_array = [(100,5), (200,5), (300, 5)]
 ```
 
 We define a function to generate the test data for the Sparse PCA problem.
-```{julia}
-#| output: false
+
+``` julia
 function gen_test_data_SPCA(n, m, p)
     A = rand(Normal(0, 1.0), (m, n))
     for i in 1:n
@@ -95,12 +71,12 @@ function gen_test_data_SPCA(n, m, p)
     PCs = Vt[:, 1:p]
     d = svdA.S[1:p]
     return A, PCs, d
-end 
+end
 ```
 
 We define the proximal operator for the ``\ell_1``-norm on the oblique manifold, following [BergmannJasaJohnPfeffer:2025:1](@cite).
-```{julia}
-#| output: false
+
+``` julia
 # Returns prox_{μ||.||_1}(M,x) on the Oblique Manifold OB(n,p) with respect to riemannian distance
 function prox_l1_OB(n, p, μ; tol = 1e-10, max_iters = 10)
     return function prox_l1_OB_μ(M, λ, X)
@@ -134,11 +110,10 @@ function prox_l1_OB(n, p, μ; tol = 1e-10, max_iters = 10)
         end 
         return prox_X
     end 
-end 
-``` 
+end
+```
 
-```{julia}
-#| output: false
+``` julia
 # Objective, gradient, and proxes
 g(M, X, H, D) = 0.5 * norm(X'H * X - D)^2 
 function grad_g(M, X, H, D)
@@ -150,8 +125,8 @@ f(M, X, H, D, μ) = 0.5 * norm(X'H * X - D)^2 + μ * norm(X, 1)
 ```
 
 We introduce an implementation of the RPG method for the Sparse PCA problem on the oblique manifold, following [HuangWei:2021:1](@cite).
-```{julia}
-#| output: false
+
+``` julia
 # Implementation of the proximal operator for the ℓ1-norm on the Oblique manifold
 function RPG_prox_OB(S, X, grad_fX, λ, L, n, p; max_iters  = 10, tol=1e-10)
     λ̃ = λ/L
@@ -239,39 +214,10 @@ end
 ```
 
 We set up some variables to collect the results of the experiments and initialize the dataframes
-```{julia}
-#| output: false
-#| echo: false
-list = ["μ", "n", "p", "time", "objective", "sparsity", "iterations", "orthogonality"]
-df_results_RPG      = DataFrame([name => Float64[] for name in list], makeunique=true)
-df_results_NCRPG    = DataFrame([name => Float64[] for name in list], makeunique=true)
-df_results_NCRPG_bt = DataFrame([name => Float64[] for name in list], makeunique=true)
-#
-# Set data collection variables
-time_RPG_tmp        = zeros(length(μs))
-time_NCRPG_tmp      = zeros(length(μs))
-time_NCRPG_bt_tmp   = zeros(length(μs))
-#
-obj_RPG_tmp         = zeros(length(μs))
-obj_NCRPG_tmp       = zeros(length(μs))
-obj_NCRPG_bt_tmp    = zeros(length(μs))
-#
-spar_RPG_tmp        = zeros(length(μs))
-spar_NCRPG_tmp      = zeros(length(μs))
-spar_NCRPG_bt_tmp   = zeros(length(μs))
-#
-it_RPG_tmp          = zeros(length(μs))
-it_NCRPG_tmp        = zeros(length(μs))
-it_NCRPG_bt_tmp     = zeros(length(μs))
-#
-orth_RPG_tmp        = zeros(length(μs))
-orth_NCRPG_tmp      = zeros(length(μs))
-orth_NCRPG_bt_tmp   = zeros(length(μs))
-``` 
 
 And run the experiments
-```{julia}
-#| output: false
+
+``` julia
 for (n, p) in n_p_array
     # Define manifold
     OB = Oblique(n, p)
@@ -427,9 +373,8 @@ end
 ```
 
 We export the results to CSV files
-```{julia}
-# | output: false
-# | code-fold: true
+
+``` julia
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_results_NCRPG = sort(df_results_NCRPG, :μ)
 df_results_NCRPG_bt = sort(df_results_NCRPG_bt, :μ)
@@ -466,43 +411,75 @@ CSV.write(joinpath(results_folder, "results-OB-obj-spar-orth-``(m_tests).csv"), 
 
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
-```{julia}
-# | echo: false
-# | code-fold: true
-header_1 = ["μ", "n", "p", "NCRPG_const_time", "NCRPG_const_iter", "NCRPG_bt_time", "NCRPG_bt_iter", "RPG_time", "RPG_iter"]
-benchmarking && pretty_table(df_results_time_iter; backend = :markdown, column_labels = header_1)
-```
+
+| **μ** | **n** | **p** | **NCRPG\_const\_time** | **NCRPG\_const\_iter** | **NCRPG\_bt\_time** | **NCRPG\_bt\_iter** | **RPG\_time** | **RPG\_iter** |
+|------:|------:|------:|-----------------------:|-----------------------:|--------------------:|--------------------:|--------------:|--------------:|
+|   0.1 |   100 |     5 |               0.684749 |                  30786 |            0.529327 |                4416 |       1.08593 |         30786 |
+|   0.1 |   200 |     5 |                1.62113 |                  31345 |             1.00647 |                3819 |       2.39352 |         31346 |
+|   0.1 |   300 |     5 |                3.75444 |                  35681 |             1.64839 |                3079 |       5.23643 |         35683 |
+|   0.5 |   100 |     5 |               0.279035 |                  11953 |           0.0954497 |                 809 |      0.411548 |         11957 |
+|   0.5 |   200 |     5 |               0.966696 |                  17982 |            0.465404 |                1495 |       1.37787 |         17796 |
+|   0.5 |   300 |     5 |                2.42251 |                  21983 |              1.1225 |                1638 |       3.12809 |         22019 |
+|   1.0 |   100 |     5 |                0.23533 |                   9808 |            0.179321 |                1090 |       0.33349 |          9817 |
+|   1.0 |   200 |     5 |               0.487548 |                   9601 |            0.420006 |                 819 |      0.699072 |          9614 |
+|   1.0 |   300 |     5 |              0.0342426 |                    331 |          0.00969333 |                  26 |     0.0528303 |           331 |
 
 Second, we look at the objective values, sparsity, and orthogonality of the solutions found by each algorithm.
-```{julia}
-# | echo: false
-# | code-fold: true
-header_2 = ["μ", "n", "p", "NCRPG_const_obj", "NCRPG_const_spar", "NCRPG_const_orth", "NCRPG_bt_obj", "NCRPG_bt_spar", "NCRPG_bt_orth", "RPG_obj", "RPG_spar", "RPG_orth"]
-benchmarking && pretty_table(df_results_obj_spar_orth; backend = :markdown, column_labels = header_2)
-```
+
+| **μ** | **n** | **p** | **NCRPG\_const\_obj** | **NCRPG\_const\_spar** | **NCRPG\_const\_orth** | **NCRPG\_bt\_obj** | **NCRPG\_bt\_spar** | **NCRPG\_bt\_orth** | **RPG\_obj** | **RPG\_spar** | **RPG\_orth** |
+|------:|------:|------:|----------------------:|-----------------------:|-----------------------:|-------------------:|--------------------:|--------------------:|-------------:|--------------:|--------------:|
+|   0.1 |   100 |     5 |               3.20343 |                  0.475 |               0.145636 |            3.20463 |              0.4756 |             0.14826 |      3.20343 |         0.475 |      0.145636 |
+|   0.1 |   200 |     5 |               4.38751 |                 0.5203 |               0.124219 |            4.38662 |              0.5178 |            0.124448 |      4.38751 |        0.5203 |      0.124219 |
+|   0.1 |   300 |     5 |               5.22587 |               0.546533 |              0.0992134 |            5.22137 |              0.5494 |           0.0984192 |      5.22587 |      0.546533 |     0.0992134 |
+|   0.5 |   100 |     5 |               13.0305 |                 0.7356 |               0.105535 |             13.039 |              0.7334 |            0.111901 |      13.0305 |        0.7356 |      0.105535 |
+|   0.5 |   200 |     5 |               16.8312 |                 0.8125 |              0.0786428 |            16.8541 |              0.8154 |           0.0822406 |      16.8193 |        0.8124 |      0.080326 |
+|   0.5 |   300 |     5 |               19.2926 |               0.867667 |              0.0621717 |            19.2791 |            0.869733 |           0.0622674 |      19.2926 |      0.867667 |     0.0621717 |
+|   1.0 |   100 |     5 |               22.0226 |                  0.874 |              0.0620929 |            21.9882 |              0.8742 |           0.0581779 |      22.0226 |         0.874 |     0.0620929 |
+|   1.0 |   200 |     5 |               25.5495 |                 0.9783 |              0.0540715 |            25.5905 |              0.9822 |           0.0540714 |      25.5495 |        0.9783 |     0.0540715 |
+|   1.0 |   300 |     5 |               25.0829 |               0.996667 |                    0.0 |            25.0812 |            0.996667 |                 0.0 |      25.0829 |      0.996667 |           0.0 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
-```{julia}
-#| code-fold: true
+``` julia
 using Pkg
 Pkg.status()
 ```
-```{julia}
-#| code-fold: true
-#| echo: false
-#| output: asis
-using Dates
-println("This tutorial was last rendered ``(Dates.format(now(), "U d, Y, H:M:S")).");
-```
+
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.6.0
+      [336ed68f] CSV v0.10.15
+      [13f3f980] CairoMakie v0.15.6
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.31.0
+    ⌅ [5ae59095] Colors v0.12.11
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.120
+      [7073ff75] IJulia v1.30.4
+      [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.2
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.4
+      [1cead3c2] Manifolds v0.10.23
+      [3362f125] ManifoldsBase v1.2.0
+      [0fc0a36d] Manopt v0.5.23 `../../Manopt.jl`
+      [5b8d5e80] ManoptExamples v0.1.15 `..`
+      [51fcb6bd] NamedColors v0.2.3
+      [91a5bcdd] Plots v1.41.1
+      [08abe8d2] PrettyTables v3.0.11
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
+      [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
+
+This tutorial was last rendered October 1, 2025, 22:15:43.
 
 ## Literature
 
-````{=commonmark}
 ```@bibliography
 Pages = ["NCRPG-Sparse-PCA.md"]
 Canonical=false
 ```
-````
