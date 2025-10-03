@@ -118,6 +118,7 @@ examples_menu =
         "Proximal Gradient Methods" => [
             "Sparse PCA" => "examples/NCRPG-Sparse-PCA.md",
             "Grassmann Experiment" => "examples/NCRPG-Grassmann.md",
+            "Row-Sparse Low-Rank Matrix Recovery" => "examples/NCRPG-Row-Sparse-Low-Rank.md",
             "Convex Example on SPDs" => "examples/CRPG-Convex-SPD.md",
             raw"Sparse Approximation on $\mathbb H^n$" => "examples/CRPG-Sparse-Approximation.md",
             raw"Mean on $\mathbb H^n$" => "examples/CRPG-Constrained-Mean-Hn.md",

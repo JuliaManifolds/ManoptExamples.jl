@@ -16,7 +16,8 @@ project:
     - "!CRPG-Constrained-Mean-Hn.qmd"
     - "!NCRPG-Grassmann.qmd"
     - "!NCRPG-Sparse-PCA.qmd"
-
+    - "!NCRPG-Row-Sparse-Low-Rank.qmd"
+    
 crossref:
   fig-prefix: Figure
   tbl-prefix: Table
