@@ -4,6 +4,11 @@
             "affiliation": "NTNU Trondheim",
             "name": "Bergmann, Ronny",
             "orcid": "0000-0001-8342-7218"
+        },
+        {
+            "affiliation": "NTNU Trondheim",
+            "name": "Jasa, Hajg",
+            "orcid": "0009-0002-7917-0530"
         }
     ],
     "description": "ManoptExamples.jl is a Julia package collecting optimization tasks for Manopt.jl",
