@@ -6,6 +6,7 @@ Hajg Jasa
 
 In this example we compare the Nonconvex Riemannian Proximal Gradient (NCRPG) method [BergmannJasaJohnPfeffer:2025:1](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the space of symmetric positive definite matrices and on hyperbolic space.
 This example reproduces the results from [BergmannJasaJohnPfeffer:2025:1](@cite), Section 6.2.
+The numbers may vary slightly due to having run this notebook on a different machine.
 
 ``` julia
 using PrettyTables

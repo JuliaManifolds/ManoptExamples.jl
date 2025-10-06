@@ -1,7 +1,7 @@
 name = "ManoptExamples"
 uuid = "5b8d5e80-5788-45cb-83d6-5e8f1484217d"
 authors = ["Ronny Bergmann <manopt@ronnybergmann.net>"]
-version = "0.1.15"
+version = "0.1.16"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
