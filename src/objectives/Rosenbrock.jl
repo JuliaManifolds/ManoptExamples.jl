@@ -118,8 +118,8 @@ where the ``\mathrm{Rb}`` stands for Rosenbrock
 struct RosenbrockMetric <: AbstractMetric end
 
 @doc raw"""
-    Y = change_representer(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, ::EuclideanMetric, p, X)
-    change_representer!(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, Y, ::EuclideanMetric, p, X)
+    Y = change_representer(M::MetricManifold{ℝ,Euclidean{ℝ,Tuple{2}},RosenbrockMetric}, ::EuclideanMetric, p, X)
+    change_representer!(M::MetricManifold{ℝ,Euclidean{ℝ,Tuple{2}},RosenbrockMetric}, Y, ::EuclideanMetric, p, X)
 
 Given the Euclidean gradient `X` at `p`, this function computes the corresponding Riesz representer `Y``
 such that ``⟨X,Z⟩ = ⟨ Y, Z ⟩_{\mathrm{Rb},p}`` holds for all ``Z``, in other words ``Y = G(p)^{-1}X``.
@@ -128,7 +128,7 @@ this function is used in `riemannian_gradient` to convert a Euclidean into a Rie
 """
 change_representer(
     ::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     ::EuclideanMetric,
     p,
@@ -136,7 +136,7 @@ change_representer(
 )
 function change_representer!(
     M::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     Y,
     ::EuclideanMetric,
@@ -148,8 +148,8 @@ function change_representer!(
 end
 
 @doc raw"""
-    q = exp(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X)
-    exp!(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, q, p, X)
+    q = exp(::MetricManifold{ℝ,Euclidean{ℝ,Tuple{2}},RosenbrockMetric}, p, X)
+    exp!(::MetricManifold{ℝ,Euclidean{ℝ,Tuple{2}},RosenbrockMetric}, q, p, X)
 
 Compute the exponential map with respect to the [`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric).
 
@@ -159,7 +159,7 @@ Compute the exponential map with respect to the [`RosenbrockMetric`](@ref Manopt
 """
 function expt(
     ::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     p,
     X,
@@ -169,7 +169,7 @@ function expt(
 end
 function exp(
     M::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     p,
     X,
@@ -178,7 +178,7 @@ function exp(
 end
 function ManifoldsBase.exp_fused!(
     ::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ, <:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     q,
     p,
@@ -192,7 +192,7 @@ end
 # Overwrite default to not dispatch on ODESolver
 function ManifoldsBase.exp!(
     M::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     q,
     p,
@@ -204,7 +204,7 @@ end
 
 @doc raw"""
 
-    inverse_local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
+    inverse_local_metric(::MetricManifold{ℝ,Euclidean{ℝ,Tuple{2}},RosenbrockMetric}, p)
 
 Return the inverse of the local metric matrix of the [`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric)
 in the canonical unit vector basis of the tangent space ``T_p\mathbb R^2`` given as
@@ -219,7 +219,7 @@ G^{-1}_p =
 """
 function inverse_local_metric(
     ::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     p,
 )
@@ -227,7 +227,7 @@ function inverse_local_metric(
 end
 
 @doc raw"""
-    inner(M::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p, X, Y)
+    inner(M::MetricManifold{ℝ,Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric}, p, X, Y)
 
 Compute the inner product on ``\mathbb R^2`` with respect to the [`RosenbrockMetric`](@ref RosenbrockMetric), i.e.
 for ``X,Y \in T_p\mathcal M`` we have
@@ -242,7 +242,7 @@ G_p = \begin{pmatrix}
 """
 function inner(
     M::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     p,
     X,
@@ -252,7 +252,7 @@ function inner(
 end
 
 @doc raw"""
-    local_metric(::MetricManifold{ℝ,Euclidean{Tuple{2},ℝ},RosenbrockMetric}, p)
+    local_metric(::MetricManifold{ℝ,Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric}, p)
 
 Return the local metric matrix of the [`RosenbrockMetric`](@ref ManoptExamples.RosenbrockMetric) in the canonical unit vector basis of the tangent space ``T_p\mathbb R^2``
 given as
@@ -266,7 +266,7 @@ G_p = \begin{pmatrix}
 """
 function local_metric(
     ::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     p,
 )
@@ -289,7 +289,7 @@ X = \begin{pmatrix}
 """
 log(
     ::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     p,
     q,
@@ -297,7 +297,7 @@ log(
 # note that the paper seems to have a typo here mixing up p and q
 function log!(
     ::MetricManifold{
-        ℝ,<:Euclidean{<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}},ℝ},RosenbrockMetric
+        ℝ,<:Euclidean{ℝ,<:Union{TypeParameter{Tuple{2}},Tuple{<:Int}}},RosenbrockMetric
     },
     X,
     p,

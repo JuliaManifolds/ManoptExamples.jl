@@ -1,2 +1,4 @@
 /.quarto/
 /.CondaPkg/
+
+**/*.quarto_ipynb

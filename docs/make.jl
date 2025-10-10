@@ -15,9 +15,9 @@ Arguments
   locally on this machine. This option should not be set on CI.
 * `--help`         - print this help and exit without rendering the documentation
 * `--prettyurls`   – toggle the pretty urls part to true (which is otherwise only true on CI)
-* `--quarto`       – run the Quarto notebooks from the `tutorials/` folder before generating the documentation
-  this has to be run locally at least once for the `tutorials/*.md` files to exist that are included in
-  the documentation (see `--exclude-tutorials`) for the alternative.
+* `--quarto`       – run the Quarto notebooks from the `examples/` folder before generating the documentation
+  this has to be run locally at least once for the `examples/*.md` files to exist that are included in
+  the documentation (see `--exclude-examples`) for the alternative.
   If they are generated ones they are cached accordingly.
   Then you can spare time in the rendering by not passing this argument.
 """,
@@ -25,33 +25,28 @@ Arguments
     exit(0)
 end
 
+run_quarto = "--quarto" in ARGS
+run_on_CI = (get(ENV, "CI", nothing) == "true")
+tutorials_in_menu = !("--exclude-tutorials" ∈ ARGS)
 #
 # (a) if docs is not the current active environment, switch to it
 # (from https://github.com/JuliaIO/HDF5.jl/pull/1020/) 
 if Base.active_project() != joinpath(@__DIR__, "Project.toml")
     using Pkg
     Pkg.activate(@__DIR__)
-    Pkg.develop(PackageSpec(; path=(@__DIR__) * "/../"))
-    Pkg.resolve()
     Pkg.instantiate()
 end
 
-# (b) Did someone say render? Then we render!
-if "--quarto" ∈ ARGS
-    using CondaPkg
-    CondaPkg.withenv() do
-        @info "Rendering Quarto"
-        examples_folder = (@__DIR__) * "/../examples"
-        # instantiate the tutorials environment if necessary
-        Pkg.activate(examples_folder)
-        Pkg.develop(PackageSpec(; path=(@__DIR__) * "/../")) # Before resolving set ManoptExamples to dev
-        Pkg.resolve()
-        Pkg.instantiate()
-        Pkg.build("IJulia") # build IJulia to the right version.
-        Pkg.activate(@__DIR__) # but return to the docs one before
-        CondaPkg.add("optuna")
-        run(`quarto render $(examples_folder)`)
-    end
+# (b) If quarto is set, or we are on CI, run quarto
+if run_quarto || run_on_CI
+    @info "Rendering Quarto"
+    example_folder = (@__DIR__) * "/../examples"
+    # instantiate the examples environment if necessary
+    Pkg.activate(example_folder)
+    # For a breaking release -> also set the examples folder to the most recent version
+    Pkg.instantiate()
+    Pkg.activate(@__DIR__) # but return to the docs one before
+    run(`quarto render $(example_folder)`)
 end
 
 examples_in_menu = true
@@ -71,7 +66,23 @@ using ManoptExamples
 using DocumenterInterLinks
 using DocumenterCitations
 
-# (d) add contributing.md to docs
+# (d) add contributing.md and Changelog.md to docs
+
+function add_links(line::String, url::String = "https://github.com/JuliaManifolds/Manifolds.jl")
+    # replace issues (#XXXX) -> ([#XXXX](url/issue/XXXX))
+    while (m = match(r"\(\#([0-9]+)\)", line)) !== nothing
+        id = m.captures[1]
+        line = replace(line, m.match => "([#$id]($url/issues/$id))")
+    end
+    # replace ## [X.Y.Z] -> with a link to the release [X.Y.Z](url/releases/tag/vX.Y.Z)
+    while (m = match(r"\#\# \[([0-9]+.[0-9]+.[0-9]+)\] (.*)", line)) !== nothing
+        tag = m.captures[1]
+        date = m.captures[2]
+        line = replace(line, m.match => "## [$tag]($url/releases/tag/v$tag) ($date)")
+    end
+    return line
+end
+
 generated_path = joinpath(@__DIR__, "src")
 base_url = "https://github.com/JuliaManifolds/Manopt.jl/blob/master/"
 isdir(generated_path) || mkdir(generated_path)
@@ -89,7 +100,7 @@ for (md_file, doc_file) in
         )
         # Write the contents out below the meta block
         for line in eachline(joinpath(dirname(@__DIR__), md_file))
-            println(io, line)
+            println(io, add_links(line))
         end
     end
 end
@@ -142,7 +153,7 @@ makedocs(;
         size_threshold_warn=200 * 2^10, # raise slightly to 200 KiB
         size_threshold=300 * 2^10,      # raise slightly to 300 KiB
     ),
-    authors="Ronny Bergmann",
+    authors="Ronny Bergmann, Hajg Jasa",
     sitename="ManoptExamples.jl",
     modules=[ManoptExamples],
     pages=[

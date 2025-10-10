@@ -25,6 +25,9 @@ PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 QuadraticModels = "f468eda6-eac5-11e8-05a5-ff9e497bcd19"
 RipQP = "1e40b3f8-35eb-4cd8-8edd-3e515bb9de08"
 
+[sources]
+ManoptExamples = {path = ".."}
+
 [compat]
 BenchmarkTools = "1.3"
 ColorSchemes = "3.24"
@@ -33,9 +36,8 @@ IJulia = "1"
 LRUCache = "1.4"
 LineSearches = "7"
 ManifoldDiff = "0.4"
-Manifolds = "0.10"
-ManifoldsBase = "1"
-Manopt = "0.5.12"
+Manifolds = "0.11"
+ManifoldsBase = "2"
 NamedColors = "0.2.1"
 Plots = "1.38"
 PythonCall = "0.9"
