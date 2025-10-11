@@ -35,7 +35,7 @@ using ManifoldDiff:
     differential_shortest_geodesic_endpoint!,
     grad_distance
 
-const NONMUTATINGMANIFOLDS = Union{Circle,PositiveNumbers,Euclidean{Tuple{}}}
+const NONMUTATINGMANIFOLDS = Union{Circle, PositiveNumbers, Euclidean{Tuple{}}}
 
 # Common collection of functions useful for several problems
 

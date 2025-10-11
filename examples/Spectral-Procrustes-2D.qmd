@@ -336,6 +336,18 @@ The result is
 write_png && save(folder*experiment_name*sub_experiment2*"_results.png",res2_fig)
 ```
 
+Again we can look at both the angle and non-outlier errors:
+
+```{julia}
+α_errors = [α(p2F), α(p2S), α(p2R)] .- α_true
+l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck2F, duck2S, duck2R]]
+pretty_table(
+    DataFrame(:rownames => ["angle", "non-outlier"], :F => [α_errors[1], l2_errors[1]], :S => [α_errors[2], l2_errors[2]], :R => [α_errors[3], l2_errors[3]]);
+    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
+```
+
+For this second experiment both the figure and the errors indicate, that robust is still reconstructing perfectly, while spectral even performs worth than Frobenius.
+
 ## Experiment 3: Outliers that are orthogonal and the same distance
 
 We continue with two outliers that are neither of same length nor orthogonal.
@@ -416,6 +428,19 @@ The result is
     axislegend(res3_ax,position = :rb)
     res3_fig
 ```
+
+Again we can look at both the angle and non-outlier errors:
+
+```{julia}
+α_errors = [α(p3F), α(p3S), α(p3R)] .- α_true
+l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck3F, duck3S, duck3R]]
+pretty_table(
+    DataFrame(:rownames => ["angle", "non-outlier"], :F => [α_errors[1], l2_errors[1]], :S => [α_errors[2], l2_errors[2]], :R => [α_errors[3], l2_errors[3]]);
+    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
+```
+
+Also for the third, robust is still performing very well.
+
 
 ## Experiment 4: Outliers of rank 1
 
@@ -515,6 +540,18 @@ The result is
 write_png && save(folder*experiment_name*sub_experiment3*"_results.png",res3_fig)
 ```
 
+We can also look at the error, though since all points are outliers, we can only look at the angle reconstruction:
+
+```{julia}
+α_errors = [α(p4F), α(p4S), α(p4R)] .- α_true
+pretty_table(
+    DataFrame(:rownames => ["angle", ], :F => [α_errors[1],], :S => [α_errors[2],], :R => [α_errors[3],]);
+    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
+```
+
+now, robust slightly fails, while both Frobenius and spectral perform very well,
+the algorithm for spectral maybe just stopping a bit early.
+
 ## Experiment 5: Outliers of rank 1 plus uniform noise
 
 Next we consider a rank-1 update from the nullspace of the `duck` and add uniform noise
@@ -604,344 +641,16 @@ The result is
     res5_fig
 ```
 
+We can also look at the error, though since all points are outliers, we can only look at the angle reconstruction:
+
 ```{julia}
-#| echo: false
-#| code-fold: true
-#| output: false
-#= copy of old Pluto notebook code that still has to be adopted here to run.
-
-# ╔═╡ 3b47eb93-cd27-4c76-8d62-0c3b83b8414f
-s_duck = svd(duck)
-
-# ╔═╡ 62bcf78c-0464-44db-94af-f29fb3b2bdab
-md"""
-We will use the following prefixed
-* o – includes outliers
-* r – rotated
-"""
-
-# ╔═╡ 0ea83015-dfd7-4c17-8a68-bad0d118ea90
-md"""
-## Parameters
-"""
-
-# ╔═╡ 5fbc8c14-3369-45f4-a441-74eeddac5c94
-# How much is the data rotated (for best of cases we aim to get α back)
-α_true = 5π/8
-
-# ╔═╡ 3322f99e-9e51-4be7-a815-5ce6492045d3
-duck_c = duck .- mean(duck; dims=2)
-
-# ╔═╡ d5232a33-6df1-410d-b12c-5f96344ce8b5
-begin
-    if sub_name ∈ ["even", "orth", "any"]
-        # Form the 10 indices – which ones are outliers?
-        outlier_indices = [2,8]
-        (sub_name == "even") && (outlier_shifts = [[2.0, 0.0], [0.0,2.0]])
-        (sub_name == "orth") && (outlier_shifts = [[1.0, 0.0], [0.0,2.0]])
-        (sub_name == "any") && (outlier_shifts = [[1.0, 2.0], [0.0,2.0]])
-        σ = 1.0
-    end
-    if sub_name == "spectral"
-        # Rank-1 alternatives - orthogonal to the data or in other words from the nullspace
-        V = nullspace(duck)
-        v = 1/size(V,2) * sum(V, dims=2)
-        u = [1.0, 1.0]
-        vt_shift = u*v'
-         outlier_shifts_all = [ vt_shift[:,i] for i in 1:size(s_duck.Vt,2) ]
-        outlier_indices = filter(
-            (i) -> norm(outlier_shifts_all[i])>1e-13,
-            collect(1:length(outlier_shifts_all))
-        )
-        σ = 8.0
-        outlier_shifts = [ σ*outlier_shifts_all[i] for i in outlier_indices]
-        # add a bit of Gaussian noise on the other
-    end
-    if sub_name == "spectral_and_gaussian" || sub_name == "spectral_and_uniform"
-        V = nullspace(duck)
-        v = 1/size(V,2) * sum(V, dims=2)
-        u = [1.0, 1.0]
-        Rmat = if sub_name == "spectral_and_gaussian"
-            Random.seed!(23)
-            0.05*randn(size(duck)...)
-        else
-            Random.seed!(23)
-            0.125*rand(size(duck)...)
-        end
-        vt_shift = u*v' .+ Rmat
-        outlier_shifts_all = [ vt_shift[:,i] for i in 1:size(s_duck.Vt,2) ]
-        outlier_indices = filter(
-            (i) -> norm(outlier_shifts_all[i])>1e-13,
-            collect(1:length(outlier_shifts_all))
-        )
-        σ = 4.0
-        outlier_shifts = [σ*outlier_shifts_all[i] for i in outlier_indices]
-        # add a bit of Gaussian noise on the other
-    end
-    outlier_shifts
-end
-
-# ╔═╡ aab59fbd-702e-49e8-8bca-7598f3665839
-outlier_indices
-
-# ╔═╡ 105ba7ab-a6e9-4f02-b453-cd4e4b9f1bea
-md"## Small Helper functions"
-
-# ╔═╡ b1ab4a1d-8f1d-4a50-a02d-6fa7cc4f9c4e
-remaining_indices = [k for k=1:size(duck,2) if k ∉ outlier_indices]
-
-# ╔═╡ f1d23ece-b9d9-471c-a252-4ade21286aa6
-R(α) = [cos(α) sin(α); -sin(α) cos(α)]
-
-# ╔═╡ 17065b72-7e33-4c41-8fef-45a1b0ba09df
-# For each outlier – move them back to the original (A) space to draw lines
-outlier_shifts_rp = [R(-α_true)x for x in outlier_shifts]
-
-# ╔═╡ 8d9eccdf-bba2-4b94-ad0a-c2b8b634b305
-for (i,v) in enumerate(outlier_shifts_rp)
-    export_data(sub_name*"-orig-outlier$(i).csv", hcat(duck[:,outlier_indices[i]], duck[:,outlier_indices[i]] .+ outlier_shifts_rp[i]))
-end
-
-# ╔═╡ 2479e210-8d21-4f24-9dbf-e93bf61a479d
-# For plotting add outlier lines first X then y components
-outlier_lines = [
-    [
-        [
-            duck[xy,outlier_indices[k]],
-            duck[xy,outlier_indices[k]] + outlier_shifts_rp[k][xy]
-        ] for xy = 1:2
-    ]
-    for k=1:length(outlier_indices)
-]
-
-# ╔═╡ 574fe359-d0e4-4082-b3a6-e0af7b091704
-α(R) = atan(R[2,1], R[1,1])
-
-# ╔═╡ 7d78b5be-b536-4320-a3ea-17cedeb50c76
-error_on_nonoutliers(res) = norm(res[:,remaining_indices]-duck[:,remaining_indices])
-
-# ╔═╡ 4b3771b6-d66c-4f43-9af4-13c6eb007f4f
-md"""
-## True solution and a first plot of outliers
-"""
-
-# ╔═╡ aa792ccb-1bcd-4f52-a273-282dae1d6ceb
-p_true = R(-α_true) # Point on SO(2), the true reconstruction point we aim for
-
-# ╔═╡ c583e450-b085-456c-a5f5-c7cb087f5c0c
-r_duck = p_true'*duck
-
-# ╔═╡ 6e313f7f-371a-43a1-888c-63f7c92eb804
-export_data("-rotated.csv", r_duck)
-
-# ╔═╡ f5f4e193-65bc-4864-b081-c711df7a8294
-begin
-    o_fig = Figure()
-    o_ax = Axis(o_fig[1, 1])
-    scatter!(o_ax, duck[1,:], duck[2,:], label="a duck")
-    for k=1:length(outlier_indices)
-        lines!(o_ax, outlier_lines[k][1], outlier_lines[k][2], color=:black)
-    end
-    axislegend(o_ax,position = :rt)
-    save(folder*experiment*sub_name*"-outlier-plot.png",o_fig)
-    o_fig
-end
-
-# ╔═╡ 860811cd-e3b9-42f4-a366-dd2d0b15dff2
-md"""
-## Manifolds and costs
-"""
-
-# ╔═╡ 6b0fb1b2-d944-4cfa-83f1-19654c8f7300
-function Frobenius_minimizer(A,B)
-    svd_AB = svd(A*B')
-    return svd_AB.U*svd_AB.V'
-end
-
-# ╔═╡ 3508f082-9c52-4d9e-b765-f90d094d7fb0
-M = Rotations(2)
-
-# ╔═╡ 33a822b6-96f2-411a-a55e-d55686012fcc
-md"""
-We consider the following three costs
-"""
-
-# ╔═╡ 463c26a6-a9a9-490f-ad5e-303023c7e438
-@doc raw"""
-    Spectral_cost(M, p)
-
-Compute the spectral norm ``\lVert p\cdot B- A\rVert_2``.
-"""
-Spectral_cost(M, p; B=r_duck, A=duck) = opnorm(p*B - A)
-
-# ╔═╡ e7fae1c9-4800-4db4-bc66-24d0b89f24da
-@doc raw"""
-    Frobenius_cost(M, p)
-
-Compute the Frobenious norm ``\lVert p\cdot B- A\rVert_{\mathrm{F}}``.
-"""
-Frobenius_cost(M, p; B=r_duck, A=duck) = norm(p*B - A)
-
-# ╔═╡ f5f795c2-a25f-48b3-86b8-ee43827eb719
-@doc raw"""
-    TwoOne_cost(M, p)
-
-Compute the 2-1-norm ``\lVert p\cdot B- A\rVert_{2,1}``, i.e. the sum of the 2-norms of the columns.
-"""
-Robust_cost(M,p; B=r_duck, A=duck) = sum([norm(c, 2.0) for c in eachcol(p*B-A)])
-
-# ╔═╡ e747aba5-1272-4e71-beac-01ebf46ac567
-p0 = Matrix{Float64}(I,2,2)
-
-# ╔═╡ 5f1b13c3-28dc-4ea6-93b1-7a43eaf2999a
-begin
-    or_duck = copy(r_duck)
-    # Here we first rotated and then do outliers
-    for (i,k) in enumerate(outlier_indices)
-        or_duck[:,k] += outlier_shifts[i]
-    end
-end
-
-# ╔═╡ dd4e4dd8-6c57-4de5-a403-7aca2c3958f3
-export_data(sub_name*"-rotated-outliers.csv", or_duck)
-
-# ╔═╡ 7943b063-0c48-481c-b484-202321d92814
-# ╠═╡ disabled = true
-#=╠═╡
-#For now we do not need this data, so we deactivate this cell
-for (i,k) in enumerate(outlier_indices)
-    export_data(sub_name*"-rotated-outlier$(i).csv", hcat(r_duck[:,k], or_duck[:,k]))
-end
-  ╠═╡ =#
-
-# ╔═╡ 8feb0e44-e682-485b-a3be-fe1b8a199ad7
-md"""
-## Part II: Optimize
-"""
-
-# ╔═╡ 5164467b-5e6f-444a-aca2-c2598bc42b3d
-@time p_or_S = mesh_adaptive_direct_search(
-    M,
-    (M,p) -> Spectral_cost(M, p; B=or_duck), p0;
-    debug=[:Iteration, :Cost, "\n", 10, :Stop]
-);
-
-# ╔═╡ e547b71b-cf0f-44b8-a5d6-bdaa4d307e79
-duck1S = p_or_S*or_duck;
-
-# ╔═╡ 76fcb6a6-5dd1-4e2b-88e4-5e5411e2e5b8
-export_data(sub_name*"-Result-S.csv", duck1S)
-
-# ╔═╡ ab729e50-8326-4018-b150-a4023787468e
-duck
-
-# ╔═╡ 88f9034d-58f4-4c2d-a505-41ca5720dfc7
-p_or_F = Frobenius_minimizer(duck, or_duck);
-
-# ╔═╡ 371d930c-5e6a-4d9e-a85f-54797c4e7d85
-duck1F = p_or_F*or_duck;
-
-# ╔═╡ c4820d1d-cd44-4967-bbd1-8c613c2c852b
-export_data(sub_name*"-Result-F.csv", duck1F)
-
-# ╔═╡ b3761be4-d665-437f-861b-6cc34bc357c5
-@time p_or_R = mesh_adaptive_direct_search(
-    M,
-    (M,p) -> Robust_cost(M, p; B=or_duck), p0;
-    debug=[:Iteration, :Cost, "\n", 10, :Stop]
-);
-
-# ╔═╡ c7a11d05-28ae-4ad8-af92-a7ab1b58e629
-duck1R = p_or_R*or_duck;
-
-# ╔═╡ 780967e2-e41e-48ed-af7d-f7c61655a1d8
-export_data(sub_name*"-Result-T.csv", duck1R)
-
-# ╔═╡ b55efc6e-e406-44ee-9f4d-bb80ac5af009
-begin
-    or_fig = Figure()
-    or_ax = Axis(or_fig[1, 1], title="Reconstructing the duck (close to outlier is best)")
-    scatter!(or_ax, duck[1,:], duck[2,:], label="a duck")
-    for k=1:length(outlier_indices)
-        lines!(or_ax, outlier_lines[k][1], outlier_lines[k][2], color=:black)
-    end
-    scatter!(or_ax, duck1S[1,:], duck1S[2,:], label="Spectral result")
-    scatter!(or_ax, duck1F[1,:], duck1F[2,:], label="Frobenius result")
-    scatter!(or_ax, duck1R[1,:], duck1R[2,:], label="Robust result")
-    axislegend(or_ax,position = :rt)
-    save(folder*experiment*sub_name*"-reconstr-plot.png",or_fig)
-    or_fig
-end
-
-# ╔═╡ 372c41d2-481b-43a2-8270-5dd7241f6e8a
-md"""
-## Analysis
-"""
-
-# ╔═╡ bf539b19-b6c7-4127-8e09-8af9d3346c5a
-# Angles
-[α_true, α(p_or_S), α(p_or_F), α(p_or_R)]
-
-# ╔═╡ 372bc020-0ba3-4643-9133-f1dbc74b1852
-# Angle errors
-[α(p_or_S), α(p_or_F), α(p_or_R)] .- α_true
-
-# ╔═╡ f7f66ffe-1397-4b4f-bf0b-8aef295c57e3
-# Error on non-outlier points
-# (for spectral this is zero since all are moved)
-[error_on_nonoutliers(d) for d in [duck1S, duck1F, duck1R]]
-
-# ╔═╡ b363e5c6-a164-4c8d-91ed-dd0209e9d645
-# Plot costs vs angle
-x = range(-π,π,300)
-
-# ╔═╡ 4eba422f-5c66-4632-a2dc-ffae0d684f94
-cost_S = map( p -> Spectral_cost(M, p; B=or_duck), R.(x))
-
-# ╔═╡ 4b5ee2d4-6139-4840-bce9-d922a9f50c22
-cost_R = map( p -> Robust_cost(M, p; B=or_duck), R.(x))
-
-# ╔═╡ 33fad395-a956-45d5-81b5-bb3bfb60d800
-cost_F = map( p -> Frobenius_cost(M, p; B=or_duck), R.(x))
-
-# ╔═╡ 66f9ec18-947c-4da4-80e2-9a1d6c079223
-#plot them
-begin
-    cost_fig = Figure()
-    cost_ax = Axis(cost_fig[1, 1], title="Cost over Rotation angle "*sub_name)
-    # alpha true - to see how close we got / or could get
-    vlines!(cost_ax, [-α_true], linestyle=:dash, label="true angle")
-    lines!(cost_ax, x, cost_S, label="Spectral")
-    lines!(cost_ax, x, cost_F, label="Frobenius")
-    lines!(cost_ax, x, cost_R, label="Robust")
-    # Plot minimizers
-    scatter!(cost_ax, [α(p_or_S'),], [Spectral_cost(M, p_or_S; B=or_duck),])
-    scatter!(cost_ax, [α(p_or_F'),], [Frobenius_cost(M, p_or_F; B=or_duck),])
-    scatter!(cost_ax, [α(p_or_R'),], [Robust_cost(M, p_or_R; B=or_duck),])
-    axislegend(cost_ax,position = :rc)
-    save(folder*experiment*sub_name*"-rcost-plot.png",cost_fig)
-    cost_fig
-end
-
-# ╔═╡ 506179e0-1c3d-4d26-b609-9191463ba16c
-export_csv && CSV.write(
-    folder*experiment*sub_name*"-cost-data.csv",
-    DataFrame(x=x, S=cost_S, F=cost_F, R=cost_R)
-)
-
-# ╔═╡ 3a9e582f-4f95-44d3-b9e3-7e3f2c877339
-export_csv && CSV.write(
-    folder*experiment*sub_name*"-cost-minimisers.csv",
-    DataFrame(xS=[α(p_or_S'),], yS=[Spectral_cost(M, p_or_S; B=or_duck),],
-             xF=[α(p_or_F'),], yF = [Frobenius_cost(M, p_or_F; B=or_duck),],
-             xR=[α(p_or_R'),], yR=[Robust_cost(M, p_or_R; B=or_duck),],
-             yFinS = [Spectral_cost(M, p_or_F; B=or_duck),],
-             yFinR = [Robust_cost(M, p_or_F; B=or_duck),],
-    )
-)
-
-=#
+α_errors = [α(p5F), α(p5S), α(p5R)] .- α_true
+pretty_table(
+    DataFrame(:rownames => ["angle", ], :F => [α_errors[1],], :S => [α_errors[2],], :R => [α_errors[3],]);
+    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
 ```
+
+Here, booth robust and Frobenius struggle to reconstruct, while spectral performs best.
 
 ## Technical details
 
