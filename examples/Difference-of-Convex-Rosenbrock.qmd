@@ -410,6 +410,26 @@ plot!(fig, rdi, rdc, color=green, label="Riemannian DoC")
 And we can see that using difference of convex outperforms gradient descent,
 and using the Riemannian approach required less iterations than their Euclidean counterparts.
 
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
+
 ## Literature
 
 ````{=commonmark}
