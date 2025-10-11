@@ -670,3 +670,12 @@ Pkg.status()
 using Dates
 println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
 ```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["Spectral-Procrustes-2D.md"]
+Canonical=false
+```
+````
