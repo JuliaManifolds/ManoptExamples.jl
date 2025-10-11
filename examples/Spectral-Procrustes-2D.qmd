@@ -26,9 +26,9 @@ folder = "duck/"
 (!isdir(folder)) && (mkdir(folder))
 experiment_name = "abstract-duck-"
 # write out CSV files of both point data and results
-write_csv = true
+write_csv = false
 # save png files of the plots separately in a folder
-write_png = true
+write_png = false
 # an export helper to store 2D point data
 function export_point_data(filename, data; active=write_csv, prefix=folder*experiment_name)
     active && CSV.write(prefix*filename, DataFrame(x=data[1,:], y=data[2,:]))

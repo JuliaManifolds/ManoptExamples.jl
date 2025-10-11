@@ -5,22 +5,22 @@
 if "--help" ∈ ARGS
     println(
         """
-    docs/make.jl
+            docs/make.jl
 
-Render the `ManoptExamples.jl` documenation with optional arguments
+        Render the `ManoptExamples.jl` documenation with optional arguments
 
-Arguments
-* `--exclude-examples` - exclude the examples from the menu of Documenter,
-  this can be used if you do not have Quarto installed to still be able to render the docs
-  locally on this machine. This option should not be set on CI.
-* `--help`         - print this help and exit without rendering the documentation
-* `--prettyurls`   – toggle the pretty urls part to true (which is otherwise only true on CI)
-* `--quarto`       – run the Quarto notebooks from the `examples/` folder before generating the documentation
-  this has to be run locally at least once for the `examples/*.md` files to exist that are included in
-  the documentation (see `--exclude-examples`) for the alternative.
-  If they are generated ones they are cached accordingly.
-  Then you can spare time in the rendering by not passing this argument.
-""",
+        Arguments
+        * `--exclude-examples` - exclude the examples from the menu of Documenter,
+          this can be used if you do not have Quarto installed to still be able to render the docs
+          locally on this machine. This option should not be set on CI.
+        * `--help`         - print this help and exit without rendering the documentation
+        * `--prettyurls`   – toggle the pretty urls part to true (which is otherwise only true on CI)
+        * `--quarto`       – run the Quarto notebooks from the `examples/` folder before generating the documentation
+          this has to be run locally at least once for the `examples/*.md` files to exist that are included in
+          the documentation (see `--exclude-examples`) for the alternative.
+          If they are generated ones they are cached accordingly.
+          Then you can spare time in the rendering by not passing this argument.
+        """,
     )
     exit(0)
 end
@@ -108,37 +108,40 @@ end
 ## Build examples menu
 examples_menu =
     "Examples" => [
-        "Overview" => "examples/index.md",
-        "Difference of Convex" => [
-            "A Benchmark" => "examples/Difference-of-Convex-Benchmark.md",
-            "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
-            "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md",
-        ],
-        "Convex Bundle Method" => [
-            "Riemannian Median" => "examples/RCBM-Median.md",
-            "Hyperbolic Signal Denoising" => "examples/H2-Signal-TV.md",
-            "Spectral Procrustes" => "examples/Spectral-Procrustes.md",
-        ],
-        "Projected Gradient Algorithm" => [
-            raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",
-            raw"Mean on $\mathbb H^n$" => "examples/Constrained-Mean-Hn.md",
-        ],
-        "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
-        "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
-        "Riemannian Mean" => "examples/Riemannian-mean.md",
-        "Proximal Gradient Methods" => [
-            "Sparse PCA" => "examples/NCRPG-Sparse-PCA.md",
-            "Grassmann Experiment" => "examples/NCRPG-Grassmann.md",
-            "Row-Sparse Low-Rank Matrix Recovery" => "examples/NCRPG-Row-Sparse-Low-Rank.md",
-            "Convex Example on SPDs" => "examples/CRPG-Convex-SPD.md",
-            raw"Sparse Approximation on $\mathbb H^n$" => "examples/CRPG-Sparse-Approximation.md",
-            raw"Mean on $\mathbb H^n$" => "examples/CRPG-Constrained-Mean-Hn.md",
-        ],
-        "Robust PCA" => "examples/Robust-PCA.md",
-        "Rosenbrock" => "examples/Rosenbrock.md",
-        "Total Variation" => "examples/Total-Variation.md",
-    ]
-bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style=:alpha)
+    "Overview" => "examples/index.md",
+    "Nonsmooth Optimization" => [
+        "Norms affecting Procrustes" => "examples/Spectral-Procrustes-2D.md",
+    ],
+    "Difference of Convex" => [
+        "A Benchmark" => "examples/Difference-of-Convex-Benchmark.md",
+        "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
+        "Frank Wolfe comparison" => "examples/Difference-of-Convex-Frank-Wolfe.md",
+    ],
+    "Convex Bundle Method" => [
+        "Riemannian Median" => "examples/RCBM-Median.md",
+        "Hyperbolic Signal Denoising" => "examples/H2-Signal-TV.md",
+        "Spectral Procrustes" => "examples/Spectral-Procrustes.md",
+    ],
+    "Projected Gradient Algorithm" => [
+        raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",
+        raw"Mean on $\mathbb H^n$" => "examples/Constrained-Mean-Hn.md",
+    ],
+    "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
+    "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
+    "Riemannian Mean" => "examples/Riemannian-mean.md",
+    "Proximal Gradient Methods" => [
+        "Sparse PCA" => "examples/NCRPG-Sparse-PCA.md",
+        "Grassmann Experiment" => "examples/NCRPG-Grassmann.md",
+        "Row-Sparse Low-Rank Matrix Recovery" => "examples/NCRPG-Row-Sparse-Low-Rank.md",
+        "Convex Example on SPDs" => "examples/CRPG-Convex-SPD.md",
+        raw"Sparse Approximation on $\mathbb H^n$" => "examples/CRPG-Sparse-Approximation.md",
+        raw"Mean on $\mathbb H^n$" => "examples/CRPG-Constrained-Mean-Hn.md",
+    ],
+    "Robust PCA" => "examples/Robust-PCA.md",
+    "Rosenbrock" => "examples/Rosenbrock.md",
+    "Total Variation" => "examples/Total-Variation.md",
+]
+bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style = :alpha)
 links = InterLinks(
     "ManifoldDiff" => ("https://juliamanifolds.github.io/ManifoldDiff.jl/stable/"),
     "ManifoldsBase" => ("https://juliamanifolds.github.io/ManifoldsBase.jl/stable/"),
@@ -147,16 +150,16 @@ links = InterLinks(
 )
 # (e) ...finally! make docs
 makedocs(;
-    format=Documenter.HTML(;
-        prettyurls=(get(ENV, "CI", nothing) == "true") || ("--prettyurls" ∈ ARGS),
-        assets=["assets/favicon.ico", "assets/citations.css"],
-        size_threshold_warn=200 * 2^10, # raise slightly to 200 KiB
-        size_threshold=300 * 2^10,      # raise slightly to 300 KiB
+    format = Documenter.HTML(;
+        prettyurls = (get(ENV, "CI", nothing) == "true") || ("--prettyurls" ∈ ARGS),
+        assets = ["assets/favicon.ico", "assets/citations.css"],
+        size_threshold_warn = 200 * 2^10, # raise slightly to 200 KiB
+        size_threshold = 300 * 2^10,      # raise slightly to 300 KiB
     ),
-    authors="Ronny Bergmann, Hajg Jasa",
-    sitename="ManoptExamples.jl",
-    modules=[ManoptExamples],
-    pages=[
+    authors = "Ronny Bergmann, Hajg Jasa",
+    sitename = "ManoptExamples.jl",
+    modules = [ManoptExamples],
+    pages = [
         "Home" => "index.md",
         (examples_in_menu ? [examples_menu] : [])...,
         "Objectives" => "objectives/index.md",
@@ -165,6 +168,6 @@ makedocs(;
         "Changelog" => "changelog.md",
         "References" => "references.md",
     ],
-    plugins=[bib, links],
+    plugins = [bib, links],
 )
-deploydocs(; repo="github.com/JuliaManifolds/ManoptExamples.jl", push_preview=true)
+deploydocs(; repo = "github.com/JuliaManifolds/ManoptExamples.jl", push_preview = true)

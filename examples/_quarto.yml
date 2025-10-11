@@ -4,18 +4,18 @@ project:
   output-dir: ../docs/src/examples
   render:
     - "*.qmd"
-    #- "!Constrained-Mean-H2.qmd"
-    #- "!Constrained-Mean-Hn.qmd"
-    #- "!Difference-of-Convex-Benchmark.qmd"
+    - "!Constrained-Mean-H2.qmd"
+    - "!Constrained-Mean-Hn.qmd"
+    - "!Difference-of-Convex-Benchmark.qmd"
     - "!HyperparameterOptimization.qmd"
-    #- "!RCBM-Median.qmd"
-    #- "!Spectral-Procrustes.qmd"
+    - "!RCBM-Median.qmd"
+    - "!Spectral-Procrustes.qmd"
     - "!H2-Signal-TV.qmd"
     - "!CRPG-Convex-SPD.qmd"
-    #- "!CRPG-Sparse-Approximation.qmd"
+    - "!CRPG-Sparse-Approximation.qmd"
     - "!CRPG-Constrained-Mean-Hn.qmd"
-    #- "!NCRPG-Grassmann.qmd"
-    #- "!NCRPG-Sparse-PCA.qmd"
+    - "!NCRPG-Grassmann.qmd"
+    - "!NCRPG-Sparse-PCA.qmd"
 
 crossref:
   fig-prefix: Figure
