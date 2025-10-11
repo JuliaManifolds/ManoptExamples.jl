@@ -19,13 +19,13 @@ function artificialIn_SAR_image(pts::Integer)
     # values for the hyperboloid
     mid_point = [0.275; 0.275]
     radius = 0.18
-    values = [range(-0.5, 0.5; length=pts)...]
+    values = [range(-0.5, 0.5; length = pts)...]
     # Steps
     aSteps = 60.0
     cosS = cosd(aSteps)
     sinS = sind(aSteps)
     l = 0.075
-    midP = [-0.475, -0.0625]#.125, .55]
+    midP = [-0.475, -0.0625] #.125, .55]
     img = zeros(Float64, pts, pts)
     for j in eachindex(values), i in eachindex(values)
         # ellipse
@@ -63,7 +63,7 @@ This example dataset was used in the numerical example in Section 5.5 of [LausNi
 
 It is based on [`artificial_S2_rotation_image`](@ref) extended by small whirl patches.
 """
-function artificial_S2_whirl_image(pts::Int=64)
+function artificial_S2_whirl_image(pts::Int = 64)
     M = Sphere(2)
     img = artificial_S2_rotation_image(pts, (0.5, 0.5))
     # Set WhirlPatches
@@ -71,13 +71,13 @@ function artificial_S2_whirl_image(pts::Int=64)
     patchSizes = floor.(sc .* [9, 9, 9, 9, 11, 11, 11, 15, 15, 15, 17, 21])
     patchCenters =
         Integer.(
-            floor.(
-                sc .*
+        floor.(
+            sc .*
                 [[35, 7] [25, 41] [32, 25] [7, 60] [10, 5] [41, 58] [11, 41] [23, 56] [
-                    38, 45
-                ] [16, 28] [55, 42] [51, 16]],
-            ),
-        )
+                38, 45,
+            ] [16, 28] [55, 42] [51, 16]],
+        ),
+    )
     patchSigns = [1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1]
     for i in 1:length(patchSizes)
         pS = Integer(patchSizes[i])
@@ -107,7 +107,7 @@ These patches are used within [`artificial_S2_whirl_image`](@ref).
 # Optional Parameters
 * `pts`: (`5`) size of the patch. If the number is odd, the center is the north pole.
 """
-function artificial_S2_whirl_patch(pts::Int=5)
+function artificial_S2_whirl_patch(pts::Int = 5)
     patch = fill([0.0, 0.0, -1.0], pts, pts)
     scaleFactor = sqrt((pts - 1)^2 / 2) * 3 / π
     for i in 1:pts
@@ -116,7 +116,7 @@ function artificial_S2_whirl_patch(pts::Int=5)
                 α = atan((j - (pts + 1) / 2), (i - (pts + 1) / 2))
                 β = sqrt((j - (pts + 1) / 2)^2 + (i - (pts + 1) / 2)^2) / scaleFactor
                 patch[i, j] = [
-                    sin(α) * sin(π / 2 - β), -cos(α) * sin(π / 2 - β), cos(π / 2 - β)
+                    sin(α) * sin(π / 2 - β), -cos(α) * sin(π / 2 - β), cos(π / 2 - β),
                 ]
             end
         end
@@ -132,11 +132,11 @@ create an artificial image of symmetric positive definite matrices of size
 
 This dataset was used in the numerical example of Section 5.2 of [BacakBergmannSteidlWeinmann:2016](@cite).
 """
-function artificial_SPD_image(pts::Int=64, stepsize=1.5)
-    r = range(0; stop=1 - 1 / pts, length=pts)
+function artificial_SPD_image(pts::Int = 64, stepsize = 1.5)
+    r = range(0; stop = 1 - 1 / pts, length = pts)
     v1 = abs.(2 * pi .* r .- pi)
     v2 = pi .* r
-    v3 = range(0; stop=3 * (1 - 1 / pts), length=2 * pts)
+    v3 = range(0; stop = 3 * (1 - 1 / pts), length = 2 * pts)
     data = fill(Matrix{Float64}(I, 3, 3), pts, pts)
     for row in 1:pts
         for col in 1:pts
@@ -166,7 +166,7 @@ create an artificial image of symmetric positive definite matrices of size
 
 This data set was introduced in the numerical examples of Section of [BergmannPerschSteidl:2016](@cite)
 """
-function artificial_SPD_image2(pts=64, fraction=0.66)
+function artificial_SPD_image2(pts = 64, fraction = 0.66)
     Zl = 4.0 * Matrix{Float64}(I, 3, 3)
     # create a first matrix
     α = 2.0 * π / 3
@@ -222,8 +222,8 @@ Create an image with a rotation on each axis as a parametrization.
 This dataset was used in the numerical example of Section 5.1 of [BacakBergmannSteidlWeinmann:2016](@cite).
 """
 function artificial_S2_rotation_image(
-    pts::Int=64, rotations::Tuple{Float64,Float64}=(0.5, 0.5)
-)
+        pts::Int = 64, rotations::Tuple{Float64, Float64} = (0.5, 0.5)
+    )
     M = Sphere(2)
     img = fill(zeros(3), pts, pts)
     north = [1.0, 0.0, 0.0]

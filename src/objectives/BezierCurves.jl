@@ -20,7 +20,7 @@ See also: [`de_Casteljau`](@ref).
 
 Given an abstract vector of `pts` generate the corresponding Bézier segment.
 """
-struct BezierSegment{T<:AbstractVector{S} where {S}}
+struct BezierSegment{T <: AbstractVector{S} where {S}}
     pts::T
 end
 #BezierSegment(pts::T) where {T <: AbstractVector{S} where S} = BezierSegment{T}(pts)
@@ -135,12 +135,12 @@ inner control points for each segment of the composite Bezier curve specified by
 the control points `B`, either a vector of segments of controlpoints.
 """
 function get_Bezier_junction_tangent_vectors(
-    M::AbstractManifold, B::AbstractVector{<:BezierSegment}
-)
+        M::AbstractManifold, B::AbstractVector{<:BezierSegment}
+    )
     return cat(
         [[log(M, b.pts[1], b.pts[2]), log(M, b.pts[end], b.pts[end - 1])] for b in B]...,
         ;
-        dims=1,
+        dims = 1,
     )
 end
 function get_Bezier_junction_tangent_vectors(M::AbstractManifold, b::BezierSegment)
@@ -156,15 +156,15 @@ specified by the control points `B`. For just one segment `b`, its start and end
 are returned.
 """
 function get_Bezier_junctions(
-    ::AbstractManifold, B::AbstractVector{<:BezierSegment}, double_inner::Bool=false
-)
+        ::AbstractManifold, B::AbstractVector{<:BezierSegment}, double_inner::Bool = false
+    )
     return cat(
         [double_inner ? [b.pts[[1, end]]...] : [b.pts[1]] for b in B]...,
         double_inner ? [] : [last(last(B).pts)];
-        dims=1,
+        dims = 1,
     )
 end
-function get_Bezier_junctions(::AbstractManifold, b::BezierSegment, ::Bool=false)
+function get_Bezier_junctions(::AbstractManifold, b::BezierSegment, ::Bool = false)
     return b.pts[[1, end]]
 end
 
@@ -177,7 +177,7 @@ composite Bézier curve specified by the control points `B`. For a single segmen
 its inner points are returned
 """
 function get_Bezier_inner_points(M::AbstractManifold, B::AbstractVector{<:BezierSegment})
-    return cat([[get_Bezier_inner_points(M, b)...] for b in B]...; dims=1)
+    return cat([[get_Bezier_inner_points(M, b)...] for b in B]...; dims = 1)
 end
 function get_Bezier_inner_points(::AbstractManifold, b::BezierSegment)
     return b.pts[2:(end - 1)]
@@ -207,28 +207,28 @@ This method reduces the points depending on the optional `reduce` symbol
 If only one segment is given, all points of `b`, `b.pts`, is returned.
 """
 function get_Bezier_points(
-    M::AbstractManifold, B::AbstractVector{<:BezierSegment}, reduce::Symbol=:default
-)
+        M::AbstractManifold, B::AbstractVector{<:BezierSegment}, reduce::Symbol = :default
+    )
     return get_Bezier_points(M, B, Val(reduce))
 end
 function get_Bezier_points(
-    ::AbstractManifold, B::AbstractVector{<:BezierSegment}, ::Val{:default}
-)
-    return cat([[b.pts...] for b in B]...; dims=1)
+        ::AbstractManifold, B::AbstractVector{<:BezierSegment}, ::Val{:default}
+    )
+    return cat([[b.pts...] for b in B]...; dims = 1)
 end
 function get_Bezier_points(
-    ::AbstractManifold, B::AbstractVector{<:BezierSegment}, ::Val{:continuous}
-)
-    return cat([[b.pts[1:(end - 1)]...] for b in B]..., [last(last(B).pts)]; dims=1)
+        ::AbstractManifold, B::AbstractVector{<:BezierSegment}, ::Val{:continuous}
+    )
+    return cat([[b.pts[1:(end - 1)]...] for b in B]..., [last(last(B).pts)]; dims = 1)
 end
 function get_Bezier_points(
-    ::AbstractManifold, B::AbstractVector{<:BezierSegment}, ::Val{:differentiable}
-)
+        ::AbstractManifold, B::AbstractVector{<:BezierSegment}, ::Val{:differentiable}
+    )
     return cat(
-        [first(B).pts[1]], [first(B).pts[2]], [[b.pts[3:end]...] for b in B]..., ; dims=1
+        [first(B).pts[1]], [first(B).pts[2]], [[b.pts[3:end]...] for b in B]..., ; dims = 1
     )
 end
-get_Bezier_points(::AbstractManifold, b::BezierSegment, ::Symbol=:default) = b.pts
+get_Bezier_points(::AbstractManifold, b::BezierSegment, ::Symbol = :default) = b.pts
 
 @doc raw"""
     get_Bezier_degree(M::AbstractManifold, b::BezierSegment)
@@ -278,23 +278,23 @@ curve consists of. Then
   ``b = \exp_{c_n}(-\log_{c_n} c_{n-1})`` such that the assumed differentiability holds
 """
 function get_Bezier_segments(
-    M::AbstractManifold, c::Array{P,1}, d, s::Symbol=:default
-) where {P}
+        M::AbstractManifold, c::Array{P, 1}, d, s::Symbol = :default
+    ) where {P}
     ((length(c) == d[1]) && (length(d) == 1)) && return Tuple(c)
     return get_Bezier_segments(M, c, d, Val(s))
 end
 function get_Bezier_segments(
-    ::AbstractManifold, c::Array{P,1}, d, ::Val{:default}
-) where {P}
+        ::AbstractManifold, c::Array{P, 1}, d, ::Val{:default}
+    ) where {P}
     endindices = cumsum(d .+ 1)
     startindices = endindices - d
     return [BezierSegment(c[si:ei]) for (si, ei) in zip(startindices, endindices)]
 end
 function get_Bezier_segments(
-    ::AbstractManifold, c::Array{P,1}, d, ::Val{:continuous}
-) where {P}
+        ::AbstractManifold, c::Array{P, 1}, d, ::Val{:continuous}
+    ) where {P}
     length(c) != (sum(d) + 1) && error(
-        "The number of control points $(length(c)) does not match (for degrees $(d) expected $(sum(d)+1) points.",
+        "The number of control points $(length(c)) does not match (for degrees $(d) expected $(sum(d) + 1) points.",
     )
     nums = d .+ [(i == length(d)) ? 1 : 0 for i in 1:length(d)]
     endindices = cumsum(nums)
@@ -302,16 +302,16 @@ function get_Bezier_segments(
     return [
         [ # for all append the start of the new also as last
             BezierSegment([c[startindices[i]:endindices[i]]..., c[startindices[i + 1]]]) for
-            i in 1:(length(startindices) - 1)
+                i in 1:(length(startindices) - 1)
         ]..., # despite for the last
         BezierSegment(c[startindices[end]:endindices[end]]),
     ]
 end
 function get_Bezier_segments(
-    M::AbstractManifold, c::Array{P,1}, d, ::Val{:differentiable}
-) where {P}
+        M::AbstractManifold, c::Array{P, 1}, d, ::Val{:differentiable}
+    ) where {P}
     length(c) != (sum(d .- 1) + 2) && error(
-        "The number of control points $(length(c)) does not match (for degrees $(d) expected $(sum(d.-1)+2) points.",
+        "The number of control points $(length(c)) does not match (for degrees $(d) expected $(sum(d .- 1) + 2) points.",
     )
     nums = d .+ [(i == 1) ? 1 : -1 for i in 1:length(d)]
     endindices = cumsum(nums)
@@ -319,15 +319,17 @@ function get_Bezier_segments(
     return [ # for all append the start of the new also as last
         BezierSegment(c[startindices[1]:endindices[1]]),
         [
-            BezierSegment([
-                c[endindices[i - 1]],
-                exp(
-                    M,
-                    c[endindices[i - 1]],
-                    -log(M, c[endindices[i - 1]], c[endindices[i - 1] - 1]),
-                ),
-                c[startindices[i]:endindices[i]]...,
-            ]) for i in 2:length(startindices)
+            BezierSegment(
+                    [
+                        c[endindices[i - 1]],
+                        exp(
+                            M,
+                            c[endindices[i - 1]],
+                            -log(M, c[endindices[i - 1]], c[endindices[i - 1] - 1]),
+                        ),
+                        c[startindices[i]:endindices[i]]...,
+                    ]
+                ) for i in 2:length(startindices)
         ]..., # despite for the last
     ]
 end
@@ -363,11 +365,11 @@ This acceleration discretization was introduced in [Bergmann, Gousenbourger, Fro
 [`grad_acceleration_Bezier`](@ref), [`L2_acceleration_Bezier`](@ref), [`grad_L2_acceleration_Bezier`](@ref)
 """
 function acceleration_Bezier(
-    M::AbstractManifold,
-    B::AbstractVector{P},
-    degrees::AbstractVector{<:Integer},
-    T::AbstractVector{<:AbstractFloat},
-) where {P}
+        M::AbstractManifold,
+        B::AbstractVector{P},
+        degrees::AbstractVector{<:Integer},
+        T::AbstractVector{<:AbstractFloat},
+    ) where {P}
     Bt = get_Bezier_segments(M, B, degrees, :differentiable)
     p = de_Casteljau(M, Bt, T)
     n = length(T)
@@ -404,17 +406,17 @@ segments can internally be reconstructed.
 [`grad_L2_acceleration_Bezier`](@ref), [`acceleration_Bezier`](@ref), [`grad_acceleration_Bezier`](@ref)
 """
 function L2_acceleration_Bezier(
-    M::AbstractManifold,
-    B::AbstractVector{P},
-    degrees::AbstractVector{<:Integer},
-    T::AbstractVector{<:AbstractFloat},
-    λ::AbstractFloat,
-    d::AbstractVector{P},
-) where {P}
+        M::AbstractManifold,
+        B::AbstractVector{P},
+        degrees::AbstractVector{<:Integer},
+        T::AbstractVector{<:AbstractFloat},
+        λ::AbstractFloat,
+        d::AbstractVector{P},
+    ) where {P}
     Bt = get_Bezier_segments(M, B, degrees, :differentiable)
     p = get_Bezier_junctions(M, Bt)
     return acceleration_Bezier(M, B, degrees, T) +
-           λ / 2 * sum((distance.(Ref(M), p, d)) .^ 2)
+        λ / 2 * sum((distance.(Ref(M), p, d)) .^ 2)
 end
 
 # (b) Differential
@@ -435,26 +437,26 @@ is the “change” of the curve at `t```∈[0,1]``. The computation can be done
 See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function differential_Bezier_control_points(
-    M::AbstractManifold, b::BezierSegment, t, X::BezierSegment
-)
+        M::AbstractManifold, b::BezierSegment, t, X::BezierSegment
+    )
     # iterative, because recursively would be too many Casteljau evals
     Y = similar(first(X.pts))
     return differential_Bezier_control_points!(M, Y, b, t, X)
 end
 function differential_Bezier_control_points!(
-    M::AbstractManifold, Y, b::BezierSegment, t, X::BezierSegment
-)
+        M::AbstractManifold, Y, b::BezierSegment, t, X::BezierSegment
+    )
     # iterative, because recursively would be too many Casteljau evals
     Z = similar(X.pts)
     c = deepcopy(b.pts)
     for l in length(c):-1:2
         Z[1:(l - 1)] .=
             differential_shortest_geodesic_startpoint.(
-                Ref(M), c[1:(l - 1)], c[2:l], Ref(t), X.pts[1:(l - 1)]
-            ) .+
+            Ref(M), c[1:(l - 1)], c[2:l], Ref(t), X.pts[1:(l - 1)]
+        ) .+
             differential_shortest_geodesic_endpoint.(
-                Ref(M), c[1:(l - 1)], c[2:l], Ref(t), X.pts[2:l]
-            )
+            Ref(M), c[1:(l - 1)], c[2:l], Ref(t), X.pts[2:l]
+        )
         c[1:(l - 1)] = shortest_geodesic.(Ref(M), c[1:(l - 1)], c[2:l], Ref(t))
     end
     return copyto!(M, Y, Z[1])
@@ -482,13 +484,13 @@ The computation can be done in place of `Y`.
 See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function differential_Bezier_control_points(
-    M::AbstractManifold, b::BezierSegment, T::AbstractVector, X::BezierSegment
-)
+        M::AbstractManifold, b::BezierSegment, T::AbstractVector, X::BezierSegment
+    )
     return differential_Bezier_control_points.(Ref(M), Ref(b), T, Ref(X))
 end
 function differential_Bezier_control_points!(
-    M::AbstractManifold, Y, b::BezierSegment, T::AbstractVector, X::BezierSegment
-)
+        M::AbstractManifold, Y, b::BezierSegment, T::AbstractVector, X::BezierSegment
+    )
     return differential_Bezier_control_points!.(Ref(M), Y, Ref(b), T, Ref(X))
 end
 @doc raw"""
@@ -515,11 +517,11 @@ The computation can be done in place of `Y`.
 See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function differential_Bezier_control_points(
-    M::AbstractManifold,
-    B::AbstractVector{<:BezierSegment},
-    t,
-    X::AbstractVector{<:BezierSegment},
-)
+        M::AbstractManifold,
+        B::AbstractVector{<:BezierSegment},
+        t,
+        X::AbstractVector{<:BezierSegment},
+    )
     if (0 > t) || (t > length(B))
         return throw(
             DomainError(
@@ -537,12 +539,12 @@ function differential_Bezier_control_points(
     return Y
 end
 function differential_Bezier_control_points!(
-    M::AbstractManifold,
-    Y,
-    B::AbstractVector{<:BezierSegment},
-    t,
-    X::AbstractVector{<:BezierSegment},
-)
+        M::AbstractManifold,
+        Y,
+        B::AbstractVector{<:BezierSegment},
+        t,
+        X::AbstractVector{<:BezierSegment},
+    )
     if (0 > t) || (t > length(B))
         return throw(
             DomainError(
@@ -584,20 +586,20 @@ length of `B`. For the mutating variant the result is computed in `Θ`.
 See [`de_Casteljau`](@ref) for more details on the curve and [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018).
 """
 function differential_Bezier_control_points(
-    M::AbstractManifold,
-    B::AbstractVector{<:BezierSegment},
-    T::AbstractVector,
-    Ξ::AbstractVector{<:BezierSegment},
-)
+        M::AbstractManifold,
+        B::AbstractVector{<:BezierSegment},
+        T::AbstractVector,
+        Ξ::AbstractVector{<:BezierSegment},
+    )
     return differential_Bezier_control_points.(Ref(M), Ref(B), T, Ref(Ξ))
 end
 function differential_Bezier_control_points!(
-    M::AbstractManifold,
-    Y,
-    B::AbstractVector{<:BezierSegment},
-    T::AbstractVector,
-    Ξ::AbstractVector{<:BezierSegment},
-)
+        M::AbstractManifold,
+        Y,
+        B::AbstractVector{<:BezierSegment},
+        T::AbstractVector,
+        Ξ::AbstractVector{<:BezierSegment},
+    )
     return differential_Bezier_control_points!.(Ref(M), Y, Ref(B), T, Ref(Ξ))
 end
 
@@ -620,14 +622,16 @@ This can be computed in place of `Y`.
 See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function adjoint_differential_Bezier_control_points(
-    M::AbstractManifold, b::BezierSegment, t, η
-)
+        M::AbstractManifold, b::BezierSegment, t, η
+    )
     n = length(b.pts)
     if n == 2
-        return BezierSegment([
-            adjoint_differential_shortest_geodesic_startpoint(M, b.pts[1], b.pts[2], t, η),
-            adjoint_differential_shortest_geodesic_endpoint(M, b.pts[1], b.pts[2], t, η),
-        ])
+        return BezierSegment(
+            [
+                adjoint_differential_shortest_geodesic_startpoint(M, b.pts[1], b.pts[2], t, η),
+                adjoint_differential_shortest_geodesic_endpoint(M, b.pts[1], b.pts[2], t, η),
+            ]
+        )
     end
     c = [b.pts, [similar.(b.pts[1:l]) for l in (n - 1):-1:2]...]
     for i in 2:(n - 1) # casteljau on the tree -> forward with interims storage
@@ -637,22 +641,22 @@ function adjoint_differential_Bezier_control_points(
     for i in (n - 1):-1:1 # propagate adjoints -> backward without interims storage
         Y[1:(n - i + 1)] .=
             [ # take previous results and add start&end point effects
-                adjoint_differential_shortest_geodesic_startpoint.(
-                    Ref(M), c[i][1:(end - 1)], c[i][2:end], Ref(t), Y[1:(n - i)]
-                )...,
-                zero_vector(M, c[i][end]),
-            ] .+ [
-                zero_vector(M, c[i][1]),
-                adjoint_differential_shortest_geodesic_endpoint.(
-                    Ref(M), c[i][1:(end - 1)], c[i][2:end], Ref(t), Y[1:(n - i)]
-                )...,
-            ]
+            adjoint_differential_shortest_geodesic_startpoint.(
+                Ref(M), c[i][1:(end - 1)], c[i][2:end], Ref(t), Y[1:(n - i)]
+            )...,
+            zero_vector(M, c[i][end]),
+        ] .+ [
+            zero_vector(M, c[i][1]),
+            adjoint_differential_shortest_geodesic_endpoint.(
+                Ref(M), c[i][1:(end - 1)], c[i][2:end], Ref(t), Y[1:(n - i)]
+            )...,
+        ]
     end
     return BezierSegment(Y)
 end
 function adjoint_differential_Bezier_control_points!(
-    M::AbstractManifold, Y::BezierSegment, b::BezierSegment, t, η
-)
+        M::AbstractManifold, Y::BezierSegment, b::BezierSegment, t, η
+    )
     n = length(b.pts)
     if n == 2
         adjoint_differential_shortest_geodesic_startpoint!(
@@ -671,16 +675,16 @@ function adjoint_differential_Bezier_control_points!(
     for i in (n - 1):-1:1 # propagate adjoints -> backward without interims storage
         Y.pts[1:(n - i + 1)] .=
             [ # take previous results and add start&end point effects
-                adjoint_differential_shortest_geodesic_startpoint.(
-                    Ref(M), c[i][1:(end - 1)], c[i][2:end], Ref(t), Y.pts[1:(n - i)]
-                )...,
-                zero_vector(M, c[i][end]),
-            ] .+ [
-                zero_vector(M, c[i][1]),
-                adjoint_differential_shortest_geodesic_endpoint.(
-                    Ref(M), c[i][1:(end - 1)], c[i][2:end], Ref(t), Y.pts[1:(n - i)]
-                )...,
-            ]
+            adjoint_differential_shortest_geodesic_startpoint.(
+                Ref(M), c[i][1:(end - 1)], c[i][2:end], Ref(t), Y.pts[1:(n - i)]
+            )...,
+            zero_vector(M, c[i][end]),
+        ] .+ [
+            zero_vector(M, c[i][1]),
+            adjoint_differential_shortest_geodesic_endpoint.(
+                Ref(M), c[i][1:(end - 1)], c[i][2:end], Ref(t), Y.pts[1:(n - i)]
+            )...,
+        ]
     end
     return Y
 end
@@ -708,20 +712,20 @@ This can be computed in place of `Y`.
 See [`de_Casteljau`](@ref) for more details on the curve and [Bergmann, Gousenbourger, Front. Appl. Math. Stat., 2018](@cite BergmannGousenbourger:2018)
 """
 function adjoint_differential_Bezier_control_points(
-    M::AbstractManifold, b::BezierSegment, t::AbstractVector, X::AbstractVector
-)
+        M::AbstractManifold, b::BezierSegment, t::AbstractVector, X::AbstractVector
+    )
     effects = [
         bt.pts for bt in adjoint_differential_Bezier_control_points.(Ref(M), Ref(b), t, X)
     ]
     return BezierSegment(sum(effects))
 end
 function adjoint_differential_Bezier_control_points!(
-    M::AbstractManifold,
-    Y::BezierSegment,
-    b::BezierSegment,
-    t::AbstractVector,
-    X::AbstractVector,
-)
+        M::AbstractManifold,
+        Y::BezierSegment,
+        b::BezierSegment,
+        t::AbstractVector,
+        X::AbstractVector,
+    )
     Z = BezierSegment(similar.(Y.pts))
     fill!.(Y.pts, zero(eltype(first(Y.pts))))
     for i in 1:length(t)
@@ -755,18 +759,18 @@ This can be computed in place of `Y`.
 See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function adjoint_differential_Bezier_control_points(
-    M::AbstractManifold, B::AbstractVector{<:BezierSegment}, t, X
-)
+        M::AbstractManifold, B::AbstractVector{<:BezierSegment}, t, X
+    )
     Y = broadcast(b -> BezierSegment(zero_vector.(Ref(M), b.pts)), B) # Double broadcast
     return adjoint_differential_Bezier_control_points!(M, Y, B, t, X)
 end
 function adjoint_differential_Bezier_control_points!(
-    M::AbstractManifold,
-    Y::AbstractVector{<:BezierSegment},
-    B::AbstractVector{<:BezierSegment},
-    t,
-    X,
-)
+        M::AbstractManifold,
+        Y::AbstractVector{<:BezierSegment},
+        B::AbstractVector{<:BezierSegment},
+        t,
+        X,
+    )
     # doubly nested broadcast on the Array(Array) of CPs (note broadcast _and_ .)
     if (0 > t) || (t > length(B))
         error(
@@ -804,21 +808,21 @@ This can be computed in place of `Y`.
 See [`de_Casteljau`](@ref) for more details on the curve.
 """
 function adjoint_differential_Bezier_control_points(
-    M::AbstractManifold,
-    B::AbstractVector{<:BezierSegment},
-    T::AbstractVector,
-    X::AbstractVector,
-)
+        M::AbstractManifold,
+        B::AbstractVector{<:BezierSegment},
+        T::AbstractVector,
+        X::AbstractVector,
+    )
     Y = broadcast(b -> BezierSegment(zero_vector.(Ref(M), b.pts)), B) # Double broadcast
     return adjoint_differential_Bezier_control_points!(M, Y, B, T, X)
 end
 function adjoint_differential_Bezier_control_points!(
-    M::AbstractManifold,
-    Y::AbstractVector{<:BezierSegment},
-    B::AbstractVector{<:BezierSegment},
-    T::AbstractVector,
-    X::AbstractVector,
-)
+        M::AbstractManifold,
+        Y::AbstractVector{<:BezierSegment},
+        B::AbstractVector{<:BezierSegment},
+        T::AbstractVector,
+        X::AbstractVector,
+    )
     Z = [BezierSegment(similar.(y.pts)) for y in Y]
     for j in 1:length(T) # for all times
         adjoint_differential_Bezier_control_points!(M, Z, B, T[j], X[j])
@@ -853,11 +857,11 @@ See [`de_Casteljau`](@ref) for more details on the curve.
 [`acceleration_Bezier`](@ref),  [`grad_L2_acceleration_Bezier`](@ref), [`L2_acceleration_Bezier`](@ref).
 """
 function grad_acceleration_Bezier(
-    M::AbstractManifold,
-    B::AbstractVector,
-    degrees::AbstractVector{<:Integer},
-    T::AbstractVector,
-)
+        M::AbstractManifold,
+        B::AbstractVector,
+        degrees::AbstractVector{<:Integer},
+        T::AbstractVector,
+    )
     gradB = _grad_acceleration_Bezier(M, B, degrees, T)
     Bt = get_Bezier_segments(M, B, degrees, :differentiable)
     for k in 1:length(Bt) # we interpolate so we do not move end points
@@ -904,13 +908,13 @@ can internally be reconstructed.
 [`grad_acceleration_Bezier`](@ref), [`L2_acceleration_Bezier`](@ref), [`acceleration_Bezier`](@ref).
 """
 function grad_L2_acceleration_Bezier(
-    M::AbstractManifold,
-    B::AbstractVector{P},
-    degrees::AbstractVector{<:Integer},
-    T::AbstractVector,
-    λ,
-    d::AbstractVector{P},
-) where {P}
+        M::AbstractManifold,
+        B::AbstractVector{P},
+        degrees::AbstractVector{<:Integer},
+        T::AbstractVector,
+        λ,
+        d::AbstractVector{P},
+    ) where {P}
     gradB = _grad_acceleration_Bezier(M, B, degrees, T)
     Bt = get_Bezier_segments(M, B, degrees, :differentiable)
     # add start and end data grad
@@ -927,11 +931,11 @@ end
 
 # common helper for the two acceleration grads
 function _grad_acceleration_Bezier(
-    M::AbstractManifold,
-    B::AbstractVector,
-    degrees::AbstractVector{<:Integer},
-    T::AbstractVector,
-)
+        M::AbstractManifold,
+        B::AbstractVector,
+        degrees::AbstractVector{<:Integer},
+        T::AbstractVector,
+    )
     Bt = get_Bezier_segments(M, B, degrees, :differentiable)
     n = length(T)
     m = length(Bt)
@@ -945,22 +949,22 @@ function _grad_acceleration_Bezier(
     inner = -2 / ((dt)^3) .* log.(Ref(M), mid, center)
     asForward =
         adjoint_differential_shortest_geodesic_startpoint.(
-            Ref(M), forward, backward, Ref(0.5), inner
-        )
+        Ref(M), forward, backward, Ref(0.5), inner
+    )
     asCenter = -2 / ((dt)^3) * log.(Ref(M), center, mid)
     asBackward =
         adjoint_differential_shortest_geodesic_endpoint.(
-            Ref(M), forward, backward, Ref(0.5), inner
-        )
+        Ref(M), forward, backward, Ref(0.5), inner
+    )
     # effect of these to the control points is the preliminary gradient
     grad_B = [
         BezierSegment(a.pts .+ b.pts .+ c.pts) for (a, b, c) in zip(
-            adjoint_differential_Bezier_control_points(M, Bt, T[[1, 3:n..., n]], asForward),
-            adjoint_differential_Bezier_control_points(M, Bt, T, asCenter),
-            adjoint_differential_Bezier_control_points(
-                M, Bt, T[[1, 1:(n - 2)..., n]], asBackward
-            ),
-        )
+                adjoint_differential_Bezier_control_points(M, Bt, T[[1, 3:n..., n]], asForward),
+                adjoint_differential_Bezier_control_points(M, Bt, T, asCenter),
+                adjoint_differential_Bezier_control_points(
+                    M, Bt, T[[1, 1:(n - 2)..., n]], asBackward
+                ),
+            )
     ]
     for k in 1:(length(Bt) - 1) # add both effects of left and right segments
         X = grad_B[k + 1].pts[1] + grad_B[k].pts[end]
@@ -973,18 +977,18 @@ function _grad_acceleration_Bezier(
         # updates b-
         X1 =
             grad_B[k - 1].pts[end - 1] .+ adjoint_differential_shortest_geodesic_startpoint(
-                M, Bt[k - 1].pts[end - 1], Bt[k].pts[1], 2.0, grad_B[k].pts[2]
-            )
+            M, Bt[k - 1].pts[end - 1], Bt[k].pts[1], 2.0, grad_B[k].pts[2]
+        )
         # update b+ - though removed in reduced form
         X2 =
             grad_B[k].pts[2] .+ adjoint_differential_shortest_geodesic_startpoint(
-                M, Bt[k].pts[2], Bt[k].pts[1], 2.0, grad_B[k - 1].pts[end - 1]
-            )
+            M, Bt[k].pts[2], Bt[k].pts[1], 2.0, grad_B[k - 1].pts[end - 1]
+        )
         # update p - effect from left and right segment as well as from c1 cond
         X3 =
             grad_B[k].pts[1] .+ adjoint_differential_shortest_geodesic_endpoint(
-                M, Bt[k - 1].pts[m - 1], Bt[k].pts[1], 2.0, grad_B[k].pts[2]
-            )
+            M, Bt[k - 1].pts[m - 1], Bt[k].pts[1], 2.0, grad_B[k].pts[2]
+        )
         # store
         grad_B[k - 1].pts[end - 1] .= X1
         grad_B[k].pts[2] .= X2

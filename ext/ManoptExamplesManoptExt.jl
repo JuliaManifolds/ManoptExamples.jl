@@ -8,58 +8,58 @@ using ManifoldsBase
 #
 # Objectives
 function ManoptExamples.robust_PCA_objective(
-    data::AbstractMatrix, ε=1.0; evaluation=Manopt.AllocatingEvaluation()
-)
+        data::AbstractMatrix, ε = 1.0; evaluation = Manopt.AllocatingEvaluation()
+    )
     return Manopt.ManifoldGradientObjective(
         ManoptExamples.RobustPCACost(data, ε),
-        ManoptExamples.RobustPCAGrad!!(data, 1.0; evaluation=evaluation),
+        ManoptExamples.RobustPCAGrad!!(data, 1.0; evaluation = evaluation),
     )
 end
 function ManoptExamples.robust_PCA_objective(
-    M::AbstractManifold,
-    data::AbstractMatrix,
-    ε=1.0;
-    evaluation=Manopt.AllocatingEvaluation(),
-)
+        M::AbstractManifold,
+        data::AbstractMatrix,
+        ε = 1.0;
+        evaluation = Manopt.AllocatingEvaluation(),
+    )
     return Manopt.ManifoldGradientObjective(
         ManoptExamples.RobustPCACost(M, data, ε),
-        ManoptExamples.RobustPCAGrad!!(M, data, ε; evaluation=evaluation);
-        evaluation=evaluation,
+        ManoptExamples.RobustPCAGrad!!(M, data, ε; evaluation = evaluation);
+        evaluation = evaluation,
     )
 end
 
 function ManoptExamples.Riemannian_mean_objective(
-    data::AbstractVector; initial_vector=nothing, evaluation=Manopt.AllocatingEvaluation()
-)
+        data::AbstractVector; initial_vector = nothing, evaluation = Manopt.AllocatingEvaluation()
+    )
     return Manopt.ManifoldGradientObjective(
         ManoptExamples.RiemannianMeanCost(data),
         ManoptExamples.RiemannianMeanGradient!!(data, initial_vector);
-        evaluation=evaluation,
+        evaluation = evaluation,
     )
 end
 function ManoptExamples.Riemannian_mean_objective(
-    M::AbstractManifold,
-    data;
-    initial_vector=zero_vector(M, first(data)),
-    evaluation=Manopt.AllocatingEvaluation(),
-)
+        M::AbstractManifold,
+        data;
+        initial_vector = zero_vector(M, first(data)),
+        evaluation = Manopt.AllocatingEvaluation(),
+    )
     return Manopt.ManifoldGradientObjective(
         ManoptExamples.RiemannianMeanCost(data),
-        ManoptExamples.RiemannianMeanGradient!!(M, data; initial_vector=initial_vector);
-        evaluation=evaluation,
+        ManoptExamples.RiemannianMeanGradient!!(M, data; initial_vector = initial_vector);
+        evaluation = evaluation,
     )
 end
 
 function ManoptExamples.Rosenbrock_objective(
-    M::AbstractManifold=ManifoldsBase.DefaultManifold();
-    a=100.0,
-    b=1.0,
-    evaluation=Manopt.AllocatingEvaluation(),
-)
+        M::AbstractManifold = ManifoldsBase.DefaultManifold();
+        a = 100.0,
+        b = 1.0,
+        evaluation = Manopt.AllocatingEvaluation(),
+    )
     return Manopt.ManifoldGradientObjective(
-        ManoptExamples.RosenbrockCost(M; a=a, b=b),
-        ManoptExamples.RosenbrockGradient!!(M; a=a, b=b, evaluation=evaluation);
-        evaluation=evaluation,
+        ManoptExamples.RosenbrockCost(M; a = a, b = b),
+        ManoptExamples.RosenbrockGradient!!(M; a = a, b = b, evaluation = evaluation);
+        evaluation = evaluation,
     )
 end
 
@@ -68,13 +68,13 @@ end
 # prox with a subsolver
 #
 function ManoptExamples.prox_second_order_Total_Variation(
-    M::AbstractManifold,
-    λ,
-    x::Tuple{T,T,T},
-    p::Int=1;
-    stopping_criterion::StoppingCriterion=Manopt.StopAfterIteration(10),
-    kwargs...,
-) where {T}
+        M::AbstractManifold,
+        λ,
+        x::Tuple{T, T, T},
+        p::Int = 1;
+        stopping_criterion::StoppingCriterion = Manopt.StopAfterIteration(10),
+        kwargs...,
+    ) where {T}
     (p != 1) && throw(
         ErrorException(
             "Proximal Map of TV2(M, λ, x, p) not implemented for p=$(p) (requires p=1) on general manifolds.",
@@ -85,26 +85,26 @@ function ManoptExamples.prox_second_order_Total_Variation(
     xR = PowX
     function F(M, x)
         return 1 / 2 * distance(M, PowX, x)^2 +
-               λ * ManoptExamples.second_order_Total_Variation(M, x)
+            λ * ManoptExamples.second_order_Total_Variation(M, x)
     end
     function ∂F(PowM, x)
         return log(PowM, x, PowX) +
-               λ * ManoptExamples.grad_second_order_Total_Variation(PowM, x)
+            λ * ManoptExamples.grad_second_order_Total_Variation(PowM, x)
     end
     Manopt.subgradient_method!(
-        PowM, F, ∂F, xR; stopping_criterion=stopping_criterion, kwargs...
+        PowM, F, ∂F, xR; stopping_criterion = stopping_criterion, kwargs...
     )
     return (xR...,)
 end
 function ManoptExamples.prox_second_order_Total_Variation!(
-    M::AbstractManifold,
-    y,
-    λ,
-    x::Tuple{T,T,T},
-    p::Int=1;
-    stopping_criterion::StoppingCriterion=Manopt.StopAfterIteration(10),
-    kwargs...,
-) where {T}
+        M::AbstractManifold,
+        y,
+        λ,
+        x::Tuple{T, T, T},
+        p::Int = 1;
+        stopping_criterion::StoppingCriterion = Manopt.StopAfterIteration(10),
+        kwargs...,
+    ) where {T}
     (p != 1) && throw(
         ErrorException(
             "Proximal Map of TV2(M, λ, x, p) not implemented for p=$(p) (requires p=1) on general manifolds.",
@@ -115,19 +115,19 @@ function ManoptExamples.prox_second_order_Total_Variation!(
     copyto!(M, y, PowX)
     function F(M, x)
         return 1 / 2 * distance(M, PowX, x)^2 +
-               λ * ManoptExamples.second_order_Total_Variation(M, x)
+            λ * ManoptExamples.second_order_Total_Variation(M, x)
     end
     function ∂F!(M, y, x)
         return log!(M, y, x, PowX) +
-               λ * ManoptExamples.grad_second_order_Total_Variation!(M, y, x)
+            λ * ManoptExamples.grad_second_order_Total_Variation!(M, y, x)
     end
     Manopt.subgradient_method!(
         PowM,
         F,
         ∂F!,
         y;
-        stopping_criterion=stopping_criterion,
-        evaluation=Manopt.InplaceEvaluation(),
+        stopping_criterion = stopping_criterion,
+        evaluation = Manopt.InplaceEvaluation(),
         kwargs...,
     )
     return y

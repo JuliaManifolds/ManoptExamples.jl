@@ -176,7 +176,7 @@ Similarly the DCPPA performs
         "\n",
     ],
     evaluation=InplaceEvaluation(),
-    stepsize=ConstantStepsize(1.0),
+    stepsize=ConstantLength(1.0),
     stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
     sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
 );
@@ -232,7 +232,7 @@ for n in N
         cost=f,
         gradient=grad_f!,
         evaluation=InplaceEvaluation(),
-        stepsize=ConstantStepsize(1.0),
+        stepsize=ConstantLength(1.0),
         stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
         sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
     )
@@ -295,7 +295,7 @@ dcppa_costs = Dict{Int,Vector{Float64}}()
 		cost = f,
 		gradient= grad_f!,
 		evaluation = InplaceEvaluation(),
-		stepsize = ConstantStepsize(1.0),
+		stepsize = ConstantLength(1.0),
 		stopping_criterion = StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
 		sub_stopping_criterion = StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
 		record = [:Iteration, :Cost],
@@ -343,6 +343,26 @@ fig
 ```
 
 where we can see that the DCA needs less iterations than the DCPPA.
+
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
 
 ## Literature
 

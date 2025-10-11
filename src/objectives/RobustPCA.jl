@@ -29,20 +29,20 @@ Note that this is a mutable struct so you can adapt the ``ε`` later on.
 Initialize the robust PCA cost to some `data` ``D``, and some regularization ``ε``.
 The manifold is optional to comply with all examples, but it is not needed here to construct the cost.
 """
-mutable struct RobustPCACost{D,F}
+mutable struct RobustPCACost{D, F}
     data::D
     ε::F
     tmp::D
 end
-function RobustPCACost(data::AbstractMatrix, ε=1.0)
+function RobustPCACost(data::AbstractMatrix, ε = 1.0)
     return RobustPCACost(data, ε, zero(data))
 end
-function RobustPCACost(::Grassmann{m,n}, data::AbstractMatrix, ε=1.0) where {m,n}
+function RobustPCACost(::Grassmann{m, n}, data::AbstractMatrix, ε = 1.0) where {m, n}
     return RobustPCACost(data, ε, zero(data))
 end
 function (f::RobustPCACost)(::Grassmann, p)
     f.tmp .= p * p' * f.data .- f.data
-    return mean(sqrt.(sum(f.tmp .^ 2; dims=1) .+ f.ε^2) .- f.ε)
+    return mean(sqrt.(sum(f.tmp .^ 2; dims = 1) .+ f.ε^2) .- f.ε)
 end
 
 @doc raw"""
@@ -66,15 +66,15 @@ The manifold is optional to comply with all examples, but it is not needed here 
 Also the `evaluation=` keyword is present only for unification of the interfaces.
 Indeed, independent of that keyword the functor always works in both variants.
 """
-mutable struct RobustPCAGrad!!{D,F}
+mutable struct RobustPCAGrad!!{D, F}
     data::D
     ε::F
     temp::D
 end
-function RobustPCAGrad!!(data::AbstractMatrix, ε=1.0; kwargs...)
+function RobustPCAGrad!!(data::AbstractMatrix, ε = 1.0; kwargs...)
     return RobustPCAGrad!!(data, ε, zero(data))
 end
-function RobustPCAGrad!!(::Grassmann, data::AbstractMatrix, ε=1.0; kwargs...)
+function RobustPCAGrad!!(::Grassmann, data::AbstractMatrix, ε = 1.0; kwargs...)
     return RobustPCAGrad!!(data, ε, zero(data))
 end
 function (f::RobustPCAGrad!!)(M::Grassmann, p)

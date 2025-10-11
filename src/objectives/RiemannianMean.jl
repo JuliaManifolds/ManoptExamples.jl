@@ -22,7 +22,7 @@ where each point is of type `P`.
 [`RiemannianMeanGradient!!`](@ref ManoptExamples.RiemannianMeanGradient!!), [`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective)
 
 """
-struct RiemannianMeanCost{P,V<:AbstractVector{<:P}}
+struct RiemannianMeanCost{P, V <: AbstractVector{<:P}}
     data::V
 end
 RiemannianMeanCost(M::AbstractManifold, data) = RiemannianMeanCost(data)
@@ -67,14 +67,14 @@ be created automatically, since the Riemannian manifold `M` is provideed.
 # See also
 [`RiemannianMeanCost`](@ref ManoptExamples.RiemannianMeanCost), [`Riemannian_mean_objective`](@ref ManoptExamples.Riemannian_mean_objective)
 """
-struct RiemannianMeanGradient!!{P,T,V<:AbstractVector{<:P}}
+struct RiemannianMeanGradient!!{P, T, V <: AbstractVector{<:P}}
     data::V
     X::T
 end
 function RiemannianMeanGradient!!(
-    M::AbstractManifold, data::V; initial_vector::T=zero_vector(M, first(data))
-) where {P,T,V<:AbstractVector{<:P}}
-    return RiemannianMeanGradient!!{P,T,V}(data, initial_vector)
+        M::AbstractManifold, data::V; initial_vector::T = zero_vector(M, first(data))
+    ) where {P, T, V <: AbstractVector{<:P}}
+    return RiemannianMeanGradient!!{P, T, V}(data, initial_vector)
 end
 function (rmg::RiemannianMeanGradient!!)(M, p)
     return sum(ManifoldDiff.grad_distance(M, di, p) for di in rmg.data)

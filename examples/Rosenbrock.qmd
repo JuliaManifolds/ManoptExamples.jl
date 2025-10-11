@@ -106,3 +106,20 @@ which we also see if we plot the recorded cost.
 fig = plot(gd_x, gd_y; linewidth=1, label="Gradient Descent");
 plot!(fig, qn_x, qn_y; linewidth=1, label="Quasi Newton")
 ```
+
+## Technical Details
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```

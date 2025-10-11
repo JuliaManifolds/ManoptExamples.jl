@@ -49,8 +49,8 @@ using ManoptExamples:
         1 / 2 * distance(N, p, f)^2 + second_order_Total_Variation(N, p)
     @test L2_Total_Variation_1_2(N, f, 1.0, 1.0, p) ≈
         1 / 2 * distance(N, p, f)^2 +
-          Total_Variation(N, p) +
-          second_order_Total_Variation(N, p)
+        Total_Variation(N, p) +
+        second_order_Total_Variation(N, p)
 
     @test second_order_Total_Variation(M, Tuple(p[1:3, 1])) ≈ π / 2
     @test Total_Variation(N, p, 1, 2) ≈ sqrt(5 / 4) * π
@@ -82,8 +82,8 @@ end
         # they cross correlate
         @test (
             abs(t[1] - u[2]) < eps(Float64) &&
-            abs(t[2] - u[1]) < eps(Float64) &&
-            abs(t[3] - u[3]) < eps(Float64)
+                abs(t[2] - u[1]) < eps(Float64) &&
+                abs(t[3] - u[3]) < eps(Float64)
         )
         @test distance(M, t, u) ≈ π / 4 # and have moved half their distance
         #
@@ -282,8 +282,8 @@ end
         @test t1[1, 1, 1] ≈ log(S, p[1, 1], p[2, 1])
         @test t1[1, 1, 2] ≈ log(S, p[1, 1], p[1, 2])
         @test t1[1, 2, 1] ≈ log(S, p[1, 2], p[2, 2])
-        @test t1[1, 2, 2] ≈ log(S, p[1, 2], p[1, 2]) atol = 1e-15
-        @test t1[2, 1, 1] ≈ log(S, p[2, 1], p[2, 1]) atol = 1e-15
+        @test t1[1, 2, 2] ≈ log(S, p[1, 2], p[1, 2]) atol = 1.0e-15
+        @test t1[2, 1, 1] ≈ log(S, p[2, 1], p[2, 1]) atol = 1.0e-15
         @test t1[2, 1, 2] ≈ log(S, p[2, 1], p[2, 2])
         @test t1[2, 2, 1] ≈ log(S, p[2, 2], p[2, 2])
         @test t1[2, 2, 2] ≈ log(S, p[2, 2], p[2, 2])
@@ -297,16 +297,16 @@ end
             Manopt.differential_log_basepoint(S, p[1, 1], p[2, 1], X[1, 1]) +
             Manopt.differential_log_argument(S, p[1, 1], p[2, 1], X[2, 1])
         @test t2[1, 1, 1] ≈ a
-        @test t2[1, 2, 1] ≈ zero_vector(S, p[1, 2]) atol = 1e-17
-        @test t2[2, 1, 1] ≈ zero_vector(S, p[2, 1]) atol = 1e-17
-        @test t2[2, 2, 1] ≈ zero_vector(S, p[2, 2]) atol = 1e-17
+        @test t2[1, 2, 1] ≈ zero_vector(S, p[1, 2]) atol = 1.0e-17
+        @test t2[2, 1, 1] ≈ zero_vector(S, p[2, 1]) atol = 1.0e-17
+        @test t2[2, 2, 1] ≈ zero_vector(S, p[2, 2]) atol = 1.0e-17
         b =
             Manopt.differential_log_basepoint(S, p[1, 1], p[1, 2], X[1, 1]) +
             Manopt.differential_log_argument(S, p[1, 1], p[1, 2], X[1, 2])
         @test t2[1, 1, 2] ≈ b
-        @test t2[1, 2, 2] ≈ zero_vector(S, p[1, 2]) atol = 1e-17
-        @test t2[2, 1, 2] ≈ zero_vector(S, p[2, 1]) atol = 1e-17
-        @test t2[2, 2, 2] ≈ zero_vector(S, p[2, 2]) atol = 1e-17
+        @test t2[1, 2, 2] ≈ zero_vector(S, p[1, 2]) atol = 1.0e-17
+        @test t2[2, 1, 2] ≈ zero_vector(S, p[2, 1]) atol = 1.0e-17
+        @test t2[2, 2, 2] ≈ zero_vector(S, p[2, 2]) atol = 1.0e-17
     end
 end
 
@@ -351,7 +351,7 @@ end
             N,
             x,
             grad_intrinsic_infimal_convolution_TV12(N, x, x, x, 1.0, 1.0)[1] -
-            [-1.0, 0.0, 0.0, 1.0],
+                [-1.0, 0.0, 0.0, 1.0],
         ) ≈ 0
         @test norm(N, x, grad_intrinsic_infimal_convolution_TV12(N, x, x, x, 1.0, 1.0)[2]) ≈
             0
@@ -364,8 +364,8 @@ end
         N3 = PowerManifold(M, 2, 2)
         N3C = PowerManifold(M, 2, 2, 2)
         x3 = [0.1 0.2; 0.3 0.5]
-        x3C = cat(x3, x3; dims=3)
-        tC = cat([0.2 0.3; 0.0 0.0], [0.1 0.0; 0.2 0.0]; dims=3)
+        x3C = cat(x3, x3; dims = 3)
+        tC = cat([0.2 0.3; 0.0 0.0], [0.1 0.0; 0.2 0.0]; dims = 3)
         @test norm(N3C, x3C, forward_logs(N3, x3) - tC) ≈ 0 atol = 10^(-16)
     end
     @testset "Sphere (Mutating)" begin

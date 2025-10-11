@@ -4,7 +4,7 @@
 Compute the (mean) squared error between the two
 points `p` and `q` on the (power) manifold `M`.
 """
-function mean_squared_error(M::mT, p, q) where {mT<:AbstractManifold}
+function mean_squared_error(M::mT, p, q) where {mT <: AbstractManifold}
     return distance(M, p, q)^2
 end
 function mean_squared_error(M::PowerManifold, x, y)

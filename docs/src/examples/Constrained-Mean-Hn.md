@@ -4,7 +4,7 @@ Ronny Bergmann
 
 ## Introduction
 
-In this example we compare the Pprojected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite) with both the Augmented Lagrangian Method (ALM) and the Exact Penalty Method (EPM) [LiuBoumal:2019](@cite).
+In this example we compare the Projected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite) with both the Augmented Lagrangian Method (ALM) and the Exact Penalty Method (EPM) [LiuBoumal:2019](@cite).
 
 ``` julia
 using Chairmarks, CSV, DataFrames, Manifolds, Manopt, CairoMakie, Random
@@ -14,7 +14,7 @@ Consider the constrained Riemannian center of mass
 for a given set of points \`\`q_i M\$ $i=1,\ldots,N$
 given by
 
-```math
+``` math
 \operatorname*{arg\,min}_{p\in\mathcal C}
 \sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i)
 ```
@@ -32,12 +32,12 @@ M_range = [Hyperbolic(n) for n ∈ n_range]
 σ_range = [ 1.5/sqrt(sqrt(n-1)) for n ∈ n_range]
 ```
 
-Our data consists of $N=200$ points, where we skew the data a bit to force the mean to be outside of the constrained set $\mathcal C$.
+The data consists of $N=200$ points, where we skew the data a bit to force the mean to be outside of the constrained set $\mathcal C$.
 
 ## Cost, gradient and projection
 
 We can formulate the constrained problem above in two different forms.
-Both share a cost adn require a gradient. For performance reasons, we also provide a mutating variant of the gradient
+Both share a cost and require a gradient. For performance reasons, we also provide a mutating variant of the gradient
 
 ``` julia
 f(M, p; pts=[]) = 1 / (2 * length(pts)) .* sum(distance(M, p, q)^2 for q in pts)
@@ -88,11 +88,11 @@ function grad_g!(M, X, p; op=[])
 end
 ```
 
-## the mean
+## The mean
 
 For comparison, we first compute the Riemannian center of mass, that is the minimization above but not constrained to $\mathcal C$. We can then
 project this onto $\mathcal C$.
-For the projected mean we obtain $g(p) = 0$ since the original mean is outside of the set, the projected one lies on the bounday.
+For the projected mean we obtain $g(p) = 0$ since the original mean is outside of the set, the projected one lies on the boundary.
 
 We first generate all data
 
@@ -234,7 +234,7 @@ axislegend(axis; position=:lt)
 fig
 ```
 
-![](Constrained-Mean-Hn_files/figure-commonmark/cell-13-output-2.png)
+![](Constrained-Mean-Hn_files/figure-commonmark/cell-13-output-1.png)
 
 and the number of iterations reads
 
@@ -250,7 +250,7 @@ axislegend(axis2; position=:lt)
 fig2
 ```
 
-![](Constrained-Mean-Hn_files/figure-commonmark/cell-15-output-2.png)
+![](Constrained-Mean-Hn_files/figure-commonmark/cell-15-output-1.png)
 
 ## Literature
 
@@ -263,30 +263,32 @@ Canonical=false
 
 This tutorial is cached. It was last run on the following package versions.
 
-    Status `/ManoptExamples.jl/examples/Project.toml`
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
       [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.13.4
+      [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
-      [35d6a980] ColorSchemes v3.29.0
+      [35d6a980] ColorSchemes v3.31.0
     ⌅ [5ae59095] Colors v0.12.11
-      [a93c6f00] DataFrames v1.7.0
-      [7073ff75] IJulia v1.27.0
-      [682c06a0] JSON v0.21.4
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+      [7073ff75] IJulia v1.30.6
+    ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
-      [d3d80556] LineSearches v7.3.0
-      [ee78f7c6] Makie v0.22.4
-      [af67fdf4] ManifoldDiff v0.4.2
-      [1cead3c2] Manifolds v0.10.16
-      [3362f125] ManifoldsBase v1.0.3
-      [0fc0a36d] Manopt v0.5.12
-      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [91a5bcdd] Plots v1.40.12
-      [08abe8d2] PrettyTables v2.4.0
-      [6099a3de] PythonCall v0.9.24
-      [f468eda6] QuadraticModels v0.9.8
-      [1e40b3f8] RipQP v0.6.4
+      [91a5bcdd] Plots v1.41.1
+    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
+      [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered April 13, 2025, 15:12:24.
+This tutorial was last rendered October 11, 2025, 12:9:56.

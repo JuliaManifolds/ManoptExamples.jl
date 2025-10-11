@@ -1,4 +1,3 @@
-
 @doc raw"""
     artificial_S1_slope_signal([pts=500, slope=4.])
 
@@ -13,8 +12,8 @@ This data set was introduced for the numerical examples in [BergmannLausSteidlWe
 
 
 """
-function artificial_S1_slope_signal(pts::Integer=500, slope::Float64=4.0)
-    t = range(0.0, 1.0; length=pts)
+function artificial_S1_slope_signal(pts::Integer = 500, slope::Float64 = 4.0)
+    t = range(0.0, 1.0; length = pts)
     f = zero(t)
     f[t .<= 1 / 6] .= -π / 2 .+ slope * π / 8 * t[t .<= 1 / 6]
     # In the following terms, the first max
@@ -47,8 +46,8 @@ the data is also wrapped to ``[BergmannLausSteidlWeinmann:2014:1](@cite).
 
 * `pts`: (`500`) number of points to sample the function
 """
-function artificial_S1_signal(pts::Integer=500)
-    t = range(0.0, 1.0; length=pts)
+function artificial_S1_signal(pts::Integer = 500)
+    t = range(0.0, 1.0; length = pts)
     f = artificial_S1_signal.(t)
     return mod.(f .+ Float64(π), Ref(2 * π)) .- Float64(π)
 end
@@ -186,24 +185,24 @@ THe second variant generates `n` points equispaced in ìnterval` and calls the f
   second direction for the plane to define the Lemniscate in, unit vector orthogonal to `X` recommended.
 """
 function Lemniscate(
-    t::Number;
-    a=π / 2.0,
-    manifold=Sphere(2),
-    p=(manifold == Sphere(2)) ? [0.0, 0.0, 1.0] : rand(manifold),
-    X=if ((manifold == Sphere(2)) && (p == [0.0, 0.0, 1.0]))
-        [1.0, 0.0, 0.0]
-    else
-        get_vectors(manifold, p, get_basis(manifold, p, DefaultOrthonormalBasis()))[1]
-    end,
-    Y=if ((manifold == Sphere(2)) && (p == [0.0, 0.0, 1.0]))
-        [0.0, 1.0, 0.0]
-    else
-        get_vectors(manifold, p, get_basis(manifold, p, DefaultOrthonormalBasis()))[2]
-    end,
-)
+        t::Number;
+        a = π / 2.0,
+        manifold = Sphere(2),
+        p = (manifold == Sphere(2)) ? [0.0, 0.0, 1.0] : rand(manifold),
+        X = if ((manifold == Sphere(2)) && (p == [0.0, 0.0, 1.0]))
+            [1.0, 0.0, 0.0]
+        else
+            get_vectors(manifold, p, get_basis(manifold, p, DefaultOrthonormalBasis()))[1]
+        end,
+        Y = if ((manifold == Sphere(2)) && (p == [0.0, 0.0, 1.0]))
+            [0.0, 1.0, 0.0]
+        else
+            get_vectors(manifold, p, get_basis(manifold, p, DefaultOrthonormalBasis()))[2]
+        end,
+    )
     Z = a * (cos(t) / (sin(t)^2 + 1.0)) * X + a * (cos(t) * sin(t) / (sin(t)^2 + 1.0)) * Y
     return exp(manifold, p, Z)
 end
-function Lemniscate(n::Integer; interval=[0.0, 2 * π], kwargs...)
-    return map(t -> Lemniscate(t; kwargs...), range(interval[1], interval[2]; length=n))
+function Lemniscate(n::Integer; interval = [0.0, 2 * π], kwargs...)
+    return map(t -> Lemniscate(t; kwargs...), range(interval[1], interval[2]; length = n))
 end

@@ -15,10 +15,10 @@ using Manifolds, Manopt, ManoptExamples, Test
     E = ℝ^3
     @test f(M, p) == 1
     @test f(E, x) == λ * xn
-    @test norm(M, p, grad_f(M, p)) ≈ 0.0 atol = 3e-16
+    @test norm(M, p, grad_f(M, p)) ≈ 0.0 atol = 3.0e-16
     Y = zero_vector(M, p)
     grad_f(M, Y, p)
-    @test norm(M, p, Y) ≈ 0.0 atol = 3e-16
+    @test norm(M, p, Y) ≈ 0.0 atol = 3.0e-16
     @test grad_f(E, x) == 2 * x
     grad_f(E, Y, x)
     @test Y == 2 * x

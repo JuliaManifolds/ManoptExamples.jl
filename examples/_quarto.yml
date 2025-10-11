@@ -16,8 +16,7 @@ project:
     - "!CRPG-Constrained-Mean-Hn.qmd"
     - "!NCRPG-Grassmann.qmd"
     - "!NCRPG-Sparse-PCA.qmd"
-    - "!NCRPG-Row-Sparse-Low-Rank.qmd"
-    
+
 crossref:
   fig-prefix: Figure
   tbl-prefix: Table
@@ -34,4 +33,4 @@ format:
     variant: -raw_html+tex_math_dollars
     wrap: preserve
 
-jupyter: julia-1.11
+engines: ['julia']
