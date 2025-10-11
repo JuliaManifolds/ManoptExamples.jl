@@ -340,12 +340,12 @@ for (r, m) in r_m_array
         ],
         stopping_criterion =  StopAfterIteration(max_iters )|StopWhenGradientMappingNormLess(stop_NCRPG)
     )
-    bm_NCRPG = @benchmark proximal_gradient_method(``Mr, ``f, ``g, ``grad_g, ``start;
-        prox_nonsmooth=``prox_norm12,
+    bm_NCRPG = @benchmark proximal_gradient_method($Mr, $f, $g, $grad_g, $start;
+        prox_nonsmooth=$prox_norm12,
         retraction_method=OrthographicRetraction(),
         inverse_retraction_method=OrthographicInverseRetraction(),
-        stepsize = ConstantLength(``step_size),
-        stopping_criterion = StopAfterIteration(``max_iters )|StopWhenGradientMappingNormLess(``stop_NCRPG)
+        stepsize = ConstantLength($step_size),
+        stopping_criterion = StopAfterIteration($max_iters )|StopWhenGradientMappingNormLess($stop_NCRPG)
     )
     it_NCRPG, res_NCRPG = get_record(rec_NCRPG)[end]
     # NCRPG with backtracking
@@ -369,12 +369,12 @@ for (r, m) in r_m_array
         ],
         stopping_criterion = StopAfterIteration(max_iters )|    StopWhenGradientMappingNormLess(stop_NCRPG)
     )
-    bm_NCRPG_bt = @benchmark proximal_gradient_method(``Mr, ``f, ``g, ``grad_g, ``start;
-        prox_nonsmooth=``prox_norm12,
+    bm_NCRPG_bt = @benchmark proximal_gradient_method($Mr, $f, $g, $grad_g, $start;
+        prox_nonsmooth=$prox_norm12,
         retraction_method=OrthographicRetraction(),
         inverse_retraction_method=OrthographicInverseRetraction(),
-        stepsize = ProximalGradientMethodBacktracking(; strategy=:nonconvex, initial_stepsize=``init_step_size_bt),
-        stopping_criterion = StopAfterIteration(``max_iters )|  StopWhenGradientMappingNormLess(``stop_NCRPG)
+        stepsize = ProximalGradientMethodBacktracking(; strategy=:nonconvex, initial_stepsize=$init_step_size_bt),
+        stopping_criterion = StopAfterIteration($max_iters )|  StopWhenGradientMappingNormLess($stop_NCRPG)
     )
     it_NCRPG_bt, res_NCRPG_bt = get_record(rec_NCRPG_bt)[end]
     # RADMM
@@ -384,10 +384,10 @@ for (r, m) in r_m_array
         η = step_size,
         stop = stop_RADMM
     )
-    bm_RADMM = @benchmark RADMM_blind_deconv(``A, ``M, ``N, ``r, ``c, ``y, ``prox_norm12_global;
+    bm_RADMM = @benchmark RADMM_blind_deconv($A, $M, $N, $r, $c, $y, $prox_norm12_global;
         max_iters  = max_iters ,
-        start = ``start,
-        η = ``step_size,
+        start = $start,
+        η = $step_size,
         stop = stop_RADMM
     )
     #
