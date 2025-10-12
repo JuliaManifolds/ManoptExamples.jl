@@ -336,10 +336,10 @@ This tutorial is cached. It was last run on the following package versions.
       [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
       [91a5bcdd] Plots v1.41.1
-      [08abe8d2] PrettyTables v3.1.0
+    ⌅ [08abe8d2] PrettyTables v2.4.0
       [6099a3de] PythonCall v0.9.28
       [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 10, 2025, 20:34:44.
+This tutorial was last rendered October 12, 2025, 8:35:47.

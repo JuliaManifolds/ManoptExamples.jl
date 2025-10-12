@@ -279,6 +279,7 @@ sgm_bm_kwargs = [
     :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
 ]
 cppa_kwargs = [
+    #=
     :debug => [
         :Iteration,
         " | ",
@@ -291,6 +292,7 @@ cppa_kwargs = [
         1000,
         :Stop,
     ],
+    =#
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stopping_criterion => StopWhenAny(StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)),
@@ -372,6 +374,7 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
+#| output: asis
 benchmarking && pretty_table(DataFrame(B, :auto); tf=tf_markdown, header=header)
 ```
 Lastly, we plot the results.

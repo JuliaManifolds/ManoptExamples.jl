@@ -52,7 +52,7 @@ n_tests = 10 # number of tests for each parameter setting
 atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-dims = [2, 10, 100] 
+dims = [2, 10, 100]
 μs = [0.1, 0.5, 1.0]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```
@@ -61,7 +61,7 @@ dims = [2, 10, 100]
 # Objective, gradient, and proxes
 g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
-# 
+#
 # Proximal map for the $\ell_1$-norm on the hyperbolic space
 function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
     n = manifold_dimension(Hn)
@@ -70,25 +70,25 @@ function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
     y[end] = x[end] + t
     for i in 1:n
         y[i] = sign(x[i])*max(0, abs(x[i]) - t)
-    end 
+    end
     y /= sqrt(abs(minkowski_metric(y, y)))
-    for k in 1:max_it 
+    for k in 1:max_it
         t_new = μ * sqrt(abs(minkowski_metric(x, y)^2 - 1 ))/distance(Hn, x, y)
         if abs(t_new - t) ≤ tol
             return y
-        end 
+        end
         y[end] = x[end] + t_new
         for i in 1:n
             y[i] = sign(x[i])*max(0, abs(x[i]) - t_new)
-        end 
+        end
         y /= sqrt(abs(minkowski_metric(y, y)))
         t = copy(t_new)
-    end 
+    end
     return y
 end
 h(M, p, μ) = μ * norm(p, 1)
 prox_h(M, λ, p, μ) = prox_l1_Hn(M, λ * μ, p)
-# 
+#
 f(M, p, data, μ) = g(M, p, data) + h(M, p, μ)
 # CPPA needs the proximal operators for the total objective
 function proxes_f(data, μ)
@@ -118,7 +118,7 @@ end
 We introduce some keyword arguments for the solvers we will use in this experiment
 
 ``` julia
-# Keyword arguments for CRPG with a constant stepsize 
+# Keyword arguments for CRPG with a constant stepsize
 pgm_kwargs_cn(constant_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -133,16 +133,16 @@ pgm_bm_kwargs_cn(constant_stepsize) = [
     :stepsize => ConstantLength(constant_stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
 # Keyword arguments for CRPG with a backtracked stepsize
 pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
         contraction_factor=contraction_factor,
         initial_stepsize=initial_stepsize,
-        strategy=:convex, 
+        strategy=:convex,
         warm_start_factor=warm_start_factor,
     ),
     :stopping_criterion => StopWhenAny(
@@ -152,7 +152,7 @@ pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
 pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
         contraction_factor=contraction_factor,
         initial_stepsize=initial_stepsize,
         strategy=:convex,
@@ -160,7 +160,7 @@ pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
 # Keyword arguments for CPPA
 cppa_kwargs(M) = [
@@ -187,7 +187,7 @@ And run the experiments
 for n in dims
     # Set random seed for reproducibility
     Random.seed!(random_seed)
-    
+
     # Define manifold
     M = Hyperbolic(n)
 
@@ -198,7 +198,7 @@ for n in dims
 
         for (c, μ) in enumerate(μs)
             # Initialize starting point for the optimization
-            p0 = rand(M) 
+            p0 = rand(M)
 
             # Initialize functions
             g_hn(M, p) = g(M, p, data)
@@ -217,7 +217,7 @@ for n in dims
             #
             # Optimization
             # Constant stepsize
-            pgm_cn = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
+            pgm_cn = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0;
                 prox_nonsmooth=prox_h_hn,
                 pgm_kwargs_cn(constant_stepsize)...
             )
@@ -225,7 +225,7 @@ for n in dims
             pgm_record_cn = get_record(pgm_cn)
             #
             # Backtracked stepsize
-            pgm_bt = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
+            pgm_bt = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0;
                 prox_nonsmooth=prox_h_hn,
                 pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor)...
             )
@@ -239,12 +239,12 @@ for n in dims
             #
             # Benchmark the algorithms
             # Constant stepsize
-            pgm_bm_cn = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
+            pgm_bm_cn = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0;
                 prox_nonsmooth=$prox_h_hn,
                 $pgm_bm_kwargs_cn($constant_stepsize)...
             )
             # Backtracked stepsize
-            pgm_bm_bt = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
+            pgm_bm_bt = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0;
                 prox_nonsmooth=$prox_h_hn,
                 $pgm_bm_kwargs_bt($contraction_factor, $initial_stepsize, $warm_start_factor)...
             )
@@ -281,21 +281,21 @@ for n in dims
             iterations_cppa = length(cppa_record)
             iterations_pgm_cn_means[c] += iterations_pgm_cn
             iterations_pgm_bt_means[c] += iterations_pgm_bt
-            iterations_cppa_means[c] += iterations_cppa      
+            iterations_cppa_means[c] += iterations_cppa
         end
     end
     for (c, μ) in enumerate(μs)
-        push!(df_pgm_cn, 
+        push!(df_pgm_cn,
             [
                 μ, n, iterations_pgm_cn_means[c]/n_tests, time_pgm_cn_means[c]/n_tests, objective_pgm_cn_means[c]/n_tests, sparsity_pgm_cn_means[c]/n_tests
             ]
         )
-        push!(df_pgm_bt, 
+        push!(df_pgm_bt,
             [
                 μ, n, iterations_pgm_bt_means[c]/n_tests, time_pgm_bt_means[c]/n_tests, objective_pgm_bt_means[c]/n_tests, sparsity_pgm_bt_means[c]/n_tests
             ]
         )
-        push!(df_cppa, 
+        push!(df_cppa,
             [
                 μ, n, iterations_cppa_means[c]/n_tests, time_cppa_means[c]/n_tests, objective_cppa_means[c]/n_tests, sparsity_cppa_means[c]/n_tests
             ]
@@ -314,7 +314,7 @@ for n in dims
     sparsity_cppa_means .= zeros(length(μs))
     objective_pgm_cn_means .= zeros(length(μs))
     objective_pgm_bt_means .= zeros(length(μs))
-    objective_cppa_means .= zeros(length(μs)) 
+    objective_cppa_means .= zeros(length(μs))
 end
 ```
 
@@ -327,23 +327,23 @@ df_pgm_bt = sort(df_pgm_bt, :μ)
 df_cppa = sort(df_cppa, :μ)
 df_results_time_iter = DataFrame(
     μ             = df_pgm_cn.μ,
-    n             = Int.(df_pgm_cn.n), 
-    CRPG_iter     = Int.(round.(df_pgm_cn.iterations, digits = 0)), 
-    CRPG_time     = df_pgm_cn.time, 
+    n             = Int.(df_pgm_cn.n),
+    CRPG_iter     = Int.(round.(df_pgm_cn.iterations, digits = 0)),
+    CRPG_time     = df_pgm_cn.time,
     CRPG_bt_iter  = Int.(round.(df_pgm_bt.iterations, digits = 0)),
-    CRPG_bt_time  = df_pgm_bt.time, 
+    CRPG_bt_time  = df_pgm_bt.time,
     CPPA_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
-    CPPA_time     = df_cppa.time, 
+    CPPA_time     = df_cppa.time,
 )
 df_results_obj_spar = DataFrame(
     μ               = df_pgm_cn.μ,
-    n               = Int.(df_pgm_cn.n), 
-    CRPG_obj       = df_pgm_cn.objective, 
-    CRPG_sparsity  = df_pgm_cn.sparsity,  
-    CRPG_bt_obj    = df_pgm_bt.objective, 
-    CRPG_bt_sparsity = df_pgm_bt.sparsity,  
-    CPPA_obj         = df_cppa.objective, 
-    CPPA_sparsity    = df_cppa.sparsity, 
+    n               = Int.(df_pgm_cn.n),
+    CRPG_obj       = df_pgm_cn.objective,
+    CRPG_sparsity  = df_pgm_cn.sparsity,
+    CRPG_bt_obj    = df_pgm_bt.objective,
+    CRPG_bt_sparsity = df_pgm_bt.sparsity,
+    CPPA_obj         = df_cppa.objective,
+    CPPA_sparsity    = df_cppa.sparsity,
 )
 # Write the results to CSV files
 CSV.write(joinpath(results_folder, "results-Hn-time-iter-$(n_tests)-$(dims[end]).csv"), df_results_time_iter)
@@ -355,38 +355,33 @@ First, we look at the time and number of iterations for each algorithm.
 
     | **μ** | **n** | **CRPG\_const\_iter** | **CRPG\_const\_time** | **CRPG\_bt\_iter** | **CRPG\_bt\_time** | **CPPA\_iter** | **CPPA\_time** |
     |------:|------:|----------------------:|----------------------:|-------------------:|-------------------:|---------------:|---------------:|
-    | 0.1   | 2     | 164                   | 0.0416791             | 1568               | 1.11878            | 5000           | 3.48623        |
-    | 0.1   | 10    | 94                    | 0.0278336             | 1453               | 1.11242            | 5000           | 3.73202        |
-    | 0.1   | 100   | 47                    | 0.0386871             | 3675               | 19.5697            | 5000           | 6.29775        |
-    | 0.5   | 2     | 119                   | 0.0283672             | 82                 | 0.0286119          | 4502           | 2.73196        |
-    | 0.5   | 10    | 70                    | 0.0199379             | 791                | 0.522316           | 4502           | 3.38637        |
-    | 0.5   | 100   | 46                    | 0.0370093             | 1706               | 6.66355            | 5000           | 6.62581        |
-    | 1.0   | 2     | 58                    | 0.0134402             | 585                | 0.345014           | 2013           | 1.22326        |
-    | 1.0   | 10    | 49                    | 0.0131571             | 34                 | 0.0155859          | 3507           | 2.5143         |
-    | 1.0   | 100   | 47                    | 0.0394827             | 1724               | 6.40198            | 4004           | 5.31794        |
+    | 0.1   | 2     | 236                   | 0.0548516             | 3524               | 3.14372            | 5000           | 2.69523        |
+    | 0.1   | 10    | 102                   | 0.0272037             | 1546               | 1.63993            | 5000           | 3.39272        |
+    | 0.1   | 100   | 44                    | 0.0336062             | 3266               | 15.7017            | 5000           | 6.23112        |
+    | 0.5   | 2     | 160                   | 0.0338148             | 1160               | 1.55429            | 4502           | 2.46977        |
+    | 0.5   | 10    | 80                    | 0.0196075             | 930                | 1.04769            | 5000           | 3.40167        |
+    | 0.5   | 100   | 43                    | 0.0338665             | 565                | 1.48537            | 5000           | 6.1948         |
+    | 1.0   | 2     | 109                   | 0.023341              | 1252               | 1.47171            | 3507           | 1.89952        |
+    | 1.0   | 10    | 65                    | 0.0156837             | 588                | 0.88618            | 4004           | 2.69726        |
+    | 1.0   | 100   | 43                    | 0.0319859             | 1847               | 7.3035             | 5000           | 6.19012        |
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 
     | **μ** | **n** | **CRPG\_const\_obj** | **CRPG\_const\_spar** | **CRPG\_bt\_obj** | **CRPG\_bt\_spar** | **CPPA\_obj** | **CPPA\_spar** |
     |------:|------:|---------------------:|----------------------:|------------------:|-------------------:|--------------:|---------------:|
-    | 0.1   | 2     | 2.47941              | 0.05                  | 2.47941           | 0.05               | 2.47941       | 0.05           |
-    | 0.1   | 10    | 6.8023               | 0.11                  | 6.8023            | 0.11               | 6.8023        | 0.11           |
-    | 0.1   | 100   | 53.4119              | 0.09                  | 53.4119           | 0.09               | 53.4119       | 0.09           |
-    | 0.5   | 2     | 3.16984              | 0.35                  | 3.16984           | 0.35               | 3.16984       | 0.35           |
-    | 0.5   | 10    | 7.81676              | 0.45                  | 7.81676           | 0.45               | 7.81676       | 0.45           |
-    | 0.5   | 100   | 56.342               | 0.393                 | 56.342            | 0.393              | 56.342        | 0.393          |
-    | 1.0   | 2     | 3.75573              | 0.7                   | 3.75573           | 0.7                | 3.75573       | 0.7            |
-    | 1.0   | 10    | 8.56761              | 0.77                  | 8.56761           | 0.77               | 8.56761       | 0.77           |
-    | 1.0   | 100   | 58.1092              | 0.718                 | 58.1092           | 0.718              | 58.1094       | 0.721          |
+    | 0.1   | 2     | 5.95233              | 0.0                   | 5.95233           | 0.0                | 5.95233       | 0.0            |
+    | 0.1   | 10    | 7.37644              | 0.07                  | 7.37644           | 0.07               | 7.37644       | 0.07           |
+    | 0.1   | 100   | 52.6785              | 0.091                 | 52.6785           | 0.091              | 52.6785       | 0.091          |
+    | 0.5   | 2     | 6.84683              | 0.2                   | 6.84683           | 0.2                | 6.84683       | 0.2            |
+    | 0.5   | 10    | 8.46827              | 0.44                  | 8.46827           | 0.44               | 8.46827       | 0.44           |
+    | 0.5   | 100   | 55.2046              | 0.447                 | 55.2046           | 0.447              | 55.2046       | 0.448          |
+    | 1.0   | 2     | 7.56389              | 0.55                  | 7.56389           | 0.55               | 7.56389       | 0.55           |
+    | 1.0   | 10    | 9.27421              | 0.76                  | 9.27421           | 0.76               | 9.27421       | 0.76           |
+    | 1.0   | 100   | 56.6973              | 0.768                 | 56.6973           | 0.768              | 56.6973       | 0.768          |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
-
-``` julia
-using Pkg
-Pkg.status()
-```
 
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
@@ -416,7 +411,7 @@ Pkg.status()
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 11, 2025, 11:27:34.
+This tutorial was last rendered October 12, 2025, 10:9:42.
 
 ## Literature
 

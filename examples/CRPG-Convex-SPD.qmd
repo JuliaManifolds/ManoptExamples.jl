@@ -236,7 +236,7 @@ end
 ```
 
 ```{julia}
-# | output: false
+#| output: false
 global A1_SPD = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -320,9 +320,10 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to CRPG with a constant stepsize, while columns 5 to 7 refer to the backtracked case...
 ```{julia}
-# | echo: false
-# | code-fold: true
-benchmarking && pretty_table(A1_SPD; backend = Val(:markdown), header = col_names_1)
+#| echo: false
+#| code-fold: true
+#| output: asis
+benchmarking && pretty_table(A1_SPD; backend=Val(:markdown), header=col_names_1)
 ```
 
 ```{julia}
@@ -361,7 +362,7 @@ end
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 ```{julia}
-# | output: false
+#| output: false
 function plot_convergence(
     stats,
     dimensions=[2],
@@ -470,7 +471,7 @@ figs = plot_convergence(stats)
 ```
 
 ```{julia}
-# | code-fold: true
+#| code-fold: true
 for fig in figs
     display(fig)
 end

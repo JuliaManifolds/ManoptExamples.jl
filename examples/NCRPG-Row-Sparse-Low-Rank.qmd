@@ -453,8 +453,8 @@ end
 
 We export the results to CSV files
 ```{julia}
-# | output: false
-# | code-fold: true
+#| output: false
+#| code-fold: true
 CSV.write(joinpath(results_folder, "results-fixed-rank-RADMM.csv"), df_RADMM)
 CSV.write(joinpath(results_folder, "results-fixed-rank-NCRPG.csv"), df_NCRPG)
 CSV.write(joinpath(results_folder, "results-fixed-rank-NCRPG-bt.csv"), df_NCRPG_bt)
@@ -464,33 +464,39 @@ CSV.write(joinpath(results_folder, "results-fixed-rank-distances.csv"), df_dista
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 The first table shows the performance RADMM.
 ```{julia}
-# | echo: false
-# | code-fold: true
+#| echo: false
+#| code-fold: true
+#| output: asis
 header_1 = ["M", "N", "m", "r", "s", "stepsize", "time (s)", "error", "iterations", "mean zero row error"]
-benchmarking && pretty_table(df_RADMM; backend = Val{:markdown}, column_labels = header_1)
+benchmarking && pretty_table(df_RADMM; backend = Val(:markdown), header = header_1)
 ```
 
 The next table shows the performance of NCRPG with a constant stepsize.
 ```{julia}
-# | echo: false
-# | code-fold: true
-benchmarking && pretty_table(df_NCRPG; backend = Val{:markdown}, column_labels = header_1)
+#| echo: false
+#| code-fold: true
+#| output: asis
+benchmarking && pretty_table(df_NCRPG; backend=Val(:markdown), header=header_1)
 ```
 
 The next table shows the performance of NCRPG with a backtracked stepsize.
 In this case, the column "stepsize" indicates the initial stepsize for the backtracking procedure.
 ```{julia}
-# | echo: false
-# | code-fold: true
-benchmarking && pretty_table(df_NCRPG_bt; backend = Val{:markdown}, column_labels = header_1)
+#| echo: false
+#| code-fold: true
+#| output: asis
+benchmarking && pretty_table(df_NCRPG_bt; backend=Val(:markdown), header=header_1)
 ```
 
 Second, we look at the distances of the solutions found by each algorithm.
 ```{julia}
-# | echo: false
-# | code-fold: true
-header_2 = ["M", "N", "m", "r", "s", "dist_NCRPG_NCRPG_bt", "dist_NCRPG_RADMM", "dist_NCRPG_NCRPG_bt"]
-benchmarking && pretty_table(df_distances; backend = Val{:markdown}, column_labels = header_2)
+#| echo: false
+#| code-fold: true
+#| output: asis
+header_2 = [
+    "M", "N", "m", "r", "s", "dist_NCRPG_NCRPG_bt", "dist_NCRPG_RADMM", "dist_NCRPG_NCRPG_bt",
+]
+benchmarking && pretty_table(df_distances; backend=Val(:markdown), header=header_2)
 ```
 
 
