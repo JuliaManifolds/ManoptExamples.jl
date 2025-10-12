@@ -101,7 +101,7 @@ k_min = 0.0
 diameter = π/(3 * √k_max)
 #
 # Manifolds and data
-M = SpecialOrthogonal(d)
+M = Rotations(d)
 p0 = orthogonal_procrustes(A, B)
 project!(M, p0, p0)
 ```

@@ -47,7 +47,7 @@ We initialize the experiment parameters, as well as some utility functions.
 # Set random seed for reproducibility
 random_seed = 1520
 Random.seed!(random_seed)
-BenchmarkTools.DEFAULT_PARAMETERS.seconds = 2.0 
+BenchmarkTools.DEFAULT_PARAMETERS.seconds = 2.0
 m_tests = 10 # number of tests for each parameter setting
 means = 20 # number of means to compute
 
@@ -65,7 +65,7 @@ function gen_test_data_SPCA(n, m, p)
     for i in 1:n
         A[:, i] = A[:, i] .- mean(A[:, i])
         A[:, i] = A[:, i] / std(A[:, i])
-    end 
+    end
     svdA = svd(A)
     Vt = svdA.Vt
     PCs = Vt[:, 1:p]
@@ -82,14 +82,14 @@ function prox_l1_OB(n, p, μ; tol = 1e-10, max_iters = 10)
     return function prox_l1_OB_μ(M, λ, X)
         μλ = μ * λ
         prox_X = Array{Float64}(undef, n, p)
-        for k in 1:p 
+        for k in 1:p
             x = X[:, k]
             t = μλ
             px_t = X[:, k]
-            for _ in 1:max_iters 
+            for _ in 1:max_iters
                 t_old = t
 
-                z = abs.(x) .- t 
+                z = abs.(x) .- t
                 prox_Rn_t = (z .> 0) .* sign.(x) .* z
 
                 px_t = prox_Rn_t/norm(prox_Rn_t)
@@ -100,28 +100,28 @@ function prox_l1_OB(n, p, μ; tol = 1e-10, max_iters = 10)
                     px_t = x
                     prox_X[:, k] = x
                     break
-                end 
-                if abs(t - t_old) < tol 
+                end
+                if abs(t - t_old) < tol
                     prox_X[:, k] = px_t
                     break
-                end 
-            end 
+                end
+            end
             prox_X[:, k] = px_t
-        end 
+        end
         return prox_X
-    end 
+    end
 end
 ```
 
 ``` julia
 # Objective, gradient, and proxes
-g(M, X, H, D) = 0.5 * norm(X'H * X - D)^2 
-function grad_g(M, X, H, D)
+g_(M, X, H, D) = 0.5 * norm(X'H * X - D)^2
+function grad_g_(M, X, H, D)
     HX = H*X
     return project(M, X, 2*HX*(X'HX - D))
 end
-h(M, X, μ) = μ * norm(X, 1)
-f(M, X, H, D, μ) = 0.5 * norm(X'H * X - D)^2 + μ * norm(X, 1)
+h_(M, X, μ) = μ * norm(X, 1)
+f_(M, X, H, D, μ) = 0.5 * norm(X'H * X - D)^2 + μ * norm(X, 1)
 ```
 
 We introduce an implementation of the RPG method for the Sparse PCA problem on the oblique manifold, following [HuangWei:2021:1](@cite).
@@ -130,54 +130,54 @@ We introduce an implementation of the RPG method for the Sparse PCA problem on t
 # Implementation of the proximal operator for the ℓ1-norm on the Oblique manifold
 function RPG_prox_OB(S, X, grad_fX, λ, L, n, p; max_iters  = 10, tol=1e-10)
     λ̃ = λ/L
-    d = 0 
+    d = 0
     for k in 1:p
-        x = X[:,k] 
+        x = X[:,k]
         ξ_x = 1/L * grad_fX[:,k]
-        
+
         neg∇h = (x-ξ_x)/λ̃
         i_max = argmax(abs.(neg∇h))
         if abs(neg∇h[i_max]) <= 1.0
             y = sign(neg∇h[i_max])*(1:n .== i_max)
         else
             z = abs.(neg∇h) .- 1.0
-            Act_set = z .> 0  
+            Act_set = z .> 0
             y = Act_set .* sign.(neg∇h) .* z
             y = y/norm(y)
         end
-        for j in 1:max_iters  
-            xty = x'y 
+        for j in 1:max_iters
+            xty = x'y
             if xty >= 1
-                sy = -1 
+                sy = -1
                 ty = 1
-            else 
+            else
                 ξty = ξ_x'y
                 acosxty = acos(xty)
-                α = 1-xty^2 
+                α = 1-xty^2
                 sy = - acosxty/sqrt(α) - ξty/α + acosxty * ξty * xty / sqrt(α^3)
                 ty = acosxty/sqrt(α)
             end
             neg∇h = -(sy*x+ty*ξ_x)/λ̃
-            
+
             i_max = argmax(abs.(neg∇h))
             if abs(neg∇h[i_max]) <= 1.0
                 y_new = sign(neg∇h[i_max])*(1:n .== i_max)
             else
                 z = abs.(neg∇h) .- 1.0
-                Act_set = z .> 0  
+                Act_set = z .> 0
                 y_new = Act_set .* sign.(neg∇h) .* z
                 y_new = y_new/norm(y_new)
             end
-            
-            if max(abs(xty-x'y_new), abs(ξ_x'y-ξ_x'y_new)) < tol 
-                break 
-            end 
-            y = y_new 
-        end 
+
+            if max(abs(xty-x'y_new), abs(ξ_x'y-ξ_x'y_new)) < tol
+                break
+            end
+            y = y_new
+        end
 
         d += distance(S, x,y)^2
         X[:,k] = y
-    end 
+    end
     return sqrt(d)
 end
 #
@@ -190,25 +190,25 @@ function RPG_SPCA_OB(M, H, D, μ, L, start, prox_fun; max_iters  = 1000, stop = 
         HX = H*X
         return project(M, X, 2*HX*(X'HX-D))
     end
-    X = copy(start) 
-    if !record 
-        for i in 1:max_iters 
+    X = copy(start)
+    if !record
+        for i in 1:max_iters
             change = prox_fun(S, X, grad_f(M,X,D), μ, L, n, p)
             if L*change < stop
                 return X, i
-            end 
-        end 
-        return X, max_iters  
-    else 
+            end
+        end
+        return X, max_iters
+    else
         Iterates = []
-        for i in 1:max_iters 
+        for i in 1:max_iters
             change = prox_fun(S, X, grad_f(M,X,D), μ, L, n, p)
             push!(Iterates, copy(X))
             if L*change < stop
                 return Iterates, i
-            end 
-        end 
-        return Iterates, max_iters  
+            end
+        end
+        return Iterates, max_iters
     end
 end
 ```
@@ -222,7 +222,7 @@ for (n, p) in n_p_array
     # Define manifold
     OB = Oblique(n, p)
     for m in 1:m_tests
-        # Construct problem 
+        # Construct problem
         A, PCs, d = gen_test_data_SPCA(n, means, p)
         H = A'A / norm(A'A) * 10
         D = diagm(svd(H).S[1:p])
@@ -230,11 +230,11 @@ for (n, p) in n_p_array
 
         for (c, μ) in enumerate(μs)
             # Localize functions
-            g(M, X) = g(M, X, H, D)
-            grad_g(M, X) = grad_g(M, X, H, D)
-            h(M, X) = h(M, X, μ)
+            g(M, X) = g_(M, X, H, D)
+            grad_g(M, X) = grad_g_(M, X, H, D)
+            h(M, X) = h_(M, X, μ)
             prox_norm1_NCRPG = prox_l1_OB(n, p, μ)
-            f(M, X) = f(M, X, H, D, μ)
+            f(M, X) = f_(M, X, H, D, μ)
             #
             # Parameters
             step_size = 1/L
@@ -250,24 +250,24 @@ for (n, p) in n_p_array
             # Optimization
             # NCRPG
             rec_NCRPG = proximal_gradient_method(OB, f, g, grad_g, start;
-                prox_nonsmooth = prox_norm1_NCRPG, 
+                prox_nonsmooth = prox_norm1_NCRPG,
                 stepsize = ConstantLength(step_size),
                 record = [:Iteration, :Iterate],
                 return_state = true,
                 stopping_criterion = StopAfterIteration(max_iters)| StopWhenGradientMappingNormLess(stop_NCRPG)
             )
             # Benchmark NCRPG
-            bm_NCRPG = @benchmark proximal_gradient_method(``OB, ``f, ``g, ``grad_g, ``start;
-                prox_nonsmooth = ``prox_norm1_NCRPG,  
-                stepsize = ConstantLength(``step_size),
-                stopping_criterion = StopAfterIteration(``max_iters)| StopWhenGradientMappingNormLess(``stop_NCRPG)
+            bm_NCRPG = @benchmark proximal_gradient_method($OB, $f, $g, $grad_g, $start;
+                prox_nonsmooth = $prox_norm1_NCRPG,
+                stepsize = ConstantLength($step_size),
+                stopping_criterion = StopAfterIteration($max_iters)| StopWhenGradientMappingNormLess($stop_NCRPG)
             )
             # NCRPG with backtracking
             rec_NCRPG_bt = proximal_gradient_method(OB, f, g, grad_g, start;
-                prox_nonsmooth = prox_norm1_NCRPG, 
-                stepsize = ProximalGradientMethodBacktracking(; 
-                    strategy = :nonconvex, 
-                    initial_stepsize = init_step_size_bt, 
+                prox_nonsmooth = prox_norm1_NCRPG,
+                stepsize = ProximalGradientMethodBacktracking(;
+                    strategy = :nonconvex,
+                    initial_stepsize = init_step_size_bt,
                     stop_when_stepsize_less = stop_step_size_bt
                 ),
                 record = [:Iteration, :Iterate],
@@ -275,24 +275,24 @@ for (n, p) in n_p_array
                 stopping_criterion = StopAfterIteration(max_iters)| StopWhenGradientMappingNormLess(stop_NCRPG_bt)
             )
             # Benchmark NCRPG with backtracking
-            bm_NCRPG_bt = @benchmark proximal_gradient_method(``OB, ``f, ``g, ``grad_g, ``start;
-                prox_nonsmooth = ``prox_norm1_NCRPG,  
-                stepsize = ProximalGradientMethodBacktracking(; 
-                    strategy = :nonconvex, 
-                    initial_stepsize = ``init_step_size_bt, 
-                    stop_when_stepsize_less = ``stop_step_size_bt
+            bm_NCRPG_bt = @benchmark proximal_gradient_method($OB, $f, $g, $grad_g, $start;
+                prox_nonsmooth = $prox_norm1_NCRPG,
+                stepsize = ProximalGradientMethodBacktracking(;
+                    strategy = :nonconvex,
+                    initial_stepsize = $init_step_size_bt,
+                    stop_when_stepsize_less = $stop_step_size_bt
                 ),
-                stopping_criterion = StopAfterIteration(``max_iters)| StopWhenGradientMappingNormLess(``stop_NCRPG_bt)
+                stopping_criterion = StopAfterIteration($max_iters)| StopWhenGradientMappingNormLess($stop_NCRPG_bt)
             )
-            # RPG 
+            # RPG
             Iterates_RPG, it_RPG = RPG_SPCA_OB(OB, H, D, μ, L, start, RPG_prox_OB;
-                max_iters = max_iters, 
-                stop = stop_RPG, 
+                max_iters = max_iters,
+                stop = stop_RPG,
                 record = true
             )
-            bm_RPG = @benchmark RPG_SPCA_OB(``OB, ``H, ``D, ``μ, ``L, ``start, ``RPG_prox_OB; 
-                max_iters = ``max_iters, 
-                stop = ``stop_RPG
+            bm_RPG = @benchmark RPG_SPCA_OB($OB, $H, $D, $μ, $L, $start, $RPG_prox_OB;
+                max_iters = $max_iters,
+                stop = $stop_RPG
             )
             #
             # Collect test results
@@ -339,16 +339,16 @@ for (n, p) in n_p_array
             it_NCRPG_tmp[c]        += it_NCRPG
             it_NCRPG_bt_tmp[c]     += it_NCRPG_bt
             it_RPG_tmp[c]          += it_RPG
-        end 
-    end 
+        end
+    end
     for (c, μ) in enumerate(μs)
-        push!(df_results_RPG, 
+        push!(df_results_RPG,
             [μ, n, p, time_RPG_tmp[c]/m_tests, obj_RPG_tmp[c]/m_tests, spar_RPG_tmp[c]/m_tests, it_RPG_tmp[c]/m_tests, orth_RPG_tmp[c]/m_tests]
         )
-        push!(df_results_NCRPG, 
+        push!(df_results_NCRPG,
             [μ, n, p, time_NCRPG_tmp[c]/m_tests, obj_NCRPG_tmp[c]/m_tests, spar_NCRPG_tmp[c]/m_tests, it_NCRPG_tmp[c]/m_tests, orth_NCRPG_tmp[c]/m_tests]
         )
-        push!(df_results_NCRPG_bt, 
+        push!(df_results_NCRPG_bt,
             [μ, n, p, time_NCRPG_bt_tmp[c]/m_tests, obj_NCRPG_bt_tmp[c]/m_tests, spar_NCRPG_bt_tmp[c]/m_tests, it_NCRPG_bt_tmp[c]/m_tests, orth_NCRPG_bt_tmp[c]/m_tests]
         )
     end
@@ -381,32 +381,32 @@ df_results_NCRPG_bt = sort(df_results_NCRPG_bt, :μ)
 df_results_RPG = sort(df_results_RPG, :μ)
 df_results_time_iter = DataFrame(
     μ             = df_results_NCRPG.μ,
-    n             = Int.(df_results_NCRPG.n), 
+    n             = Int.(df_results_NCRPG.n),
     p             = Int.(df_results_NCRPG.p),
-    NCRPG_time     = df_results_NCRPG.time, 
-    NCRPG_iter     = Int.(round.(df_results_NCRPG.iterations, digits = 0)), 
-    NCRPG_bt_time  = df_results_NCRPG_bt.time, 
+    NCRPG_time     = df_results_NCRPG.time,
+    NCRPG_iter     = Int.(round.(df_results_NCRPG.iterations, digits = 0)),
+    NCRPG_bt_time  = df_results_NCRPG_bt.time,
     NCRPG_bt_iter  = Int.(round.(df_results_NCRPG_bt.iterations, digits = 0)),
-    RPG_time     = df_results_RPG.time, 
+    RPG_time     = df_results_RPG.time,
     RPG_iter     = Int.(round.(df_results_RPG.iterations, digits = 0)),
 )
 df_results_obj_spar_orth = DataFrame(
     μ               = df_results_NCRPG.μ,
-    n               = Int.(df_results_NCRPG.n), 
+    n               = Int.(df_results_NCRPG.n),
     p               = Int.(df_results_NCRPG.p),
-    NCRPG_obj       = df_results_NCRPG.objective, 
-    NCRPG_sparsity  = df_results_NCRPG.sparsity,  
+    NCRPG_obj       = df_results_NCRPG.objective,
+    NCRPG_sparsity  = df_results_NCRPG.sparsity,
     NCRPG_orth      = df_results_NCRPG.orthogonality,
-    NCRPG_bt_obj    = df_results_NCRPG_bt.objective, 
+    NCRPG_bt_obj    = df_results_NCRPG_bt.objective,
     NCRPG_bt_sparsity = df_results_NCRPG_bt.sparsity,
-    NCRPG_bt_orth   = df_results_NCRPG_bt.orthogonality,  
-    RPG_obj         = df_results_RPG.objective, 
-    RPG_sparsity    = df_results_RPG.sparsity, 
+    NCRPG_bt_orth   = df_results_NCRPG_bt.orthogonality,
+    RPG_obj         = df_results_RPG.objective,
+    RPG_sparsity    = df_results_RPG.sparsity,
     RPG_orth        = df_results_RPG.orthogonality,
 )
 # Write the results to CSV files
-CSV.write(joinpath(results_folder, "results-OB-time-iter-``(m_tests).csv"), df_results_time_iter)
-CSV.write(joinpath(results_folder, "results-OB-obj-spar-orth-``(m_tests).csv"), df_results_obj_spar_orth)
+CSV.write(joinpath(results_folder, "results-OB-time-iter-$(m_tests).csv"), df_results_time_iter)
+CSV.write(joinpath(results_folder, "results-OB-obj-spar-orth-$(m_tests).csv"), df_results_obj_spar_orth)
 ```
 
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
@@ -455,27 +455,27 @@ Pkg.status()
       [35d6a980] ColorSchemes v3.31.0
     ⌅ [5ae59095] Colors v0.12.11
       [a93c6f00] DataFrames v1.8.0
-      [31c24e10] Distributions v0.25.120
-      [7073ff75] IJulia v1.30.4
-      [682c06a0] JSON v0.21.4
+      [31c24e10] Distributions v0.25.122
+      [7073ff75] IJulia v1.30.6
+    ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
       [d3d80556] LineSearches v7.4.0
       [ee78f7c6] Makie v0.24.6
-      [af67fdf4] ManifoldDiff v0.4.4
-      [1cead3c2] Manifolds v0.10.23
-      [3362f125] ManifoldsBase v1.2.0
-      [0fc0a36d] Manopt v0.5.23 `../../Manopt.jl`
-      [5b8d5e80] ManoptExamples v0.1.15 `..`
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
       [91a5bcdd] Plots v1.41.1
-      [08abe8d2] PrettyTables v3.0.11
+    ⌅ [08abe8d2] PrettyTables v2.4.0
       [6099a3de] PythonCall v0.9.28
       [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 1, 2025, 22:15:43.
+This tutorial was last rendered October 12, 2025, 15:27:8.
 
 ## Literature
 

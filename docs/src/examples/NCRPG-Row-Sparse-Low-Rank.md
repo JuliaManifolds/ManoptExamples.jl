@@ -54,8 +54,7 @@ c = 1e-4    # penalty parameter
 M = 500     # amount of rows
 N = 100     # amount of columns
 s = 10      # amount of non-zero rows
-#r_m_array = [(1, 300), (2, 500), (3, 700)] # (rank, number of measurements)
-r_m_array = [(1, 300),] # (rank, number of measurements)
+r_m_array = [(1, 300), (2, 500), (3, 700)] # (rank, number of measurements)
 step_size = 0.25
 init_step_size_bt = 2 * step_size
 stop_NCRPG = atol
@@ -462,7 +461,7 @@ This tutorial is cached. It was last run on the following package versions.
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 12, 2025, 7:13:28.
+This tutorial was last rendered October 12, 2025, 14:5:20.
 
 ## Literature
 
