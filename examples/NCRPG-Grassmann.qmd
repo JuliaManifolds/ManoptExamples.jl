@@ -356,7 +356,7 @@ We can take a look at how the algorithms compare to each other in their performa
 #| echo: false
 #| code-fold: true
 #| output: asis
-benchmarking && pretty_table(A1_Gr; backend=Val(:markdown), header=col_names_1)
+benchmarking && println(pretty_table(A1_Gr; backend=Val(:markdown), header=col_names_1))
 ```
 
 ## Technical details
