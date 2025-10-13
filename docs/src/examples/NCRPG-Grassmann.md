@@ -78,10 +78,10 @@ gr_dims = [(5, 2), (10, 4), (50, 10), (100, 20), (200, 40)] # dimensions of the 
 # Objective, gradient, and proxes
 g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
-# 
+#
 h(M, p, q) = α * distance(M, p, q)
 prox_h(M, λ, p, q) = ManifoldDiff.prox_distance(M, α * λ, q, p, 1)
-# 
+#
 f(M, p, data, q) = g(M, p, data) + h(M, p, q)
 # CPPA needs the proximal operators for the total objective
 function proxes_f(data, q)
@@ -126,8 +126,8 @@ We introduce some keyword arguments for the solvers we will use in this experime
 pgm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
-        strategy=:nonconvex, 
+    :stepsize => ProximalGradientMethodBacktracking(;
+        strategy=:nonconvex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
         ),
@@ -138,16 +138,16 @@ pgm_kwargs(initial_stepsize) = [
 pgm_bm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
-        strategy=:nonconvex,   
+    :stepsize => ProximalGradientMethodBacktracking(;
+        strategy=:nonconvex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
         ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
-# 
+#
 pgm_kwargs_constant(stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -162,9 +162,9 @@ pgm_bm_kwargs_constant(stepsize) = [
     :stepsize => ConstantLength(stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
-# 
+#
 cppa_kwargs(M) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -208,7 +208,7 @@ function initialize_dataframes(results_folder, experiment_name, subexperiment_na
     CSV.write(
         joinpath(
             results_folder,
-            experiment_name * 
+            experiment_name *
             "-Comparisons.csv",
         ),
         A1;
@@ -227,14 +227,14 @@ function export_dataframes(M, records, times, results_folder, experiment_name, s
         Objective_1=minimum([r[2] for r in records[1]]),
         Time_2=times[2],
         Iterations_2=maximum(first.(records[2])),
-        Objective_2=minimum([r[2] for r in records[2]]),   
+        Objective_2=minimum([r[2] for r in records[2]]),
     )
     return B1
 end
 function write_dataframes(
-    B1, 
-    results_folder, 
-    experiment_name, 
+    B1,
+    results_folder,
+    experiment_name,
     subexperiment_name
 )
     CSV.write(
@@ -301,7 +301,7 @@ for (n, m) in gr_dims
     if benchmarking
         pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs_constant($constant_stepsize)...)
         pgm_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs($initial_stepsize)...)
-        
+
         times = [
             median(pgm_constant_bm).time * 1e-9,
             median(pgm_bm).time * 1e-9,
@@ -370,7 +370,7 @@ Pkg.status()
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 11, 2025, 14:11:23.
+This tutorial was last rendered October 12, 2025, 14:39:19.
 
 ## Literature
 

@@ -294,10 +294,10 @@ We can take a look at how the algorithms compare to each other in their performa
 
     | **Dimension** | **Iterations\_1** | **Time\_1** | **Cost\_1** | **Iterations\_2** | **Time\_2** | **Cost\_2** |
     |--------------:|------------------:|------------:|------------:|------------------:|------------:|------------:|
-    | 3             | 367               | 0.00645146  | 0.18593     | 249               | 0.0089915   | 0.18593     |
-    | 6             | 1944              | 0.0463005   | 0.27078     | 1341              | 0.147126    | 0.27078     |
-    | 10            | 8640              | 0.412053    | 0.371274    | 6027              | 0.982695    | 0.371274    |
-    | 15            | 15535             | 0.74381     | 0.449625    | 12544             | 3.22686     | 0.449625    |
+    | 3             | 367               | 0.00388833  | 0.18593     | 249               | 0.00704563  | 0.18593     |
+    | 6             | 1944              | 0.0395926   | 0.27078     | 1341              | 0.0792227   | 0.27078     |
+    | 10            | 8640              | 0.25598     | 0.371274    | 6027              | 0.509768    | 0.371274    |
+    | 15            | 15535             | 0.589659    | 0.449625    | 12544             | 2.67216     | 0.449625    |
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 
@@ -451,7 +451,7 @@ This tutorial is cached. It was last run on the following package versions.
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 11, 2025, 9:51:52.
+This tutorial was last rendered October 12, 2025, 8:39:15.
 
 ## Literature
 

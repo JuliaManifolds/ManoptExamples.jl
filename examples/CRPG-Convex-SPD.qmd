@@ -236,7 +236,7 @@ end
 ```
 
 ```{julia}
-# | output: false
+#| output: false
 global A1_SPD = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -361,7 +361,7 @@ end
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 ```{julia}
-# | output: false
+#| output: false
 function plot_convergence(
     stats,
     dimensions=[2],
@@ -470,7 +470,7 @@ figs = plot_convergence(stats)
 ```
 
 ```{julia}
-# | code-fold: true
+#| code-fold: true
 for fig in figs
     display(fig)
 end

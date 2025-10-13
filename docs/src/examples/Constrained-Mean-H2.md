@@ -154,7 +154,7 @@ mean_pg = copy(M, c) # start at the center
     # 5     f(x): 5.741846 |grad f(p)|:1.8819649705365404
     # 6     f(x): 5.741846 |grad f(p)|:1.8819649640556793
     At iteration 6 algorithm has reached a stationary point, since the distance from the last iterate to the projected gradient (1.0030679901141345e-8) less than 1.0e-7.
-      2.133887 seconds (9.51 M allocations: 493.002 MiB, 17.65% gc time, 99.72% compilation time)
+      2.084813 seconds (9.52 M allocations: 493.328 MiB, 15.69% gc time, 99.75% compilation time)
 
     # Solver state for `Manopt.jl`s Projected Gradient Method
     After 6 iterations
@@ -208,7 +208,7 @@ mean_alm = copy(M, c)
     # 10    f(x): 5.741814 
     # 20    f(x): 5.741845 
     The algorithm computed a step size (5.830448990119683e-11) less than 1.0e-10.
-      2.189462 seconds (12.38 M allocations: 636.053 MiB, 3.23% gc time, 99.36% compilation time)
+      2.145063 seconds (12.37 M allocations: 635.945 MiB, 3.32% gc time, 99.35% compilation time)
 
     # Solver state for `Manopt.jl`s Augmented Lagrangian Method
     After 29 iterations
@@ -259,7 +259,7 @@ mean_epm = copy(M, c)
     # 100   f(x): 5.741847 
     The value of the variable (ϵ) is smaller than or equal to its threshold (1.0e-6).
     At iteration 101 the algorithm performed a step with a change (5.712257693422003e-8) less than 1.0e-6.
-      1.438867 seconds (10.29 M allocations: 503.253 MiB, 4.71% gc time, 92.91% compilation time)
+      1.381320 seconds (10.30 M allocations: 503.952 MiB, 2.55% gc time, 95.19% compilation time)
 
     # Solver state for `Manopt.jl`s Exact Penalty Method
     After 101 iterations
@@ -303,10 +303,10 @@ pg_b = @be projected_gradient_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    190.125 μs (3849 allocs: 160.688 KiB)
-     median 236.542 μs (5473 allocs: 223.750 KiB)
-     mean   309.908 μs (7340.60 allocs: 296.272 KiB)
-     max    555.833 μs (17247 allocs: 680.953 KiB)
+     min    189.459 μs (3849 allocs: 160.672 KiB)
+     median 219.375 μs (5473 allocs: 223.734 KiB)
+     mean   283.500 μs (7340.60 allocs: 296.256 KiB)
+     max    451.666 μs (17247 allocs: 680.938 KiB)
 
 ``` julia
 alm_b = @be augmented_Lagrangian_method!(
@@ -318,10 +318,10 @@ alm_b = @be augmented_Lagrangian_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    10.433 ms (325530 allocs: 12.246 MiB)
-     median 12.744 ms (395087 allocs: 14.854 MiB)
-     mean   12.056 ms (373553.40 allocs: 14.046 MiB)
-     max    13.036 ms (404833 allocs: 15.218 MiB)
+     min    9.613 ms (325530 allocs: 12.246 MiB)
+     median 11.345 ms (395087 allocs: 14.854 MiB)
+     mean   17.227 ms (373553.40 allocs: 14.046 MiB, 14.39% gc time)
+     max    43.672 ms (404833 allocs: 15.218 MiB, 71.95% gc time)
 
 ``` julia
 epm_b = @be exact_penalty_method!(
@@ -333,10 +333,10 @@ epm_b = @be exact_penalty_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    64.796 ms (2000556 allocs: 75.418 MiB)
-     median 80.282 ms (2000556 allocs: 75.418 MiB)
-     mean   74.904 ms (2000556 allocs: 75.418 MiB, 7.94% gc time)
-     max    83.337 ms (2000556 allocs: 75.418 MiB, 21.57% gc time)
+     min    60.959 ms (2000556 allocs: 75.418 MiB)
+     median 70.301 ms (2000556 allocs: 75.418 MiB, 12.66% gc time)
+     mean   72.022 ms (2000556 allocs: 75.418 MiB, 12.84% gc time)
+     max    87.483 ms (2000556 allocs: 75.418 MiB, 29.03% gc time)
 
 ## Plots & results
 
@@ -454,4 +454,4 @@ This tutorial is cached. It was last run on the following package versions.
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 11, 2025, 11:28:21.
+This tutorial was last rendered October 12, 2025, 10:10:26.

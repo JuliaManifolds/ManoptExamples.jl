@@ -260,6 +260,7 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
+#| output: asis
 benchmarking && pretty_table(DataFrame(D, :auto); tf = tf_markdown, header=header)
 ```
 ... and this cost versus iterations plot

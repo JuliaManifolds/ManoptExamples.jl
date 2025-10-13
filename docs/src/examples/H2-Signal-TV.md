@@ -257,6 +257,7 @@ sgm_bm_kwargs = [
     :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
 ]
 cppa_kwargs = [
+    #=
     :debug => [
         :Iteration,
         " | ",
@@ -269,6 +270,7 @@ cppa_kwargs = [
         1000,
         :Stop,
     ],
+    =#
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stopping_criterion => StopWhenAny(StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)),
@@ -349,12 +351,7 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table…
 
-| Algorithm | Iterations | Time (s) | Objective |     Error |
-|-----------|------------|----------|-----------|-----------|
-|      RCBM |       5000 |  13.8923 |  0.140232 | 0.0136919 |
-|       PBA |       5000 |   9.5191 |  0.142887 | 0.0130322 |
-|       SGM |       5000 |  7.89653 |  0.146216 | 0.0124605 |
-|      CPPA |       5000 |  3.73857 |  0.131913 | 0.0173612 |
+[TABLE]
 
 Lastly, we plot the results.
 
@@ -404,34 +401,73 @@ Pkg.status()
 ```
 
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
-      [6e4b80f9] BenchmarkTools v1.5.0
+      [6e4b80f9] BenchmarkTools v1.6.0
       [336ed68f] CSV v0.10.15
-      [35d6a980] ColorSchemes v3.27.1
+      [13f3f980] CairoMakie v0.15.6
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.31.0
     ⌅ [5ae59095] Colors v0.12.11
-      [a93c6f00] DataFrames v1.7.0
-      [7073ff75] IJulia v1.26.0
-      [682c06a0] JSON v0.21.4
-      [8ac3fa9e] LRUCache v1.6.1
-      [d3d80556] LineSearches v7.3.0
-      [af67fdf4] ManifoldDiff v0.3.13
-      [1cead3c2] Manifolds v0.10.7
-      [3362f125] ManifoldsBase v0.15.22
-      [0fc0a36d] Manopt v0.5.3 `../../Manopt.jl`
-      [5b8d5e80] ManoptExamples v0.1.10 `..`
-      [51fcb6bd] NamedColors v0.2.2
-      [91a5bcdd] Plots v1.40.9
-    ⌃ [08abe8d2] PrettyTables v2.3.2
-      [6099a3de] PythonCall v0.9.23
-      [f468eda6] QuadraticModels v0.9.7
-      [1e40b3f8] RipQP v0.6.4
-    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+      [7073ff75] IJulia v1.30.6
+    ⌅ [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.2
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
+      [51fcb6bd] NamedColors v0.2.3
+      [91a5bcdd] Plots v1.41.1
+    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
+      [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
 ``` julia
 using Dates
 now()
 ```
 
-    2024-11-29T17:29:02.109
+    2025-10-12T11:11:27.719
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.6.0
+      [336ed68f] CSV v0.10.15
+      [13f3f980] CairoMakie v0.15.6
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.31.0
+    ⌅ [5ae59095] Colors v0.12.11
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+      [7073ff75] IJulia v1.30.6
+    ⌅ [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.2
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
+      [51fcb6bd] NamedColors v0.2.3
+      [91a5bcdd] Plots v1.41.1
+    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
+      [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
+
+This tutorial was last rendered October 12, 2025, 11:11:27.
 
 ## Literature
 

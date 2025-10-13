@@ -367,8 +367,8 @@ end
 
 We export the results to CSV files
 ```{julia}
-# | output: false
-# | code-fold: true
+#| output: false
+#| code-fold: true
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
 df_pgm_bt = sort(df_pgm_bt, :μ)
@@ -401,16 +401,18 @@ CSV.write(joinpath(results_folder, "results-Hn-obj-spar-$(n_tests)-$(dims[end]).
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
 ```{julia}
-# | echo: false
-# | code-fold: true
+#| echo: false
+#| code-fold: true
+#| output: asis
 header_1 = ["μ", "n", "CRPG_const_iter", "CRPG_const_time", "CRPG_bt_iter", "CRPG_bt_time", "CPPA_iter", "CPPA_time"]
 benchmarking && pretty_table(df_results_time_iter; backend = :markdown, column_labels = header_1)
 ```
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 ```{julia}
-# | echo: false
-# | code-fold: true
+#| echo: false
+#| code-fold: true
+#| output: asis
 header_2 = ["μ", "n", "CRPG_const_obj", "CRPG_const_spar", "CRPG_bt_obj", "CRPG_bt_spar", "CPPA_obj", "CPPA_spar"]
 benchmarking && pretty_table(df_results_obj_spar; backend = :markdown, column_labels = header_2)
 ```

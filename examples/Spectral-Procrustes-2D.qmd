@@ -239,6 +239,7 @@ write_png && save(folder*experiment_name*sub_experiment1*"_results.png",res1_fig
 We can also look at the numbers: How well the angle is reconstructed and how large the error on the non-outliers is;
 
 ```{julia}
+#| output: asis
 α_errors = [α(p1F), α(p1S), α(p1R)] .- α_true
 l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck1F, duck1S, duck1R]]
 pretty_table(
@@ -339,6 +340,7 @@ write_png && save(folder*experiment_name*sub_experiment2*"_results.png",res2_fig
 Again we can look at both the angle and non-outlier errors:
 
 ```{julia}
+#| output: asis
 α_errors = [α(p2F), α(p2S), α(p2R)] .- α_true
 l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck2F, duck2S, duck2R]]
 pretty_table(
@@ -432,6 +434,7 @@ The result is
 Again we can look at both the angle and non-outlier errors:
 
 ```{julia}
+#| output: asis
 α_errors = [α(p3F), α(p3S), α(p3R)] .- α_true
 l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck3F, duck3S, duck3R]]
 pretty_table(
@@ -543,6 +546,7 @@ write_png && save(folder*experiment_name*sub_experiment3*"_results.png",res3_fig
 We can also look at the error, though since all points are outliers, we can only look at the angle reconstruction:
 
 ```{julia}
+#| output: asis
 α_errors = [α(p4F), α(p4S), α(p4R)] .- α_true
 pretty_table(
     DataFrame(:rownames => ["angle", ], :F => [α_errors[1],], :S => [α_errors[2],], :R => [α_errors[3],]);
@@ -644,10 +648,16 @@ The result is
 We can also look at the error, though since all points are outliers, we can only look at the angle reconstruction:
 
 ```{julia}
+#| output: asis
 α_errors = [α(p5F), α(p5S), α(p5R)] .- α_true
 pretty_table(
-    DataFrame(:rownames => ["angle", ], :F => [α_errors[1],], :S => [α_errors[2],], :R => [α_errors[3],]);
-    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
+    DataFrame(
+        :rownames => ["angle"],
+        :F => [α_errors[1]], :S => [α_errors[2]], :R => [α_errors[3]]
+    );
+    tf=tf_markdown,
+    header=["error on", "Frobenius", "spectral", "robust"],
+)
 ```
 
 Here, booth robust and Frobenius struggle to reconstruct, while spectral performs best.
