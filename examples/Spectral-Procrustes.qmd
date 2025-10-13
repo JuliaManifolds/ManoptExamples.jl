@@ -19,8 +19,6 @@ using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
 
-Pkg.develop(path="../") # a trick to work on the local dev version
-
 export_table = true
 benchmarking = true
 show_plot = true
@@ -101,7 +99,7 @@ k_min = 0.0
 diameter = π/(3 * √k_max)
 #
 # Manifolds and data
-M = SpecialOrthogonal(d)
+M = Rotations(d)
 p0 = orthogonal_procrustes(A, B)
 project!(M, p0, p0)
 ```
@@ -231,8 +229,8 @@ if benchmarking
         [minimum([r[2] for r in record]) for record in records];
         dims=2,
     )
-    # 
-    
+    #
+
     #
     # Finalize - export costs
     if export_table

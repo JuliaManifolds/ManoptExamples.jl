@@ -467,14 +467,14 @@ The first table shows the performance RADMM.
 # | echo: false
 # | code-fold: true
 header_1 = ["M", "N", "m", "r", "s", "stepsize", "time (s)", "error", "iterations", "mean zero row error"]
-benchmarking && pretty_table(df_RADMM; backend = Val{:markdown}, column_labels = header_1)
+benchmarking && pretty_table(df_RADMM; backend = :markdown, column_labels = header_1)
 ```
 
 The next table shows the performance of NCRPG with a constant stepsize.
 ```{julia}
 # | echo: false
 # | code-fold: true
-benchmarking && pretty_table(df_NCRPG; backend = Val{:markdown}, column_labels = header_1)
+benchmarking && pretty_table(df_NCRPG; backend = :markdown, column_labels = header_1)
 ```
 
 The next table shows the performance of NCRPG with a backtracked stepsize.
@@ -482,7 +482,7 @@ In this case, the column "stepsize" indicates the initial stepsize for the backt
 ```{julia}
 # | echo: false
 # | code-fold: true
-benchmarking && pretty_table(df_NCRPG_bt; backend = Val{:markdown}, column_labels = header_1)
+benchmarking && pretty_table(df_NCRPG_bt; backend = :markdown, column_labels = header_1)
 ```
 
 Second, we look at the distances of the solutions found by each algorithm.

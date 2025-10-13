@@ -404,7 +404,7 @@ First, we look at the time and number of iterations for each algorithm.
 # | echo: false
 # | code-fold: true
 header_1 = ["μ", "n", "CRPG_const_iter", "CRPG_const_time", "CRPG_bt_iter", "CRPG_bt_time", "CPPA_iter", "CPPA_time"]
-benchmarking && pretty_table(df_results_time_iter; backend = Val(:markdown), header = header_1)
+benchmarking && pretty_table(df_results_time_iter; backend = :markdown, column_labels = header_1)
 ```
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
@@ -412,7 +412,7 @@ Second, we look at the objective values and sparsity of the solutions found by e
 # | echo: false
 # | code-fold: true
 header_2 = ["μ", "n", "CRPG_const_obj", "CRPG_const_spar", "CRPG_bt_obj", "CRPG_bt_spar", "CPPA_obj", "CPPA_spar"]
-benchmarking && pretty_table(df_results_obj_spar; backend = Val(:markdown), header = header_2)
+benchmarking && pretty_table(df_results_obj_spar; backend = :markdown, column_labels = header_2)
 ```
 
 ## Technical details
