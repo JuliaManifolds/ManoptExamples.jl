@@ -244,7 +244,7 @@ We can also look at the numbers: How well the angle is reconstructed and how lar
 l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck1F, duck1S, duck1R]]
 pretty_table(
     DataFrame(:rownames => ["angle", "non-outlier"], :F => [α_errors[1], l2_errors[1]], :S => [α_errors[2], l2_errors[2]], :R => [α_errors[3], l2_errors[3]]);
-    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
+    backend=:markdown, column_labels = ["error on", "Frobenius", "spectral", "robust"])
 ```
 
 We see both in outlier error and angle reconstruction, Frobenius is not reconstructions perfectly, while both spectral and robust do.
@@ -345,7 +345,7 @@ Again we can look at both the angle and non-outlier errors:
 l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck2F, duck2S, duck2R]]
 pretty_table(
     DataFrame(:rownames => ["angle", "non-outlier"], :F => [α_errors[1], l2_errors[1]], :S => [α_errors[2], l2_errors[2]], :R => [α_errors[3], l2_errors[3]]);
-    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
+    backend = :markdown, column_labels = ["error on", "Frobenius", "spectral", "robust"])
 ```
 
 For this second experiment both the figure and the errors indicate, that robust is still reconstructing perfectly, while spectral even performs worth than Frobenius.
@@ -439,7 +439,7 @@ Again we can look at both the angle and non-outlier errors:
 l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck3F, duck3S, duck3R]]
 pretty_table(
     DataFrame(:rownames => ["angle", "non-outlier"], :F => [α_errors[1], l2_errors[1]], :S => [α_errors[2], l2_errors[2]], :R => [α_errors[3], l2_errors[3]]);
-    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
+    backend = :markdown, column_labels = ["error on", "Frobenius", "spectral", "robust"])
 ```
 
 Also for the third, robust is still performing very well.
@@ -550,7 +550,7 @@ We can also look at the error, though since all points are outliers, we can only
 α_errors = [α(p4F), α(p4S), α(p4R)] .- α_true
 pretty_table(
     DataFrame(:rownames => ["angle", ], :F => [α_errors[1],], :S => [α_errors[2],], :R => [α_errors[3],]);
-    tf=tf_markdown, header=["error on", "Frobenius", "spectral", "robust"])
+    backend = :markdown, column_labels = ["error on", "Frobenius", "spectral", "robust"])
 ```
 
 now, robust slightly fails, while both Frobenius and spectral perform very well,
@@ -655,8 +655,8 @@ pretty_table(
         :rownames => ["angle"],
         :F => [α_errors[1]], :S => [α_errors[2]], :R => [α_errors[3]]
     );
-    tf=tf_markdown,
-    header=["error on", "Frobenius", "spectral", "robust"],
+    backend = :markdown,
+    column_labels = ["error on", "Frobenius", "spectral", "robust"],
 )
 ```
 
