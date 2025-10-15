@@ -320,6 +320,9 @@ end
 
 We export the results to CSV files
 
+<details class="code-fold">
+<summary>Code</summary>
+
 ``` julia
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
@@ -350,34 +353,36 @@ CSV.write(joinpath(results_folder, "results-Hn-time-iter-$(n_tests)-$(dims[end])
 CSV.write(joinpath(results_folder, "results-Hn-obj-spar-$(n_tests)-$(dims[end]).csv"), df_results_obj_spar)
 ```
 
+</details>
+
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
 
-    | **μ** | **n** | **CRPG\_const\_iter** | **CRPG\_const\_time** | **CRPG\_bt\_iter** | **CRPG\_bt\_time** | **CPPA\_iter** | **CPPA\_time** |
-    |------:|------:|----------------------:|----------------------:|-------------------:|-------------------:|---------------:|---------------:|
-    | 0.1   | 2     | 236                   | 0.0548516             | 3524               | 3.14372            | 5000           | 2.69523        |
-    | 0.1   | 10    | 102                   | 0.0272037             | 1546               | 1.63993            | 5000           | 3.39272        |
-    | 0.1   | 100   | 44                    | 0.0336062             | 3266               | 15.7017            | 5000           | 6.23112        |
-    | 0.5   | 2     | 160                   | 0.0338148             | 1160               | 1.55429            | 4502           | 2.46977        |
-    | 0.5   | 10    | 80                    | 0.0196075             | 930                | 1.04769            | 5000           | 3.40167        |
-    | 0.5   | 100   | 43                    | 0.0338665             | 565                | 1.48537            | 5000           | 6.1948         |
-    | 1.0   | 2     | 109                   | 0.023341              | 1252               | 1.47171            | 3507           | 1.89952        |
-    | 1.0   | 10    | 65                    | 0.0156837             | 588                | 0.88618            | 4004           | 2.69726        |
-    | 1.0   | 100   | 43                    | 0.0319859             | 1847               | 7.3035             | 5000           | 6.19012        |
+| **μ** | **n** | **CRPG_const_iter** | **CRPG_const_time** | **CRPG_bt_iter** | **CRPG_bt_time** | **CPPA_iter** | **CPPA_time** |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.1 | 2 | 167 | 0.049181 | 1561 | 1.4581 | 5000 | 3.9519 |
+| 0.1 | 10 | 111 | 0.0443115 | 2033 | 3.18836 | 5000 | 7.17354 |
+| 0.1 | 100 | 48 | 0.0358821 | 2928 | 12.569 | 5000 | 7.73864 |
+| 0.5 | 2 | 121 | 0.0317396 | 567 | 0.86611 | 4004 | 3.2404 |
+| 0.5 | 10 | 81 | 0.0267678 | 1117 | 2.01164 | 4502 | 5.1665 |
+| 0.5 | 100 | 45 | 0.0335185 | 1021 | 3.32761 | 5000 | 6.23522 |
+| 1.0 | 2 | 69 | 0.0185704 | 73 | 0.0460234 | 2511 | 2.28915 |
+| 1.0 | 10 | 67 | 0.0204594 | 1098 | 1.9168 | 3507 | 3.39929 |
+| 1.0 | 100 | 45 | 0.0336094 | 3069 | 13.005 | 4502 | 5.83509 |
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 
-    | **μ** | **n** | **CRPG\_const\_obj** | **CRPG\_const\_spar** | **CRPG\_bt\_obj** | **CRPG\_bt\_spar** | **CPPA\_obj** | **CPPA\_spar** |
-    |------:|------:|---------------------:|----------------------:|------------------:|-------------------:|--------------:|---------------:|
-    | 0.1   | 2     | 5.95233              | 0.0                   | 5.95233           | 0.0                | 5.95233       | 0.0            |
-    | 0.1   | 10    | 7.37644              | 0.07                  | 7.37644           | 0.07               | 7.37644       | 0.07           |
-    | 0.1   | 100   | 52.6785              | 0.091                 | 52.6785           | 0.091              | 52.6785       | 0.091          |
-    | 0.5   | 2     | 6.84683              | 0.2                   | 6.84683           | 0.2                | 6.84683       | 0.2            |
-    | 0.5   | 10    | 8.46827              | 0.44                  | 8.46827           | 0.44               | 8.46827       | 0.44           |
-    | 0.5   | 100   | 55.2046              | 0.447                 | 55.2046           | 0.447              | 55.2046       | 0.448          |
-    | 1.0   | 2     | 7.56389              | 0.55                  | 7.56389           | 0.55               | 7.56389       | 0.55           |
-    | 1.0   | 10    | 9.27421              | 0.76                  | 9.27421           | 0.76               | 9.27421       | 0.76           |
-    | 1.0   | 100   | 56.6973              | 0.768                 | 56.6973           | 0.768              | 56.6973       | 0.768          |
+| **μ** | **n** | **CRPG_const_obj** | **CRPG_const_spar** | **CRPG_bt_obj** | **CRPG_bt_spar** | **CPPA_obj** | **CPPA_spar** |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.1 | 2 | 3.17406 | 0.05 | 3.17406 | 0.05 | 3.17406 | 0.05 |
+| 0.1 | 10 | 8.32265 | 0.15 | 8.32265 | 0.15 | 8.32265 | 0.15 |
+| 0.1 | 100 | 52.938 | 0.088 | 52.938 | 0.088 | 52.938 | 0.088 |
+| 0.5 | 2 | 3.89857 | 0.4 | 3.89857 | 0.4 | 3.89857 | 0.4 |
+| 0.5 | 10 | 9.47638 | 0.51 | 9.47638 | 0.51 | 9.47638 | 0.51 |
+| 0.5 | 100 | 55.593 | 0.442 | 55.593 | 0.442 | 55.593 | 0.442 |
+| 1.0 | 2 | 4.51909 | 0.6 | 4.51909 | 0.6 | 4.51909 | 0.6 |
+| 1.0 | 10 | 10.357 | 0.73 | 10.357 | 0.73 | 10.357 | 0.73 |
+| 1.0 | 100 | 57.1667 | 0.76 | 57.1667 | 0.76 | 57.167 | 0.763 |
 
 ## Technical details
 
@@ -389,10 +394,9 @@ This tutorial is cached. It was last run on the following package versions.
       [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
-    ⌅ [5ae59095] Colors v0.12.11
+      [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.0
       [31c24e10] Distributions v0.25.122
-      [7073ff75] IJulia v1.30.6
     ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
@@ -405,13 +409,13 @@ This tutorial is cached. It was last run on the following package versions.
       [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
       [91a5bcdd] Plots v1.41.1
-    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [08abe8d2] PrettyTables v3.1.0
       [6099a3de] PythonCall v0.9.28
       [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 12, 2025, 10:9:42.
+This tutorial was last rendered October 15, 2025, 15:29:44.
 
 ## Literature
 

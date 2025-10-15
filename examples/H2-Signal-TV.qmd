@@ -375,7 +375,7 @@ We can take a look at how the algorithms compare to each other in their performa
 #| echo: false
 #| code-fold: true
 #| output: asis
-benchmarking && pretty_table(DataFrame(B, :auto); tf=tf_markdown, header=header)
+benchmarking && pretty_table(DataFrame(B, :auto); backend = :markdown, column_labels = header)
 ```
 Lastly, we plot the results.
 ```{julia}
@@ -411,22 +411,6 @@ if export_result
     display(ball_scene)
 end
 ```
-
-## Technical details
-
-This tutorial is cached. It was last run on the following package versions.
-
-```{julia}
-#| code-fold: true
-using Pkg
-Pkg.status()
-```
-```{julia}
-#| code-fold: true
-using Dates
-now()
-```
-
 
 ## Technical details
 

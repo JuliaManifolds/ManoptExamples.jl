@@ -494,7 +494,7 @@ Second, we look at the distances of the solutions found by each algorithm.
 header_2 = [
     "M", "N", "m", "r", "s", "dist_NCRPG_NCRPG_bt", "dist_NCRPG_RADMM", "dist_NCRPG_NCRPG_bt",
 ]
-benchmarking && pretty_table(df_distances; backend=Val(:markdown), header=header_2)
+benchmarking && pretty_table(df_distances; backend= :markdown, column_labels = header_2)
 ```
 
 

@@ -27,6 +27,7 @@ execute:
   eval: true
   echo: true
   output: true
+  keep-md: true
 
 format:
   commonmark:

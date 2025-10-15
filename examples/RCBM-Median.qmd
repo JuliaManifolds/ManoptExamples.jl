@@ -342,14 +342,14 @@ We can take a look at how the algorithms compare to each other in their performa
 #| echo: false
 #| code-fold: true
 #| output: asis
-benchmarking && pretty_table(A1, tf = tf_markdown, header=col_names_1)
+benchmarking && pretty_table(A1, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
 #| output: asis
-benchmarking && pretty_table(A2; tf=tf_markdown, header=col_names_2)
+benchmarking && pretty_table(A2; backend = :markdown, column_labels = col_names_2)
 ```
 
 
@@ -433,14 +433,14 @@ We can take a look at how the algorithms compare to each other in their performa
 #| echo: false
 #| code-fold: true
 #| output: asis
-benchmarking && pretty_table(A1_SPD, tf = tf_markdown, header=col_names_1)
+benchmarking && pretty_table(A1_SPD, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
 #| output: asis
-benchmarking && pretty_table(A2_SPD; tf=tf_markdown, header=col_names_2)
+benchmarking && pretty_table(A2_SPD; backend = :markdown, column_labels = col_names_2)
 ```
 
 ## The Median on the Sphere
@@ -533,14 +533,14 @@ We can take a look at how the algorithms compare to each other in their performa
 #| echo: false
 #| code-fold: true
 #| output: asis
-benchmarking && pretty_table(A1_Sn, tf = tf_markdown, header=col_names_1)
+benchmarking && pretty_table(A1_Sn, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
 #| output: asis
-benchmarking && pretty_table(A2_Sn, tf = tf_markdown, header=col_names_2)
+benchmarking && pretty_table(A2_Sn, backend = :markdown, column_labels = col_names_2)
 ```
 
 ## Technical details

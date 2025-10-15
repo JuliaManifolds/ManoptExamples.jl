@@ -355,7 +355,7 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A1_Gr, backend = :markdown, header=col_names_1)
+benchmarking && pretty_table(A1_Gr, backend = :markdown, column_labels=col_names_1)
 ```
 
 ## Technical details

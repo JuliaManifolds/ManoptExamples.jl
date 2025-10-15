@@ -471,7 +471,7 @@ First, we look at the time and number of iterations for each algorithm.
 #| code-fold: true
 #| output: asis
 header_1 = ["μ", "n", "p", "NCRPG_const_time", "NCRPG_const_iter", "NCRPG_bt_time", "NCRPG_bt_iter", "RPG_time", "RPG_iter"]
-benchmarking && pretty_table(df_results_time_iter; backend = Val(:markdown), header = header_1)
+benchmarking && pretty_table(df_results_time_iter; backend = :markdown, column_labels = header_1)
 ```
 
 Second, we look at the objective values, sparsity, and orthogonality of the solutions found by each algorithm.
@@ -480,7 +480,7 @@ Second, we look at the objective values, sparsity, and orthogonality of the solu
 #| code-fold: true
 #| output: asis
 header_2 = ["μ", "n", "p", "NCRPG_const_obj", "NCRPG_const_spar", "NCRPG_const_orth", "NCRPG_bt_obj", "NCRPG_bt_spar", "NCRPG_bt_orth", "RPG_obj", "RPG_spar", "RPG_orth"]
-benchmarking && pretty_table(df_results_obj_spar_orth; backend = Val(:markdown), header = header_2)
+benchmarking && pretty_table(df_results_obj_spar_orth; backend = :markdown, column_labels = header_2)
 ```
 
 ## Technical details

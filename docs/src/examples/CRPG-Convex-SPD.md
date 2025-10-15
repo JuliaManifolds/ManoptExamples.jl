@@ -294,10 +294,10 @@ We can take a look at how the algorithms compare to each other in their performa
 
     | **Dimension** | **Iterations\_1** | **Time\_1** | **Cost\_1** | **Iterations\_2** | **Time\_2** | **Cost\_2** |
     |--------------:|------------------:|------------:|------------:|------------------:|------------:|------------:|
-    | 3             | 367               | 0.00388833  | 0.18593     | 249               | 0.00704563  | 0.18593     |
-    | 6             | 1944              | 0.0395926   | 0.27078     | 1341              | 0.0792227   | 0.27078     |
-    | 10            | 8640              | 0.25598     | 0.371274    | 6027              | 0.509768    | 0.371274    |
-    | 15            | 15535             | 0.589659    | 0.449625    | 12544             | 2.67216     | 0.449625    |
+    |             3 |               367 |  0.00453621 |     0.18593 |               249 |  0.00818665 |     0.18593 |
+    |             6 |              1944 |   0.0414022 |     0.27078 |              1341 |    0.094039 |     0.27078 |
+    |            10 |              8640 |    0.280774 |    0.371274 |              6027 |    0.578688 |    0.371274 |
+    |            15 |             15535 |    0.645499 |    0.449625 |             12544 |     3.05128 |    0.449625 |
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 
@@ -409,13 +409,18 @@ end
 figs = plot_convergence(stats)
 ```
 
+<details class="code-fold">
+<summary>Code</summary>
+
 ``` julia
 for fig in figs
     display(fig)
 end
 ```
 
-![](CRPG-Convex-SPD_files/figure-commonmark/cell-13-output-1.png)
+</details>
+
+<img src="CRPG-Convex-SPD_files/figure-commonmark/cell-13-output-1.png" width="672" height="480" />
 
 This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.7.
 
@@ -429,10 +434,9 @@ This tutorial is cached. It was last run on the following package versions.
       [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
-    ⌅ [5ae59095] Colors v0.12.11
+      [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.0
       [31c24e10] Distributions v0.25.122
-      [7073ff75] IJulia v1.30.6
     ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
@@ -445,13 +449,13 @@ This tutorial is cached. It was last run on the following package versions.
       [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
       [91a5bcdd] Plots v1.41.1
-    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [08abe8d2] PrettyTables v3.1.0
       [6099a3de] PythonCall v0.9.28
       [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 12, 2025, 8:39:15.
+This tutorial was last rendered October 15, 2025, 13:40:45.
 
 ## Literature
 

@@ -138,7 +138,7 @@ And compare times for both algorithms, with a bit of debug output.
     # 15    f(p): -0.250000000 |grad_f(p)|: 0.000000772 |δp|: 0.000002574
     # 20    f(p): -0.250000000 |grad_f(p)|: 0.000000005 |δp|: 0.000000011
     The algorithm reached approximately critical point after 24 iterations; the gradient norm (7.619584706652928e-11) is less than 1.0e-10.
-      3.805829 seconds (22.45 M allocations: 1.173 GiB, 8.44% gc time, 99.48% compilation time)
+      3.711502 seconds (22.45 M allocations: 1.173 GiB, 7.83% gc time, 99.46% compilation time)
 
 The cost is
 
@@ -186,7 +186,7 @@ Similarly the DCPPA performs
     # 30    f(p): -0.250000000 |grad_f(p)|: 0.0000000076|δp|: 0.0000000048
     # 35    f(p): -0.250000000 |grad_f(p)|: 0.0000000002|δp|: 0.0000000001
     The algorithm reached approximately critical point after 37 iterations; the gradient norm (5.458071707233144e-11) is less than 1.0e-10.
-      1.042669 seconds (5.32 M allocations: 305.981 MiB, 2.90% gc time, 98.58% compilation time)
+      1.005187 seconds (5.32 M allocations: 306.021 MiB, 2.72% gc time, 98.51% compilation time)
 
 It needs a few more iterations, but the single iterations are slightly faster.
 Both obtain the same cost
@@ -359,7 +359,7 @@ This tutorial is cached. It was last run on the following package versions.
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 12, 2025, 10:58:37.
+This tutorial was last rendered October 11, 2025, 17:12:28.
 
 ## Literature
 
