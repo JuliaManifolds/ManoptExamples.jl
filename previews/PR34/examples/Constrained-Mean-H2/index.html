@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mean on mathbb H^2 · ManoptExamples.jl</title><meta name="title" content="Mean on mathbb H^2 · ManoptExamples.jl"/><meta property="og:title" content="Mean on mathbb H^2 · ManoptExamples.jl"/><meta property="twitter:title" content="Mean on mathbb H^2 · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox" checked/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Mean on <span>$\mathbb H^2$</span></a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#Cost,-gradient-and-projection"><span>Cost, gradient and projection</span></a></li><li><a class="tocitem" href="#The-mean"><span>The mean</span></a></li><li><a class="tocitem" href="#The-experiment"><span>The experiment</span></a></li><li><a class="tocitem" href="#Plots-and-results"><span>Plots &amp; results</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li><li><a class="tocitem" href="#Technical-details"><span>Technical details</span></a></li></ul></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-8" type="checkbox"/><label class="tocitem" for="menuitem-2-8"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NCRPG-Sparse-PCA/">Sparse PCA</a></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li><a class="tocitem" href="../NCRPG-Row-Sparse-Low-Rank/">Row-Sparse Low-Rank Matrix Recovery</a></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li><a class="tocitem" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span></a></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Projected Gradient Algorithm</a></li><li class="is-active"><a href>Mean on <span>$\mathbb H^2$</span></a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Mean on <span>$\mathbb H^2$</span></a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/Constrained-Mean-H2.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="The-Constrained-mean-on-Hyperbolic-space."><a class="docs-heading-anchor" href="#The-Constrained-mean-on-Hyperbolic-space.">The Constrained mean on Hyperbolic space.</a><a id="The-Constrained-mean-on-Hyperbolic-space.-1"></a><a class="docs-heading-anchor-permalink" href="#The-Constrained-mean-on-Hyperbolic-space." title="Permalink"></a></h1><p>Ronny Bergmann 2027-03-03</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In this example we compare the Pprojected Gradient Algorithm (PGA) as introduced in [<a href="../../references/#BergmannFerreiraNemethZhu_2025">BFNZ25</a>] with both the Augmented Lagrangian Method (ALM) and the Exact Penalty Method (EPM) [<a href="../../references/#LiuBoumal_2019">LB19</a>].</p><pre><code class="language-julia hljs">using Chairmarks, CSV, DataFrames, Manifolds, Manopt, CairoMakie, Random</code></pre><p>Consider the constrained Riemannian center of mass for a given set of points ``q_i M<span>$</span> <span>$i=1,\ldots,N$</span> given by</p><p class="math-container">\[\operatorname*{arg\,min}_{p\in\mathcal C}
+\sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i)\]</p><p>constrained to a set <span>$\mathcal C \subset \mathcal M$</span>.</p><p>For this experiment set <span>$\mathcal M = \mathbb H^2$</span> is the <a href="https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/hyperbolic/">Hyperbolic space</a> and the constrained set <span>$\mathcal C = C_{c,r}$</span> as the ball of radius <span>$r$</span> around the center point <span>$c$</span>, where we choose here <span>$r=1$</span> and <span>$c = (0,0,1)^{\mathrm{T}}$</span>.</p><pre><code class="language-julia hljs">M = Hyperbolic(2)
+c = Manifolds._hyperbolize(M, [0, 0])
+radius = 1.0
+# Sample the boundary
+unit_circle = [
+    exp(M, c, get_vector(M, c, radius .* [cos(α), sin(α)], DefaultOrthonormalBasis())) for
+    α in 0:(2π / 720):(2π)
+]</code></pre><p>Our data consists of <span>$N=200$</span> points, where we skew the data a bit to force the mean to be outside of the constrained set <span>$\mathcal C$</span>.</p><pre><code class="language-julia hljs">N = 200;
+σ = 1.5
+Random.seed!(42)
+# N random points moved to top left to have a mean outside
+data_pts = [
+    exp(
+        M,
+        c,
+        get_vector(
+            M, c, σ .* randn(manifold_dimension(M)) .+ [2.5, 2.5], DefaultOrthonormalBasis()
+        ),
+    ) for _ in 1:N
+]</code></pre><h2 id="Cost,-gradient-and-projection"><a class="docs-heading-anchor" href="#Cost,-gradient-and-projection">Cost, gradient and projection</a><a id="Cost,-gradient-and-projection-1"></a><a class="docs-heading-anchor-permalink" href="#Cost,-gradient-and-projection" title="Permalink"></a></h2><p>We can formulate the constrained problem above in two different forms. Both share a cost adn require a gradient. For performance reasons, we also provide a mutating variant of the gradient</p><pre><code class="language-julia hljs">f(M, p; pts=[op]) = 1 / (2 * length(pts)) .* sum(distance(M, p, q)^2 for q in pts);
+
+grad_f(M, p; pts=[op]) = -1 / length(pts) .* sum(log(M, p, q) for q in pts);
+
+function grad_f!(M, X, p; pts=[op])
+    zero_vector!(M, X, p)
+    Y = zero_vector(M, p)
+    for q in pts
+        log!(M, Y, p, q)
+        X .+= Y
+    end
+    X .*= -1 / length(pts)
+    return X
+end;</code></pre><p>We can model the constrained either with an inequality constraint <span>$g(p) \geq 0$</span> or using a projection onto the set. For the gradient of <span>$g$</span> and the projection we again also provide mutating variants.</p><pre><code class="language-julia hljs">g(M, p) = distance(M, c, p)^2 - radius^2;
+indicator_C(M, p) = (g(M, p) ≤ 0) ? 0 : Inf;
+
+function project_C(M, p, r=radius)
+    X = log(M, c, p)
+    n = norm(M, c, X)
+    q = (n &gt; r) ? exp(M, c, (r / n) * X) : copy(M, p)
+    return q
+end;
+function project_C!(M, q, p; X=zero_vector(M, c), r=radius)
+    log!(M, X, c, p)
+    n = norm(M, c, X)
+    if (n &gt; r)
+        exp!(M, q, c, (r / n) * X)
+    else
+        copyto!(M, q, p)
+    end
+    return q
+end;
+
+grad_g(M, p) = -2 * log(M, p, c);
+function grad_g!(M, X, p)
+    log!(M, X, p, c)
+    X .*= -2
+    return X
+end</code></pre><h2 id="The-mean"><a class="docs-heading-anchor" href="#The-mean">The mean</a><a id="The-mean-1"></a><a class="docs-heading-anchor-permalink" href="#The-mean" title="Permalink"></a></h2><p>For comparison, we first compute the Riemannian center of mass, that is the minimization above but not constrained to <span>$\mathcal C$</span>. We can then project this onto <span>$\mathcal C$</span>. For the projected mean we obtain <span>$g(p) = 0$</span> since the original mean is outside of the set, the projected one lies on the boundary.</p><pre><code class="language-julia hljs">mean_data = mean(M, data_pts)
+mean_projected = project_C(M, mean_data)
+g(M, mean_projected)</code></pre><pre><code class="nohighlight hljs">0.0</code></pre><h2 id="The-experiment"><a class="docs-heading-anchor" href="#The-experiment">The experiment</a><a id="The-experiment-1"></a><a class="docs-heading-anchor-permalink" href="#The-experiment" title="Permalink"></a></h2><p>We first define the specific data cost functions</p><pre><code class="language-julia hljs">_f(M, p) = f(M, p; pts=data_pts)
+_grad_f(M, p) = grad_f(M, p; pts=data_pts)
+_grad_f!(M, X, p) = grad_f!(M, X, p; pts=data_pts)</code></pre><p>and in a first run record a projected gradient method solver run</p><pre><code class="language-julia hljs">mean_pg = copy(M, c) # start at the center
+@time pgms = projected_gradient_method!(
+    M, _f, _grad_f!, project_C!, mean_pg;
+    evaluation=InplaceEvaluation(),
+    indicator=indicator_C,
+    debug=[:Iteration, :Cost, &quot; &quot;, :GradientNorm, &quot;\n&quot;, 1, :Stop],
+    record=[:Iteration, :Iterate, :Cost, :Gradient],
+    stopping_criterion=StopAfterIteration(150) |
+                       StopWhenProjectedGradientStationary(M, 1e-7),
+    return_state=true,
+)</code></pre><pre><code class="nohighlight hljs">Initial f(x): 8.519830
+# 1     f(x): 5.741908 |grad f(p)|:3.560737798355543
+# 2     f(x): 5.741846 |grad f(p)|:1.881900575821152
+# 3     f(x): 5.741846 |grad f(p)|:1.8819696248924744
+# 4     f(x): 5.741846 |grad f(p)|:1.881964795224877
+# 5     f(x): 5.741846 |grad f(p)|:1.8819649705365404
+# 6     f(x): 5.741846 |grad f(p)|:1.8819649640556793
+At iteration 6 algorithm has reached a stationary point, since the distance from the last iterate to the projected gradient (1.0030679901141345e-8) less than 1.0e-7.
+  1.589012 seconds (7.34 M allocations: 370.937 MiB, 3.65% gc time, 99.67% compilation time)
+
+# Solver state for `Manopt.jl`s Projected Gradient Method
+After 6 iterations
+
+## Parameters
+* inverse retraction method: LogarithmicInverseRetraction()
+* retraction method: ExponentialRetraction()
+
+## Stepsize for the gradient step
+ConstantLength(1.0; type=:relative)
+
+## Stepsize for the complete step
+ArmijoLinesearch(;
+    initial_stepsize=1.0
+    retraction_method=ExponentialRetraction()
+    contraction_factor=0.95
+    sufficient_decrease=0.1
+)
+
+## Stopping criterion
+
+Stop When _one_ of the following are fulfilled:
+  * Max Iteration 150:  not reached
+  * projected gradient stationary (&lt;1.0e-7):    reached
+Overall: reached
+This indicates convergence: Yes
+
+## Debug
+    :Iteration = [(:Iteration, &quot;# %-6d&quot;), (:Cost, &quot;f(x): %f&quot;), &quot; &quot;, (:GradientNorm, &quot;|grad f(p)|:%s&quot;), &quot;\n&quot;, 1]
+    :Stop = :Stop
+
+## Record
+(Iteration = RecordGroup([RecordIteration(), RecordIterate(Vector{Float64}), RecordCost(), RecordGradient{Vector{Float64}}()]),)</code></pre><p>and similarly perform a first run of both the <a href="https://juliamanifolds.github.io/Manopt.jl/stable/solvers/augmented_Lagrangian_method/#Manopt.augmented_Lagrangian_method">augmented Lagrangian method</a> and the <a href="https://juliamanifolds.github.io/Manopt.jl/stable/solvers/exact_penalty_method/#Manopt.exact_penalty_method">exact penalty method</a></p><pre><code class="language-julia hljs">mean_alm = copy(M, c)
+@time alms = augmented_Lagrangian_method!(
+    M, _f, _grad_f!, mean_alm;
+    evaluation=InplaceEvaluation(),
+    g=[g], grad_g=[grad_g!],
+    debug=[:Iteration, :Cost, &quot; &quot;, &quot;\n&quot;, 10, :Stop],
+    record=[:Iteration, :Iterate, :Cost],
+    return_state=true,
+)</code></pre><pre><code class="nohighlight hljs">Initial f(x): 8.519830
+# 10    f(x): 5.741814
+# 20    f(x): 5.741845
+The algorithm computed a step size (5.830448990119683e-11) less than 1.0e-10.
+  1.748130 seconds (9.92 M allocations: 503.845 MiB, 4.47% gc time, 99.07% compilation time)
+
+# Solver state for `Manopt.jl`s Augmented Lagrangian Method
+After 29 iterations
+
+## Parameters
+* ϵ: 0.0001348962882591652 (ϵ_min: 1.0e-6, θ_ϵ: 0.933254300796991)
+* λ: Float64[] (λ_min: -20.0, λ_max: 20.0)
+* μ: [0.94098958634295] (μ_max: 20.0)
+* ρ: 15241.579027587262 (θ_ρ: 0.3)
+* τ: 0.8
+* current penalty: 1.1472098826459387e-9
+
+## Stopping criterion
+
+Stop When _one_ of the following are fulfilled:
+  * Max Iteration 300:  not reached
+  * Stop When _all_ of the following are fulfilled:
+      * Field :ϵ ≤ 1.0e-6:  not reached
+      * |Δp| &lt; 0.00014454397707459258: not reached
+    Overall: not reached
+  * Stepsize s &lt; 1.0e-10:   reached
+Overall: reached
+This indicates convergence: No
+
+## Debug
+    :Iteration = [(:Iteration, &quot;# %-6d&quot;), (:Cost, &quot;f(x): %f&quot;), &quot; &quot;, &quot;\n&quot;, 10]
+    :Stop = :Stop
+
+## Record
+(Iteration = RecordGroup([RecordIteration(), RecordIterate(Vector{Float64}), RecordCost()]),)</code></pre><pre><code class="language-julia hljs">mean_epm = copy(M, c)
+@time epms = exact_penalty_method!(
+    M, _f, _grad_f!, mean_epm;
+    evaluation = InplaceEvaluation(),
+    g = [g], grad_g = [grad_g!],
+    debug = [:Iteration, :Cost, &quot; &quot;, &quot;\n&quot;, 25, :Stop],
+    record = [:Iteration, :Iterate, :Cost],
+    return_state = true,
+)</code></pre><pre><code class="nohighlight hljs">Initial f(x): 8.519830
+# 25    f(x): 5.747352
+# 50    f(x): 5.742157
+# 75    f(x): 5.741863
+# 100   f(x): 5.741847
+The value of the variable (ϵ) is smaller than or equal to its threshold (1.0e-6).
+At iteration 101 the algorithm performed a step with a change (5.712257693422003e-8) less than 1.0e-6.
+  1.078051 seconds (7.59 M allocations: 359.751 MiB, 4.62% gc time, 89.39% compilation time)
+
+# Solver state for `Manopt.jl`s Exact Penalty Method
+After 101 iterations
+
+## Parameters
+* ϵ: 1.0e-6 (ϵ_min: 1.0e-6, θ_ϵ: 0.933254300796991)
+* u: 1.0e-6 (ϵ_min: 1.0e-6, θ_u: 0.8912509381337456)
+* ρ: 3.3333333333333335 (θ_ρ: 0.3)
+
+## Stopping criterion
+
+Stop When _one_ of the following are fulfilled:
+  * Max Iteration 300:  not reached
+  * Stop When _all_ of the following are fulfilled:
+      * Field :ϵ ≤ 1.0e-6:  reached
+      * |Δp| &lt; 1.0e-6: reached
+    Overall: reached
+Overall: reached
+This indicates convergence: Yes
+
+## Debug
+    :Iteration = [(:Iteration, &quot;# %-6d&quot;), (:Cost, &quot;f(x): %f&quot;), &quot; &quot;, &quot;\n&quot;, 25]
+    :Stop = :Stop
+
+## Record
+(Iteration = RecordGroup([RecordIteration(), RecordIterate(Vector{Float64}), RecordCost()]),)</code></pre><h3 id="Benchmark"><a class="docs-heading-anchor" href="#Benchmark">Benchmark</a><a id="Benchmark-1"></a><a class="docs-heading-anchor-permalink" href="#Benchmark" title="Permalink"></a></h3><p>After a first run we now Benchmark the three algorithms with <a href="https://github.com/LilithHafner/Chairmarks.jl"><code>Chairmarks.jl</code></a></p><pre><code class="language-julia hljs">pg_b = @be projected_gradient_method!(
+    $M, $_f, $_grad_f!, $project_C!, $(copy(M, c));
+    evaluation=$(InplaceEvaluation()),
+    indicator=$indicator_C,
+    stopping_criterion=$(
+        StopAfterIteration(150) | StopWhenProjectedGradientStationary(M, 1e-7)
+    ),
+) evals = 1 samples = 5 seconds = 100</code></pre><pre><code class="nohighlight hljs">Benchmark: 5 samples with 1 evaluation
+ min    183.583 μs (3862 allocs: 145.734 KiB)
+ median 231.000 μs (5486 allocs: 208.797 KiB)
+ mean   290.992 μs (7353.60 allocs: 281.319 KiB)
+ max    605.583 μs (17260 allocs: 666.000 KiB)</code></pre><pre><code class="language-julia hljs">alm_b = @be augmented_Lagrangian_method!(
+    $M, $_f, $_grad_f!, $(copy(M, c));
+    evaluation = $(InplaceEvaluation()),
+    g = $([g]),
+    grad_g = $([grad_g!]),
+) evals = 1 samples = 5 seconds = 100</code></pre><pre><code class="nohighlight hljs">Benchmark: 5 samples with 1 evaluation
+ min    13.538 ms (322539 allocs: 11.890 MiB)
+ median 15.662 ms (391018 allocs: 14.427 MiB)
+ mean   15.472 ms (369894.80 allocs: 13.646 MiB, 2.63% compile time)
+ max    16.310 ms (400764 allocs: 14.791 MiB, 13.15% compile time)</code></pre><pre><code class="language-julia hljs">epm_b = @be exact_penalty_method!(
+    $M, $_f, $_grad_f!, $(copy(M, c));
+    evaluation = $(InplaceEvaluation()),
+    g = $([g]),
+    grad_g = $([grad_g!]),
+) evals = 1 samples = 5 seconds = 100</code></pre><pre><code class="nohighlight hljs">Benchmark: 5 samples with 1 evaluation
+ min    87.115 ms (1981548 allocs: 73.062 MiB)
+ median 90.660 ms (1981548 allocs: 73.062 MiB)
+ mean   94.963 ms (1981548 allocs: 73.062 MiB, 6.10% gc time)
+ max    109.907 ms (1981548 allocs: 73.062 MiB, 16.78% gc time)</code></pre><h2 id="Plots-and-results"><a class="docs-heading-anchor" href="#Plots-and-results">Plots &amp; results</a><a id="Plots-and-results-1"></a><a class="docs-heading-anchor-permalink" href="#Plots-and-results" title="Permalink"></a></h2><pre><code class="language-julia hljs">pb_x(data) = [convert(PoincareBallPoint, p).value[1] for p in data]
+pb_y(data) = [convert(PoincareBallPoint, p).value[2] for p in data]</code></pre><p>The results are</p><pre><code class="language-julia hljs">fig = Figure()
+axis = Axis(fig[1, 1], title = &quot;The ball constrained mean comparison&quot;, aspect = 1)
+arc!(Point2f(0, 0), 1, -π, π; color = :black)
+lines!(axis, pb_x(unit_circle), pb_y(unit_circle); label = L&quot;δC&quot;)
+scatter!(axis, pb_x(data_pts), pb_y(data_pts), label = L&quot;d_i&quot;)
+scatter!(axis, pb_x([mean_data]), pb_y([mean_data]), label = L&quot;m&quot;)
+scatter!(
+    axis,
+    pb_x([mean_projected]),
+    pb_y([mean_projected]),
+    label = L&quot;m_{\text{proj}}&quot;,
+)
+scatter!(axis, pb_x([mean_alm]), pb_y([mean_alm]), label = L&quot;m_{\text{alm}}&quot;)
+scatter!(axis, pb_x([mean_epm]), pb_y([mean_epm]), label = L&quot;m_{\text{epm}}&quot;)
+scatter!(axis, pb_x([mean_pg]), pb_y([mean_pg]), label = L&quot;m_{\text{pg}}&quot;)
+axislegend(axis, position = :rt)
+xlims!(axis, -1.02, 1.5)
+ylims!(axis, -1.02, 1.5)
+hidespines!(axis)
+hidedecorations!(axis)
+fig</code></pre><p><img src="../Constrained-Mean-H2_files/figure-commonmark/cell-18-output-2.png" alt/></p><pre><code class="language-julia hljs">min_cost = minimum(map(p -&gt; _f(M, p), [mean_pg, mean_alm, mean_epm]))</code></pre><pre><code class="nohighlight hljs">5.7418455315254855</code></pre><pre><code class="language-julia hljs">fig2 = Figure()
+axis2 = Axis(
+    fig2[1, 1];
+    title=&quot;Cost over iterations (log scale x)&quot;,
+    xscale=log10,
+    yscale=identity,
+    xticks=[1, 10, 100],
+)
+lines!(
+    axis2,
+    get_record(pgms, :Iteration, :Iteration),
+    get_record(pgms, :Iteration, :Cost);
+    label=&quot;PG&quot;,
+)
+lines!(
+    axis2,
+    get_record(alms, :Iteration, :Iteration),
+    get_record(alms, :Iteration, :Cost);
+    label=&quot;ALM&quot;,
+)
+lines!(
+    axis2,
+    get_record(epms, :Iteration, :Iteration),
+    get_record(epms, :Iteration, :Cost);
+    label=&quot;EPM&quot;,
+)
+axislegend(axis2; position=:rb)
+#ylims!(axis2, min_cost-0.001,)
+axis2.xlabel = &quot;Iterations (log scale)&quot;
+axis2.ylabel = &quot;Cost f&quot;
+fig2</code></pre><p><img src="../Constrained-Mean-H2_files/figure-commonmark/cell-20-output-2.png" alt/></p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BFNZ25]</dt><dd><div>R. Bergmann, O. P. Ferreira, S. Z. Németh and J. Zhu. <em>On projection mappings and the gradient projection method                on hyperbolic space forms</em>. Preprint, in preparation (2025).</div></dd><dt>[LB19]</dt><dd><div>C. Liu and N. Boumal. <em>Simple algorithms for optimization on Riemannian manifolds with constraints</em>. <a href="https://doi.org/10.1007/s00245-019-09564-3">Applied Mathematics &amp; Optimization</a> (2019), <a href="https://arxiv.org/abs/1091.10000">arXiv:1091.10000</a>.</div></dd></dl></div><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.6.0
+  [336ed68f] CSV v0.10.15
+  [13f3f980] CairoMakie v0.13.4
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.29.0
+⌅ [5ae59095] Colors v0.12.11
+  [a93c6f00] DataFrames v1.7.0
+  [7073ff75] IJulia v1.27.0
+  [682c06a0] JSON v0.21.4
+  [8ac3fa9e] LRUCache v1.6.2
+  [d3d80556] LineSearches v7.3.0
+  [ee78f7c6] Makie v0.22.4
+  [af67fdf4] ManifoldDiff v0.4.2
+  [1cead3c2] Manifolds v0.10.16
+  [3362f125] ManifoldsBase v1.0.3
+  [0fc0a36d] Manopt v0.5.12
+  [5b8d5e80] ManoptExamples v0.1.14 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [91a5bcdd] Plots v1.40.12
+  [08abe8d2] PrettyTables v2.4.0
+  [6099a3de] PythonCall v0.9.24
+  [f468eda6] QuadraticModels v0.9.8
+  [1e40b3f8] RipQP v0.6.4
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`</code></pre><p>This tutorial was last rendered April 13, 2025, 14:06:35.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Spectral-Procrustes/">« Spectral Procrustes</a><a class="docs-footer-nextpage" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span> »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Monday 6 October 2025 09:01">Monday 6 October 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
