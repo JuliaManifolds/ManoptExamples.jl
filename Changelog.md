@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
   * update rendering to use the [QuartoNotebookRunner.jl](https://github.com/PumasAI/QuartoNotebookRunner.jl) removing the dependency on Python
   * switched to [Runic.jl](https://github.com/fredrikekre/Runic.jl) for code formatting
+
 ## [0.1.16] – 03/10/2025
 
 ### Added
