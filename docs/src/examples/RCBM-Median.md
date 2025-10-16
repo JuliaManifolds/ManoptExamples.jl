@@ -320,23 +320,23 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |     Time_1 | Objective_1 | Iterations_2 |   Time_2 | Objective_2 |
-|-----------|--------------|------------|-------------|--------------|----------|-------------|
-|         2 |            9 | 0.00523775 |     1.05192 |          251 | 0.132011 |     1.05192 |
-|         4 |            8 | 0.00469981 |     1.07516 |          230 | 0.132091 |     1.07516 |
-|        32 |           15 |  0.0151958 |     1.08559 |          234 | 0.180374 |     1.08559 |
-|      1024 |           16 |   0.284984 |     1.09706 |          234 |  4.00771 |     1.09706 |
-|     32768 |           16 |    7.34017 |      1.0681 |          229 |  91.2803 |      1.0681 |
+| **Dimension** | **Iterations_1** | **Time_1** | **Objective_1** | **Iterations_2** | **Time_2** | **Objective_2** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 2 | 9 | 0.00356471 | 1.05192 | 251 | 0.0862535 | 1.05192 |
+| 4 | 8 | 0.00314671 | 1.07516 | 230 | 0.0884041 | 1.07516 |
+| 32 | 15 | 0.0109876 | 1.08403 | 234 | 0.140324 | 1.08403 |
+| 1024 | 16 | 0.159712 | 1.09479 | 234 | 2.50606 | 1.09479 |
+| 32768 | 23 | 7.58011 | 1.08865 | 225 | 73.0331 | 1.08865 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |       Time | Objective |
-|-----------|------------|------------|-----------|
-|         2 |         18 | 0.00811254 |   1.04748 |
-|         4 |         19 | 0.00953129 |   1.05518 |
-|        32 |         25 |  0.0208788 |   1.08559 |
-|      1024 |         23 |   0.400038 |   1.09706 |
-|     32768 |         21 |    8.81869 |   1.06488 |
+| **Dimension** | **Iterations** |   **Time** | **Objective** |
+|--------------:|---------------:|-----------:|--------------:|
+|             2 |             18 | 0.00552563 |       1.04748 |
+|             4 |             19 | 0.00595608 |       1.02366 |
+|            32 |             23 |  0.0140014 |       1.08229 |
+|          1024 |             23 |   0.252079 |       1.09479 |
+|         32768 |             19 |    6.24903 |       1.08865 |
 
 ## The Median on the Symmetric Positive Definite Matrix Space
 
@@ -416,21 +416,21 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |   Time_1 | Objective_1 | Iterations_2 |   Time_2 | Objective_2 |
-|-----------|--------------|----------|-------------|--------------|----------|-------------|
-|         3 |           43 | 0.303751 |    0.260846 |           57 | 0.441796 |    0.260846 |
-|        15 |           49 |  2.01407 |    0.436536 |           75 |  1.74885 |    0.436536 |
-|        55 |           15 |  1.30749 |    0.618059 |           89 |  6.15426 |    0.618059 |
-|       120 |            6 |  1.20377 |    0.764031 |          123 |  15.4064 |    0.764031 |
+| **Dimension** | **Iterations_1** | **Time_1** | **Objective_1** | **Iterations_2** | **Time_2** | **Objective_2** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 3 | 38 | 0.197977 | 0.260846 | 57 | 0.269715 | 0.260846 |
+| 15 | 57 | 1.05206 | 0.436536 | 75 | 1.19217 | 0.436536 |
+| 55 | 14 | 44.2278 | 0.618086 | 89 | 3.84133 | 0.618086 |
+| 120 | 12 | 0.909657 | 0.761396 | 123 | 10.3126 | 0.761396 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |    Time | Objective |
-|-----------|------------|---------|-----------|
-|         3 |       4629 | 46.5469 |  0.260846 |
-|        15 |       1727 | 40.4873 |  0.436536 |
-|        55 |        776 | 53.3628 |  0.618059 |
-|       120 |        438 | 53.5932 |  0.764031 |
+| **Dimension** | **Iterations** | **Time** | **Objective** |
+|--------------:|---------------:|---------:|--------------:|
+|             3 |           4709 |  21.6766 |      0.260846 |
+|            15 |           1727 |  27.0529 |      0.436536 |
+|            55 |            776 |  32.5559 |      0.618086 |
+|           120 |            440 |  36.1041 |      0.761396 |
 
 ## The Median on the Sphere
 
@@ -519,32 +519,37 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |    Time_1 | Objective_1 | Iterations_2 |    Time_2 | Objective_2 |
-|-----------|--------------|-----------|-------------|--------------|-----------|-------------|
-|         2 |           43 | 0.0158139 |    0.258898 |           71 | 0.0184203 |    0.258898 |
-|         4 |           74 | 0.0230197 |    0.253525 |           62 | 0.0168082 |    0.253525 |
-|        32 |          102 |  0.043011 |    0.259886 |           64 | 0.0272739 |    0.259886 |
-|      1024 |          103 |  0.890434 |    0.266993 |           68 |  0.622527 |    0.266993 |
-|     32768 |           80 |   27.1998 |    0.259302 |           65 |   29.1502 |    0.259302 |
+| **Dimension** | **Iterations_1** | **Time_1** | **Objective_1** | **Iterations_2** | **Time_2** | **Objective_2** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 2 | 53 | 0.0132414 | 0.258898 | 71 | 0.0151436 | 0.258898 |
+| 4 | 76 | 0.0189887 | 0.253525 | 62 | 0.0139826 | 0.253525 |
+| 32 | 92 | 0.0377148 | 0.260417 | 67 | 0.0242471 | 0.260417 |
+| 1024 | 100 | 39.9569 | 0.26468 | 73 | 0.44985 | 0.26468 |
+| 32768 | 5000 | 1130.31 | 0.278525 | 69 | 10.7402 | 0.264932 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |      Time | Objective |
-|-----------|------------|-----------|-----------|
-|         2 |        401 | 0.0970337 |  0.258898 |
-|         4 |       5000 |   1.33258 |  0.253525 |
-|        32 |        231 | 0.0963392 |  0.259886 |
-|      1024 |        185 |   1.98786 |  0.266993 |
-|     32768 |        157 |    205.02 |  0.259302 |
+| **Dimension** | **Iterations** |  **Time** | **Objective** |
+|--------------:|---------------:|----------:|--------------:|
+|             2 |            401 | 0.0869962 |      0.258898 |
+|             4 |           5000 |   1.15463 |      0.253525 |
+|            32 |            241 |   1.66381 |      0.260417 |
+|          1024 |            169 |   1.01981 |       0.26468 |
+|         32768 |            209 |   21.8256 |      0.264932 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
+<details class="code-fold">
+<summary>Code</summary>
+
 ``` julia
 using Pkg
 Pkg.status()
 ```
+
+</details>
 
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
@@ -552,10 +557,9 @@ Pkg.status()
       [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
-    ⌅ [5ae59095] Colors v0.12.11
+      [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.0
       [31c24e10] Distributions v0.25.122
-      [7073ff75] IJulia v1.30.6
     ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
@@ -568,18 +572,23 @@ Pkg.status()
       [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
       [91a5bcdd] Plots v1.41.1
-    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [08abe8d2] PrettyTables v3.1.0
       [6099a3de] PythonCall v0.9.28
       [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
+
+<details class="code-fold">
+<summary>Code</summary>
 
 ``` julia
 using Dates
 now()
 ```
 
-    2025-10-12T17:22:27.122
+</details>
+
+    2025-10-15T21:06:49.512
 
 ## Literature
 

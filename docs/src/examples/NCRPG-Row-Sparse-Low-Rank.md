@@ -396,6 +396,9 @@ end
 
 We export the results to CSV files
 
+<details class="code-fold">
+<summary>Code</summary>
+
 ``` julia
 CSV.write(joinpath(results_folder, "results-fixed-rank-RADMM.csv"), df_RADMM)
 CSV.write(joinpath(results_folder, "results-fixed-rank-NCRPG.csv"), df_NCRPG)
@@ -403,31 +406,41 @@ CSV.write(joinpath(results_folder, "results-fixed-rank-NCRPG-bt.csv"), df_NCRPG_
 CSV.write(joinpath(results_folder, "results-fixed-rank-distances.csv"), df_distances )
 ```
 
+</details>
+
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 The first table shows the performance RADMM.
 
-    | **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** | **error**  | **iterations** | **mean zero row error** |
-    |------:|------:|------:|------:|------:|-------------:|-------------:|-----------:|---------------:|------------------------:|
-    | 500.0 | 100.0 | 300.0 | 1.0   | 10.0  | 0.25         | 9.03925      | 0.00052812 | 1431.0         | 5.37441e-9              |
+| **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** | **error** | **iterations** | **mean zero row error** |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 0.25 | 10.2648 | 0.00052812 | 1431.0 | 5.37441e-9 |
+| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 0.25 | 16.7196 | 0.000725431 | 1354.0 | 6.09862e-9 |
+| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 0.25 | 19.2542 | 0.000772805 | 1414.0 | 7.4266e-9 |
 
 The next table shows the performance of NCRPG with a constant stepsize.
 
-    | **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** | **error**   | **iterations** | **mean zero row error** |
+    | **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** |   **error** | **iterations** | **mean zero row error** |
     |------:|------:|------:|------:|------:|-------------:|-------------:|------------:|---------------:|------------------------:|
-    | 500.0 | 100.0 | 300.0 | 1.0   | 10.0  | 0.25         | 6.08312      | 0.000528145 | 1049.0         | 0.0                     |
+    | 500.0 | 100.0 | 300.0 |   1.0 |  10.0 |         0.25 |      7.75729 | 0.000528145 |         1049.0 |                     0.0 |
+    | 500.0 | 100.0 | 500.0 |   2.0 |  10.0 |         0.25 |      11.6917 | 0.000725859 |         1047.0 |             1.58429e-21 |
+    | 500.0 | 100.0 | 700.0 |   3.0 |  10.0 |         0.25 |      16.4164 | 0.000775127 |         1120.0 |             6.52608e-21 |
 
 The next table shows the performance of NCRPG with a backtracked stepsize.
 In this case, the column “stepsize” indicates the initial stepsize for the backtracking procedure.
 
-    | **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** | **error**   | **iterations** | **mean zero row error** |
+    | **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** |   **error** | **iterations** | **mean zero row error** |
     |------:|------:|------:|------:|------:|-------------:|-------------:|------------:|---------------:|------------------------:|
-    | 500.0 | 100.0 | 300.0 | 1.0   | 10.0  | 0.5          | 7.01073      | 0.000528144 | 562.0          | 0.0                     |
+    | 500.0 | 100.0 | 300.0 |   1.0 |  10.0 |          0.5 |      8.07119 | 0.000528144 |          562.0 |                     0.0 |
+    | 500.0 | 100.0 | 500.0 |   2.0 |  10.0 |          0.5 |      15.0202 | 0.000725847 |          604.0 |             3.19594e-21 |
+    | 500.0 | 100.0 | 700.0 |   3.0 |  10.0 |          0.5 |      1325.19 | 0.000778709 |         5000.0 |             3.79913e-20 |
 
 Second, we look at the distances of the solutions found by each algorithm.
 
-    | **M** | **N** | **m** | **r** | **s** | **dist\_NCRPG\_NCRPG\_bt** | **dist\_NCRPG\_RADMM** | **dist\_NCRPG\_NCRPG\_bt** |
-    |------:|------:|------:|------:|------:|---------------------------:|-----------------------:|---------------------------:|
-    | 500.0 | 100.0 | 300.0 | 1.0   | 10.0  | 1.08617e-8                 | 5.59207e-7             | 5.49924e-7                 |
+| **M** | **N** | **m** | **r** | **s** | **dist_NCRPG_NCRPG_bt** | **dist_NCRPG_RADMM** | **dist_NCRPG_NCRPG_bt** |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 1.08617e-8 | 5.59207e-7 | 5.49924e-7 |
+| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 2.18404e-8 | 7.53362e-7 | 7.33125e-7 |
+| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 1.38496e-5 | 2.39003e-5 | 2.51754e-5 |
 
 ## Technical details
 
@@ -439,10 +452,9 @@ This tutorial is cached. It was last run on the following package versions.
       [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
-    ⌅ [5ae59095] Colors v0.12.11
+      [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.0
       [31c24e10] Distributions v0.25.122
-      [7073ff75] IJulia v1.30.6
     ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
@@ -455,13 +467,13 @@ This tutorial is cached. It was last run on the following package versions.
       [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
       [91a5bcdd] Plots v1.41.1
-    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [08abe8d2] PrettyTables v3.1.0
       [6099a3de] PythonCall v0.9.28
       [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 12, 2025, 14:5:20.
+This tutorial was last rendered October 15, 2025, 18:40:14.
 
 ## Literature
 

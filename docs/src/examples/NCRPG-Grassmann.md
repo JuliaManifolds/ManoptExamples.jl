@@ -325,22 +325,27 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the NCRPG with a constant stepsize, while columns 5 to 7 refer to a backtracked stepsize…
 
-| **Dimension** | **Time\_1** | **Iterations\_1** | **Objective\_1** | **Time\_2** | **Iterations\_2** | **Objective\_2** |
-|--------------:|------------:|------------------:|-----------------:|------------:|------------------:|-----------------:|
-| 6             | 0.389674    | 90                | 0.853678         | 0.0987565   | 12                | 0.853678         |
-| 24            | 0.583378    | 58                | 0.858344         | 0.180316    | 9                 | 0.858344         |
-| 400           | 2.37086     | 36                | 0.868749         | 0.70433     | 6                 | 0.868749         |
-| 1600          | 8.63405     | 35                | 0.871773         | 4.17984     | 6                 | 0.871773         |
-| 6400          | 33.6688     | 34                | 0.873426         | 9.63182     | 5                 | 0.873426         |
+    | **Dimension** | **Time\_1** | **Iterations\_1** | **Objective\_1** | **Time\_2** | **Iterations\_2** | **Objective\_2** |
+    |--------------:|------------:|------------------:|-----------------:|------------:|------------------:|-----------------:|
+    |             6 |     0.37101 |                90 |         0.853678 |   0.0940748 |                12 |         0.853678 |
+    |            24 |    0.542643 |                58 |         0.858344 |    0.168517 |                 9 |         0.858344 |
+    |           400 |     2.30952 |                36 |         0.868749 |    0.697674 |                 6 |         0.868749 |
+    |          1600 |     8.28298 |                35 |         0.871773 |     5.48798 |                 6 |         0.871773 |
+    |          6400 |     36.8967 |                34 |         0.873426 |     10.3206 |                 5 |         0.873426 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
+<details class="code-fold">
+<summary>Code</summary>
+
 ``` julia
 using Pkg
 Pkg.status()
 ```
+
+</details>
 
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
@@ -348,10 +353,9 @@ Pkg.status()
       [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
-    ⌅ [5ae59095] Colors v0.12.11
+      [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.0
       [31c24e10] Distributions v0.25.122
-      [7073ff75] IJulia v1.30.6
     ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
@@ -364,13 +368,13 @@ Pkg.status()
       [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
       [91a5bcdd] Plots v1.41.1
-    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [08abe8d2] PrettyTables v3.1.0
       [6099a3de] PythonCall v0.9.28
       [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 12, 2025, 14:39:19.
+This tutorial was last rendered October 15, 2025, 16:5:25.
 
 ## Literature
 

@@ -10,6 +10,7 @@ project:
     - "!HyperparameterOptimization.qmd"
     - "!RCBM-Median.qmd"
     - "!Spectral-Procrustes.qmd"
+    - "!NCRPG-Row-Sparse-Low-Rank.qmd"
     - "!H2-Signal-TV.qmd"
     - "!CRPG-Convex-SPD.qmd"
     - "!CRPG-Sparse-Approximation.qmd"
