@@ -154,7 +154,7 @@ mean_pg = copy(M, c) # start at the center
     # 5     f(x): 5.741846 |grad f(p)|:1.8819649705365404
     # 6     f(x): 5.741846 |grad f(p)|:1.8819649640556793
     At iteration 6 algorithm has reached a stationary point, since the distance from the last iterate to the projected gradient (1.0030679901141345e-8) less than 1.0e-7.
-      3.017829 seconds (9.43 M allocations: 489.627 MiB, 1.83% gc time, 99.72% compilation time)
+      1.804329 seconds (9.43 M allocations: 489.090 MiB, 3.91% gc time, 99.67% compilation time)
 
     # Solver state for `Manopt.jl`s Projected Gradient Method
     After 6 iterations
@@ -208,7 +208,7 @@ mean_alm = copy(M, c)
     # 10    f(x): 5.741814 
     # 20    f(x): 5.741845 
     The algorithm computed a step size (5.830448990119683e-11) less than 1.0e-10.
-      3.841506 seconds (12.38 M allocations: 636.837 MiB, 4.82% gc time, 99.42% compilation time)
+      2.207807 seconds (12.38 M allocations: 635.823 MiB, 3.43% gc time, 99.41% compilation time)
 
     # Solver state for `Manopt.jl`s Augmented Lagrangian Method
     After 29 iterations
@@ -259,7 +259,7 @@ mean_epm = copy(M, c)
     # 100   f(x): 5.741847 
     The value of the variable (ϵ) is smaller than or equal to its threshold (1.0e-6).
     At iteration 101 the algorithm performed a step with a change (5.712257693422003e-8) less than 1.0e-6.
-      2.692434 seconds (10.30 M allocations: 503.070 MiB, 6.60% gc time, 93.87% compilation time)
+      1.473903 seconds (10.30 M allocations: 504.499 MiB, 6.09% gc time, 92.78% compilation time)
 
     # Solver state for `Manopt.jl`s Exact Penalty Method
     After 101 iterations
@@ -303,10 +303,10 @@ pg_b = @be projected_gradient_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    393.750 μs (3849 allocs: 160.688 KiB)
-     median 411.917 μs (5473 allocs: 223.750 KiB)
-     mean   527.192 μs (7340.60 allocs: 296.272 KiB)
-     max    850.042 μs (17247 allocs: 680.953 KiB)
+     min    184.708 μs (3849 allocs: 160.688 KiB)
+     median 219.917 μs (5473 allocs: 223.750 KiB)
+     mean   276.942 μs (7340.60 allocs: 296.272 KiB)
+     max    444.167 μs (17247 allocs: 680.953 KiB)
 
 ``` julia
 alm_b = @be augmented_Lagrangian_method!(
@@ -318,10 +318,10 @@ alm_b = @be augmented_Lagrangian_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    11.666 ms (325530 allocs: 12.246 MiB)
-     median 13.540 ms (395087 allocs: 14.854 MiB)
-     mean   25.503 ms (373553.40 allocs: 14.046 MiB, 17.05% gc time)
-     max    75.746 ms (404833 allocs: 15.218 MiB, 85.27% gc time)
+     min    9.858 ms (325530 allocs: 12.246 MiB)
+     median 12.499 ms (395087 allocs: 14.854 MiB)
+     mean   11.926 ms (373553.40 allocs: 14.046 MiB)
+     max    13.190 ms (404833 allocs: 15.218 MiB)
 
 ``` julia
 epm_b = @be exact_penalty_method!(
@@ -333,10 +333,10 @@ epm_b = @be exact_penalty_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    67.820 ms (2000556 allocs: 75.418 MiB)
-     median 80.554 ms (2000556 allocs: 75.418 MiB)
-     mean   83.605 ms (2000556 allocs: 75.418 MiB, 11.35% gc time)
-     max    104.816 ms (2000556 allocs: 75.418 MiB, 33.57% gc time)
+     min    60.591 ms (2000556 allocs: 75.418 MiB)
+     median 71.683 ms (2000556 allocs: 75.418 MiB)
+     mean   78.335 ms (2000556 allocs: 75.418 MiB, 9.02% gc time)
+     max    112.708 ms (2000556 allocs: 75.418 MiB, 45.09% gc time)
 
 ## Plots & results
 
@@ -371,7 +371,7 @@ hidedecorations!(axis)
 fig
 ```
 
-<img src="Constrained-Mean-H2_files/figure-commonmark_x/cell-18-output-1.png" width="672" height="480" />
+![](Constrained-Mean-H2_files/figure-commonmark/cell-18-output-1.png)
 
 ``` julia
 min_cost = minimum(map(p -> _f(M, p), [mean_pg, mean_alm, mean_epm]))
@@ -413,7 +413,7 @@ axis2.ylabel = "Cost f"
 fig2
 ```
 
-<img src="Constrained-Mean-H2_files/figure-commonmark_x/cell-20-output-1.png" width="672" height="480" />
+![](Constrained-Mean-H2_files/figure-commonmark/cell-20-output-1.png)
 
 ## Literature
 
@@ -453,4 +453,4 @@ This tutorial is cached. It was last run on the following package versions.
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 15, 2025, 12:11:53.
+This tutorial was last rendered October 16, 2025, 10:29:49.

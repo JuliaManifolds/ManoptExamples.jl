@@ -353,10 +353,10 @@ We can take a look at how the algorithms compare to each other in their performa
 
 | **Algorithm** | **Iterations** | **Time (s)** | **Objective** | **Error** |
 |--------------:|---------------:|-------------:|--------------:|----------:|
-|          RCBM |           5000 |      12.6895 |      0.139219 | 0.0139671 |
-|           PBA |           3461 |       19.247 |      0.140166 | 0.0134865 |
-|           SGM |           5000 |      4.28778 |      0.146256 | 0.0124733 |
-|          CPPA |           5000 |      3.47077 |      0.132025 | 0.0173612 |
+|          RCBM |           5000 |      9.24497 |      0.139219 | 0.0139671 |
+|           PBA |           3461 |      12.0163 |      0.140166 | 0.0134865 |
+|           SGM |           5000 |      3.40848 |      0.146256 | 0.0124733 |
+|          CPPA |           5000 |      3.05321 |      0.132025 | 0.0173612 |
 
 Lastly, we plot the results.
 
@@ -427,7 +427,7 @@ This tutorial is cached. It was last run on the following package versions.
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 16, 2025, 8:7:43.
+This tutorial was last rendered October 16, 2025, 11:21:16.
 
 ## Literature
 

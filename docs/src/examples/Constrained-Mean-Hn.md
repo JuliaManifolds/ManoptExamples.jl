@@ -234,7 +234,7 @@ axislegend(axis; position=:lt)
 fig
 ```
 
-<img src="Constrained-Mean-Hn_files/figure-commonmark_x/cell-13-output-1.png" width="672" height="480" />
+![](Constrained-Mean-Hn_files/figure-commonmark/cell-13-output-1.png)
 
 and the number of iterations reads
 
@@ -250,7 +250,7 @@ axislegend(axis2; position=:lt)
 fig2
 ```
 
-<img src="Constrained-Mean-Hn_files/figure-commonmark_x/cell-15-output-1.png" width="672" height="480" />
+![](Constrained-Mean-Hn_files/figure-commonmark/cell-15-output-1.png)
 
 ## Literature
 
@@ -290,4 +290,4 @@ This tutorial is cached. It was last run on the following package versions.
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 15, 2025, 13:8:25.
+This tutorial was last rendered October 16, 2025, 11:15:25.

@@ -1,5 +1,5 @@
 ---
-title: "A 2D illustration of different norms in the Procrustes problem"
+title: "A 2D illustration of Spectral and Robust Procrustes"
 author: "Ronny Bergmann"
 date: 11/10/2025
 ---
