@@ -32,7 +32,7 @@ execute:
 
 format:
   commonmark:
-    variant: +pipe_tables+tex_math_dollars
+    variant: +pipe_tables+tex_math_dollars-raw_html
     wrap: preserve
 
 engines: ['julia']
