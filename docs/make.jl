@@ -109,9 +109,6 @@ end
 examples_menu =
     "Examples" => [
     "Overview" => "examples/index.md",
-    "Nonsmooth Optimization" => [
-        "Norms affecting Procrustes" => "examples/Spectral-Procrustes-2D.md",
-    ],
     "Difference of Convex" => [
         "A Benchmark" => "examples/Difference-of-Convex-Benchmark.md",
         "Rosenbrock Metric" => "examples/Difference-of-Convex-Rosenbrock.md",
@@ -121,6 +118,9 @@ examples_menu =
         "Riemannian Median" => "examples/RCBM-Median.md",
         "Hyperbolic Signal Denoising" => "examples/H2-Signal-TV.md",
         "Spectral Procrustes" => "examples/Spectral-Procrustes.md",
+    ],
+    "LTMADS" => [
+        "Spectral & Robust Norms affecting Procrustes" => "examples/Spectral-Procrustes-2D.md",
     ],
     "Projected Gradient Algorithm" => [
         raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",

@@ -43,24 +43,24 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 
 ## The Problem
 
-Let ``\mathcal M = \mathcal M_r`` be the manifold of rank ``r`` matrices.
-Let ``g \colon \mathcal M \to \mathbb R`` be defined by
+Let $\mathcal M = \mathcal M_r$ be the manifold of rank $r$ matrices.
+Let $g \colon \mathcal M \to \mathbb R$ be defined by
 
 ```math
 g(X) = \Vert\mathbb A (X) - y\Vert_2^2,
 ```
 
-where ``\mathbb A \colon \mathbb R^{M \times N} \to \mathbb R^m`` is a linear measurement operator.
+where $\mathbb A \colon \mathbb R^{M \times N} \to \mathbb R^m$ is a linear measurement operator.
 
-Let ``h \colon \mathcal M \to \mathbb R`` be defined by
+Let $h \colon \mathcal M \to \mathbb R$ be defined by
 
 ```math
 h(X) = \mu \Vert X \Vert_{1, 2}
 ```
-be the row sparsity-enforcing term given by the ``\ell_{1,2}``-norm, where ``\mu \ge 0`` is a regularization parameter.
+be the row sparsity-enforcing term given by the $\ell_{1,2}$-norm, where $\mu \ge 0$ is a regularization parameter.
 
-We define our total objective function as ``f = g + h``.
-The goal is to recover the (low-rank and row-sparse) signal ``X`` from as few measurements ``y`` as possible.
+We define our total objective function as $f = g + h$.
+The goal is to recover the (low-rank and row-sparse) signal $X$ from as few measurements $y$ as possible.
 
 
 ## Numerical Experiment
@@ -116,7 +116,7 @@ end
 
 ```
 
-We implement the proximal operators for the ``\ell_{1, 2}``-norm on the fixed-rank manifold, following [BergmannJasaJohnPfeffer:2025:1](@cite) and [JiaxiangShiqianTejes:2022:1](@cite).
+We implement the proximal operators for the $\ell_{1, 2}$-norm on the fixed-rank manifold, following [BergmannJasaJohnPfeffer:2025:1](@cite) and [JiaxiangShiqianTejes:2022:1](@cite).
 ```{julia}
 #| output: false
 # NCRPG
@@ -149,7 +149,7 @@ function prox_norm12_global(Mr::FixedRankMatrices, prox_param, X1::Matrix{Float6
 end
 ```
 
-Next, we define the objective function, its gradient, and the proximal operator for the ``\ell_{1,2}``-norm on the fixed-rank manifold.
+Next, we define the objective function, its gradient, and the proximal operator for the $\ell_{1,2}$-norm on the fixed-rank manifold.
 ```{julia}
 #| output: false
 # Objective(s), gradient, and proxes
@@ -473,16 +473,18 @@ benchmarking && pretty_table(df_RADMM; backend = :markdown, column_labels = head
 
 The next table shows the performance of NCRPG with a constant stepsize.
 ```{julia}
-# | echo: false
-# | code-fold: true
+#| echo: false
+#| code-fold: true
+#| output: asis
 benchmarking && pretty_table(df_NCRPG; backend = :markdown, column_labels = header_1)
 ```
 
 The next table shows the performance of NCRPG with a backtracked stepsize.
 In this case, the column "stepsize" indicates the initial stepsize for the backtracking procedure.
 ```{julia}
-# | echo: false
-# | code-fold: true
+#| echo: false
+#| code-fold: true
+#| output: asis
 benchmarking && pretty_table(df_NCRPG_bt; backend = :markdown, column_labels = header_1)
 ```
 

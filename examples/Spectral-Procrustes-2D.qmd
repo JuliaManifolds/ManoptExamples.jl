@@ -47,7 +47,7 @@ This example reproduces the results preented in Section 5 of ``[JasaBergmannKuem
 \operatorname*{arg\,min}_{p \in \mathrm{SO}(n)} \lVert A - pB\rVert_s
 ```
 
-for different norms ``s ∈ \{\mathrm{F},\mathrm{S},\mathrm{R}\}``, namely the Frobenius, spectral and a robust norm, respectively.
+for different norms $s ∈ \{\mathrm{F},\mathrm{S},\mathrm{R}\}$, namely the Frobenius, spectral and a robust norm, respectively.
 
 We first define a set of points, that originally started with a duch example from [the master thesis of S. Oddsen](https://hdl.handle.net/11250/3189974), hence the name “`duck`”, though for this experiment it is merely an abstract idea of a duck.
 
