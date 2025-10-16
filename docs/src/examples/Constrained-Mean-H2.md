@@ -4,7 +4,7 @@ Ronny Bergmann
 
 ## Introduction
 
-In this example we compare the Pprojected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite) with both the Augmented Lagrangian Method (ALM) and the Exact Penalty Method (EPM) [LiuBoumal:2019](@cite).
+In this example we compare the Projected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite) with both the Augmented Lagrangian Method (ALM) and the Exact Penalty Method (EPM) [LiuBoumal:2019](@cite).
 
 ``` julia
 using Chairmarks, CSV, DataFrames, Manifolds, Manopt, CairoMakie, Random
@@ -14,7 +14,7 @@ Consider the constrained Riemannian center of mass
 for a given set of points \`\`q_i M\$ $i=1,\ldots,N$
 given by
 
-```math
+``` math
 \operatorname*{arg\,min}_{p\in\mathcal C}
 \sum_{i=1}^N d_{\mathrm{M}}^2(p,q_i)
 ```
@@ -22,7 +22,7 @@ given by
 constrained to a set $\mathcal C \subset \mathcal M$.
 
 For this experiment set $\mathcal M = \mathbb H^2$ is the [Hyperbolic space](@extref Manifolds :std:doc:`manifolds/hyperbolic`)
-and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around the center point $c$, where we choose here $r=1$ and $c = (0,0,1)^{\mathrm{T}}$.
+and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around the center point $c$, where we choose here $r=1$ and \$c = (0,0,1)^{}.
 
 ``` julia
 M = Hyperbolic(2)
@@ -56,7 +56,7 @@ data_pts = [
 ## Cost, gradient and projection
 
 We can formulate the constrained problem above in two different forms.
-Both share a cost adn require a gradient. For performance reasons, we also provide a mutating variant of the gradient
+Both share a cost and require a gradient. For performance reasons, we also provide a mutating variant of the gradient
 
 ``` julia
 f(M, p; pts=[op]) = 1 / (2 * length(pts)) .* sum(distance(M, p, q)^2 for q in pts);
@@ -146,7 +146,7 @@ mean_pg = copy(M, c) # start at the center
 )
 ```
 
-    Initial f(x): 8.519830
+    Initial f(x): 8.519830 
     # 1     f(x): 5.741908 |grad f(p)|:3.560737798355543
     # 2     f(x): 5.741846 |grad f(p)|:1.881900575821152
     # 3     f(x): 5.741846 |grad f(p)|:1.8819696248924744
@@ -154,24 +154,24 @@ mean_pg = copy(M, c) # start at the center
     # 5     f(x): 5.741846 |grad f(p)|:1.8819649705365404
     # 6     f(x): 5.741846 |grad f(p)|:1.8819649640556793
     At iteration 6 algorithm has reached a stationary point, since the distance from the last iterate to the projected gradient (1.0030679901141345e-8) less than 1.0e-7.
-      1.589012 seconds (7.34 M allocations: 370.937 MiB, 3.65% gc time, 99.67% compilation time)
+      1.804329 seconds (9.43 M allocations: 489.090 MiB, 3.91% gc time, 99.67% compilation time)
 
     # Solver state for `Manopt.jl`s Projected Gradient Method
     After 6 iterations
 
     ## Parameters
-    * inverse retraction method: LogarithmicInverseRetraction()
-    * retraction method: ExponentialRetraction()
+    * inverse retraction method: ManifoldsBase.LogarithmicInverseRetraction()
+    * retraction method: ManifoldsBase.ExponentialRetraction()
 
     ## Stepsize for the gradient step
     ConstantLength(1.0; type=:relative)
 
     ## Stepsize for the complete step
     ArmijoLinesearch(;
-        initial_stepsize=1.0
-        retraction_method=ExponentialRetraction()
-        contraction_factor=0.95
-        sufficient_decrease=0.1
+        initial_stepsize=1.0,
+        retraction_method=ManifoldsBase.ExponentialRetraction(),
+        contraction_factor=0.95,
+        sufficient_decrease=0.1,
     )
 
     ## Stopping criterion
@@ -180,7 +180,7 @@ mean_pg = copy(M, c) # start at the center
       * Max Iteration 150:  not reached
       * projected gradient stationary (<1.0e-7):    reached
     Overall: reached
-    This indicates convergence: Yes
+    This indicates convergence: No
 
     ## Debug
         :Iteration = [(:Iteration, "# %-6d"), (:Cost, "f(x): %f"), " ", (:GradientNorm, "|grad f(p)|:%s"), "\n", 1]
@@ -204,11 +204,11 @@ mean_alm = copy(M, c)
 )
 ```
 
-    Initial f(x): 8.519830
-    # 10    f(x): 5.741814
-    # 20    f(x): 5.741845
+    Initial f(x): 8.519830 
+    # 10    f(x): 5.741814 
+    # 20    f(x): 5.741845 
     The algorithm computed a step size (5.830448990119683e-11) less than 1.0e-10.
-      1.748130 seconds (9.92 M allocations: 503.845 MiB, 4.47% gc time, 99.07% compilation time)
+      2.207807 seconds (12.38 M allocations: 635.823 MiB, 3.43% gc time, 99.41% compilation time)
 
     # Solver state for `Manopt.jl`s Augmented Lagrangian Method
     After 29 iterations
@@ -252,14 +252,14 @@ mean_epm = copy(M, c)
 )
 ```
 
-    Initial f(x): 8.519830
-    # 25    f(x): 5.747352
-    # 50    f(x): 5.742157
-    # 75    f(x): 5.741863
-    # 100   f(x): 5.741847
+    Initial f(x): 8.519830 
+    # 25    f(x): 5.747352 
+    # 50    f(x): 5.742157 
+    # 75    f(x): 5.741863 
+    # 100   f(x): 5.741847 
     The value of the variable (ϵ) is smaller than or equal to its threshold (1.0e-6).
     At iteration 101 the algorithm performed a step with a change (5.712257693422003e-8) less than 1.0e-6.
-      1.078051 seconds (7.59 M allocations: 359.751 MiB, 4.62% gc time, 89.39% compilation time)
+      1.473903 seconds (10.30 M allocations: 504.499 MiB, 6.09% gc time, 92.78% compilation time)
 
     # Solver state for `Manopt.jl`s Exact Penalty Method
     After 101 iterations
@@ -278,7 +278,7 @@ mean_epm = copy(M, c)
           * |Δp| < 1.0e-6: reached
         Overall: reached
     Overall: reached
-    This indicates convergence: Yes
+    This indicates convergence: No
 
     ## Debug
         :Iteration = [(:Iteration, "# %-6d"), (:Cost, "f(x): %f"), " ", "\n", 25]
@@ -303,10 +303,10 @@ pg_b = @be projected_gradient_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    183.583 μs (3862 allocs: 145.734 KiB)
-     median 231.000 μs (5486 allocs: 208.797 KiB)
-     mean   290.992 μs (7353.60 allocs: 281.319 KiB)
-     max    605.583 μs (17260 allocs: 666.000 KiB)
+     min    184.708 μs (3849 allocs: 160.688 KiB)
+     median 219.917 μs (5473 allocs: 223.750 KiB)
+     mean   276.942 μs (7340.60 allocs: 296.272 KiB)
+     max    444.167 μs (17247 allocs: 680.953 KiB)
 
 ``` julia
 alm_b = @be augmented_Lagrangian_method!(
@@ -318,10 +318,10 @@ alm_b = @be augmented_Lagrangian_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    13.538 ms (322539 allocs: 11.890 MiB)
-     median 15.662 ms (391018 allocs: 14.427 MiB)
-     mean   15.472 ms (369894.80 allocs: 13.646 MiB, 2.63% compile time)
-     max    16.310 ms (400764 allocs: 14.791 MiB, 13.15% compile time)
+     min    9.858 ms (325530 allocs: 12.246 MiB)
+     median 12.499 ms (395087 allocs: 14.854 MiB)
+     mean   11.926 ms (373553.40 allocs: 14.046 MiB)
+     max    13.190 ms (404833 allocs: 15.218 MiB)
 
 ``` julia
 epm_b = @be exact_penalty_method!(
@@ -333,10 +333,10 @@ epm_b = @be exact_penalty_method!(
 ```
 
     Benchmark: 5 samples with 1 evaluation
-     min    87.115 ms (1981548 allocs: 73.062 MiB)
-     median 90.660 ms (1981548 allocs: 73.062 MiB)
-     mean   94.963 ms (1981548 allocs: 73.062 MiB, 6.10% gc time)
-     max    109.907 ms (1981548 allocs: 73.062 MiB, 16.78% gc time)
+     min    60.591 ms (2000556 allocs: 75.418 MiB)
+     median 71.683 ms (2000556 allocs: 75.418 MiB)
+     mean   78.335 ms (2000556 allocs: 75.418 MiB, 9.02% gc time)
+     max    112.708 ms (2000556 allocs: 75.418 MiB, 45.09% gc time)
 
 ## Plots & results
 
@@ -371,7 +371,7 @@ hidedecorations!(axis)
 fig
 ```
 
-![](Constrained-Mean-H2_files/figure-commonmark/cell-18-output-2.png)
+![](Constrained-Mean-H2_files/figure-commonmark/cell-18-output-1.png)
 
 ``` julia
 min_cost = minimum(map(p -> _f(M, p), [mean_pg, mean_alm, mean_epm]))
@@ -413,7 +413,7 @@ axis2.ylabel = "Cost f"
 fig2
 ```
 
-![](Constrained-Mean-H2_files/figure-commonmark/cell-20-output-2.png)
+![](Constrained-Mean-H2_files/figure-commonmark/cell-20-output-1.png)
 
 ## Literature
 
@@ -426,30 +426,31 @@ Canonical=false
 
 This tutorial is cached. It was last run on the following package versions.
 
-    Status `/ManoptExamples.jl/examples/Project.toml`
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
       [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.13.4
+      [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
-      [35d6a980] ColorSchemes v3.29.0
-    ⌅ [5ae59095] Colors v0.12.11
-      [a93c6f00] DataFrames v1.7.0
-      [7073ff75] IJulia v1.27.0
-      [682c06a0] JSON v0.21.4
+      [35d6a980] ColorSchemes v3.31.0
+      [5ae59095] Colors v0.13.1
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+    ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
-      [d3d80556] LineSearches v7.3.0
-      [ee78f7c6] Makie v0.22.4
-      [af67fdf4] ManifoldDiff v0.4.2
-      [1cead3c2] Manifolds v0.10.16
-      [3362f125] ManifoldsBase v1.0.3
-      [0fc0a36d] Manopt v0.5.12
-      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [91a5bcdd] Plots v1.40.12
-      [08abe8d2] PrettyTables v2.4.0
-      [6099a3de] PythonCall v0.9.24
-      [f468eda6] QuadraticModels v0.9.8
-      [1e40b3f8] RipQP v0.6.4
+      [91a5bcdd] Plots v1.41.1
+      [08abe8d2] PrettyTables v3.1.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
+      [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered April 13, 2025, 14:06:35.
+This tutorial was last rendered October 16, 2025, 10:29:49.

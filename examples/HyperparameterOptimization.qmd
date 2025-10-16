@@ -171,7 +171,7 @@ The next part is the trial evaluation procedure.
 This is one of the more important places which need to be customized to your problem.
 This is the point where we tell Optuna about the relevant optimization hyperparameters and use them to define specific problems.
 The hyperparameter optimization is a multiobjective problem: we want as good problem objectives as possible and as low times as possible.
-As Optuna doesn't currently support multicriteria pruning, which is important for obtaining a solution in a reasonable amount of time, we use a linear combination of sub-objectives to turn the problem into a single-criterion optimization. 
+As Optuna doesn't currently support multicriteria pruning, which is important for obtaining a solution in a reasonable amount of time, we use a linear combination of sub-objectives to turn the problem into a single-criterion optimization.
 The hyperparameter optimization objective is a linear combination of achieved objectives the relative weight is controlled by `objective.obj_loss_coeff`.
 
 ```{julia}
@@ -390,6 +390,26 @@ lbfgs_study()
 ## Summary
 
 We've shown how to automatically select the best hyperparameter values for your optimization problem.
+
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
 
 ## Literature
 

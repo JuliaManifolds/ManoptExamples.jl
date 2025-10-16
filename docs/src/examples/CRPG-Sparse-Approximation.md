@@ -52,7 +52,7 @@ n_tests = 10 # number of tests for each parameter setting
 atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-dims = [2, 10, 100] 
+dims = [2, 10, 100]
 μs = [0.1, 0.5, 1.0]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```
@@ -61,7 +61,7 @@ dims = [2, 10, 100]
 # Objective, gradient, and proxes
 g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
-# 
+#
 # Proximal map for the $\ell_1$-norm on the hyperbolic space
 function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
     n = manifold_dimension(Hn)
@@ -70,25 +70,25 @@ function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
     y[end] = x[end] + t
     for i in 1:n
         y[i] = sign(x[i])*max(0, abs(x[i]) - t)
-    end 
+    end
     y /= sqrt(abs(minkowski_metric(y, y)))
-    for k in 1:max_it 
+    for k in 1:max_it
         t_new = μ * sqrt(abs(minkowski_metric(x, y)^2 - 1 ))/distance(Hn, x, y)
         if abs(t_new - t) ≤ tol
             return y
-        end 
+        end
         y[end] = x[end] + t_new
         for i in 1:n
             y[i] = sign(x[i])*max(0, abs(x[i]) - t_new)
-        end 
+        end
         y /= sqrt(abs(minkowski_metric(y, y)))
         t = copy(t_new)
-    end 
+    end
     return y
 end
 h(M, p, μ) = μ * norm(p, 1)
 prox_h(M, λ, p, μ) = prox_l1_Hn(M, λ * μ, p)
-# 
+#
 f(M, p, data, μ) = g(M, p, data) + h(M, p, μ)
 # CPPA needs the proximal operators for the total objective
 function proxes_f(data, μ)
@@ -118,7 +118,7 @@ end
 We introduce some keyword arguments for the solvers we will use in this experiment
 
 ``` julia
-# Keyword arguments for CRPG with a constant stepsize 
+# Keyword arguments for CRPG with a constant stepsize
 pgm_kwargs_cn(constant_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -133,16 +133,16 @@ pgm_bm_kwargs_cn(constant_stepsize) = [
     :stepsize => ConstantLength(constant_stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
 # Keyword arguments for CRPG with a backtracked stepsize
 pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
         contraction_factor=contraction_factor,
         initial_stepsize=initial_stepsize,
-        strategy=:convex, 
+        strategy=:convex,
         warm_start_factor=warm_start_factor,
     ),
     :stopping_criterion => StopWhenAny(
@@ -152,7 +152,7 @@ pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
 pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
         contraction_factor=contraction_factor,
         initial_stepsize=initial_stepsize,
         strategy=:convex,
@@ -160,7 +160,7 @@ pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
 # Keyword arguments for CPPA
 cppa_kwargs(M) = [
@@ -187,7 +187,7 @@ And run the experiments
 for n in dims
     # Set random seed for reproducibility
     Random.seed!(random_seed)
-    
+
     # Define manifold
     M = Hyperbolic(n)
 
@@ -198,7 +198,7 @@ for n in dims
 
         for (c, μ) in enumerate(μs)
             # Initialize starting point for the optimization
-            p0 = rand(M) 
+            p0 = rand(M)
 
             # Initialize functions
             g_hn(M, p) = g(M, p, data)
@@ -217,7 +217,7 @@ for n in dims
             #
             # Optimization
             # Constant stepsize
-            pgm_cn = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
+            pgm_cn = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0;
                 prox_nonsmooth=prox_h_hn,
                 pgm_kwargs_cn(constant_stepsize)...
             )
@@ -225,7 +225,7 @@ for n in dims
             pgm_record_cn = get_record(pgm_cn)
             #
             # Backtracked stepsize
-            pgm_bt = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
+            pgm_bt = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0;
                 prox_nonsmooth=prox_h_hn,
                 pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor)...
             )
@@ -239,12 +239,12 @@ for n in dims
             #
             # Benchmark the algorithms
             # Constant stepsize
-            pgm_bm_cn = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
+            pgm_bm_cn = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0;
                 prox_nonsmooth=$prox_h_hn,
                 $pgm_bm_kwargs_cn($constant_stepsize)...
             )
             # Backtracked stepsize
-            pgm_bm_bt = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
+            pgm_bm_bt = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0;
                 prox_nonsmooth=$prox_h_hn,
                 $pgm_bm_kwargs_bt($contraction_factor, $initial_stepsize, $warm_start_factor)...
             )
@@ -281,21 +281,21 @@ for n in dims
             iterations_cppa = length(cppa_record)
             iterations_pgm_cn_means[c] += iterations_pgm_cn
             iterations_pgm_bt_means[c] += iterations_pgm_bt
-            iterations_cppa_means[c] += iterations_cppa      
+            iterations_cppa_means[c] += iterations_cppa
         end
     end
     for (c, μ) in enumerate(μs)
-        push!(df_pgm_cn, 
+        push!(df_pgm_cn,
             [
                 μ, n, iterations_pgm_cn_means[c]/n_tests, time_pgm_cn_means[c]/n_tests, objective_pgm_cn_means[c]/n_tests, sparsity_pgm_cn_means[c]/n_tests
             ]
         )
-        push!(df_pgm_bt, 
+        push!(df_pgm_bt,
             [
                 μ, n, iterations_pgm_bt_means[c]/n_tests, time_pgm_bt_means[c]/n_tests, objective_pgm_bt_means[c]/n_tests, sparsity_pgm_bt_means[c]/n_tests
             ]
         )
-        push!(df_cppa, 
+        push!(df_cppa,
             [
                 μ, n, iterations_cppa_means[c]/n_tests, time_cppa_means[c]/n_tests, objective_cppa_means[c]/n_tests, sparsity_cppa_means[c]/n_tests
             ]
@@ -314,11 +314,14 @@ for n in dims
     sparsity_cppa_means .= zeros(length(μs))
     objective_pgm_cn_means .= zeros(length(μs))
     objective_pgm_bt_means .= zeros(length(μs))
-    objective_cppa_means .= zeros(length(μs)) 
+    objective_cppa_means .= zeros(length(μs))
 end
 ```
 
 We export the results to CSV files
+
+<details class="code-fold">
+<summary>Code</summary>
 
 ``` julia
 # Sort the dataframes by the parameter μ and create the final results dataframes
@@ -327,94 +330,92 @@ df_pgm_bt = sort(df_pgm_bt, :μ)
 df_cppa = sort(df_cppa, :μ)
 df_results_time_iter = DataFrame(
     μ             = df_pgm_cn.μ,
-    n             = Int.(df_pgm_cn.n), 
-    CRPG_iter     = Int.(round.(df_pgm_cn.iterations, digits = 0)), 
-    CRPG_time     = df_pgm_cn.time, 
+    n             = Int.(df_pgm_cn.n),
+    CRPG_iter     = Int.(round.(df_pgm_cn.iterations, digits = 0)),
+    CRPG_time     = df_pgm_cn.time,
     CRPG_bt_iter  = Int.(round.(df_pgm_bt.iterations, digits = 0)),
-    CRPG_bt_time  = df_pgm_bt.time, 
+    CRPG_bt_time  = df_pgm_bt.time,
     CPPA_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
-    CPPA_time     = df_cppa.time, 
+    CPPA_time     = df_cppa.time,
 )
 df_results_obj_spar = DataFrame(
     μ               = df_pgm_cn.μ,
-    n               = Int.(df_pgm_cn.n), 
-    CRPG_obj       = df_pgm_cn.objective, 
-    CRPG_sparsity  = df_pgm_cn.sparsity,  
-    CRPG_bt_obj    = df_pgm_bt.objective, 
-    CRPG_bt_sparsity = df_pgm_bt.sparsity,  
-    CPPA_obj         = df_cppa.objective, 
-    CPPA_sparsity    = df_cppa.sparsity, 
+    n               = Int.(df_pgm_cn.n),
+    CRPG_obj       = df_pgm_cn.objective,
+    CRPG_sparsity  = df_pgm_cn.sparsity,
+    CRPG_bt_obj    = df_pgm_bt.objective,
+    CRPG_bt_sparsity = df_pgm_bt.sparsity,
+    CPPA_obj         = df_cppa.objective,
+    CPPA_sparsity    = df_cppa.sparsity,
 )
 # Write the results to CSV files
 CSV.write(joinpath(results_folder, "results-Hn-time-iter-$(n_tests)-$(dims[end]).csv"), df_results_time_iter)
 CSV.write(joinpath(results_folder, "results-Hn-obj-spar-$(n_tests)-$(dims[end]).csv"), df_results_obj_spar)
 ```
 
+</details>
+
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
 
-| **μ** | **n** | **CRPG\_const\_iter** | **CRPG\_const\_time** | **CRPG\_bt\_iter** | **CRPG\_bt\_time** | **CPPA\_iter** | **CPPA\_time** |
-|------:|------:|----------------------:|----------------------:|-------------------:|-------------------:|---------------:|---------------:|
-| 0.1   | 2     | 204                   | 0.055911              | 2181               | 1.1538             | 5000           | 2.70869        |
-| 0.1   | 10    | 101                   | 0.0366215             | 1636               | 1.9697             | 5000           | 3.40173        |
-| 0.1   | 100   | 49                    | 0.0382509             | 4144               | 19.185             | 5000           | 5.92673        |
-| 0.5   | 2     | 143                   | 0.0367069             | 586                | 0.485252           | 5000           | 2.67662        |
-| 0.5   | 10    | 83                    | 0.02751               | 491                | 0.412215           | 4004           | 2.72047        |
-| 0.5   | 100   | 48                    | 0.0365263             | 1974               | 8.39718            | 5000           | 6.19089        |
-| 1.0   | 2     | 104                   | 0.0257036             | 530                | 0.271966           | 3507           | 1.92153        |
-| 1.0   | 10    | 56                    | 0.016988              | 113                | 0.106215           | 3507           | 2.36858        |
-| 1.0   | 100   | 48                    | 0.0376193             | 2207               | 8.4336             | 4502           | 5.43228        |
+| **μ** | **n** | **CRPG_const_iter** | **CRPG_const_time** | **CRPG_bt_iter** | **CRPG_bt_time** | **CPPA_iter** | **CPPA_time** |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.1 | 2 | 167 | 0.049181 | 1561 | 1.4581 | 5000 | 3.9519 |
+| 0.1 | 10 | 111 | 0.0443115 | 2033 | 3.18836 | 5000 | 7.17354 |
+| 0.1 | 100 | 48 | 0.0358821 | 2928 | 12.569 | 5000 | 7.73864 |
+| 0.5 | 2 | 121 | 0.0317396 | 567 | 0.86611 | 4004 | 3.2404 |
+| 0.5 | 10 | 81 | 0.0267678 | 1117 | 2.01164 | 4502 | 5.1665 |
+| 0.5 | 100 | 45 | 0.0335185 | 1021 | 3.32761 | 5000 | 6.23522 |
+| 1.0 | 2 | 69 | 0.0185704 | 73 | 0.0460234 | 2511 | 2.28915 |
+| 1.0 | 10 | 67 | 0.0204594 | 1098 | 1.9168 | 3507 | 3.39929 |
+| 1.0 | 100 | 45 | 0.0336094 | 3069 | 13.005 | 4502 | 5.83509 |
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 
-| **μ** | **n** | **CRPG\_const\_obj** | **CRPG\_const\_spar** | **CRPG\_bt\_obj** | **CRPG\_bt\_spar** | **CPPA\_obj** | **CPPA\_spar** |
-|------:|------:|---------------------:|----------------------:|------------------:|-------------------:|--------------:|---------------:|
-| 0.1   | 2     | 3.74126              | 0.05                  | 3.74126           | 0.05               | 3.74126       | 0.05           |
-| 0.1   | 10    | 7.82812              | 0.08                  | 7.82812           | 0.08               | 7.82812       | 0.08           |
-| 0.1   | 100   | 54.2988              | 0.066                 | 54.2988           | 0.066              | 54.2988       | 0.066          |
-| 0.5   | 2     | 4.57092              | 0.2                   | 4.57092           | 0.2                | 4.57092       | 0.2            |
-| 0.5   | 10    | 9.00006              | 0.42                  | 9.00006           | 0.42               | 9.00007       | 0.44           |
-| 0.5   | 100   | 57.5651              | 0.369                 | 57.5651           | 0.369              | 57.5651       | 0.369          |
-| 1.0   | 2     | 5.23394              | 0.5                   | 5.23394           | 0.5                | 5.23394       | 0.55           |
-| 1.0   | 10    | 9.85087              | 0.71                  | 9.85087           | 0.71               | 9.85087       | 0.71           |
-| 1.0   | 100   | 59.5296              | 0.69                  | 59.5296           | 0.69               | 59.5298       | 0.693          |
+| **μ** | **n** | **CRPG_const_obj** | **CRPG_const_spar** | **CRPG_bt_obj** | **CRPG_bt_spar** | **CPPA_obj** | **CPPA_spar** |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.1 | 2 | 3.17406 | 0.05 | 3.17406 | 0.05 | 3.17406 | 0.05 |
+| 0.1 | 10 | 8.32265 | 0.15 | 8.32265 | 0.15 | 8.32265 | 0.15 |
+| 0.1 | 100 | 52.938 | 0.088 | 52.938 | 0.088 | 52.938 | 0.088 |
+| 0.5 | 2 | 3.89857 | 0.4 | 3.89857 | 0.4 | 3.89857 | 0.4 |
+| 0.5 | 10 | 9.47638 | 0.51 | 9.47638 | 0.51 | 9.47638 | 0.51 |
+| 0.5 | 100 | 55.593 | 0.442 | 55.593 | 0.442 | 55.593 | 0.442 |
+| 1.0 | 2 | 4.51909 | 0.6 | 4.51909 | 0.6 | 4.51909 | 0.6 |
+| 1.0 | 10 | 10.357 | 0.73 | 10.357 | 0.73 | 10.357 | 0.73 |
+| 1.0 | 100 | 57.1667 | 0.76 | 57.1667 | 0.76 | 57.167 | 0.763 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
-``` julia
-using Pkg
-Pkg.status()
-```
-
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
       [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.15.3
+      [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
-      [35d6a980] ColorSchemes v3.30.0
-    ⌅ [5ae59095] Colors v0.12.11
-      [a93c6f00] DataFrames v1.7.0
-      [7073ff75] IJulia v1.29.0
-      [682c06a0] JSON v0.21.4
+      [35d6a980] ColorSchemes v3.31.0
+      [5ae59095] Colors v0.13.1
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+    ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
+      [b964fa9f] LaTeXStrings v1.4.0
       [d3d80556] LineSearches v7.4.0
-      [ee78f7c6] Makie v0.24.3
-      [af67fdf4] ManifoldDiff v0.4.4
-      [1cead3c2] Manifolds v0.10.22
-      [3362f125] ManifoldsBase v1.2.0
-      [0fc0a36d] Manopt v0.5.20
-      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [91a5bcdd] Plots v1.40.16
-      [08abe8d2] PrettyTables v2.4.0
-      [6099a3de] PythonCall v0.9.25
-      [f468eda6] QuadraticModels v0.9.13
+      [91a5bcdd] Plots v1.41.1
+      [08abe8d2] PrettyTables v3.1.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered July 15, 2025, 15:56:59.
+This tutorial was last rendered October 15, 2025, 15:29:44.
 
 ## Literature
 

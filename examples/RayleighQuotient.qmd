@@ -244,6 +244,25 @@ allocating and in-place function.
 While the performance is better for the Riemannian case, the Euclidean one is a worthy alternative, when those are easier to compute.
 
 
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
+
 ## Literature
 
 ````{=commonmark}

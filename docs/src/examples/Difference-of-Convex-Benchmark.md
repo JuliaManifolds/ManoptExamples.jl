@@ -9,10 +9,10 @@ and the Difference of Convex Proximal Point Algorithm (DCPPA) [SouzaOliveira:201
 Difference of Convex (DC) problems of the form. This Benchmark reproduces the results from [BergmannFerreiraSantosSouza:2024](@cite), Section 7.1.
 
 ``` math
-\operatorname*{arg\,min}_{p\in\mathcal M}\ \  g(p) - h(p)
+\operatorname*{arg\,min}_{p∈\mathcal M}\ \  g(p) - h(p)
 ```
 
-where $g,h\colon \mathcal M \to \mathbb R$ are geodesically convex function on the Riemannian manifold $\mathcal M$.
+where $g,h\colon \mathcal M → \mathbb R$ are geodesically convex function on the Riemannian manifold $\mathcal M$.
 
 ``` julia
 using LinearAlgebra, Random, Statistics, BenchmarkTools
@@ -34,7 +34,7 @@ teal = paul_tol["mutedteal"]
 We start with defining the two convex functions $g,h$ and their gradients as well as the DC problem $f$ and its gradient for the problem
 
 ``` math
-    \operatorname*{arg\,min}_{p\in\mathcal M}\ \ \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
+    \operatorname*{arg\,min}_{p∈\mathcal M}\ \ \bigl( \log\bigr(\det(p)\bigr)\bigr)^4 - \bigl(\log \det(p) \bigr)^2.
 ```
 
 where the critical points obtain a functional value of $-\frac{1}{4}$.
@@ -84,7 +84,7 @@ check_gradient(M, h, grad_h, p0, X0; plot=true)
 ![](Difference-of-Convex-Benchmark_files/figure-commonmark/cell-9-output-1.svg)
 
 which both pass the test.
-We continue to define their inplace variants
+We continue to define their in-place variants
 
 ``` julia
 function grad_g!(M, X, p)
@@ -137,8 +137,8 @@ And compare times for both algorithms, with a bit of debug output.
     # 10    f(p): -0.249999999 |grad_f(p)|: 0.000187633 |δp|: 0.000626103
     # 15    f(p): -0.250000000 |grad_f(p)|: 0.000000772 |δp|: 0.000002574
     # 20    f(p): -0.250000000 |grad_f(p)|: 0.000000005 |δp|: 0.000000011
-    The algorithm reached approximately critical point after 24 iterations; the gradient norm (7.619584706652929e-11) is less than 1.0e-10.
-      3.531235 seconds (8.71 M allocations: 628.709 MiB, 3.52% gc time, 67.16% compilation time)
+    The algorithm reached approximately critical point after 24 iterations; the gradient norm (7.619584706652928e-11) is less than 1.0e-10.
+      3.711502 seconds (22.45 M allocations: 1.173 GiB, 7.83% gc time, 99.46% compilation time)
 
 The cost is
 
@@ -171,13 +171,13 @@ Similarly the DCPPA performs
         "\n",
     ],
     evaluation=InplaceEvaluation(),
-    stepsize=ConstantStepsize(1.0),
+    stepsize=ConstantLength(1.0),
     stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
     sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
 );
 ```
 
-    Initial f(p): 137.679053470
+    Initial f(p): 137.679053470 
     # 5     f(p): -0.248491803 |grad_f(p)|: 0.2793140152|δp|: 0.2753827692
     # 10    f(p): -0.249998655 |grad_f(p)|: 0.0080437374|δp|: 0.0050891316
     # 15    f(p): -0.249999999 |grad_f(p)|: 0.0002507329|δp|: 0.0001567676
@@ -186,7 +186,7 @@ Similarly the DCPPA performs
     # 30    f(p): -0.250000000 |grad_f(p)|: 0.0000000076|δp|: 0.0000000048
     # 35    f(p): -0.250000000 |grad_f(p)|: 0.0000000002|δp|: 0.0000000001
     The algorithm reached approximately critical point after 37 iterations; the gradient norm (5.458071707233144e-11) is less than 1.0e-10.
-      1.341931 seconds (2.55 M allocations: 180.474 MiB, 2.46% gc time, 59.94% compilation time)
+      1.005187 seconds (5.32 M allocations: 306.021 MiB, 2.72% gc time, 98.51% compilation time)
 
 It needs a few more iterations, but the single iterations are slightly faster.
 Both obtain the same cost
@@ -238,7 +238,7 @@ for n in N
         cost=f,
         gradient=grad_f!,
         evaluation=InplaceEvaluation(),
-        stepsize=ConstantStepsize(1.0),
+        stepsize=ConstantLength(1.0),
         stopping_criterion=StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
         sub_stopping_criterion=StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
     )
@@ -300,7 +300,7 @@ dcppa_costs = Dict{Int,Vector{Float64}}()
         cost = f,
         gradient= grad_f!,
         evaluation = InplaceEvaluation(),
-        stepsize = ConstantStepsize(1.0),
+        stepsize = ConstantLength(1.0),
         stopping_criterion = StopAfterIteration(5000) | StopWhenGradientNormLess(1e-10),
         sub_stopping_criterion = StopAfterIteration(100) | StopWhenGradientNormLess(1e-10),
         record = [:Iteration, :Cost],
@@ -326,6 +326,40 @@ And for the developtment of the cost
 ![](Difference-of-Convex-Benchmark_files/figure-commonmark/cell-22-output-1.svg)
 
 where we can see that the DCA needs less iterations than the DCPPA.
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.6.0
+      [336ed68f] CSV v0.10.15
+      [13f3f980] CairoMakie v0.15.6
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.31.0
+    ⌅ [5ae59095] Colors v0.12.11
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+      [7073ff75] IJulia v1.30.6
+    ⌅ [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.2
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
+      [51fcb6bd] NamedColors v0.2.3
+      [91a5bcdd] Plots v1.41.1
+    ⌅ [08abe8d2] PrettyTables v2.4.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
+      [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
+
+This tutorial was last rendered October 11, 2025, 17:12:28.
 
 ## Literature
 

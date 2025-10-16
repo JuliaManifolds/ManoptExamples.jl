@@ -57,7 +57,7 @@ Let $h \colon \mathcal M \to \mathbb R$ be defined by
 
 ```math
 h(p) = \mu \Vert p \Vert_1
-``` 
+```
 be the sparsity-enforcing term given by the $\ell_1$-norm, where $\mu > 0$ is a regularization parameter.
 
 We define our total objective function as $f = g + h$.
@@ -76,7 +76,7 @@ n_tests = 10 # number of tests for each parameter setting
 atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-dims = [2, 10, 100] 
+dims = [2, 10, 100]
 μs = [0.1, 0.5, 1.0]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```
@@ -86,7 +86,7 @@ dims = [2, 10, 100]
 # Objective, gradient, and proxes
 g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
-# 
+#
 # Proximal map for the $\ell_1$-norm on the hyperbolic space
 function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
     n = manifold_dimension(Hn)
@@ -95,25 +95,25 @@ function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
     y[end] = x[end] + t
     for i in 1:n
         y[i] = sign(x[i])*max(0, abs(x[i]) - t)
-    end 
+    end
     y /= sqrt(abs(minkowski_metric(y, y)))
-    for k in 1:max_it 
+    for k in 1:max_it
         t_new = μ * sqrt(abs(minkowski_metric(x, y)^2 - 1 ))/distance(Hn, x, y)
         if abs(t_new - t) ≤ tol
             return y
-        end 
+        end
         y[end] = x[end] + t_new
         for i in 1:n
             y[i] = sign(x[i])*max(0, abs(x[i]) - t_new)
-        end 
+        end
         y /= sqrt(abs(minkowski_metric(y, y)))
         t = copy(t_new)
-    end 
+    end
     return y
 end
 h(M, p, μ) = μ * norm(p, 1)
 prox_h(M, λ, p, μ) = prox_l1_Hn(M, λ * μ, p)
-# 
+#
 f(M, p, data, μ) = g(M, p, data) + h(M, p, μ)
 # CPPA needs the proximal operators for the total objective
 function proxes_f(data, μ)
@@ -143,7 +143,7 @@ end
 We introduce some keyword arguments for the solvers we will use in this experiment
 ```{julia}
 #| output: false
-# Keyword arguments for CRPG with a constant stepsize 
+# Keyword arguments for CRPG with a constant stepsize
 pgm_kwargs_cn(constant_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -158,16 +158,16 @@ pgm_bm_kwargs_cn(constant_stepsize) = [
     :stepsize => ConstantLength(constant_stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
 # Keyword arguments for CRPG with a backtracked stepsize
 pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
         contraction_factor=contraction_factor,
         initial_stepsize=initial_stepsize,
-        strategy=:convex, 
+        strategy=:convex,
         warm_start_factor=warm_start_factor,
     ),
     :stopping_criterion => StopWhenAny(
@@ -177,7 +177,7 @@ pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
 pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
         contraction_factor=contraction_factor,
         initial_stepsize=initial_stepsize,
         strategy=:convex,
@@ -185,7 +185,7 @@ pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
     ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
 # Keyword arguments for CPPA
 cppa_kwargs(M) = [
@@ -225,8 +225,8 @@ sparsity_pgm_bt_means = zeros(length(μs))
 sparsity_cppa_means = zeros(length(μs))
 objective_pgm_cn_means = zeros(length(μs))
 objective_pgm_bt_means = zeros(length(μs))
-objective_cppa_means = zeros(length(μs)) 
-``` 
+objective_cppa_means = zeros(length(μs))
+```
 
 And run the experiments
 ```{julia}
@@ -234,7 +234,7 @@ And run the experiments
 for n in dims
     # Set random seed for reproducibility
     Random.seed!(random_seed)
-    
+
     # Define manifold
     M = Hyperbolic(n)
 
@@ -245,7 +245,7 @@ for n in dims
 
         for (c, μ) in enumerate(μs)
             # Initialize starting point for the optimization
-            p0 = rand(M) 
+            p0 = rand(M)
 
             # Initialize functions
             g_hn(M, p) = g(M, p, data)
@@ -264,7 +264,7 @@ for n in dims
             #
             # Optimization
             # Constant stepsize
-            pgm_cn = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
+            pgm_cn = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0;
                 prox_nonsmooth=prox_h_hn,
                 pgm_kwargs_cn(constant_stepsize)...
             )
@@ -272,7 +272,7 @@ for n in dims
             pgm_record_cn = get_record(pgm_cn)
             #
             # Backtracked stepsize
-            pgm_bt = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
+            pgm_bt = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0;
                 prox_nonsmooth=prox_h_hn,
                 pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor)...
             )
@@ -286,12 +286,12 @@ for n in dims
             #
             # Benchmark the algorithms
             # Constant stepsize
-            pgm_bm_cn = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
+            pgm_bm_cn = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0;
                 prox_nonsmooth=$prox_h_hn,
                 $pgm_bm_kwargs_cn($constant_stepsize)...
             )
             # Backtracked stepsize
-            pgm_bm_bt = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
+            pgm_bm_bt = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0;
                 prox_nonsmooth=$prox_h_hn,
                 $pgm_bm_kwargs_bt($contraction_factor, $initial_stepsize, $warm_start_factor)...
             )
@@ -328,21 +328,21 @@ for n in dims
             iterations_cppa = length(cppa_record)
             iterations_pgm_cn_means[c] += iterations_pgm_cn
             iterations_pgm_bt_means[c] += iterations_pgm_bt
-            iterations_cppa_means[c] += iterations_cppa      
+            iterations_cppa_means[c] += iterations_cppa
         end
     end
     for (c, μ) in enumerate(μs)
-        push!(df_pgm_cn, 
+        push!(df_pgm_cn,
             [
                 μ, n, iterations_pgm_cn_means[c]/n_tests, time_pgm_cn_means[c]/n_tests, objective_pgm_cn_means[c]/n_tests, sparsity_pgm_cn_means[c]/n_tests
             ]
         )
-        push!(df_pgm_bt, 
+        push!(df_pgm_bt,
             [
                 μ, n, iterations_pgm_bt_means[c]/n_tests, time_pgm_bt_means[c]/n_tests, objective_pgm_bt_means[c]/n_tests, sparsity_pgm_bt_means[c]/n_tests
             ]
         )
-        push!(df_cppa, 
+        push!(df_cppa,
             [
                 μ, n, iterations_cppa_means[c]/n_tests, time_cppa_means[c]/n_tests, objective_cppa_means[c]/n_tests, sparsity_cppa_means[c]/n_tests
             ]
@@ -361,37 +361,37 @@ for n in dims
     sparsity_cppa_means .= zeros(length(μs))
     objective_pgm_cn_means .= zeros(length(μs))
     objective_pgm_bt_means .= zeros(length(μs))
-    objective_cppa_means .= zeros(length(μs)) 
+    objective_cppa_means .= zeros(length(μs))
 end
 ```
 
 We export the results to CSV files
 ```{julia}
-# | output: false
-# | code-fold: true
+#| output: false
+#| code-fold: true
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
 df_pgm_bt = sort(df_pgm_bt, :μ)
 df_cppa = sort(df_cppa, :μ)
 df_results_time_iter = DataFrame(
     μ             = df_pgm_cn.μ,
-    n             = Int.(df_pgm_cn.n), 
-    CRPG_iter     = Int.(round.(df_pgm_cn.iterations, digits = 0)), 
-    CRPG_time     = df_pgm_cn.time, 
+    n             = Int.(df_pgm_cn.n),
+    CRPG_iter     = Int.(round.(df_pgm_cn.iterations, digits = 0)),
+    CRPG_time     = df_pgm_cn.time,
     CRPG_bt_iter  = Int.(round.(df_pgm_bt.iterations, digits = 0)),
-    CRPG_bt_time  = df_pgm_bt.time, 
+    CRPG_bt_time  = df_pgm_bt.time,
     CPPA_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
-    CPPA_time     = df_cppa.time, 
+    CPPA_time     = df_cppa.time,
 )
 df_results_obj_spar = DataFrame(
     μ               = df_pgm_cn.μ,
-    n               = Int.(df_pgm_cn.n), 
-    CRPG_obj       = df_pgm_cn.objective, 
-    CRPG_sparsity  = df_pgm_cn.sparsity,  
-    CRPG_bt_obj    = df_pgm_bt.objective, 
-    CRPG_bt_sparsity = df_pgm_bt.sparsity,  
-    CPPA_obj         = df_cppa.objective, 
-    CPPA_sparsity    = df_cppa.sparsity, 
+    n               = Int.(df_pgm_cn.n),
+    CRPG_obj       = df_pgm_cn.objective,
+    CRPG_sparsity  = df_pgm_cn.sparsity,
+    CRPG_bt_obj    = df_pgm_bt.objective,
+    CRPG_bt_sparsity = df_pgm_bt.sparsity,
+    CPPA_obj         = df_cppa.objective,
+    CPPA_sparsity    = df_cppa.sparsity,
 )
 # Write the results to CSV files
 CSV.write(joinpath(results_folder, "results-Hn-time-iter-$(n_tests)-$(dims[end]).csv"), df_results_time_iter)
@@ -401,18 +401,20 @@ CSV.write(joinpath(results_folder, "results-Hn-obj-spar-$(n_tests)-$(dims[end]).
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
 ```{julia}
-# | echo: false
-# | code-fold: true
+#| echo: false
+#| code-fold: true
+#| output: asis
 header_1 = ["μ", "n", "CRPG_const_iter", "CRPG_const_time", "CRPG_bt_iter", "CRPG_bt_time", "CPPA_iter", "CPPA_time"]
-benchmarking && pretty_table(df_results_time_iter; backend = Val(:markdown), header = header_1)
+benchmarking && pretty_table(df_results_time_iter; backend = :markdown, column_labels = header_1)
 ```
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 ```{julia}
-# | echo: false
-# | code-fold: true
+#| echo: false
+#| code-fold: true
+#| output: asis
 header_2 = ["μ", "n", "CRPG_const_obj", "CRPG_const_spar", "CRPG_bt_obj", "CRPG_bt_spar", "CPPA_obj", "CPPA_spar"]
-benchmarking && pretty_table(df_results_obj_spar; backend = Val(:markdown), header = header_2)
+benchmarking && pretty_table(df_results_obj_spar; backend = :markdown, column_labels = header_2)
 ```
 
 ## Technical details
@@ -421,11 +423,13 @@ This tutorial is cached. It was last run on the following package versions.
 
 ```{julia}
 #| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
 using Pkg
 Pkg.status()
 ```
+
 ```{julia}
-#| code-fold: true
 #| echo: false
 #| output: asis
 using Dates

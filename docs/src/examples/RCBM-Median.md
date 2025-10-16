@@ -293,7 +293,7 @@ for n in hn_sn_dims
         rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn, $k_min_hn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
-        
+
         times = [
             median(rcbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
@@ -320,23 +320,23 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |     Time_1 | Objective_1 | Iterations_2 |   Time_2 | Objective_2 |
-|-----------|--------------|------------|-------------|--------------|----------|-------------|
-|         2 |            9 | 0.00523775 |     1.05192 |          251 | 0.132011 |     1.05192 |
-|         4 |            8 | 0.00469981 |     1.07516 |          230 | 0.132091 |     1.07516 |
-|        32 |           15 |  0.0151958 |     1.08559 |          234 | 0.180374 |     1.08559 |
-|      1024 |           16 |   0.284984 |     1.09706 |          234 |  4.00771 |     1.09706 |
-|     32768 |           16 |    7.34017 |      1.0681 |          229 |  91.2803 |      1.0681 |
+| **Dimension** | **Iterations_1** | **Time_1** | **Objective_1** | **Iterations_2** | **Time_2** | **Objective_2** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 2 | 9 | 0.00374917 | 1.05192 | 251 | 0.0876468 | 1.05192 |
+| 4 | 8 | 0.00349267 | 1.07516 | 230 | 0.0974517 | 1.07516 |
+| 32 | 15 | 0.0113675 | 1.08403 | 234 | 0.141856 | 1.08403 |
+| 1024 | 16 | 0.170142 | 1.09479 | 234 | 2.65338 | 1.09479 |
+| 32768 | 23 | 8.611 | 1.08865 | 225 | 86.0427 | 1.08865 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |       Time | Objective |
-|-----------|------------|------------|-----------|
-|         2 |         18 | 0.00811254 |   1.04748 |
-|         4 |         19 | 0.00953129 |   1.05518 |
-|        32 |         25 |  0.0208788 |   1.08559 |
-|      1024 |         23 |   0.400038 |   1.09706 |
-|     32768 |         21 |    8.81869 |   1.06488 |
+| **Dimension** | **Iterations** |   **Time** | **Objective** |
+|--------------:|---------------:|-----------:|--------------:|
+|             2 |             18 | 0.00559008 |       1.04748 |
+|             4 |             19 | 0.00665521 |       1.02366 |
+|            32 |             23 |  0.0143063 |       1.08229 |
+|          1024 |             23 |    0.24613 |       1.09479 |
+|         32768 |             19 |    6.84741 |       1.08865 |
 
 ## The Median on the Symmetric Positive Definite Matrix Space
 
@@ -361,7 +361,7 @@ for n in spd_dims
     dists = [distance(M, z, y) for z in data_spd, y in data_spd]
     diameter_spd = 2 * maximum(dists)
     p0 = data_spd[minimum(Tuple(findmax(dists)[2]))]
-    
+
     f_spd(M, p) = f(M, p, data_spd)
     domf_spd(M, p) = domf(M, p, p0, diameter_spd)
     ∂f_spd(M, p) = ∂f(M, p, data_spd, atol)
@@ -416,21 +416,21 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |   Time_1 | Objective_1 | Iterations_2 |   Time_2 | Objective_2 |
-|-----------|--------------|----------|-------------|--------------|----------|-------------|
-|         3 |           43 | 0.303751 |    0.260846 |           57 | 0.441796 |    0.260846 |
-|        15 |           49 |  2.01407 |    0.436536 |           75 |  1.74885 |    0.436536 |
-|        55 |           15 |  1.30749 |    0.618059 |           89 |  6.15426 |    0.618059 |
-|       120 |            6 |  1.20377 |    0.764031 |          123 |  15.4064 |    0.764031 |
+| **Dimension** | **Iterations_1** | **Time_1** | **Objective_1** | **Iterations_2** | **Time_2** | **Objective_2** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 3 | 38 | 0.249011 | 0.260846 | 57 | 0.346319 | 0.260846 |
+| 15 | 57 | 1.27281 | 0.436536 | 75 | 1.34131 | 0.436536 |
+| 55 | 14 | 46.8956 | 0.618086 | 89 | 3.99824 | 0.618086 |
+| 120 | 12 | 0.946472 | 0.761396 | 123 | 10.8884 | 0.761396 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |    Time | Objective |
-|-----------|------------|---------|-----------|
-|         3 |       4629 | 46.5469 |  0.260846 |
-|        15 |       1727 | 40.4873 |  0.436536 |
-|        55 |        776 | 53.3628 |  0.618059 |
-|       120 |        438 | 53.5932 |  0.764031 |
+| **Dimension** | **Iterations** | **Time** | **Objective** |
+|--------------:|---------------:|---------:|--------------:|
+|             3 |           4709 |  25.4934 |      0.260846 |
+|            15 |           1727 |  29.7775 |      0.436536 |
+|            55 |            776 |  34.2142 |      0.618086 |
+|           120 |            440 |  38.0669 |      0.761396 |
 
 ## The Median on the Sphere
 
@@ -460,7 +460,7 @@ for n in hn_sn_dims
     distance(M, data_sn[1], north) < diameter_sn / 2 ? pop!(data_sn) : nothing
     while length(data_sn) < N
         q = close_point(M, north, diameter_sn / 2)
-        distance(M, q, north) < diameter_sn / 2 ? push!(data_sn, q) : nothing 
+        distance(M, q, north) < diameter_sn / 2 ? push!(data_sn, q) : nothing
     end
     dists = [distance(M, z, y) for z in data_sn, y in data_sn]
     p0 = data_sn[minimum(Tuple(findmax(dists)[2]))]
@@ -519,62 +519,56 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…
 
-| Dimension | Iterations_1 |    Time_1 | Objective_1 | Iterations_2 |    Time_2 | Objective_2 |
-|-----------|--------------|-----------|-------------|--------------|-----------|-------------|
-|         2 |           43 | 0.0158139 |    0.258898 |           71 | 0.0184203 |    0.258898 |
-|         4 |           74 | 0.0230197 |    0.253525 |           62 | 0.0168082 |    0.253525 |
-|        32 |          102 |  0.043011 |    0.259886 |           64 | 0.0272739 |    0.259886 |
-|      1024 |          103 |  0.890434 |    0.266993 |           68 |  0.622527 |    0.266993 |
-|     32768 |           80 |   27.1998 |    0.259302 |           65 |   29.1502 |    0.259302 |
+| **Dimension** | **Iterations_1** | **Time_1** | **Objective_1** | **Iterations_2** | **Time_2** | **Objective_2** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 2 | 53 | 0.0146394 | 0.258898 | 71 | 0.0157284 | 0.258898 |
+| 4 | 76 | 0.0203875 | 0.253525 | 62 | 0.0148905 | 0.253525 |
+| 32 | 92 | 0.0398844 | 0.260417 | 67 | 0.0259528 | 0.260417 |
+| 1024 | 100 | 43.7537 | 0.26468 | 73 | 0.646818 | 0.26468 |
+| 32768 | 5000 | 1143.88 | 0.278525 | 69 | 13.112 | 0.264932 |
 
 … Whereas the following table refers to the SGM
 
-| Dimension | Iterations |      Time | Objective |
-|-----------|------------|-----------|-----------|
-|         2 |        401 | 0.0970337 |  0.258898 |
-|         4 |       5000 |   1.33258 |  0.253525 |
-|        32 |        231 | 0.0963392 |  0.259886 |
-|      1024 |        185 |   1.98786 |  0.266993 |
-|     32768 |        157 |    205.02 |  0.259302 |
+| **Dimension** | **Iterations** |  **Time** | **Objective** |
+|--------------:|---------------:|----------:|--------------:|
+|             2 |            401 | 0.0936217 |      0.258898 |
+|             4 |           5000 |   1.19094 |      0.253525 |
+|            32 |            241 | 0.0916558 |      0.260417 |
+|          1024 |            169 |   1.24458 |       0.26468 |
+|         32768 |            209 |   27.4642 |      0.264932 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
-``` julia
-using Pkg
-Pkg.status()
-```
-
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
-      [6e4b80f9] BenchmarkTools v1.5.0
+      [6e4b80f9] BenchmarkTools v1.6.0
       [336ed68f] CSV v0.10.15
-      [35d6a980] ColorSchemes v3.27.1
-    ⌅ [5ae59095] Colors v0.12.11
-      [a93c6f00] DataFrames v1.7.0
-      [7073ff75] IJulia v1.26.0
-      [682c06a0] JSON v0.21.4
-      [8ac3fa9e] LRUCache v1.6.1
-      [d3d80556] LineSearches v7.3.0
-      [af67fdf4] ManifoldDiff v0.3.13
-      [1cead3c2] Manifolds v0.10.7
-      [3362f125] ManifoldsBase v0.15.22
-      [0fc0a36d] Manopt v0.5.3 `../../Manopt.jl`
-      [5b8d5e80] ManoptExamples v0.1.10 `..`
-      [51fcb6bd] NamedColors v0.2.2
-      [91a5bcdd] Plots v1.40.9
-    ⌃ [08abe8d2] PrettyTables v2.3.2
-      [6099a3de] PythonCall v0.9.23
-      [f468eda6] QuadraticModels v0.9.7
-      [1e40b3f8] RipQP v0.6.4
-    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
+      [13f3f980] CairoMakie v0.15.6
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.31.0
+      [5ae59095] Colors v0.13.1
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+    ⌅ [682c06a0] JSON v0.21.4
+      [8ac3fa9e] LRUCache v1.6.2
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.4.0
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
+      [51fcb6bd] NamedColors v0.2.3
+      [91a5bcdd] Plots v1.41.1
+      [08abe8d2] PrettyTables v3.1.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
+      [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-``` julia
-using Dates
-now()
-```
-
-    2024-11-28T00:40:27.330
+This tutorial was last rendered October 16, 2025, 13:16:19.
 
 ## Literature
 

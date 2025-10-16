@@ -83,10 +83,10 @@ spd_dims = [2, 3, 4, 5]
 # Objective, gradient, and proxes
 g(M, p) = log(det(p))^4
 grad_g(M, p) = 4log(det(p))^3 * p
-# 
+#
 h(M, p, q) = τ * distance(M, p, q)
 prox_h(M, λ, p, q) = ManifoldDiff.prox_distance(M, τ * λ, q, p, 1)
-# 
+#
 f(M, p, q) = g(M, p) + h(M, p, q)
 # Function to generate points close to the given point p
 function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
@@ -113,9 +113,9 @@ We introduce some keyword arguments for the solvers we will use in this experime
 pgm_kwargs(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
         contraction_factor=contraction_factor,
-        strategy=:convex, 
+        strategy=:convex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
         warm_start_factor=warm_start_factor,
@@ -128,17 +128,17 @@ pgm_bm_kwargs(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stepsize => ProximalGradientMethodBacktracking(;
-        contraction_factor=contraction_factor, 
-        strategy=:convex,   
+        contraction_factor=contraction_factor,
+        strategy=:convex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
         warm_start_factor=warm_start_factor,
     ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
-# Solver arguments for constant stepsize 
+# Solver arguments for constant stepsize
 pgm_kwargs_constant(stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -153,7 +153,7 @@ pgm_bm_kwargs_constant(stepsize) = [
     :stepsize => ConstantLength(stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
 ```
 
@@ -182,15 +182,15 @@ col_types_1 = [
 named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
 # Function for initializing the dataframe
 function initialize_dataframes(
-    results_folder, 
-    experiment_name, 
+    results_folder,
+    experiment_name,
     named_tuple_1,
 )
     A1 = DataFrame(named_tuple_1)
     CSV.write(
         joinpath(
             results_folder,
-            experiment_name * 
+            experiment_name *
             "-Comparisons.csv",
         ),
         A1;
@@ -203,9 +203,9 @@ end
 ```{julia}
 #| output: false
 function export_dataframes(
-    M, 
-    records, 
-    times, 
+    M,
+    records,
+    times,
 )
     B1 = DataFrame(;
         Dimension=manifold_dimension(M),
@@ -219,9 +219,9 @@ function export_dataframes(
     return B1
 end
 function write_dataframes(
-    B1, 
-    results_folder, 
-    experiment_name, 
+    B1,
+    results_folder,
+    experiment_name,
 )
     CSV.write(
         joinpath(
@@ -236,7 +236,7 @@ end
 ```
 
 ```{julia}
-# | output: false
+#| output: false
 global A1_SPD = initialize_dataframes(
     results_folder,
     experiment_name,
@@ -264,25 +264,25 @@ for n in spd_dims
 
     # Optimization
     pgm_constant = proximal_gradient_method(M, f_spd, g, grad_g, p0;
-        prox_nonsmooth=prox_h_spd, 
+        prox_nonsmooth=prox_h_spd,
         pgm_bm_kwargs_constant(constant_stepsize)...
     )
     pgm_constant_result = get_solver_result(pgm_constant)
-    pgm_constant_record = get_record(pgm_constant) 
+    pgm_constant_record = get_record(pgm_constant)
     stats[:CRPG_CN][n] = Dict()
     stats[:CRPG_CN][n][:Iteration] = length(get_record(pgm_constant, :Iteration)) + 1
     stats[:CRPG_CN][n][:Cost] = get_record(pgm_constant, :Iteration, :Cost)
     pushfirst!(stats[:CRPG_CN][n][:Cost], f_spd(M, p0))
 
     # We can also use a backtracked stepsize
-    pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0; 
+    pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0;
         prox_nonsmooth=prox_h_spd,
         pgm_kwargs(contraction_factor, initial_stepsize, warm_start_factor)...
     )
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
     stats[:CRPG_BT][n] = Dict()
-    stats[:CRPG_BT][n][:Iteration] = length(get_record(pgm, :Iteration)) + 1 
+    stats[:CRPG_BT][n][:Iteration] = length(get_record(pgm, :Iteration)) + 1
     stats[:CRPG_BT][n][:Cost] = get_record(pgm, :Iteration, :Cost)
     pushfirst!(stats[:CRPG_BT][n][:Cost], f_spd(M, p0))
 
@@ -293,15 +293,15 @@ for n in spd_dims
 
     # Benchmarking
     if benchmarking
-        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
+        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0;
             prox_nonsmooth=$prox_h_spd,
             $pgm_bm_kwargs_constant($constant_stepsize)...
         )
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0;
             prox_nonsmooth=$prox_h_spd,
             $pgm_bm_kwargs($contraction_factor, $initial_stepsize, $warm_start_factor)...
         )
-        
+
         times = [
             median(pgm_constant_bm).time * 1e-9,
             median(pgm_bm).time * 1e-9,
@@ -322,13 +322,13 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 # | echo: false
 # | code-fold: true
-benchmarking && pretty_table(A1_SPD; backend = Val(:markdown), header = col_names_1)
+benchmarking && pretty_table(A1_SPD; backend = :markdown, column_labels = col_names_1)
 ```
 
 ```{julia}
 #| output: false
 #| echo: false
-#| code-fold: true 
+#| code-fold: true
 for n in spd_dims
     CSV.write(
         joinpath(
@@ -336,7 +336,7 @@ for n in spd_dims
             experiment_name *
             "-Constant" *
             "-$n.csv",
-        ), 
+        ),
         DataFrame(;
             Iteration=0:stats[:CRPG_CN][n][:Iteration]-1,
             Objective=stats[:CRPG_CN][n][:Cost],
@@ -349,7 +349,7 @@ for n in spd_dims
             experiment_name *
             "-Backtracking" *
             "-$n.csv",
-        ), 
+        ),
         DataFrame(;
             Iteration=0:stats[:CRPG_BT][n][:Iteration]-1,
             Objective=stats[:CRPG_BT][n][:Cost],
@@ -361,7 +361,7 @@ end
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 ```{julia}
-# | output: false
+#| output: false
 function plot_convergence(
     stats,
     dimensions=[2],
@@ -401,7 +401,7 @@ function plot_convergence(
             initial_error_crpg_cn,
             initial_error_crpg_bt,
         )
-        
+
         iterations = max(
             iterations_crpg_cn,
             iterations_crpg_bt,
@@ -421,7 +421,7 @@ function plot_convergence(
             ylabel =L"f(p_k) - f_*",
             # xscale=log10,
             yscale=log10,
-            yminorticksvisible = true, 
+            yminorticksvisible = true,
             yminorgridvisible = true,
             yminorticks = IntervalsBetween(8),
         )
@@ -470,7 +470,7 @@ figs = plot_convergence(stats)
 ```
 
 ```{julia}
-# | code-fold: true
+#| code-fold: true
 for fig in figs
     display(fig)
 end
@@ -484,11 +484,13 @@ This tutorial is cached. It was last run on the following package versions.
 
 ```{julia}
 #| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
 using Pkg
 Pkg.status()
 ```
+
 ```{julia}
-#| code-fold: true
 #| echo: false
 #| output: asis
 using Dates

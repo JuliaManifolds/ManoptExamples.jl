@@ -57,10 +57,10 @@ spd_dims = [2, 3, 4, 5]
 # Objective, gradient, and proxes
 g(M, p) = log(det(p))^4
 grad_g(M, p) = 4log(det(p))^3 * p
-# 
+#
 h(M, p, q) = τ * distance(M, p, q)
 prox_h(M, λ, p, q) = ManifoldDiff.prox_distance(M, τ * λ, q, p, 1)
-# 
+#
 f(M, p, q) = g(M, p) + h(M, p, q)
 # Function to generate points close to the given point p
 function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
@@ -87,9 +87,9 @@ We introduce some keyword arguments for the solvers we will use in this experime
 pgm_kwargs(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
+    :stepsize => ProximalGradientMethodBacktracking(;
         contraction_factor=contraction_factor,
-        strategy=:convex, 
+        strategy=:convex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
         warm_start_factor=warm_start_factor,
@@ -102,17 +102,17 @@ pgm_bm_kwargs(contraction_factor, initial_stepsize, warm_start_factor) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stepsize => ProximalGradientMethodBacktracking(;
-        contraction_factor=contraction_factor, 
-        strategy=:convex,   
+        contraction_factor=contraction_factor,
+        strategy=:convex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
         warm_start_factor=warm_start_factor,
     ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
-# Solver arguments for constant stepsize 
+# Solver arguments for constant stepsize
 pgm_kwargs_constant(stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -127,7 +127,7 @@ pgm_bm_kwargs_constant(stepsize) = [
     :stepsize => ConstantLength(stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
 ```
 
@@ -156,15 +156,15 @@ col_types_1 = [
 named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
 # Function for initializing the dataframe
 function initialize_dataframes(
-    results_folder, 
-    experiment_name, 
+    results_folder,
+    experiment_name,
     named_tuple_1,
 )
     A1 = DataFrame(named_tuple_1)
     CSV.write(
         joinpath(
             results_folder,
-            experiment_name * 
+            experiment_name *
             "-Comparisons.csv",
         ),
         A1;
@@ -176,9 +176,9 @@ end
 
 ``` julia
 function export_dataframes(
-    M, 
-    records, 
-    times, 
+    M,
+    records,
+    times,
 )
     B1 = DataFrame(;
         Dimension=manifold_dimension(M),
@@ -192,9 +192,9 @@ function export_dataframes(
     return B1
 end
 function write_dataframes(
-    B1, 
-    results_folder, 
-    experiment_name, 
+    B1,
+    results_folder,
+    experiment_name,
 )
     CSV.write(
         joinpath(
@@ -236,25 +236,25 @@ for n in spd_dims
 
     # Optimization
     pgm_constant = proximal_gradient_method(M, f_spd, g, grad_g, p0;
-        prox_nonsmooth=prox_h_spd, 
+        prox_nonsmooth=prox_h_spd,
         pgm_bm_kwargs_constant(constant_stepsize)...
     )
     pgm_constant_result = get_solver_result(pgm_constant)
-    pgm_constant_record = get_record(pgm_constant) 
+    pgm_constant_record = get_record(pgm_constant)
     stats[:CRPG_CN][n] = Dict()
     stats[:CRPG_CN][n][:Iteration] = length(get_record(pgm_constant, :Iteration)) + 1
     stats[:CRPG_CN][n][:Cost] = get_record(pgm_constant, :Iteration, :Cost)
     pushfirst!(stats[:CRPG_CN][n][:Cost], f_spd(M, p0))
 
     # We can also use a backtracked stepsize
-    pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0; 
+    pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0;
         prox_nonsmooth=prox_h_spd,
         pgm_kwargs(contraction_factor, initial_stepsize, warm_start_factor)...
     )
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
     stats[:CRPG_BT][n] = Dict()
-    stats[:CRPG_BT][n][:Iteration] = length(get_record(pgm, :Iteration)) + 1 
+    stats[:CRPG_BT][n][:Iteration] = length(get_record(pgm, :Iteration)) + 1
     stats[:CRPG_BT][n][:Cost] = get_record(pgm, :Iteration, :Cost)
     pushfirst!(stats[:CRPG_BT][n][:Cost], f_spd(M, p0))
 
@@ -265,15 +265,15 @@ for n in spd_dims
 
     # Benchmarking
     if benchmarking
-        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
+        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0;
             prox_nonsmooth=$prox_h_spd,
             $pgm_bm_kwargs_constant($constant_stepsize)...
         )
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0; 
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0;
             prox_nonsmooth=$prox_h_spd,
             $pgm_bm_kwargs($contraction_factor, $initial_stepsize, $warm_start_factor)...
         )
-        
+
         times = [
             median(pgm_constant_bm).time * 1e-9,
             median(pgm_bm).time * 1e-9,
@@ -292,12 +292,12 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to CRPG with a constant stepsize, while columns 5 to 7 refer to the backtracked case…
 
-| **Dimension** | **Iterations\_1** | **Time\_1** | **Cost\_1** | **Iterations\_2** | **Time\_2** | **Cost\_2** |
-|--------------:|------------------:|------------:|------------:|------------------:|------------:|------------:|
-| 3             | 367               | 0.00415113  | 0.18593     | 250               | 0.00888871  | 0.18593     |
-| 6             | 1944              | 0.0439392   | 0.27078     | 1313              | 0.0795954   | 0.27078     |
-| 10            | 8640              | 0.272177    | 0.371274    | 5878              | 0.522786    | 0.371274    |
-| 15            | 15535             | 0.618404    | 0.449625    | 12937             | 3.06766     | 0.449625    |
+    | **Dimension** | **Iterations\_1** | **Time\_1** | **Cost\_1** | **Iterations\_2** | **Time\_2** | **Cost\_2** |
+    |--------------:|------------------:|------------:|------------:|------------------:|------------:|------------:|
+    |             3 |               367 |  0.00453621 |     0.18593 |               249 |  0.00818665 |     0.18593 |
+    |             6 |              1944 |   0.0414022 |     0.27078 |              1341 |    0.094039 |     0.27078 |
+    |            10 |              8640 |    0.280774 |    0.371274 |              6027 |    0.578688 |    0.371274 |
+    |            15 |             15535 |    0.645499 |    0.449625 |             12544 |     3.05128 |    0.449625 |
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 
@@ -341,7 +341,7 @@ function plot_convergence(
             initial_error_crpg_cn,
             initial_error_crpg_bt,
         )
-        
+
         iterations = max(
             iterations_crpg_cn,
             iterations_crpg_bt,
@@ -361,7 +361,7 @@ function plot_convergence(
             ylabel =L"f(p_k) - f_*",
             # xscale=log10,
             yscale=log10,
-            yminorticksvisible = true, 
+            yminorticksvisible = true,
             yminorgridvisible = true,
             yminorticks = IntervalsBetween(8),
         )
@@ -409,13 +409,18 @@ end
 figs = plot_convergence(stats)
 ```
 
+<details class="code-fold">
+<summary>Code</summary>
+
 ``` julia
 for fig in figs
     display(fig)
 end
 ```
 
-![](CRPG-Convex-SPD_files/figure-commonmark/cell-13-output-1.png)
+</details>
+
+<img src="CRPG-Convex-SPD_files/figure-commonmark/cell-13-output-1.png" width="672" height="480" />
 
 This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.7.
 
@@ -423,39 +428,34 @@ This is in line with the convergence rates of the CRPG method in the geodesicall
 
 This tutorial is cached. It was last run on the following package versions.
 
-``` julia
-using Pkg
-Pkg.status()
-```
-
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
       [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.15.3
+      [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
-      [35d6a980] ColorSchemes v3.30.0
-    ⌅ [5ae59095] Colors v0.12.11
-      [a93c6f00] DataFrames v1.7.0
-      [7073ff75] IJulia v1.29.0
-      [682c06a0] JSON v0.21.4
+      [35d6a980] ColorSchemes v3.31.0
+      [5ae59095] Colors v0.13.1
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+    ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
       [d3d80556] LineSearches v7.4.0
-      [ee78f7c6] Makie v0.24.3
-      [af67fdf4] ManifoldDiff v0.4.4
-      [1cead3c2] Manifolds v0.10.22
-      [3362f125] ManifoldsBase v1.2.0
-      [0fc0a36d] Manopt v0.5.20
-      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
-    ⌃ [91a5bcdd] Plots v1.40.16
-      [08abe8d2] PrettyTables v2.4.0
-    ⌃ [6099a3de] PythonCall v0.9.25
-      [f468eda6] QuadraticModels v0.9.13
+      [91a5bcdd] Plots v1.41.1
+      [08abe8d2] PrettyTables v3.1.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
-    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered July 16, 2025, 16:47:53.
+This tutorial was last rendered October 15, 2025, 13:40:45.
 
 ## Literature
 

@@ -78,10 +78,10 @@ gr_dims = [(5, 2), (10, 4), (50, 10), (100, 20), (200, 40)] # dimensions of the 
 # Objective, gradient, and proxes
 g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
 grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
-# 
+#
 h(M, p, q) = α * distance(M, p, q)
 prox_h(M, λ, p, q) = ManifoldDiff.prox_distance(M, α * λ, q, p, 1)
-# 
+#
 f(M, p, data, q) = g(M, p, data) + h(M, p, q)
 # CPPA needs the proximal operators for the total objective
 function proxes_f(data, q)
@@ -126,8 +126,8 @@ We introduce some keyword arguments for the solvers we will use in this experime
 pgm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
-        strategy=:nonconvex, 
+    :stepsize => ProximalGradientMethodBacktracking(;
+        strategy=:nonconvex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
         ),
@@ -138,16 +138,16 @@ pgm_kwargs(initial_stepsize) = [
 pgm_bm_kwargs(initial_stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
-    :stepsize => ProximalGradientMethodBacktracking(; 
-        strategy=:nonconvex,   
+    :stepsize => ProximalGradientMethodBacktracking(;
+        strategy=:nonconvex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
         ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
-# 
+#
 pgm_kwargs_constant(stepsize) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -162,9 +162,9 @@ pgm_bm_kwargs_constant(stepsize) = [
     :stepsize => ConstantLength(stepsize),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
-    ), 
+    ),
 ]
-# 
+#
 cppa_kwargs(M) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
@@ -208,7 +208,7 @@ function initialize_dataframes(results_folder, experiment_name, subexperiment_na
     CSV.write(
         joinpath(
             results_folder,
-            experiment_name * 
+            experiment_name *
             "-Comparisons.csv",
         ),
         A1;
@@ -227,14 +227,14 @@ function export_dataframes(M, records, times, results_folder, experiment_name, s
         Objective_1=minimum([r[2] for r in records[1]]),
         Time_2=times[2],
         Iterations_2=maximum(first.(records[2])),
-        Objective_2=minimum([r[2] for r in records[2]]),   
+        Objective_2=minimum([r[2] for r in records[2]]),
     )
     return B1
 end
 function write_dataframes(
-    B1, 
-    results_folder, 
-    experiment_name, 
+    B1,
+    results_folder,
+    experiment_name,
     subexperiment_name
 )
     CSV.write(
@@ -301,7 +301,7 @@ for (n, m) in gr_dims
     if benchmarking
         pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs_constant($constant_stepsize)...)
         pgm_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs($initial_stepsize)...)
-        
+
         times = [
             median(pgm_constant_bm).time * 1e-9,
             median(pgm_bm).time * 1e-9,
@@ -325,51 +325,56 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the NCRPG with a constant stepsize, while columns 5 to 7 refer to a backtracked stepsize…
 
-| **Dimension** | **Time\_1** | **Iterations\_1** | **Objective\_1** | **Time\_2** | **Iterations\_2** | **Objective\_2** |
-|--------------:|------------:|------------------:|-----------------:|------------:|------------------:|-----------------:|
-| 6             | 0.389674    | 90                | 0.853678         | 0.0987565   | 12                | 0.853678         |
-| 24            | 0.583378    | 58                | 0.858344         | 0.180316    | 9                 | 0.858344         |
-| 400           | 2.37086     | 36                | 0.868749         | 0.70433     | 6                 | 0.868749         |
-| 1600          | 8.63405     | 35                | 0.871773         | 4.17984     | 6                 | 0.871773         |
-| 6400          | 33.6688     | 34                | 0.873426         | 9.63182     | 5                 | 0.873426         |
+    | **Dimension** | **Time\_1** | **Iterations\_1** | **Objective\_1** | **Time\_2** | **Iterations\_2** | **Objective\_2** |
+    |--------------:|------------:|------------------:|-----------------:|------------:|------------------:|-----------------:|
+    |             6 |     0.37101 |                90 |         0.853678 |   0.0940748 |                12 |         0.853678 |
+    |            24 |    0.542643 |                58 |         0.858344 |    0.168517 |                 9 |         0.858344 |
+    |           400 |     2.30952 |                36 |         0.868749 |    0.697674 |                 6 |         0.868749 |
+    |          1600 |     8.28298 |                35 |         0.871773 |     5.48798 |                 6 |         0.871773 |
+    |          6400 |     36.8967 |                34 |         0.873426 |     10.3206 |                 5 |         0.873426 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
+
+<details class="code-fold">
+<summary>Code</summary>
 
 ``` julia
 using Pkg
 Pkg.status()
 ```
 
+</details>
+
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.0
       [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.15.3
+      [13f3f980] CairoMakie v0.15.6
       [0ca39b1e] Chairmarks v1.3.1
-      [35d6a980] ColorSchemes v3.30.0
-    ⌅ [5ae59095] Colors v0.12.11
-      [a93c6f00] DataFrames v1.7.0
-      [7073ff75] IJulia v1.29.0
-      [682c06a0] JSON v0.21.4
+      [35d6a980] ColorSchemes v3.31.0
+      [5ae59095] Colors v0.13.1
+      [a93c6f00] DataFrames v1.8.0
+      [31c24e10] Distributions v0.25.122
+    ⌅ [682c06a0] JSON v0.21.4
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
       [d3d80556] LineSearches v7.4.0
-      [ee78f7c6] Makie v0.24.3
-      [af67fdf4] ManifoldDiff v0.4.4
-      [1cead3c2] Manifolds v0.10.22
-      [3362f125] ManifoldsBase v1.2.0
-      [0fc0a36d] Manopt v0.5.20
-      [5b8d5e80] ManoptExamples v0.1.14 `..`
+      [ee78f7c6] Makie v0.24.6
+      [af67fdf4] ManifoldDiff v0.4.5
+      [1cead3c2] Manifolds v0.11.0
+      [3362f125] ManifoldsBase v2.0.0
+      [0fc0a36d] Manopt v0.5.25
+      [5b8d5e80] ManoptExamples v0.1.16 `..`
       [51fcb6bd] NamedColors v0.2.3
-    ⌃ [91a5bcdd] Plots v1.40.16
-      [08abe8d2] PrettyTables v2.4.0
-    ⌃ [6099a3de] PythonCall v0.9.25
-      [f468eda6] QuadraticModels v0.9.13
+      [91a5bcdd] Plots v1.41.1
+      [08abe8d2] PrettyTables v3.1.0
+      [6099a3de] PythonCall v0.9.28
+      [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
-    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
+    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered July 16, 2025, 13:37:16.
+This tutorial was last rendered October 15, 2025, 16:5:25.
 
 ## Literature
 

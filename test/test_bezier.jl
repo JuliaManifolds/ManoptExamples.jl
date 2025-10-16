@@ -25,7 +25,7 @@ using ManifoldDiff:
 @testset "Bezier Tests" begin
     @testset "General Bezier Tests" begin
         repr(BezierSegment([[0.0, 0.0], [0.0, 0.0]])) ==
-        "BezierSegment([[0.0, 0.0], [0.0, 0.0]])"
+            "BezierSegment([[0.0, 0.0], [0.0, 0.0]])"
     end
     @testset "Spherical Test" begin
         M = Sphere(2)
@@ -37,15 +37,15 @@ using ManifoldDiff:
             BezierSegment(shortest_geodesic(M, pC, pB, [0.0, 1 / 3, 2 / 3, 1.0])),
         ]
         # this is equispaced, so the pure cost is zero and the gradient is a zero-vector
-        t = collect(range(0.0, 1.0; length=5))
+        t = collect(range(0.0, 1.0; length = 5))
         pts = shortest_geodesic(M, pT, pB, t)
         pts2 = de_Casteljau(M, B, 2 .* t)
         @test sum(distance.(Ref(M), pts, pts2)) < 10 * eps()
         aX = log(M, pT, pC)
         aT1 =
             adjoint_differential_Bezier_control_points(
-                M, BezierSegment([pT, pC]), 0.5, aX
-            ).pts
+            M, BezierSegment([pT, pC]), 0.5, aX
+        ).pts
         aT1a = BezierSegment(similar.(aT1))
         adjoint_differential_Bezier_control_points!(
             M, aT1a, BezierSegment([pT, pC]), 0.5, aX
@@ -60,14 +60,14 @@ using ManifoldDiff:
         @test sum(
             norm.(
                 grad_acceleration_Bezier(
-                    M, B[1], collect(range(0.0, 1.0; length=20))
+                    M, B[1], collect(range(0.0, 1.0; length = 20))
                 ).pts .-
-                [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+                    [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
             ),
-        ) ≈ 0 atol = 2e-12
+        ) ≈ 0 atol = 2.0e-12
 
         # cost and gradient
-        T = collect(range(0.0, 2.0; length=51))
+        T = collect(range(0.0, 2.0; length = 51))
         degrees = get_Bezier_degrees(M, B)
         Bvec = get_Bezier_points(M, B, :differentiable)
         Mp = PowerManifold(M, NestedPowerRepresentation(), length(Bvec))
@@ -75,7 +75,7 @@ using ManifoldDiff:
         z = zero_vector(Mp, Bvec)
         distance(Mp, grad_acceleration_Bezier(M, Bvec, degrees, T), z)
         @test norm(Mp, Bvec, grad_acceleration_Bezier(M, Bvec, degrees, T) - z) ≈ 0 atol =
-            2e-12
+            2.0e-12
 
         d = [pT, exp(M, pC, [0.3, 0.0, 0.0]), pB]
         λ = 3.0
@@ -88,15 +88,15 @@ using ManifoldDiff:
         # when the data are the junctions
         @test norm(
             Mp, Bvec, grad_L2_acceleration_Bezier(M, Bvec, degrees, T, λ, [pT, pC, pB]) - z
-        ) ≈ 0 atol = 2e-12
+        ) ≈ 0 atol = 2.0e-12
         z[4][1] = -0.9
         @test norm(Mp, Bvec, grad_L2_acceleration_Bezier(M, Bvec, degrees, T, λ, d) - z) ≈ 0 atol =
-            2e-12
+            2.0e-12
         # when the data is weighted with zero
         @test L2_acceleration_Bezier(M, Bvec, degrees, T, 0.0, d) ≈ 0 atol = 10^(-10)
         z[4][1] = 0.0
         @test norm(Mp, Bvec, grad_L2_acceleration_Bezier(M, Bvec, degrees, T, 0.0, d) - z) ≈
-            0 atol = 2e-12
+            0 atol = 2.0e-12
     end
     @testset "de Casteljau variants" begin
         M = Sphere(2)
@@ -143,11 +143,11 @@ using ManifoldDiff:
             [B[1].pts[2], B[1].pts[3], B[2].pts[2], B[2].pts[3], B[3].pts[2], B[3].pts[3]]
         @test get_Bezier_inner_points(M, B[1]) == [B[1].pts[2], B[1].pts[3]]
 
-        @test get_Bezier_points(M, B) == cat([[b.pts...] for b in B]...; dims=1)
+        @test get_Bezier_points(M, B) == cat([[b.pts...] for b in B]...; dims = 1)
         @test get_Bezier_points(M, B, :continuous) ==
-            cat([[b.pts[[1:3]...]...] for b in B]..., [B[3].pts[4]]; dims=1)
+            cat([[b.pts[[1:3]...]...] for b in B]..., [B[3].pts[4]]; dims = 1)
         @test get_Bezier_points(M, B, :differentiable) ==
-            cat([B[1].pts[[1, 2]]...], [b.pts[[3, 4]] for b in B]...; dims=1)
+            cat([B[1].pts[[1, 2]]...], [b.pts[[3, 4]] for b in B]...; dims = 1)
         @test get_Bezier_points(M, B[1]) == B[1].pts
         # for segments just check that they
         d = get_Bezier_degrees(M, B)
@@ -173,7 +173,7 @@ using ManifoldDiff:
             adjoint_differential_Bezier_control_points(
                 M, b, 0.0, log(M, b.pts[1], b.pts[2])
             ).pts +
-            adjoint_differential_Bezier_control_points(
+                adjoint_differential_Bezier_control_points(
                 M, b, 1.0, -log(M, b.pts[4], b.pts[3])
             ).pts,
         )
@@ -181,9 +181,11 @@ using ManifoldDiff:
         adjoint_differential_Bezier_control_points!(M, Ys, b, [0.0, 1.0], Xi)
         @test isapprox(Xs.pts, Ys.pts)
         # differential
-        X = BezierSegment([
-            log(M, b.pts[1], b.pts[2]), [zero_vector(M, b.pts[i]) for i in 2:4]...
-        ])
+        X = BezierSegment(
+            [
+                log(M, b.pts[1], b.pts[2]), [zero_vector(M, b.pts[i]) for i in 2:4]...,
+            ]
+        )
         Ye = zero(X.pts[1])
         @test differential_Bezier_control_points(M, b, 0.0, X) ≈ X.pts[1]
         differential_Bezier_control_points!(M, Ye, b, 0.0, X)

@@ -10,14 +10,14 @@ project:
     - "!HyperparameterOptimization.qmd"
     - "!RCBM-Median.qmd"
     - "!Spectral-Procrustes.qmd"
+    - "!NCRPG-Row-Sparse-Low-Rank.qmd"
     - "!H2-Signal-TV.qmd"
     - "!CRPG-Convex-SPD.qmd"
     - "!CRPG-Sparse-Approximation.qmd"
     - "!CRPG-Constrained-Mean-Hn.qmd"
     - "!NCRPG-Grassmann.qmd"
     - "!NCRPG-Sparse-PCA.qmd"
-    - "!NCRPG-Row-Sparse-Low-Rank.qmd"
-    
+
 crossref:
   fig-prefix: Figure
   tbl-prefix: Table
@@ -28,10 +28,11 @@ execute:
   eval: true
   echo: true
   output: true
+  keep-md: true
 
 format:
   commonmark:
-    variant: -raw_html+tex_math_dollars
+    variant: +pipe_tables+tex_math_dollars-raw_html
     wrap: preserve
 
-jupyter: julia-1.11
+engines: ['julia']

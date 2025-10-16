@@ -19,8 +19,6 @@ The runtimes reported in the tables are measured in seconds.
 using Pkg;
 cd(@__DIR__)
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
-Pkg.develop(path="../") # a trick to work on the local dev version
-Pkg.develop(path="../../Manopt.jl") # a trick to work on the local dev version
 benchmarking = true
 export_table = true
 plot = true
@@ -315,7 +313,7 @@ for n in hn_sn_dims
         rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn, $k_min_hn)...)
         pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; $pba_bm_kwargs...)
         sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
-        
+
         times = [
             median(rcbm_bm).time * 1e-9,
             median(pba_bm).time * 1e-9,
@@ -343,13 +341,15 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A1, tf = tf_markdown, header=col_names_1)
+#| output: asis
+benchmarking && pretty_table(A1, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A2, tf = tf_markdown, header=col_names_2)
+#| output: asis
+benchmarking && pretty_table(A2; backend = :markdown, column_labels = col_names_2)
 ```
 
 
@@ -376,7 +376,7 @@ for n in spd_dims
     dists = [distance(M, z, y) for z in data_spd, y in data_spd]
     diameter_spd = 2 * maximum(dists)
     p0 = data_spd[minimum(Tuple(findmax(dists)[2]))]
-    
+
     f_spd(M, p) = f(M, p, data_spd)
     domf_spd(M, p) = domf(M, p, p0, diameter_spd)
     ∂f_spd(M, p) = ∂f(M, p, data_spd, atol)
@@ -432,13 +432,15 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A1_SPD, tf = tf_markdown, header=col_names_1)
+#| output: asis
+benchmarking && pretty_table(A1_SPD, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A2_SPD, tf = tf_markdown, header=col_names_2)
+#| output: asis
+benchmarking && pretty_table(A2_SPD; backend = :markdown, column_labels = col_names_2)
 ```
 
 ## The Median on the Sphere
@@ -470,7 +472,7 @@ for n in hn_sn_dims
     distance(M, data_sn[1], north) < diameter_sn / 2 ? pop!(data_sn) : nothing
     while length(data_sn) < N
         q = close_point(M, north, diameter_sn / 2)
-        distance(M, q, north) < diameter_sn / 2 ? push!(data_sn, q) : nothing 
+        distance(M, q, north) < diameter_sn / 2 ? push!(data_sn, q) : nothing
     end
     dists = [distance(M, z, y) for z in data_sn, y in data_sn]
     p0 = data_sn[minimum(Tuple(findmax(dists)[2]))]
@@ -530,13 +532,15 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A1_Sn, tf = tf_markdown, header=col_names_1)
+#| output: asis
+benchmarking && pretty_table(A1_Sn, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A2_Sn, tf = tf_markdown, header=col_names_2)
+#| output: asis
+benchmarking && pretty_table(A2_Sn, backend = :markdown, column_labels = col_names_2)
 ```
 
 ## Technical details
@@ -545,13 +549,17 @@ This tutorial is cached. It was last run on the following package versions.
 
 ```{julia}
 #| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
 using Pkg
 Pkg.status()
 ```
+
 ```{julia}
-#| code-fold: true
+#| echo: false
+#| output: asis
 using Dates
-now()
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
 ```
 
 ## Literature
