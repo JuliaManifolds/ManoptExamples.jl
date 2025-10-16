@@ -120,7 +120,7 @@ examples_menu =
         "Spectral Procrustes" => "examples/Spectral-Procrustes.md",
     ],
     "LTMADS" => [
-        "Spectral & Robust Norms affecting Procrustes" => "examples/Spectral-Procrustes-2D.md",
+        "Spectral & Robust Procrustes" => "examples/Spectral-Procrustes-2D.md",
     ],
     "Projected Gradient Algorithm" => [
         raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",
