@@ -39,14 +39,14 @@ Using a penalty method, also known as Moreau-Yosida regularization (cf. \cite{Hi
 $\min_{\gamma \in H^1(\Omega, \mathbb S^2)} \; \underbrace{\frac12 \int_0^T \|\dot \gamma(t)\|^2 + p \max(0, \gamma_3(t) - 1 + h_{\mathrm{ref}})^2 \; dt}_{=: f(\gamma)}$
 
 Let $m \colon\mathbb R \to \mathbb R, \, m(x) \coloneqq \max(0, x)$. 
-The objective is a semismooth function $f : \mathcal X \to \mathbb R$ with a Newton-derivative 
+The objective is a differentiable function $f : \mathcal X \to \mathbb R$ with derivative
 
 $f'(\gamma)\delta \gamma = \int_0^T \langle \dot\gamma(t), \dot{\delta \gamma}(t)\rangle + p \cdot m(\gamma_3(t) - 1 + h_{\mathrm{ref}})\delta \gamma_3(t)$
 
 for $\delta \gamma \in T_\gamma \mathcal X$. 
-Our goal is to find a zero of this Newton-derivative. 
+This mapping is semismooth and our goal is to find a critical point of $f$ by applying Newton's method on $f'$. 
 
-This yields a geodesic avoiding the north pol cap and connecting $\gamma_0$ and $\gamma_T$.
+This then yields a geodesic avoiding the north pol cap and connecting $\gamma_0$ and $\gamma_T$.
 """
 
 # ╔═╡ 00fe7ab7-3cb7-455c-872d-336770503c02
@@ -75,7 +75,7 @@ end;
 
 # ╔═╡ 81c14a72-309c-470e-8c8c-bcc7dd843e43
 md"""
-In order to apply Newton's method to find a zero of $f'$, we need the linear mapping $Q_{f'(\gamma)}^*\circ f''(\gamma)$ (cf. \ref{paper}). Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formular 
+In order to apply Newton's method to find a zero of $f'$, we need the linear mapping $Q_{f'(\gamma)}^*\circ f''(\gamma)$ (cf. \ref{paper}). Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula 
 
 $Q_{f'(\gamma)}^*\circ f''(\gamma)\delta \gamma\,\phi = f'(\gamma)(\overset{\rightarrow}{V}_\gamma'(\gamma)\delta \gamma\,\phi) + f''_{\mathbb R^3}(\gamma)\delta \gamma\,\phi$
 
@@ -83,7 +83,7 @@ for $\delta \gamma, \, \phi \in T_\gamma \mathcal X$, where $\overset{\rightarro
 
 $f_{\mathbb R^3}''(\gamma)\delta \gamma\, \phi = \int_0^T \langle \dot{\delta \gamma}(t), \dot{\phi}(t)\rangle + p \cdot m'(\gamma_3(t) - 1 + h_{\mathrm{ref}})\phi_{3}(t) \delta \gamma_{3}(t)$
 
-is the euclidean second derivative of the objective.
+is an (euclidean) Newton-derivative of f'.
 
 
 """
@@ -284,7 +284,7 @@ end;
 
 # ╔═╡ da4fca13-23d3-4f4a-bc35-ace2b5dacaf8
 md"""
-This yields the geodesic shown below avoiding the north pole cap and connecting two almost antipodal points $\gamma_0$ and $\gamma_T$.
+This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$.
 """
 
 # ╔═╡ 6f6eb0f9-21af-481a-a2ae-020a0ff305bf
