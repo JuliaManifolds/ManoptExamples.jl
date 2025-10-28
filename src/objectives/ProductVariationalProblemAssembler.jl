@@ -1,4 +1,3 @@
-#using RecursiveArrayTools
 """
  A:      Matrix to be written into\\
 row_idx: row index of block inside system\\
@@ -67,16 +66,8 @@ end
 		# applying rhs at right and left quadrature point
 		tmp+=integrand.value(integrand,yl,ydot,bfl*Pprimel,Pprimedot)
 		tmp+=integrand.value(integrand,yr,ydot,bfr*Pprimer,Pprimedot)
-			
-		# derivative of the vector transport w.r.t. y at right quadrature point
-		#Pprime=transport.derivative(integrand.domain,yr.x[row_idx],bfr*B[j],tfr*T[k])
-
-		#Pprimedot=(bfr-bfl)*Pprime/h			
-		#tmp+=integrand.value(integrand,yl,ydot,bfl*Pprime,Pprimedot)
-		#tmp+=integrand.value(integrand,yr,ydot,bfr*Pprime,Pprimedot)
-			
-        # Update matrix entry
-			
+	
+        # Update matrix entry		
 		A[idxc+k,idx+j]+=quadwght*tmp
 		end
 	end
@@ -226,6 +217,7 @@ end
 
 function get_rhs_simplified!(eval, b,row_idx,degT,h,nCells,y,y_trial,integrand,transport)
 	S = integrand.precodomain
+	println(S)
 	# loop: time intervals
 	for i in 1:nCells
 			yl=eval(y,i,0.0)
@@ -233,10 +225,12 @@ function get_rhs_simplified!(eval, b,row_idx,degT,h,nCells,y,y_trial,integrand,t
 			
 			yl_trial=eval(y_trial,i,0.0)
 			yr_trial=eval(y_trial,i,1.0)
+
+			println(y_trial)
 		
 			Tcl=get_basis(S,yl.x[row_idx],DefaultOrthonormalBasis())
 			Tl=get_vectors(S, yl.x[row_idx],Tcl)
-		
+
 			Tcr=get_basis(S,yr.x[row_idx],DefaultOrthonormalBasis())
 	    	Tr = get_vectors(S, yr.x[row_idx], Tcr)
 		
@@ -246,6 +240,7 @@ function get_rhs_simplified!(eval, b,row_idx,degT,h,nCells,y,y_trial,integrand,t
 				Tl[k]=transport.value(S,yl.x[row_idx],Tl[k],yl_trial.x[row_idx])
 				Tr[k]=transport.value(S,yr.x[row_idx],Tr[k],yr_trial.x[row_idx])
 			end
+			
 			if degT == 1
 			assemble_local_rhs!(b,row_idx, h, i, yl_trial, yr_trial, Tl, 1, 0, integrand)		
         	assemble_local_rhs!(b,row_idx, h, i, yl_trial, yr_trial, Tr, 0, 1, integrand)		
