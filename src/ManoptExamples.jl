@@ -52,6 +52,8 @@ include("objectives/VariationalProblemAssembler.jl")
 include("objectives/ProductVariationalProblemAssembler.jl")
 include("objectives/optimalControlAssembler.jl")
 
+include("objectives/variationalProblemAssemblerNew.jl")
+
 include("data/artificial_signals.jl")
 include("data/artificial_images.jl")
 
