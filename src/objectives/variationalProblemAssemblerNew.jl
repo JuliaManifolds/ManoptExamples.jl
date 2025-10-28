@@ -18,62 +18,65 @@ y:                      iterate\\
 eval:                   function that evaluates y at left and right boundary point of i-th interval, signature: eval(y, i, scaling), must return an element of M
 A:                      Matrix to be written into\\
 integrand:	            integrand of the functional as a struct, must have a field value and a field derivative\\
-transport:	            vectortransport used to compute the connection term (as a struct, must have a field value and a field derivative)
-h:                      length of interval\\
-number_of_intervals:    total number of intervals\\
+transport:	            vectortransport used to compute the connection term (as a struct, must have a field value and a field derivative)\\
+time_intervals:			time interval with discrete time points
 
 Keyword arguments:
 
 row_index:                  row index of block inside system\\
 column_index:               column index of block inside system\\
-degree_test_function:       degree of test functions (1: linear, 0: constant)\\
-degree_ansatz_function:     degree of ansatz functions (1: linear, 0: constant)\\
-test_space:    				base manifold of the space of test functions\\
-ansatz_space:   			base manifold of the space of ansatz functions
+test_space:    				space of test functions as a struct, must have a field manifold (base manifold of the tangent spaces) and a field degree (degree of test functions (1: linear, 0: constant))\\
+ansatz_space:   			space of ansatz functions as a struct, must have a field manifold (base manifold of the tangent spaces) and a field degree (degree of ansatz functions (1: linear, 0: constant))\\
 
 ...
 """
-function get_jacobian_block!(M::ProductManifold, y, eval, A, integrand, transport, h, number_of_intervals; row_index = nothing, column_index = nothing, degree_test_function = 1, degree_ansatz_function = 1, test_space = nothing, ansatz_space = nothing)
+function get_jacobian_block!(M::ProductManifold, y, eval, A, integrand, transport, time_interval; row_index = nothing, column_index = nothing, test_space = nothing, ansatz_space = nothing)
+
     isnothing(row_index) && error("Please provide the row index of the block to be assembled")
     isnothing(column_index) && error("Please provide the column index of the block to be assembled")
     isnothing(test_space) && error("Please provide the space of the test functions")
     isnothing(ansatz_space) && error("Please provide the space of the ansatz functions")
 
-	# loop: time intervals
-	for i in 1:number_of_intervals
+	degree_test_function = test_space.degree
+	degree_ansatz_function = ansatz_space.degree
 
-		# Evaluation of the current iterate. This routine has to be provided from outside, because knowledge about the ansatz functions is needed
+	# loop: time intervals
+	for i in 1:length(time_interval)-1
+
+		# Evaluation of the current iterate. This routine has to be provided from outside, because knowledge about the ansatz space is needed
 		yl=eval(y,i,0.0)
 		yr=eval(y,i,1.0)
 
-        base_ansatz_functions_left = build_base(ansatz_space, yl[M, column_index])
-        base_ansatz_functions_right = build_base(ansatz_space, yr[M, column_index])
-        base_test_functions_left = build_base(test_space, yl[M, row_index])
-        base_test_functions_right = build_base(test_space, yr[M, row_index])
+        base_ansatz_space_left = build_base(ansatz_space.manifold, yl[M, column_index])
+        base_ansatz_space_right = build_base(ansatz_space.manifold, yr[M, column_index])
+        base_test_space_left = build_base(test_space.manifold, yl[M, row_index])
+        base_test_space_right = build_base(test_space.manifold, yr[M, row_index])
+
+		h = time_interval[i+1] - time_interval[i]
 
         # In the following, all combinations of test and ansatz functions have to be considered.
 		
 		# The case, where both test and ansatz functions are linear. We have 2x2=4 combinations, since there are two test/ansatz functions on each interval
 		if degree_test_function == 1 && degree_ansatz_function == 1
 
-    	    assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_functions_left, 1, 0, base_test_functions_left, 1, 0, integrand, transport; row_index = row_index)		
-            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_functions_right, 0, 1, base_test_functions_left, 1, 0, integrand, transport; row_index = row_index)	
-			assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_functions_left, 1, 0, base_test_functions_right, 0, 1, integrand, transport; row_index = row_index)	
-            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_functions_right, 0, 1, base_test_functions_right, 0, 1, integrand, transport; row_index = row_index)	
+    	    assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_space_left, 1, 0, base_test_space_left, 1, 0, integrand, transport; row_index = row_index)		
+            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_space_right, 0, 1, base_test_space_left, 1, 0, integrand, transport; row_index = row_index)	
+			assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_space_left, 1, 0, base_test_space_right, 0, 1, integrand, transport; row_index = row_index)	
+            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_space_right, 0, 1, base_test_space_right, 0, 1, integrand, transport; row_index = row_index)	
 
 		end
 		# The case, where test functions are linear and ansatz functions are piecewise constant. We have 1x2=2 combinations, since there are are two test functions and one ansatz function on each interval
 		if degree_test_function == 1 && degree_ansatz_function == 0 	
 
-            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_functions_right, 1, 1, base_test_functions_left, 1, 0, integrand, transport; row_index = row_index)		
-            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_functions_right, 1, 1, base_test_functions_right, 0, 1, integrand, transport; row_index = row_index)
+            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_space_right, 1, 1, base_test_space_left, 1, 0, integrand, transport; row_index = row_index)		
+            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_space_right, 1, 1, base_test_space_right, 0, 1, integrand, transport; row_index = row_index)
 
 		end
         # The case, where test functions are piecewise constant and ansatz functions are linear. We have 2x1=2 combinations, since there are are two ansatz functions and one test function on each interval
 		if degree_test_function == 0 && degree_ansatz_function == 1 
 	
-            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_functions_left, 1, 0, base_test_functions_right, 1, 1, integrand, transport; row_index = row_index)		
-            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_functions_right, 0, 1, base_test_functions_right, 1, 1, integrand, transport; row_index = row_index)	
+            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_space_left, 1, 0, base_test_space_right, 1, 1, integrand, transport; row_index = row_index)		
+            assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_ansatz_space_right, 0, 1, base_test_space_right, 1, 1, integrand, transport; row_index = row_index)	
 
 		end
 		# Other cases could be added here.
@@ -90,36 +93,40 @@ y:                      iterate\\
 eval:                   function that evaluates y at left and right boundary point of i-th interval, signature: eval(y, i, scaling), must return an element of M
 A:                      Matrix to be written into\\
 integrand:	            integrand of the functional as a struct, must have a field value and a field derivative\\
-transport:	            vectortransport used to compute the connection term (as a struct, must have a field value and a field derivative)
-h:                      length of interval\\
-number_of_intervals:    total number of intervals\\
+transport:	            vectortransport used to compute the connection term (as a struct, must have a field value and a field derivative)\\
+time_interval:          time interval with discrete time points
 
 Keyword arguments:
 
-degree_test_function:       degree of test functions (1: linear, 0: constant)\\
-degree_ansatz_function:      degree of ansatz functions (1: linear, 0: constant) (test functions and ansatz functions are the same in this case)\\
-test_space:    Space of test functions\\
-ansatz_space:   Space of ansatz functions (test functions and ansatz functions are the same in this case)
+test_space:    			space of test functions as a struct, must have a field manifold (base manifold of the tangent spaces) and a field degree (degree of test functions (1: linear, 0: constant))\\
 
 ...
 """
 
-function get_jacobian!(M::AbstractManifold, y, eval, A, integrand, transport, h, number_of_intervals; row_index = nothing, column_index = nothing, degree_test_function = 1, degree_ansatz_function = degree_test_function, test_space = nothing, ansatz_space = test_space)
+function get_jacobian!(M::AbstractManifold, y, eval, A, integrand, transport, time_interval; row_index = nothing, column_index = nothing, test_space = nothing, ansatz_space = test_space)
 
     isnothing(test_space) && error("Please provide the space of the test functions")
 
 	# loop: time intervals
-	for i in 1:number_of_intervals
+	for i in 1:length(time_interval)-1
+
+		h = time_interval[i+1] - time_interval[i]
+
 		yl=eval(y,i,0.0)
 		yr=eval(y,i,1.0)
 
-        base_test_functions_left = build_base(test_space, yl)
-        base_test_functions_right = build_base(test_space, yr)
+        base_test_space_left = build_base(test_space.manifold, yl)
+        base_test_space_right = build_base(test_space.manifold, yr)
 
-        assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_test_functions_left, 1, 0, base_test_functions_left, 1, 0, integrand, transport)				
-        assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_test_functions_right, 0, 1, base_test_functions_left, 1, 0, integrand, transport)		
-        assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_test_functions_left, 1, 0, base_test_functions_right, 0, 1, integrand, transport)			
-        assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_test_functions_right, 0, 1, base_test_functions_right, 0, 1, integrand, transport)	
+
+		if test_space.degree == 1
+			assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_test_space_left, 1, 0, base_test_space_left, 1, 0, integrand, transport)				
+       		assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_test_space_right, 0, 1, base_test_space_left, 1, 0, integrand, transport)		
+        	assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_test_space_left, 1, 0, base_test_space_right, 0, 1, integrand, transport)			
+        	assemble_local_jacobian_with_connection!(M, yl, yr, A, h, i, base_test_space_right, 0, 1, base_test_space_right, 0, 1, integrand, transport)
+		else
+			error("The case degree ≠ 1 is not yet implemented")
+		end	
 	end
 end
 
@@ -132,31 +139,33 @@ M:                      Product manifold\\
 y:                      iterate\\
 eval:                   function that evaluates y at left and right boundary point of i-th interval, signature: eval(y, i, scaling), must return an element of M
 b:                      vector to be written into\\
-h:                      length of interval\\
-number_of_intervals:    total number of intervals\\
-integrand:	            integrand of the functional as a struct, must have a field value and a field derivative
+integrand:	            integrand of the functional as a struct, must have a field value and a field derivative\\
+time_interval:			time interval with discrete time points\\
 
 Keyword arguments:
 
-row_index:                  if M is a ProductManifold, the row index of the entry inside the right hand side must be provided\\
-degree_test_function:       degree of test functions (1: linear, 0: constant)\\
-test_space:    Space of test functions\\
+row_index:              if M is a ProductManifold, the row index of the entry inside the right hand side must be provided\\
+test_space:  			space of test functions as a struct, must have a field manifold (base manifold of the tangent spaces) and a field degree (degree of test functions (1: linear, 0: constant))\\
 
 ...
 """
 
-function get_right_hand_side_row!(M::ProductManifold, y, eval, b, h, number_of_intervals, integrand; row_index = nothing, degree_test_function = 1, test_space = nothing)
+function get_right_hand_side_row!(M::ProductManifold, y, eval, b, integrand, time_interval,; row_index = nothing, test_space = nothing)
 	
     isnothing(row_index) && error("Please provide the row index of the right hand side to be assembled")
     isnothing(test_space) && error("Please provide the space of the test functions")
 
+	degree_test_function = test_space.degree
+
 	# loop: time intervals
-	for i in 1:number_of_intervals
+	for i in 1:length(time_interval)-1
 		y_left = eval(y,i,0.0)
 		y_right = eval(y,i,1.0)
 
-        base_test_function_left = build_base(test_space, y_left[M, row_index])
-        base_test_function_right = build_base(test_space, y_right[M, row_index])
+        base_test_function_left = build_base(test_space.manifold, y_left[M, row_index])
+        base_test_function_right = build_base(test_space.manifold, y_right[M, row_index])
+
+		h = time_interval[i+1] - time_interval[i]
 
 		if degree_test_function == 1
 			assemble_local_right_hand_side!(M, y_left, y_right, b, h, i, base_test_function_left, 1, 0, integrand)		
@@ -178,33 +187,35 @@ M:                      manifold\\
 y:                      iterate\\
 eval:                   function that evaluates y at left and right boundary point of i-th interval, signature: eval(y, i, scaling), must return an element of M
 b:                      vector to be written into\\
-h:                      length of interval\\
-number_of_intervals:    total number of intervals\\
+time_interval:			time interval with discrete time points\\
 integrand:	            integrand of the functional as a struct, must have a field value and a field derivative
 
 Keyword arguments:
 
-degree_test_function:       degree of test functions (1: linear, 0: constant)\\
-test_space:    Space of test functions\\
+test_space:  			space of test functions as a struct, must have a field manifold (base manifold of the tangent spaces) and a field degree (degree of test functions (1: linear, 0: constant))
 
 ...
 """
 
-function get_right_hand_side!(M::AbstractManifold, y, eval, b, h, number_of_intervals, integrand; row_index = nothing, degree_test_function = 1, test_space = nothing)
+function get_right_hand_side!(M::AbstractManifold, y, eval, b, integrand, time_interval; row_index = nothing, test_space = nothing)
 	
     isnothing(test_space) && error("Please provide the space of the test functions")
 
 	# loop: time intervals
-	for i in 1:number_of_intervals
+	for i in 1:length(time_interval)-1
 		y_left = eval(y,i,0.0)
 		y_right = eval(y,i,1.0)
 
-        base_test_function_left = build_base(test_space, y_left)
-        base_test_function_right = build_base(test_space, y_right)
+        base_test_function_left = build_base(test_space.manifold, y_left)
+        base_test_function_right = build_base(test_space.manifold, y_right)
 
-		if degree_test_function == 1
+		h = time_interval[i+1] - time_interval[i]
+
+		if test_space.degree == 1
 			assemble_local_right_hand_side!(M, y_left, y_right, b, h, i, base_test_function_left, 1, 0, integrand)		
         	assemble_local_right_hand_side!(M, y_left, y_right, b, h, i, base_test_function_right, 0, 1, integrand)		
+		else
+			error("The case degree ≠ 1 is not yet implemented")
 		end
 	end
 end
@@ -220,53 +231,55 @@ y:                      iterate\\
 y_trial:				next iterate\\
 eval:                   function that evaluates y at left and right boundary point of i-th interval, signature: eval(y, i, scaling), must return an element of M
 b:                      vector to be written into\\
-h:                      length of interval\\
-number_of_intervals:    total number of intervals\\
-integrand:	            integrand of the functional as a struct, must have a field value and a field derivative
-transport: 				vectortransport used to transport the test functions (as a struct, must have a field value and a field derivative)
+integrand:	            integrand of the functional as a struct, must have a field value and a field derivative\\
+transport: 				vectortransport used to transport the test functions (as a struct, must have a field value and a field derivative)\\
+time_interval:			time interval with discrete time points
 
 Keyword arguments:
 
-row_index:					if M is a ProductManifold, the row index of the entry inside the right hand side must be provided
-degree_test_function:       degree of test functions (1: linear, 0: constant)\\
-test_space:    Space of test functions\\
+row_index:				if M is a ProductManifold, the row index of the entry inside the right hand side must be provided
+test_space:   			space of test functions as a struct, must have a field manifold (base manifold of the tangent spaces) and a field degree (degree of test functions (1: linear, 0: constant))\\
 
 ...
 """
 
 
-function get_right_hand_side_simplified_row!(M::ProductManifold, y, y_trial, eval, b, h, number_of_intervals, integrand, transport; row_index = nothing, degree_test_function = 1, test_space = nothing)
+function get_right_hand_side_simplified_row!(M::ProductManifold, y, y_trial, eval, b, integrand, transport, time_interval; row_index = nothing, test_space = nothing)
 
     isnothing(row_index) && error("Please provide the row index of the right hand side to be assembled")
     isnothing(test_space) && error("Please provide the space of the test functions")
 
+	degree_test_function = test_space.degree
+
 	# loop: time intervals
-	for i in 1:number_of_intervals
+	for i in 1:length(time_interval)-1
 		y_left = eval(y,i,0.0)
 		y_right = eval(y,i,1.0)
 
 		y_trial_left = eval(y_trial,i,0.0)
 		y_trial_right = eval(y_trial,i,1.0)
 
-        base_test_functions_left = build_base(test_space, y_left[M, row_index])
+        base_test_space_left = build_base(test_space.manifold, y_left[M, row_index])
 
-	    base_test_functions_right = build_base(test_space, y_right[M, row_index])
+	    base_test_space_right = build_base(test_space.manifold, y_right[M, row_index])
 	
-		dim = manifold_dimension(test_space)
+		dim = manifold_dimension(test_space.manifold)
 
 		# transport the test functions 
         for k=1:dim
-			base_test_functions_left[k] = transport.value(test_space, y_left[M, row_index], base_test_functions_left[k], y_trial_left[M, row_index])
-			base_test_functions_right[k] = transport.value(test_space, y_right[M, row_index], base_test_functions_right[k], y_trial_right[M, row_index])
+			base_test_space_left[k] = transport.value(test_space.manifold, y_left[M, row_index], base_test_space_left[k], y_trial_left[M, row_index])
+			base_test_space_right[k] = transport.value(test_space.manifold, y_right[M, row_index], base_test_space_right[k], y_trial_right[M, row_index])
 		end
 
+		h = time_interval[i+1] - time_interval[i]
+
 		if degree_test_function == 1
-		    assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_functions_left, 1, 0, integrand)		
-            assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_functions_right, 0, 1, integrand)		
+		    assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_space_left, 1, 0, integrand)		
+            assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_space_right, 0, 1, integrand)		
 		end
 
 		if degree_test_function == 0
-            assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_functions_right, 1, 1, integrand)		
+            assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_space_right, 1, 1, integrand)		
 		end
 	end
 end
@@ -281,46 +294,48 @@ y:                      iterate\\
 y_trial:				next iterate\\
 eval:                   function that evaluates y at left and right boundary point of i-th interval, signature: eval(y, i, scaling), must return an element of M
 b:                      vector to be written into\\
-h:                      length of interval\\
-number_of_intervals:    total number of intervals\\
-integrand:	            integrand of the functional as a struct, must have a field value and a field derivative
-transport: 				vectortransport used to transport the test functions (as a struct, must have a field value and a field derivative)
+integrand:	            integrand of the functional as a struct, must have a field value and a field derivative\\
+transport: 				vectortransport used to transport the test functions (as a struct, must have a field value and a field derivative)\\
+time_interval:			time interval with discrete time points
 
 Keyword arguments:
 
-degree_test_function:       degree of test functions (1: linear, 0: constant)\\
-test_space:    Space of test functions\\
+test_space:   			space of test functions as a struct, must have a field manifold (base manifold of the tangent spaces) and a field degree (degree of test functions (1: linear, 0: constant))\\
 
 ...
 """
 
 
-function get_right_hand_side_simplified!(M::AbstractManifold, y, y_trial, eval, b, h, number_of_intervals, integrand, transport; row_index = nothing, degree_test_function = 1, test_space = nothing)
+function get_right_hand_side_simplified!(M::AbstractManifold, y, y_trial, eval, b, integrand, transport, time_interval; row_index = nothing, test_space = nothing)
 
     isnothing(test_space) && error("Please provide the space of the test functions")
 
 	# loop: time intervals
-	for i in 1:number_of_intervals
+	for i in 1:length(time_interval)-1
 		y_left = eval(y,i,0.0)
 		y_right = eval(y,i,1.0)
 			
 		y_trial_left = eval(y_trial,i,0.0)
 		y_trial_right = eval(y_trial,i,1.0)
 		
-        base_test_functions_left = build_base(test_space, y_left)
-		base_test_functions_right = build_base(test_space, y_right)
+        base_test_space_left = build_base(test_space.manifold, y_left)
+		base_test_space_right = build_base(test_space.manifold, y_right)
 		
-		dim = manifold_dimension(test_space)
+		dim = manifold_dimension(test_space.manifold)
+
 		# transport the test functions
         for k=1:dim
-			base_test_functions_left[k] = transport.value(test_space, y_left, base_test_functions_left[k], y_trial_left)
-			base_test_functions_right[k] = transport.value(test_space, y_right, base_test_functions_right[k], y_trial_right)
+			base_test_space_left[k] = transport.value(test_space.manifold, y_left, base_test_space_left[k], y_trial_left)
+			base_test_space_right[k] = transport.value(test_space.manifold, y_right, base_test_space_right[k], y_trial_right)
 		end
 
+		h = time_interval[i+1] - time_interval[i]
 
-		if degree_test_function == 1
-		    assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_functions_left, 1, 0, integrand)		
-            assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_functions_right, 0, 1, integrand)		
+		if test_space.degree == 1
+		    assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_space_left, 1, 0, integrand)		
+            assemble_local_right_hand_side!(M, y_trial_left, y_trial_right, b, h, i, base_test_space_right, 0, 1, integrand)		
+		else
+			error("The case degree ≠ 1 is not yet implemented")
 		end
 	end
 end
@@ -335,10 +350,10 @@ y_right:                right value of iterate\\
 A:                      Matrix to be written into\\
 h:                      length of interval\\
 i:                      index of interval\\
-B:                      basis vector for ansatz function\\
+base_ansatz:                      basis vector for ansatz function\\
 bfl:                    0/1 scaling factor at left boundary\\
 bfr:                    0/1 scaling factor at right boundary \\
-T:                      basis vector for test function\\
+base_test:                      basis vector for test function\\
 tfl:                    0/1 scaling factor at left boundary\\
 tfr:                    0/1 scaling factor at right boundary \\
 integrand:	            integrand of the functional as a struct, must have a field value and a field derivative\\
@@ -347,15 +362,13 @@ transport:	            vectortransport used to compute the connection term (as a
 Keyword Arguments:
 
 row_index:                row index of block inside system\\
-y_component_left:         if M is a ProductManifold this is one of the components of y_left, otherwise it is just y_left
-y_component_right:         if M is a ProductManifold this is one of the components of y_right, otherwise it is just y_right
 
 
 ...
 """
-function assemble_local_jacobian_with_connection!(M, y_left, y_right, A, h, i, B, bfl, bfr, T, tfl, tfr, integrand, transport; row_index = nothing, y_component_left = isnothing(row_index) ? y_left : y_left[M, row_index], y_component_right = isnothing(row_index) ? y_right : y_right[M, row_index], M_component = isnothing(row_index) ? M : M[row_index])
- dim_ansatz = length(B)
- dim_test = length(T)
+function assemble_local_jacobian_with_connection!(M, y_left, y_right, A, h, i, base_ansatz, bfl, bfr, base_test, tfl, tfr, integrand, transport; row_index = nothing, y_component_left = isnothing(row_index) ? y_left : y_left[M, row_index], y_component_right = isnothing(row_index) ? y_right : y_right[M, row_index], M_component = isnothing(row_index) ? M : M[row_index])
+ dim_ansatz = length(base_ansatz)
+ dim_test = length(base_test)
 
 if tfr == 1
 	idxc = dim_test*(i-1)
@@ -381,21 +394,21 @@ end
         if idx+j >= 1 && idxc+k >= 1 && idx+j <= nA2 && idxc+k <= nA1
 
 		# approximation of time derivative of ansatz and test functions (=0 am jeweils anderen Rand)
-     	Tdot = (tfr-tfl)*T[k]/h
-		Bdot = (bfr-bfl)*B[j]/h
+     	Tdot = (tfr-tfl)*base_test[k]/h
+		Bdot = (bfr-bfl)*base_ansatz[j]/h
 
 
     	# derivative (using the embedding) at right and left quadrature point
-        tmp = integrand.derivative(integrand,y_left,ydot,bfl*B[j],Bdot,tfl*T[k],Tdot)	
+        tmp = integrand.derivative(integrand,y_left,ydot,bfl*base_ansatz[j],Bdot,tfl*base_test[k],Tdot)	
 			
-		tmp += integrand.derivative(integrand,y_right,ydot,bfr*B[j],Bdot,tfr*T[k],Tdot)	
+		tmp += integrand.derivative(integrand,y_right,ydot,bfr*base_ansatz[j],Bdot,tfr*base_test[k],Tdot)	
 			
 		# modification for covariant derivative:	
 		# derivative of the vector transport w.r.t. y at left quadrature point
-		# P'(yl)bfl*B[j] (tfl*T(k))
+		# P'(yl)bfl*base_ansatz[j] (tfl*base_test(k))
 
-		Pprime_left = transport.derivative(M_component,y_component_left,bfl*B[j],tfl*T[k])
-		Pprime_right = transport.derivative(M_component,y_component_right,bfr*B[j],tfr*T[k])
+		Pprime_left = transport.derivative(M_component,y_component_left,bfl*base_ansatz[j],tfl*base_test[k])
+		Pprime_right = transport.derivative(M_component,y_component_right,bfr*base_ansatz[j],tfr*base_test[k])
 
 		# approximation of the time derivative of the vector transport
 
@@ -421,15 +434,15 @@ y_right:                right value of iterate\\
 b:                      Vector to be written into\\
 h:                      length of interval\\
 i:                      index of interval\\
-base_test_functions:    basis of the space of test functions\\
+base_test_space:    	basis of the space of test functions\\
 tlf:                    0/1 scaling factor at left boundary\\
 trf:                    0/1 scaling factor at right boundary \\
 integrand:	            integrand of the functional as a struct, must have a field value and a field derivative\\
 
 """
 
-function assemble_local_right_hand_side!(M, y_left, y_right, b, h, i, base_test_functions, tlf, trf, integrand)
-    dim_test = length(base_test_functions)
+function assemble_local_right_hand_side!(M, y_left, y_right, b, h, i, base_test_space, tlf, trf, integrand)
+    dim_test = length(base_test_space)
 	if trf == 1
     	idx = dim_test*(i-1)
 	else 
@@ -445,11 +458,11 @@ function assemble_local_right_hand_side!(M, y_left, y_right, b, h, i, base_test_
 		# finite differences, taking into account values of test function at both endpoints
         if idx+k > 0 && idx+k <= length(b)
 			
-			Tdot = (trf-tlf)*base_test_functions[k]/h
+			Tdot = (trf-tlf)*base_test_space[k]/h
 			# left quadrature point
-			tmp =  integrand.value(integrand, y_left, ydotl, tlf*base_test_functions[k], Tdot)	
+			tmp =  integrand.value(integrand, y_left, ydotl, tlf*base_test_space[k], Tdot)	
 			# right quadrature point
-			tmp += integrand.value(integrand, y_right, ydotr, trf*base_test_functions[k], Tdot)	
+			tmp += integrand.value(integrand, y_right, ydotr, trf*base_test_space[k], Tdot)	
 			# Update rhs
 		  	b[idx+k]+= quadwght*tmp	
 		end
