@@ -18,9 +18,7 @@ begin
     using WGLMakie, Makie, GeometryTypes, Colors, ColorSchemes, NamedColors
 	using GLMakie
 	using CairoMakie
-	using CSV, DataFrames
 	using RecursiveArrayTools
-	using FileIO, ProgressLogging
 end;
 
 # ╔═╡ 3f3a047f-0e9d-4364-8df2-7105a104843b
@@ -104,8 +102,7 @@ We define a structure that has to be filled for two purposes:
 
 # ╔═╡ bc449c2d-1f23-4c72-86ab-a46acbf64129
 mutable struct DifferentiableMapping{M<:AbstractManifold,F1<:Function,F2<:Function,T}
-	domain::M
-	precodomain::M
+	space_of_test_functions::M
 	value::F1
 	derivative::F2
 	scaling::T
@@ -136,7 +133,7 @@ begin
 		return (- dq*p' - p*dq')*X
 	end
 
-	transport=DifferentiableMapping(S,S,transport_by_proj,transport_by_proj_prime,nothing)
+	transport=DifferentiableMapping(S,transport_by_proj,transport_by_proj_prime,nothing)
 	
 end;
 
@@ -155,9 +152,7 @@ $\omega(y) \coloneqq \frac{C y_3}{y_1^2+y_2^2} \cdot \bigg\langle \begin{pmatrix
 """
 
 # ╔═╡ 808db8aa-64f7-4b36-8c6c-929ba4fa22db
-function w(p, c)
-		return c*p[3]*[-p[2]/(p[1]^2+p[2]^2), p[1]/(p[1]^2+p[2]^2), 0.0] 
-end;
+w(p, c) = c*p[3]*[-p[2]/(p[1]^2+p[2]^2), p[1]/(p[1]^2+p[2]^2), 0.0];
 
 # ╔═╡ e6fdf785-808d-4203-a2d2-be9696b05689
 md"""
@@ -166,8 +161,9 @@ Its derivative is given by
 
 # ╔═╡ 288b9637-0500-40b8-a1f9-90cb9591402b
 function w_prime(p, c)
-	nenner = p[1]^2+p[2]^2
-		return c*[p[3]*2*p[1]*p[2]/nenner^2 p[3]*(-1.0/(nenner)+2.0*p[2]^2/nenner^2) -p[2]/nenner; p[3]*(1.0/nenner-2.0*p[1]^2/(nenner^2)) p[3]*(-2.0*p[1]*p[2]/(nenner^2)) p[1]/(nenner); 0.0 0.0 0.0]
+	denominator = p[1]^2+p[2]^2
+	
+	return c*[p[3]*2*p[1]*p[2]/denominator^2 p[3]*(-1.0/denominator+2.0*p[2]^2/denominator^2) -p[2]/denominator; p[3]*(1.0/denominator-2.0*p[1]^2/(denominator^2)) p[3]*(-2.0*p[1]*p[2]/(denominator^2)) p[1]/denominator; 0.0 0.0 0.0]
 end;
 
 # ╔═╡ 56ae7f53-061e-4414-90ad-85c7a12d51e2
@@ -181,7 +177,7 @@ begin
 		return B1dot'*B2dot+(w_prime(y,Integrand.scaling)*B1)'*B2
 	end
 
-	integrand=DifferentiableMapping(S,S,F_at,F_prime_at,3.0) 
+	integrand=DifferentiableMapping(S,F_at,F_prime_at,3.0) 
 
 end;
 
@@ -200,37 +196,13 @@ Moreover, for the computation of the simplified Newton direction (which is neces
 	
 """
 
-# ╔═╡ 7332978a-2e17-45fa-89ad-1ca4e3c229a3
-begin
-@doc raw"""
-This function is called by Newton's method to assembly the matrix for the Newton step
-
-Use this method in case the manifold is not a product manifold
-
-
-A:      Matrix to be written into\\
-h:      length of interval\\
-y: 		iterate \\
-integrand:	integrand of the functional as struct, must have a field value and a field derivative \\
-transport:	vectortransport used to compute the connection term (as a struct, must have a field value and a field derivative)
+# ╔═╡ 01c5c03b-884a-4483-a0a8-5c663a2ff8ef
+md"""
+The assembly routines need a function for evaluation the iterates at the left and right quadrature point.
 """
 
-function get_Jac!(A,h,y,integrand,transport)
-	function evaluate(p, i, tloc) 
-		return ArrayPartition((1.0-tloc)*p.x[1][i-1]+tloc*p.x[1][i])
-	end
-	y_ap = ArrayPartition(y)
-	ManoptExamples.get_Jac!(evaluate,A,1,1,1,1,h,length(y)-1,y_ap,integrand,transport)
-end
-
-function get_rhs!(b,h,y,integrand)
-	function evaluate(p, i, tloc) 
-		return ArrayPartition((1.0-tloc)*p.x[1][i-1]+tloc*p.x[1][i])
-	end
-	y_ap = ArrayPartition(y)
-	ManoptExamples.get_rhs_row!(evaluate,b,1,1,h,length(y)-1,y_ap,integrand)
-end
-end;
+# ╔═╡ 0d901362-f9e4-446f-9220-43e0df296366
+evaluate(p, i, tloc) = (1.0-tloc)*p[i-1]+tloc*p[i];
 
 # ╔═╡ 6ce088e9-1aa0-4d44-98a3-2ab8b8ba5422
 begin
@@ -256,22 +228,25 @@ function (ne::NewtonEquation)(M, VB, p)
 
 	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
 	
-	get_Jac!(ne.A,h,Oy,ne.integrand,ne.transport)
-	get_rhs!(ne.b,h,Oy,ne.integrand)
-
-	#ManoptExamples.get_rhs_Jac!(ne.b,ne.A,h,Oy,ne.integrand,ne.transport)
+	#old: get_Jac!(ne.A,h,Oy,ne.integrand,ne.transport)
+	ManoptExamples.get_jacobian!(M, Oy, evaluate, ne.A, ne.integrand, ne.transport, h, length(Oy)-1; degree_test_function=1, test_space=ne.integrand.space_of_test_functions)
+	
+	#old: get_rhs!(ne.b,h,Oy,ne.integrand)
+	ManoptExamples.get_right_hand_side!(M, Oy, evaluate, ne.b, h, length(Oy)-1, ne.integrand; degree_test_function=1, test_space=ne.integrand.space_of_test_functions)
+	
 	return
 end
 
 function (ne::NewtonEquation)(M, VB, p, p_trial)
 	n = manifold_dimension(M)
-	bctrial=zeros(n)
+	btrial=zeros(n)
 	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
 	Oytrial = OffsetArray([y0, p_trial..., yT], 0:(length(ne.Omega)+1))
 
-	ManoptExamples.get_rhs_simplified!(bctrial,h,Oy,Oytrial,ne.integrand,ne.transport)
-
-	return bctrial
+	#old: ManoptExamples.get_rhs_simplified!(btrial,h,Oy,Oytrial,ne.integrand,ne.transport)
+	ManoptExamples.get_right_hand_side_simplified!(M, Oy, Oytrial, evaluate, btrial, h, length(Oy)-1, ne.integrand, ne.transport; degree_test_function = 1, test_space = ne.integrand.space_of_test_functions)
+	
+	return btrial
 end
 end;
 
@@ -286,16 +261,23 @@ function solve_in_basis_repr(problem, newtonstate)
 	return get_vector(problem.manifold, newtonstate.p, X_base, DefaultOrthogonalBasis())
 end;
 
+# ╔═╡ f88718ca-c22b-4df2-8ea6-c3d37948f34a
+begin
+	# adjust norms for recording
+	rec = RecordChange(power;
+    inverse_retraction_method=ProjectionInverseRetraction());
+end;
+
 # ╔═╡ 9a2ebb9a-74c7-4efd-b042-23263bbf4235
 begin
 	NE = NewtonEquation(power, integrand, transport, Omega)
 		
 	st_res = vectorbundle_newton(power, TangentBundle(power), NE, discretized_y; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
-	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-12; outer_norm=Inf)),
+	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-12; outer_norm=Inf, inverse_retraction_method=ProjectionInverseRetraction())),
 	retraction_method=ProjectionRetraction(),
-	#stepsize=Manopt.AffineCovariantStepsize(power, theta_des=0.5),
+	#stepsize=Manopt.AffineCovariantStepsize(power, theta_des=0.1),
 	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
-	record=[:Iterate, :Change],
+	record=[:Iterate, rec => :Change],
 	return_state=true
 )
 end
@@ -329,7 +311,7 @@ end
 
 # ╔═╡ 290dbe94-4686-4629-9f93-f01353aac404
 md"""
-and the resulting geodesic under the force field (orange). The starting geodesic (blue) is plotted as well. The force acting on each point of the geodesic is visualized by green arrows. 
+and the resulting elastic geodesic under the force field (orange). The starting geodesic (blue) is plotted as well. The force acting on each point of the geodesic is visualized by green arrows. 
 """
 
 # ╔═╡ 6f6eb0f9-21af-481a-a2ae-020a0ff305bf
@@ -363,13 +345,17 @@ wireframe!(ax, sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
     π1(x) = 1.02*x[1]
     π2(x) = 1.02*x[2]
     π3(x) = 1.02*x[3]
-	
+
+	# result
 	scatterlines!(ax, π1.(geodesic_final), π2.(geodesic_final), π3.(geodesic_final); markersize =5, color=:orange, linewidth=2)
-	
+
+	# starting geodesic
 	scatterlines!(ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =5, color=:blue, linewidth=2)
-	
+
+	# boundary points
 	scatter!(ax, π1.([y0, yT]), π2.([y0, yT]), π3.([y0, yT]); markersize =5, color=:red)
-	
+
+	# force field
 	arrows!(ax, π1.(p_res), π2.(p_res), π3.(p_res), π1.(ws), π2.(ws), π3.(ws); color=:green, linewidth=0.01, arrowsize=Vec3f(0.03, 0.03, 0.05), transparency=true, lengthscale=0.1)
 	
 
@@ -401,11 +387,13 @@ end
 # ╟─e6fdf785-808d-4203-a2d2-be9696b05689
 # ╠═288b9637-0500-40b8-a1f9-90cb9591402b
 # ╟─a0b939d5-40e7-4da4-baf1-8a297bb52fb7
+# ╟─01c5c03b-884a-4483-a0a8-5c663a2ff8ef
+# ╠═0d901362-f9e4-446f-9220-43e0df296366
 # ╠═6ce088e9-1aa0-4d44-98a3-2ab8b8ba5422
-# ╠═7332978a-2e17-45fa-89ad-1ca4e3c229a3
 # ╟─a3179c3a-cb5a-4fcb-bbdc-75ea693616d2
 # ╠═f78557e2-363e-4803-97d7-b57df115a619
 # ╠═9a2ebb9a-74c7-4efd-b042-23263bbf4235
+# ╠═f88718ca-c22b-4df2-8ea6-c3d37948f34a
 # ╟─87af653d-901e-4f81-a41c-ddc613d04909
 # ╠═161070b9-7953-4260-ab3b-f0f0bf8410ac
 # ╟─4c939ec9-0e1b-4194-8f22-d2639172922c

@@ -97,7 +97,7 @@ We define a structure that has to be filled for two purposes:
 
 # ╔═╡ bc449c2d-1f23-4c72-86ab-a46acbf64129
 mutable struct DifferentiableMapping{M<:AbstractManifold,F1<:Function,F2<:Function,T}
-	domain::M
+	space_of_test_functions::M
 	value::F1
 	derivative::F2
 	scaling_penalty::T
@@ -182,6 +182,14 @@ Moreover, for the computation of the simplified Newton direction (which is neces
 	
 """
 
+# ╔═╡ 4a052a62-fd57-4c9b-b9c9-f875e635d739
+md"""
+The assembly routines need a function for evaluation the iterates at the left and right quadrature point.
+"""
+
+# ╔═╡ 64e04115-1646-4bd4-95aa-adf869555b19
+evaluate(p, i, tloc) = (1.0-tloc)*p[i-1]+tloc*p[i];
+
 # ╔═╡ 1adf467b-81e8-4438-98ce-4420ad1f5bda
 begin
 struct NewtonEquation{F, T, Om, NM, Nrhs}
@@ -207,21 +215,13 @@ function (ne::NewtonEquation)(M, VB, p)
 	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
 	
 	println("Assemble:")
-    @time ManoptExamples.get_rhs_Jac!(ne.b,ne.A,h,Oy,ne.integrand,ne.transport)
+	ManoptExamples.get_jacobian!(M, Oy, evaluate, ne.A, ne.integrand, ne.transport, h, length(Oy)-1; degree_test_function=1, test_space=ne.integrand.space_of_test_functions)
+	
+	ManoptExamples.get_right_hand_side!(M, Oy, evaluate, ne.b, h, length(Oy)-1, ne.integrand; degree_test_function=1, test_space=ne.integrand.space_of_test_functions)
+   	
+	#old: ManoptExamples.get_rhs_Jac!(ne.b,ne.A,h,Oy,ne.integrand,ne.transport)
 
 	return
-end
-
-
-function (ne::NewtonEquation)(M, VB, p, p_trial)
-	n = manifold_dimension(M)
-	bctrial=zeros(n)
-	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
-	Oytrial = OffsetArray([y0, p_trial..., yT], 0:(length(ne.Omega)+1))
-
-	ManoptExamples.get_rhs_simplified!(bctrial,h,Oy,Oytrial,ne.integrand,ne.transport)
-	println(norm(bctrial))
-	return bctrial
 end
 end;
 
@@ -263,8 +263,8 @@ begin
 	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
 	retraction_method=ProjectionRetraction(),
 	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
-	return_state=true
-)
+	return_state=true)
+	
 	y_star = copy(power, get_solver_result(st_res))
 		
 	for i in range(1,50)
@@ -284,7 +284,7 @@ end;
 
 # ╔═╡ da4fca13-23d3-4f4a-bc35-ace2b5dacaf8
 md"""
-This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$.
+This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is also plotted.
 """
 
 # ╔═╡ 6f6eb0f9-21af-481a-a2ae-020a0ff305bf
@@ -331,6 +331,8 @@ wireframe!(ax, sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
 	scatterlines!(ax, circx, circy, circz; markersize =2, color=:black, linewidth=2)
 	
 	scatterlines!(ax, π1.(y_star), π2.(y_star), π3.(y_star); markersize =8, color=:orange, linewidth=2)
+
+	scatterlines!(ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =8, color=:blue, linewidth=2)
 	
 	scatter!(ax, π1.([y0]), π2.([y0]), π3.([y0]); markersize = 10, color=:green)
 	scatter!(ax, π1.([yT]), π2.([yT]), π3.([yT]); markersize = 10, color=:red)
@@ -353,6 +355,8 @@ end
 # ╟─fde5a441-9ff5-45f9-ad00-57078a16dba8
 # ╠═56ae7f53-061e-4414-90ad-85c7a12d51e2
 # ╟─eda0a587-a19d-4f80-80bf-c4cc5a21854c
+# ╟─4a052a62-fd57-4c9b-b9c9-f875e635d739
+# ╠═64e04115-1646-4bd4-95aa-adf869555b19
 # ╠═1adf467b-81e8-4438-98ce-4420ad1f5bda
 # ╟─f7ba0044-ecfe-4714-9ec3-b4792d38b21c
 # ╠═910e85fe-2db4-43f3-8cf9-a805858f3627

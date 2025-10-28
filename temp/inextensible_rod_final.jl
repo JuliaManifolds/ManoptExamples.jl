@@ -127,7 +127,7 @@ begin
 
 	disc_point = ArrayPartition(discretized_y, discretized_v, discretized_λ)
 
-end
+end;
 
 # ╔═╡ 7741a74f-0a73-47c8-9202-b8789782eb7b
 md"""
@@ -157,8 +157,8 @@ We define a structure that has to be filled for two purposes:
 
 # ╔═╡ bc449c2d-1f23-4c72-86ab-a46acbf64129
 mutable struct DifferentiableMapping{M<:AbstractManifold, N<:AbstractManifold,F1<:Function,F2<:Function}
-	domain::M
-	precodomain::N
+	ansatz_space::M
+	test_space::N
 	value::F1
 	derivative::F2
 end
@@ -216,7 +216,7 @@ end;
 
 # ╔═╡ d69da8fa-fe17-4114-84c7-651aedbc756e
 md"""
-If no vector transport is needed, leave it away, then the identity transport is used as dummy
+If no connection term is needed, we use the identity transport and its derivative
 """
 
 # ╔═╡ e2f48dcc-5c23-453d-8ff3-eb425b7b67af
@@ -225,9 +225,6 @@ begin
 	identity_transport_prime(S, p, X, dq) = 0.0*X
 	
 	id_transport = DifferentiableMapping(R3,R3,identity_transport,identity_transport_prime)
-		
-	function get_Jac!(eval,A,row_idx,degT,col_idx,degB,h,nCells,y,integrand)			ManoptExamples.get_Jac!(eval,A,row_idx,degT,col_idx,degB,h,nCells,y,integrand,id_transport)
-	end
 end;
 
 # ╔═╡ db885ad3-f53d-4b56-9428-4f00f484f37d
@@ -247,7 +244,7 @@ Moreover, for the computation of the simplified Newton direction (which is neces
 
 # ╔═╡ d09e5081-71b8-448f-ad83-cac312f8f17d
 md"""
-The assembly routines need a function for evaluating the test functions at the left and right quadrature point.
+The assembly routines need a function for evaluating the iterates at the left and right quadrature point.
 """
 
 # ╔═╡ c9e3bf29-85af-4f97-8308-333f1472355c
@@ -320,16 +317,33 @@ function (ne::NewtonEquation)(M, VB, p)
 	println("Assemble:")
 	nCells = length(ne.omega_λ)
 	
-	ManoptExamples.get_Jac!(evaluate,ne.A22,2,1,2,1,h,nCells,Op,ne.integrand_v,ne.vectortransport) # assemble (2,2)-block using the connection
-	
-    get_Jac!(evaluate,ne.A13,1,1,3,0,h,nCells,Op,ne.integrand_y) # assemble (1,3)-block without connection
+    
+	#old: ManoptExamples.get_Jac!(evaluate,A22_test,2,1,2,1,h,nCells,Op,ne.integrand_v,ne.vectortransport) 
+	# assemble (2,2)-block using the connection
+	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A22, ne.integrand_v, ne.vectortransport, h, nCells; row_index = 2, column_index = 2, degree_test_function = 1, degree_ansatz_function = 1, test_space = ne.integrand_v.test_space, ansatz_space = ne.integrand_v.ansatz_space)
 
-	get_Jac!(evaluate,ne.A32,3,0,2,1,h,nCells,Op,ne.integrand_λ) # assemble (3,2)-block without connection
 
-    ManoptExamples.get_rhs_row!(evaluate,ne.b1,1,1,h,nCells,Op,ne.integrand_y) 
-	ManoptExamples.get_rhs_row!(evaluate,ne.b2,2,1,h,nCells,Op,ne.integrand_v)
-	ManoptExamples.get_rhs_row!(evaluate,ne.b3,3,0,h,nCells,Op,ne.integrand_λ)
-	
+	#old: ManoptExamples.get_Jac!(evaluate,A13_test,1,1,3,0,h,nCells,Op,ne.integrand_y,id_transport) 
+	# assemble (1,3)-block without connection
+	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A13, ne.integrand_y, id_transport, h, nCells; row_index = 1, column_index = 3, degree_test_function = 1, degree_ansatz_function = 0, test_space = ne.integrand_y.test_space, ansatz_space = ne.integrand_y.ansatz_space) 
+
+
+	#old: ManoptExamples.get_Jac!(evaluate,A32_test,3,0,2,1,h,nCells,Op,ne.integrand_λ,id_transport)
+	# assemble (3,2)-block without connection
+	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A32, ne.integrand_λ, id_transport, h, nCells; row_index = 3, column_index = 2, degree_test_function = 0, degree_ansatz_function = 1, test_space = ne.integrand_λ.test_space, ansatz_space = ne.integrand_λ.ansatz_space) 
+    
+    
+    #old: ManoptExamples.get_rhs_row!(evaluate,b1_test,1,1,h,nCells,Op,ne.integrand_y)
+	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b1, h, nCells, ne.integrand_y; row_index=1, degree_test_function=1, test_space=ne.integrand_y.test_space)
+    
+	#old: ManoptExamples.get_rhs_row!(evaluate,b2_test,2,1,h,nCells,Op,ne.integrand_v)
+	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b2, h, nCells, ne.integrand_v; row_index=2, degree_test_function=1, test_space=ne.integrand_v.test_space)
+	 
+    
+	#old: ManoptExamples.get_rhs_row!(evaluate,b3_test,3,0,h,nCells,Op,ne.integrand_λ)
+	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b3, h, nCells, ne.integrand_λ; row_index=3, degree_test_function=0, test_space=ne.integrand_λ.test_space)
+
+    
 	ne.A .= vcat(hcat(spzeros(n1,n1) , spzeros(n1,n2) , ne.A13), 
 			  hcat(spzeros(n2,n1), ne.A22 , ne.A32'), 
 			  hcat(ne.A13', ne.A32, spzeros(n3,n3)))
@@ -360,10 +374,15 @@ function (ne::NewtonEquation)(M, VB, p, p_trial)
 
 	nCells = length(ne.omega_λ)
 
-	ManoptExamples.get_rhs_simplified!(evaluate, btrial_y,1,1,h,nCells,Op,Optrial,ne.integrand_y, id_transport)
-	ManoptExamples.get_rhs_simplified!(evaluate,btrial_v,2,1,h,nCells,Op,Optrial,ne.integrand_v,ne.vectortransport)
-	ManoptExamples.get_rhs_simplified!(evaluate,btrial_λ,3,0,h,nCells,Op,Optrial,ne.integrand_λ, id_transport)
-
+	#old: ManoptExamples.get_rhs_simplified!(evaluate, btrial_y,1,1,h,nCells,Op,Optrial,ne.integrand_y, id_transport)
+	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_y, h, nCells, ne.integrand_y, id_transport; row_index=1, degree_test_function=1, test_space=ne.integrand_y.test_space)
+	
+	#old: ManoptExamples.get_rhs_simplified!(evaluate,btrial_v,2,1,h,nCells,Op,Optrial,ne.integrand_v,ne.vectortransport)
+	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_v, h, nCells, ne.integrand_v, ne.vectortransport; row_index=2, degree_test_function=1, test_space=ne.integrand_v.test_space)
+	
+	#old: ManoptExamples.get_rhs_simplified!(evaluate,btrial_λ,3,0,h,nCells,Op,Optrial,ne.integrand_λ, id_transport)
+	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_λ, h, nCells, ne.integrand_λ, id_transport; row_index=3, degree_test_function=0, test_space=ne.integrand_λ.test_space)
+	
 	return vcat(btrial_y, btrial_v, btrial_λ)
 end
 end;
@@ -394,10 +413,9 @@ end;
 	NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_λv, transport, Omega_y, Omega_v, Omega_λ)
 		
 	st_res = vectorbundle_newton(product, TangentBundle(product), NE, y_0; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
-	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(product,1e-12; outer_norm=Inf, inverse_retraction_method=pr_inv)),
+	stopping_criterion=(StopAfterIteration(100)|StopWhenChangeLess(product,1e-12; outer_norm=Inf, inverse_retraction_method=pr_inv)),
 	retraction_method=ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
 	stepsize=Manopt.AffineCovariantStepsize(product, theta_des=0.5, outer_norm=Inf),
-	#stepsize=ConstantLength(product, 1.0),
 	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
 	record=[:Iterate, rec => :Change, :Stepsize],
 	return_state=true
@@ -457,21 +475,22 @@ and the resulting rod (orange). The starting rod (red) is plotted as well.
 begin
 fig = Figure(size = (1000, 500))
 ax = Axis3(fig[1, 1], aspect = :data, viewmode = :fitzoom, azimuth=-3pi/4 + 0.3, elevation=pi/8 + 0.15) 
-	#xticklabelsvisible=false, yticklabelsvisible=false, zticklabelsvisible=false, xlabelvisible=false, ylabelvisible=false, zlabelvisible=false)
-#ax = Axis3(fig[1, 2], aspect = :equal)
-
-
+	
     π1(x) = x[1]
     π2(x) = x[2]
     π3(x) = x[3]
 
+	# shadows:
 	scatter!(ax, π1.(p_res[product, 1]), 0.3 .+ 0.0.*π2.(p_res[product, 1]), π3.(p_res[product, 1]); markersize =8, color = RGBAf(0.9, 0.7, 0.5, 0.5))
 
 	scatter!(ax, π1.(discretized_y), 0.3 .+ 0.0.*π2.(discretized_y), π3.(discretized_y); markersize =8, color = RGBAf(0.8, 0.5, 0.5, 0.5))
-	
+
+	# resulting rod:
 	scatter!(ax, π1.(p_res[product, 1]), π2.(p_res[product, 1]), π3.(p_res[product, 1]); markersize =8, color=:orange)
-	
+
+	# initial rod:
 	scatter!(ax, π1.([y0, y1]), π2.([y0, y1]), π3.([y0, y1]); markersize =8, color=:red)
+
 	scatter!(ax, π1.(discretized_y), π2.(discretized_y), π3.(discretized_y); markersize =8, color=:red)
 
 	fig
