@@ -53,16 +53,20 @@ begin
 
 	S = Manifolds.Sphere(2)
 	power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
+	
+	mutable struct variational_space
+		manifold::AbstractManifold
+		degree::Integer
+	end
 
-	st = 0.4
-	halt = pi - 0.4
-	#halt = pi/2
+	test_space = variational_space(S, 1)
 	
-	h = (halt-st)/(N+1)
-	Omega = range(; start=st, stop = halt, length=N+2)[2:end-1] # equidistant discrete time points
+	start_interval = 0.4
+	end_interval = pi - 0.4
+	discrete_time = range(; start = start_interval, stop = end_interval, length=N+2) # equidistant discrete time points
 	
-	y0 = [sin(st),0,cos(st)] # startpoint of geodesic
-	yT = [sin(halt),0,cos(halt)] # endpoint of geodesic
+	y0 = [sin(start_interval),0,cos(start_interval)] # startpoint of geodesic
+	yT = [sin(end_interval),0,cos(end_interval)] # endpoint of geodesic
 end;
 
 # ╔═╡ d286999d-6324-4112-87c5-de4df7a52d93
@@ -71,12 +75,10 @@ As a starting point, we use the geodesic connecting $\gamma_0$ and $\gamma_T$:
 """
 
 # ╔═╡ 29043ca3-afe0-4280-a76a-7c160a117fdf
-function y(t)
-	return [sin(t), 0, cos(t)]
+begin
+	y(t) =  [sin(t), 0, cos(t)]
+	discretized_y = [y(ti) for ti in discrete_time[2:end-1]]
 end;
-
-# ╔═╡ 5c0980c5-284e-4406-bab8-9b9aff9391ba
-discretized_y = [y(Ωi) for Ωi in Omega];
 
 # ╔═╡ e00854e0-95ef-4ef5-be4c-ea19f014c8b7
 md"""
@@ -101,8 +103,7 @@ We define a structure that has to be filled for two purposes:
 """
 
 # ╔═╡ bc449c2d-1f23-4c72-86ab-a46acbf64129
-mutable struct DifferentiableMapping{M<:AbstractManifold,F1<:Function,F2<:Function,T}
-	space_of_test_functions::M
+mutable struct DifferentiableMapping{F1<:Function,F2<:Function,T}
 	value::F1
 	derivative::F2
 	scaling::T
@@ -133,8 +134,7 @@ begin
 		return (- dq*p' - p*dq')*X
 	end
 
-	transport=DifferentiableMapping(S,transport_by_proj,transport_by_proj_prime,nothing)
-	
+	transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothing)
 end;
 
 # ╔═╡ 8a2fdd86-315d-44e1-90c7-7347304b6bc7
@@ -177,8 +177,7 @@ begin
 		return B1dot'*B2dot+(w_prime(y,Integrand.scaling)*B1)'*B2
 	end
 
-	integrand=DifferentiableMapping(S,F_at,F_prime_at,3.0) 
-
+	integrand = DifferentiableMapping(F_at,F_prime_at,3.0) 
 end;
 
 # ╔═╡ a0b939d5-40e7-4da4-baf1-8a297bb52fb7
@@ -206,19 +205,20 @@ evaluate(p, i, tloc) = (1.0-tloc)*p[i-1]+tloc*p[i];
 
 # ╔═╡ 6ce088e9-1aa0-4d44-98a3-2ab8b8ba5422
 begin
-struct NewtonEquation{F, T, Om, NM, Nrhs}
+struct NewtonEquation{F, TS, T, I, NM, Nrhs}
 	integrand::F
+	test_space::TS
 	transport::T
-	Omega::Om
+	time_interval::I
 	A::NM
 	b::Nrhs
 end
 
-function NewtonEquation(M, F, VT, interval)
+function NewtonEquation(M, F, test_space, VT, interval)
 	n = manifold_dimension(M)
 	A = spzeros(n,n)
 	b = zeros(n)
-	return NewtonEquation{typeof(F), typeof(VT), typeof(interval), typeof(A), typeof(b)}(F, VT, interval, A, b)
+	return NewtonEquation{typeof(F), typeof(test_space), typeof(VT), typeof(interval), typeof(A), typeof(b)}(F, test_space, VT, interval, A, b)
 end
 	
 function (ne::NewtonEquation)(M, VB, p)
@@ -226,25 +226,20 @@ function (ne::NewtonEquation)(M, VB, p)
 	ne.A .= spzeros(n,n)
 	ne.b .= zeros(n)
 
-	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
+	Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
 	
-	#old: get_Jac!(ne.A,h,Oy,ne.integrand,ne.transport)
-	ManoptExamples.get_jacobian!(M, Oy, evaluate, ne.A, ne.integrand, ne.transport, h, length(Oy)-1; degree_test_function=1, test_space=ne.integrand.space_of_test_functions)
-	
-	#old: get_rhs!(ne.b,h,Oy,ne.integrand)
-	ManoptExamples.get_right_hand_side!(M, Oy, evaluate, ne.b, h, length(Oy)-1, ne.integrand; degree_test_function=1, test_space=ne.integrand.space_of_test_functions)
-	
-	return
+	ManoptExamples.get_jacobian!(M, Op, evaluate, ne.A, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
+	ManoptExamples.get_right_hand_side!(M, Op, evaluate, ne.b, ne.integrand, ne.time_interval; test_space = ne.test_space)
 end
 
 function (ne::NewtonEquation)(M, VB, p, p_trial)
 	n = manifold_dimension(M)
 	btrial=zeros(n)
-	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
-	Oytrial = OffsetArray([y0, p_trial..., yT], 0:(length(ne.Omega)+1))
+	
+	Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
+	Optrial = OffsetArray([y0, p_trial..., yT], 0:(length(p_trial)+1))
 
-	#old: ManoptExamples.get_rhs_simplified!(btrial,h,Oy,Oytrial,ne.integrand,ne.transport)
-	ManoptExamples.get_right_hand_side_simplified!(M, Oy, Oytrial, evaluate, btrial, h, length(Oy)-1, ne.integrand, ne.transport; degree_test_function = 1, test_space = ne.integrand.space_of_test_functions)
+	ManoptExamples.get_right_hand_side_simplified!(M, Op, Optrial, evaluate, btrial, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
 	
 	return btrial
 end
@@ -270,7 +265,7 @@ end;
 
 # ╔═╡ 9a2ebb9a-74c7-4efd-b042-23263bbf4235
 begin
-	NE = NewtonEquation(power, integrand, transport, Omega)
+	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 		
 	st_res = vectorbundle_newton(power, TangentBundle(power), NE, discretized_y; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
 	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-12; outer_norm=Inf, inverse_retraction_method=ProjectionInverseRetraction())),
@@ -374,7 +369,6 @@ end
 # ╠═12e32b83-ae65-406c-be51-3f21935eaae5
 # ╟─d286999d-6324-4112-87c5-de4df7a52d93
 # ╠═29043ca3-afe0-4280-a76a-7c160a117fdf
-# ╠═5c0980c5-284e-4406-bab8-9b9aff9391ba
 # ╟─e00854e0-95ef-4ef5-be4c-ea19f014c8b7
 # ╟─4d22e6ed-068d-4127-bf50-5b4a0f6bd9d1
 # ╠═bc449c2d-1f23-4c72-86ab-a46acbf64129

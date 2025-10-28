@@ -60,15 +60,21 @@ begin
 	
 	S = Manifolds.Sphere(2)
 	power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
+
+	mutable struct variational_space
+		manifold::AbstractManifold
+		degree::Integer
+	end
+
+	test_space = variational_space(S, 1)
 	
-	st = -pi/2 + 0.1
-	halt = pi/2 - 0.1
-	h = (halt-st)/(N+1)
-	Omega = range(; start=st, stop = halt, length=N+2)[2:end-1] # equidistant discrete time points
+	start_interval = -pi/2 + 0.1
+	end_interval = pi/2 - 0.1
+	discrete_time = range(; start=start_interval, stop = end_interval, length=N+2) # equidistant discrete time points
 	
 	theta = pi/4
-	y0 = [sin(theta)*cos(st),sin(theta)*sin(st),cos(theta)] # startpoint of geodesic
-	yT = [sin(theta)*cos(halt),sin(theta)*sin(halt),cos(theta)] # endpoint of geodesic
+	y0 = [sin(theta)*cos(start_interval),sin(theta)*sin(start_interval),cos(theta)] # startpoint of geodesic
+	yT = [sin(theta)*cos(end_interval),sin(theta)*sin(end_interval),cos(theta)] # endpoint of geodesic
 
 	h_ref = 0.17
 end;
@@ -96,8 +102,7 @@ We define a structure that has to be filled for two purposes:
 """
 
 # ╔═╡ bc449c2d-1f23-4c72-86ab-a46acbf64129
-mutable struct DifferentiableMapping{M<:AbstractManifold,F1<:Function,F2<:Function,T}
-	space_of_test_functions::M
+mutable struct DifferentiableMapping{F1<:Function,F2<:Function,T}
 	value::F1
 	derivative::F2
 	scaling_penalty::T
@@ -128,8 +133,7 @@ begin
 		return (- dq*p' - p*dq')*X
 	end
 
-	transport=DifferentiableMapping(S,transport_by_proj,transport_by_proj_prime,nothing)
-	
+	transport=DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothing)
 end;
 
 # ╔═╡ fde5a441-9ff5-45f9-ad00-57078a16dba8
@@ -164,7 +168,7 @@ begin
 		return B1dot'*B2dot + Integrand.scaling_penalty*max_prime(y)*B1[3]*B2[3]
 	end
 
-	integrand=DifferentiableMapping(S,f_prime_at,f_second_at,1.0)
+	integrand=DifferentiableMapping(f_prime_at,f_second_at,1.0)
 end;
 
 # ╔═╡ eda0a587-a19d-4f80-80bf-c4cc5a21854c
@@ -192,19 +196,20 @@ evaluate(p, i, tloc) = (1.0-tloc)*p[i-1]+tloc*p[i];
 
 # ╔═╡ 1adf467b-81e8-4438-98ce-4420ad1f5bda
 begin
-struct NewtonEquation{F, T, Om, NM, Nrhs}
+struct NewtonEquation{F, TS, T, I, NM, Nrhs}
 	integrand::F
+	test_space::TS
 	transport::T
-	Omega::Om
+	time_interval::I
 	A::NM
 	b::Nrhs
 end
 
-function NewtonEquation(M, F, VT, interval)
+function NewtonEquation(M, F, test_space, VT, interval)
 	n = manifold_dimension(M)
 	A = spzeros(n,n)
 	b = zeros(n)
-	return NewtonEquation{typeof(F), typeof(VT), typeof(interval), typeof(A), typeof(b)}(F, VT, interval, A, b)
+	return NewtonEquation{typeof(F), typeof(test_space), typeof(VT), typeof(interval), typeof(A), typeof(b)}(F, test_space, VT, interval, A, b)
 end
 	
 function (ne::NewtonEquation)(M, VB, p)
@@ -212,16 +217,12 @@ function (ne::NewtonEquation)(M, VB, p)
 	ne.A .= spzeros(n,n)
 	ne.b .= zeros(n)
 	
-	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
+	Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
 	
 	println("Assemble:")
-	ManoptExamples.get_jacobian!(M, Oy, evaluate, ne.A, ne.integrand, ne.transport, h, length(Oy)-1; degree_test_function=1, test_space=ne.integrand.space_of_test_functions)
+	ManoptExamples.get_jacobian!(M, Op, evaluate, ne.A, ne.integrand, ne.transport, ne.time_interval; test_space=ne.test_space)
 	
-	ManoptExamples.get_right_hand_side!(M, Oy, evaluate, ne.b, h, length(Oy)-1, ne.integrand; degree_test_function=1, test_space=ne.integrand.space_of_test_functions)
-   	
-	#old: ManoptExamples.get_rhs_Jac!(ne.b,ne.A,h,Oy,ne.integrand,ne.transport)
-
-	return
+	ManoptExamples.get_right_hand_side!(M, Op, evaluate, ne.b, ne.integrand, ne.time_interval; test_space=ne.test_space)
 end
 end;
 
@@ -232,9 +233,8 @@ We compute the Newton direction $\delta \gamma$ by solving the linear system giv
 
 # ╔═╡ 910e85fe-2db4-43f3-8cf9-a805858f3627
 function solve_in_basis_repr(problem, newtonstate) 
-	Xc = (problem.newton_equation.A) \ (-problem.newton_equation.b)
-	res_c = get_vector(problem.manifold, newtonstate.p, Xc, DefaultOrthogonalBasis())
-	return res_c
+	X_base = (problem.newton_equation.A) \ (-problem.newton_equation.b)
+	return get_vector(problem.manifold, newtonstate.p, X_base, DefaultOrthogonalBasis())
 end;
 
 # ╔═╡ 1798ca75-1c1a-4760-af68-87bbd60544b4
@@ -244,11 +244,8 @@ For the computation of a solution of the penalized problem we use a simple path-
 
 # ╔═╡ 189e45a0-b64f-4d88-ad8a-d0a03f543362
 begin
-	function y(t)
-		return [sin(theta)*cos(t), sin(theta)*sin(t), cos(theta)]
-	end
-
-	discretized_y = [y(Ωi) for Ωi in Omega];
+	y(t) = [sin(theta)*cos(t), sin(theta)*sin(t), cos(theta)]
+	discretized_y = [y(ti) for ti in discrete_time[2:end-1]];
 end;
 
 # ╔═╡ 4c26b3d0-51ed-48b1-9efe-1a4ba0949e04
@@ -257,7 +254,7 @@ begin
 
 	integrand.scaling_penalty = 5.0
 	
-	NE = NewtonEquation(power, integrand, transport, Omega)
+	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 	
 	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
 	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
@@ -270,7 +267,7 @@ begin
 	for i in range(1,50)
 		integrand.scaling_penalty *= 1.2
 
-		NE = NewtonEquation(power, integrand, transport, Omega)
+		NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
  
 		st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
 		stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
@@ -284,7 +281,7 @@ end;
 
 # ╔═╡ da4fca13-23d3-4f4a-bc35-ace2b5dacaf8
 md"""
-This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is also plotted.
+This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well.
 """
 
 # ╔═╡ 6f6eb0f9-21af-481a-a2ae-020a0ff305bf

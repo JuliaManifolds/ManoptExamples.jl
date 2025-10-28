@@ -85,15 +85,19 @@ begin
 	powerR3 = PowerManifold(R3, NestedPowerRepresentation(), N) # power manifold of R^3
 	powerR3_λ = PowerManifold(R3, NestedPowerRepresentation(), N+1) # power manifold of R^3
 	product = ProductManifold(powerR3, powerS, powerR3_λ) # product manifold
+
+	mutable struct variational_space
+		manifold::AbstractManifold
+		degree::Integer
+	end
+
+	test_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
+
+	ansatz_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
 	
 	start_interval = 0.0
 	end_interval = 1.0
-
-	h = (end_interval-start_interval)/(N+1) 
-
-	Omega_y = range(; start=start_interval, stop = end_interval, length=N+2)[2:end-1]
-	Omega_v = range(; start=start_interval, stop = end_interval, length=N+2)[2:end-1]
-	Omega_λ = range(; start=start_interval, stop = end_interval, length=N+2)[1:end-1]
+	discrete_time = range(; start=start_interval, stop = end_interval, length=N+2)
 	
 	y0 = [0,0,0] # startpoint of rod
 	y1 = [0.8,0,0] # endpoint of rod
@@ -121,9 +125,9 @@ begin
 		return [0.1, 0.1, 0.1]
 	end
 
-	discretized_y = [y(Ωi) for Ωi in Omega_y]
-	discretized_v = [v(Ωi) for Ωi in Omega_v]
-	discretized_λ = [λ(Ωi) for Ωi in Omega_λ]
+	discretized_y = [y(ti) for ti in discrete_time[2:end-1]]
+	discretized_v = [v(ti) for ti in discrete_time[2:end-1]]
+	discretized_λ = [λ(ti) for ti in discrete_time[1:end-1]]
 
 	disc_point = ArrayPartition(discretized_y, discretized_v, discretized_λ)
 
@@ -156,9 +160,7 @@ We define a structure that has to be filled for two purposes:
 """
 
 # ╔═╡ bc449c2d-1f23-4c72-86ab-a46acbf64129
-mutable struct DifferentiableMapping{M<:AbstractManifold, N<:AbstractManifold,F1<:Function,F2<:Function}
-	ansatz_space::M
-	test_space::N
+mutable struct DifferentiableMapping{F1<:Function,F2<:Function}
 	value::F1
 	derivative::F2
 end
@@ -188,7 +190,7 @@ begin
 		return (- dq*p' - p*dq')*X
 	end
 
-	transport = DifferentiableMapping(S,S,transport_by_proj,transport_by_proj_prime)
+	transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime)
 end;
 
 # ╔═╡ 524ac97b-d2df-46d6-b098-ded4db69e665
@@ -207,11 +209,10 @@ begin
 
 	F_prime_λv_at(Integrand,y,ydot,B,Bdot,T,Tdot) = -B'*T # derivative of Fλ_at w.r.t. v (others are zero)
 	
-	integrand_vv = DifferentiableMapping(S,S,Fv_at,F_prime_vv_at)
-	integrand_yλ = DifferentiableMapping(R3,R3,Fy_at,F_prime_yλ_at)
-	integrand_λv = DifferentiableMapping(S,R3,Fλ_at,F_prime_λv_at)
+	integrand_vv = DifferentiableMapping(Fv_at,F_prime_vv_at)
+	integrand_yλ = DifferentiableMapping(Fy_at,F_prime_yλ_at)
+	integrand_λv = DifferentiableMapping(Fλ_at,F_prime_λv_at)
 	
-
 end;
 
 # ╔═╡ d69da8fa-fe17-4114-84c7-651aedbc756e
@@ -224,7 +225,7 @@ begin
 	identity_transport(S, p, X, q) = X
 	identity_transport_prime(S, p, X, dq) = 0.0*X
 	
-	id_transport = DifferentiableMapping(R3,R3,identity_transport,identity_transport_prime)
+	id_transport = DifferentiableMapping(identity_transport,identity_transport_prime)
 end;
 
 # ╔═╡ db885ad3-f53d-4b56-9428-4f00f484f37d
@@ -258,14 +259,14 @@ end;
 
 # ╔═╡ ea3c49be-896c-4470-b6fe-587ebe009eab
 begin
-struct NewtonEquation{Fy, Fv, Fλ, T, Om, NM, Nrhs}
+struct NewtonEquation{Fy, Fv, Fλ, TS, AS, T, O, NM, Nrhs}
 	integrand_y::Fy
 	integrand_v::Fv
 	integrand_λ::Fλ
+	test_spaces::TS
+	ansatz_spaces::AS
 	vectortransport::T
-	omega_y::Om
-	omega_v::Om
-	omega_λ::Om
+	discrete_time_interval::O
 	A13::NM
 	A22::NM
 	A32::NM
@@ -276,7 +277,7 @@ struct NewtonEquation{Fy, Fv, Fλ, T, Om, NM, Nrhs}
 	b::Nrhs
 end
 
-function NewtonEquation(M, inty, intv, intλ, VT, interval_y, interval_v, interval_λ)
+function NewtonEquation(M, inty, intv, intλ, test_spaces, ansatz_spaces, VT, discrete_time)
 	n1 = Int(manifold_dimension(submanifold(M, 1)))
 	n2 = Int(manifold_dimension(submanifold(M, 2)))
 	n3 = Int(manifold_dimension(submanifold(M, 3)))
@@ -293,7 +294,7 @@ function NewtonEquation(M, inty, intv, intλ, VT, interval_y, interval_v, interv
 	b3 = zeros(n3)
 	b = zeros(n1+n2+n3)
 	
-	return NewtonEquation{typeof(inty), typeof(intv), typeof(intλ), typeof(VT), typeof(interval_y), typeof(A13), typeof(b1)}(inty, intv, intλ, VT, interval_y, interval_v, interval_λ, A13, A22, A32, A, b1, b2, b3, b)
+	return NewtonEquation{typeof(inty), typeof(intv), typeof(intλ), typeof(test_spaces), typeof(ansatz_spaces), typeof(VT), typeof(discrete_time), typeof(A13), typeof(b1)}(inty, intv, intλ, test_spaces, ansatz_spaces, VT, discrete_time, A13, A22, A32, A, b1, b2, b3, b)
 end
 	
 function (ne::NewtonEquation)(M, VB, p)
@@ -309,39 +310,29 @@ function (ne::NewtonEquation)(M, VB, p)
 	ne.b2 .= zeros(n2)
 	ne.b3 .= zeros(n3)
 	
-	Op_y = OffsetArray([y0, p[M, 1]..., y1], 0:(length(ne.omega_y)+1))
-	Op_v = OffsetArray([v0, p[M, 2]..., v1], 0:(length(ne.omega_v)+1))
-	Op_λ = OffsetArray(p[M, 3], 1:length(ne.omega_λ))
+	Op_y = OffsetArray([y0, p[M, 1]..., y1], 0:(length(p[M, 1])+1))
+	Op_v = OffsetArray([v0, p[M, 2]..., v1], 0:(length(p[M, 2])+1))
+	Op_λ = OffsetArray(p[M, 3], 1:length(p[M, 3]))
+	
 	Op = ArrayPartition(Op_y,Op_v,Op_λ);
-	
-	println("Assemble:")
-	nCells = length(ne.omega_λ)
-	
     
-	#old: ManoptExamples.get_Jac!(evaluate,A22_test,2,1,2,1,h,nCells,Op,ne.integrand_v,ne.vectortransport) 
 	# assemble (2,2)-block using the connection
-	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A22, ne.integrand_v, ne.vectortransport, h, nCells; row_index = 2, column_index = 2, degree_test_function = 1, degree_ansatz_function = 1, test_space = ne.integrand_v.test_space, ansatz_space = ne.integrand_v.ansatz_space)
+	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A22, ne.integrand_v, ne.vectortransport, ne.discrete_time_interval; row_index = 2, column_index = 2, test_space = ne.test_spaces.x[2], ansatz_space = ne.ansatz_spaces.x[2])
 
 
-	#old: ManoptExamples.get_Jac!(evaluate,A13_test,1,1,3,0,h,nCells,Op,ne.integrand_y,id_transport) 
 	# assemble (1,3)-block without connection
-	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A13, ne.integrand_y, id_transport, h, nCells; row_index = 1, column_index = 3, degree_test_function = 1, degree_ansatz_function = 0, test_space = ne.integrand_y.test_space, ansatz_space = ne.integrand_y.ansatz_space) 
+	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A13, ne.integrand_y, id_transport, ne.discrete_time_interval; row_index = 1, column_index = 3, test_space = ne.test_spaces.x[1], ansatz_space = ne.ansatz_spaces.x[3]) 
 
 
-	#old: ManoptExamples.get_Jac!(evaluate,A32_test,3,0,2,1,h,nCells,Op,ne.integrand_λ,id_transport)
 	# assemble (3,2)-block without connection
-	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A32, ne.integrand_λ, id_transport, h, nCells; row_index = 3, column_index = 2, degree_test_function = 0, degree_ansatz_function = 1, test_space = ne.integrand_λ.test_space, ansatz_space = ne.integrand_λ.ansatz_space) 
+	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A32, ne.integrand_λ, id_transport, ne.discrete_time_interval; row_index = 3, column_index = 2, test_space = ne.test_spaces.x[3], ansatz_space = ne.ansatz_spaces.x[2]) 
     
     
-    #old: ManoptExamples.get_rhs_row!(evaluate,b1_test,1,1,h,nCells,Op,ne.integrand_y)
-	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b1, h, nCells, ne.integrand_y; row_index=1, degree_test_function=1, test_space=ne.integrand_y.test_space)
+	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b1, ne.integrand_y, ne.discrete_time_interval; row_index=1, test_space = ne.test_spaces.x[1])
     
-	#old: ManoptExamples.get_rhs_row!(evaluate,b2_test,2,1,h,nCells,Op,ne.integrand_v)
-	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b2, h, nCells, ne.integrand_v; row_index=2, degree_test_function=1, test_space=ne.integrand_v.test_space)
+	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b2, ne.integrand_v, ne.discrete_time_interval,; row_index=2, test_space = ne.test_spaces.x[2])
 	 
-    
-	#old: ManoptExamples.get_rhs_row!(evaluate,b3_test,3,0,h,nCells,Op,ne.integrand_λ)
-	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b3, h, nCells, ne.integrand_λ; row_index=3, degree_test_function=0, test_space=ne.integrand_λ.test_space)
+	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b3, ne.integrand_λ, ne.discrete_time_interval,; row_index=3, test_space = ne.test_spaces.x[3])
 
     
 	ne.A .= vcat(hcat(spzeros(n1,n1) , spzeros(n1,n2) , ne.A13), 
@@ -361,27 +352,22 @@ function (ne::NewtonEquation)(M, VB, p, p_trial)
 	btrial_v = zeros(n2)
 	btrial_λ = zeros(n3)
 	
-	Op_y = OffsetArray([y0, p[M, 1]..., y1], 0:(length(ne.omega_y)+1))
-	Op_v = OffsetArray([v0, p[M, 2]..., v1], 0:(length(ne.omega_v)+1))
-	Op_λ = OffsetArray(p[M, 3], 1:length(ne.omega_λ))
+	Op_y = OffsetArray([y0, p[M, 1]..., y1], 0:(length(p[M, 1])+1))
+	Op_v = OffsetArray([v0, p[M, 2]..., v1], 0:(length(p[M, 2])+1))
+	Op_λ = OffsetArray(p[M, 3], 1:length(p[M, 3]))
 	Op = ArrayPartition(Op_y,Op_v,Op_λ);
 
 	
-	Optrial_y = OffsetArray([y0, p_trial[M,1]..., y1], 0:(length(ne.omega_y)+1))
-	Optrial_v = OffsetArray([v0, p_trial[M,2]..., v1], 0:(length(ne.omega_v)+1))
-	Optrial_λ = OffsetArray(p_trial[M,3], 1:length(ne.omega_λ))
+	Optrial_y = OffsetArray([y0, p_trial[M,1]..., y1], 0:(length(p_trial[M,1])+1))
+	Optrial_v = OffsetArray([v0, p_trial[M,2]..., v1], 0:(length(p_trial[M,2])+1))
+	Optrial_λ = OffsetArray(p_trial[M,3], 1:length(p_trial[M,3]))
 	Optrial = ArrayPartition(Optrial_y,Optrial_v,Optrial_λ);
 
-	nCells = length(ne.omega_λ)
+	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_y, ne.integrand_y, id_transport, ne.discrete_time_interval; row_index=1, test_space = ne.test_spaces.x[1])
+	
+	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_v, ne.integrand_v, ne.vectortransport, ne.discrete_time_interval; row_index=2, test_space = ne.test_spaces.x[2])
 
-	#old: ManoptExamples.get_rhs_simplified!(evaluate, btrial_y,1,1,h,nCells,Op,Optrial,ne.integrand_y, id_transport)
-	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_y, h, nCells, ne.integrand_y, id_transport; row_index=1, degree_test_function=1, test_space=ne.integrand_y.test_space)
-	
-	#old: ManoptExamples.get_rhs_simplified!(evaluate,btrial_v,2,1,h,nCells,Op,Optrial,ne.integrand_v,ne.vectortransport)
-	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_v, h, nCells, ne.integrand_v, ne.vectortransport; row_index=2, degree_test_function=1, test_space=ne.integrand_v.test_space)
-	
-	#old: ManoptExamples.get_rhs_simplified!(evaluate,btrial_λ,3,0,h,nCells,Op,Optrial,ne.integrand_λ, id_transport)
-	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_λ, h, nCells, ne.integrand_λ, id_transport; row_index=3, degree_test_function=0, test_space=ne.integrand_λ.test_space)
+	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_λ, ne.integrand_λ, id_transport, ne.discrete_time_interval; row_index=3, test_space = ne.test_spaces.x[3])
 	
 	return vcat(btrial_y, btrial_v, btrial_λ)
 end
@@ -410,7 +396,7 @@ end;
 	begin
 	y_0 = copy(product, disc_point)
 	
-	NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_λv, transport, Omega_y, Omega_v, Omega_λ)
+	NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_λv, test_spaces, ansatz_spaces, transport, discrete_time)
 		
 	st_res = vectorbundle_newton(product, TangentBundle(product), NE, y_0; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
 	stopping_criterion=(StopAfterIteration(100)|StopWhenChangeLess(product,1e-12; outer_norm=Inf, inverse_retraction_method=pr_inv)),
