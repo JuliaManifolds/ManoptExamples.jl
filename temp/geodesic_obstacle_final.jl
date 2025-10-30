@@ -182,7 +182,6 @@ $$Q^*_{f''(\gamma)}\circ f''(\gamma)\delta \gamma + f'(\gamma) = 0^*_\gamma$$
 by using the assembler provided in ManoptExamples.jl (cf. Referenz).
 	
 It returns the matrix and the right hand side in base representation.
-Moreover, for the computation of the simplified Newton direction (which is necessary for affine covariant damping) a method for assembling the right hand side for the simplified Newton equation is provided.
 	
 """
 
@@ -256,7 +255,7 @@ begin
 	
 	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 	
-	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr,
 	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
 	retraction_method=ProjectionRetraction(),
 	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
@@ -269,7 +268,7 @@ begin
 
 		NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
  
-		st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+		st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr,
 		stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
 		retraction_method=ProjectionRetraction(),
 		debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop],
@@ -281,7 +280,7 @@ end;
 
 # ╔═╡ da4fca13-23d3-4f4a-bc35-ace2b5dacaf8
 md"""
-This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well.
+This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well (blue).
 """
 
 # ╔═╡ 6f6eb0f9-21af-481a-a2ae-020a0ff305bf

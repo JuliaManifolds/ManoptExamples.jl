@@ -267,10 +267,10 @@ end;
 begin
 	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 		
-	st_res = vectorbundle_newton(power, TangentBundle(power), NE, discretized_y; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+	st_res = vectorbundle_newton(power, TangentBundle(power), NE, discretized_y; sub_problem=solve_in_basis_repr,
 	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-12; outer_norm=Inf, inverse_retraction_method=ProjectionInverseRetraction())),
 	retraction_method=ProjectionRetraction(),
-	#stepsize=Manopt.AffineCovariantStepsize(power, theta_des=0.1),
+	#stepsize=Manopt.AffineCovariantStepsize(power, θ_des=0.1),
 	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
 	record=[:Iterate, rec => :Change],
 	return_state=true

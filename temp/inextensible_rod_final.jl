@@ -113,17 +113,11 @@ As a starting point, we use
 
 # ╔═╡ 29043ca3-afe0-4280-a76a-7c160a117fdf
 begin
-	function y(t)
-		return [t*0.8, 0.1*t*(1-t), 0]
-	end
+	y(t) = [t*0.8, 0.1*t*(1-t), 0]
 	
-	function v(t)
-		return [sin(t*pi/2+pi/4), cos(t*pi/2+pi/4), 0]
-	end
-
-	function λ(t)
-		return [0.1, 0.1, 0.1]
-	end
+	v(t) = [sin(t*pi/2+pi/4), cos(t*pi/2+pi/4), 0]
+	
+	λ(t) = [0.1, 0.1, 0.1]
 
 	discretized_y = [y(ti) for ti in discrete_time[2:end-1]]
 	discretized_v = [v(ti) for ti in discrete_time[2:end-1]]
@@ -398,10 +392,10 @@ end;
 	
 	NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_λv, test_spaces, ansatz_spaces, transport, discrete_time)
 		
-	st_res = vectorbundle_newton(product, TangentBundle(product), NE, y_0; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+	st_res = vectorbundle_newton(product, TangentBundle(product), NE, y_0; sub_problem=solve_in_basis_repr,
 	stopping_criterion=(StopAfterIteration(100)|StopWhenChangeLess(product,1e-12; outer_norm=Inf, inverse_retraction_method=pr_inv)),
 	retraction_method=ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
-	stepsize=Manopt.AffineCovariantStepsize(product, theta_des=0.5, outer_norm=Inf),
+	stepsize=Manopt.AffineCovariantStepsize(product, θ_des=0.5, outer_norm=Inf),
 	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
 	record=[:Iterate, rec => :Change, :Stepsize],
 	return_state=true
