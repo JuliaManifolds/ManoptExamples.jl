@@ -20,6 +20,8 @@ using GLMakie, Makie, GeometryTypes, Colors, ColorSchemes, NamedColors
 using CSV, DataFrames
 ```
 
+# Introduction 
+
 In this example we compute a geodesic on the sphere avoiding an obstacle by applying Newton's method on vector bundles which was introduced in \ref{paper}. This example reproduces the results from \ref{paper}.
 
 We consider the sphere $$\mathbb{S}^2$$ equipped with the Riemannian metric $\langle \cdot, \cdot \rangle$ given by the Euclidean inner product with corresponding norm $\lVert\cdot\rVert$ and a time interval $\Omega =[0,T]$.
@@ -50,18 +52,24 @@ For our example we set
 
 ```{julia}
 N=200
-
+	
 S = Manifolds.Sphere(2)
 power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
 
-st = -pi/2 + 0.1
-halt = pi/2 - 0.1
-h = (halt-st)/(N+1)
-Omega = range(; start=st, stop = halt, length=N+2)[2:end-1] # equidistant discrete time points
+mutable struct variational_space
+	manifold::AbstractManifold
+	degree::Integer
+end
 
+test_space = variational_space(S, 1)
+	
+start_interval = -pi/2 + 0.1
+end_interval = pi/2 - 0.1
+discrete_time = range(; start=start_interval, stop = end_interval, length=N+2) # equidistant discrete time points
+	
 theta = pi/4
-y0 = [sin(theta)*cos(st),sin(theta)*sin(st),cos(theta)] # startpoint of geodesic
-yT = [sin(theta)*cos(halt),sin(theta)*sin(halt),cos(theta)] # endpoint of geodesic
+y0 = [sin(theta)*cos(start_interval),sin(theta)*sin(start_interval),cos(theta)] # startpoint of geodesic
+yT = [sin(theta)*cos(end_interval),sin(theta)*sin(end_interval),cos(theta)] # endpoint of geodesic
 
 h_ref = 0.17
 ```
@@ -81,12 +89,11 @@ We define a structure that has to be filled for two purposes:
 * Definition of a vector transport and its derivative
 
 ```{julia}
-mutable struct DifferentiableMapping{M<:AbstractManifold,F1<:Function,F2<:Function,T}
-	domain::M
+mutable struct DifferentiableMapping{F1<:Function,F2<:Function,T}
 	value::F1
 	derivative::F2
 	scaling_penalty::T
-end
+end;
 ```
 
 The following routines define a vector transport and its euclidean derivative. As seen above, they are needed to derive $Q_{f'(\gamma)}^*\circ f''(\gamma)$.
@@ -106,7 +113,7 @@ end
 function transport_by_proj_prime(S, p, X, dq)
 	return (- dq*p' - p*dq')*X
 end
-transport=DifferentiableMapping(S,transport_by_proj,transport_by_proj_prime,nothing)
+transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothing)
 ```
 
 The following two routines define the integrand of $f'$ and the euclidean second derivative $f''_{\mathbb R^3}$. Here, a Newton-derivative of the maximum function given by
@@ -135,7 +142,7 @@ end
 function f_second_at(Integrand,y,ydot,B1,B1dot,B2,B2dot)
 	return B1dot'*B2dot + Integrand.scaling_penalty*max_prime(y)*B1[3]*B2[3]
 end
-integrand=DifferentiableMapping(S,f_prime_at,f_second_at,1.0)
+integrand = DifferentiableMapping(f_prime_at,f_second_at,1.0)
 ```
 
 ##  Newton Equation
@@ -149,88 +156,90 @@ Q^*_{f''(\gamma)}\circ f''(\gamma)\delta \gamma + f'(\gamma) = 0^*_\gamma
 by using the assembler provided in ManoptExamples.jl (cf. Referenz).
 
 It returns the matrix and the right hand side in base representation.
-Moreover, for the computation of the simplified Newton direction (which is necessary for affine covariant damping) a method for assembling the right hand side for the simplified Newton equation is provided.
+
+The assembly routines need a function for evaluation the iterates at the left and right quadrature point.
 
 ```{julia}
-struct NewtonEquation{F, T, Om, NM, Nrhs}
+evaluate(p, i, tloc) = (1.0-tloc)*p[i-1]+tloc*p[i];
+
+struct NewtonEquation{F, TS, T, I, NM, Nrhs}
 	integrand::F
+	test_space::TS
 	transport::T
-	Omega::Om
+	time_interval::I
 	A::NM
 	b::Nrhs
 end
-function NewtonEquation(M, F, VT, interval)
+
+function NewtonEquation(M, F, test_space, VT, interval)
 	n = manifold_dimension(M)
 	A = spzeros(n,n)
 	b = zeros(n)
-	return NewtonEquation{typeof(F), typeof(VT), typeof(interval), typeof(A), typeof(b)}(F, VT, interval, A, b)
+	return NewtonEquation{typeof(F), typeof(test_space), typeof(VT), typeof(interval), typeof(A), typeof(b)}(F, test_space, VT, interval, A, b)
 end
+
 function (ne::NewtonEquation)(M, VB, p)
 	n = manifold_dimension(M)
 	ne.A .= spzeros(n,n)
 	ne.b .= zeros(n)
-	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
-    return ManoptExamples.get_rhs_Jac!(ne.b,ne.A,h,Oy,ne.integrand,ne.transport)
+	
+	Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
+	
+	println("Assemble:")
+	ManoptExamples.get_jacobian!(M, Op, evaluate, ne.A, ne.integrand, ne.transport, ne.time_interval; test_space=ne.test_space)
+	
+	ManoptExamples.get_right_hand_side!(M, Op, evaluate, ne.b, ne.integrand, ne.time_interval; test_space=ne.test_space)
 end
-function (ne::NewtonEquation)(M, VB, p, p_trial)
-	n = manifold_dimension(M)
-	bctrial=zeros(n)
-	Oy = OffsetArray([y0, p..., yT], 0:(length(ne.Omega)+1))
-	Oytrial = OffsetArray([y0, p_trial..., yT], 0:(length(ne.Omega)+1))
-
-	ManoptExamples.get_rhs_simplified!(bctrial,h,Oy,Oytrial,ne.integrand,ne.transport)
-	println(norm(bctrial))
-	return bctrial
-end
+end;
 ```
 
 We compute the Newton direction $\delta \gamma$ by solving the linear system given by the base representation of the Newton equation directly and return the Newton direction in vector representation:
 
 ```{julia}
-function solve_in_basis_repr(problem, newtonstate)
-	Xc = (problem.newton_equation.A) \ (-problem.newton_equation.b)
-	res_c = get_vector(problem.manifold, newtonstate.p, Xc, DefaultOrthogonalBasis())
-	return res_c
-end
+function solve_in_basis_repr(problem, newtonstate) 
+	X_base = (problem.newton_equation.A) \ (-problem.newton_equation.b)
+	return get_vector(problem.manifold, newtonstate.p, X_base, DefaultOrthogonalBasis())
+end;
 ```
 
 For the computation of a solution of the penalized problem we use a simple path-following method increasing the penalty parameter by a factor 1.2 in each iteration. For the first iteration we use a curve along the latitude connecting $\gamma_0$ and $\gamma_T$:
 
 ```{julia}
-function y(t)
-	return [sin(theta)*cos(t), sin(theta)*sin(t), cos(theta)]
-end
-discretized_y = [y(Ωi) for Ωi in Omega]
+y(t) = [sin(theta)*cos(t), sin(theta)*sin(t), cos(theta)]
+discretized_y = [y(ti) for ti in discrete_time[2:end-1]];
 ```
 
 ```{julia}
 y_star = copy(power, discretized_y)
-integrand.scaling_penalty = 5.0
-NE = NewtonEquation(power, integrand, transport, Omega)
-st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
-stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
-retraction_method=ProjectionRetraction(),
-debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
-return_state=true
-)
-y_star = copy(power, get_solver_result(st_res))
 
-for i in range(1,50)
-	integrand.scaling_penalty *= 1.2
-
-	NE = NewtonEquation(power, integrand, transport, Omega)
-
-	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+	integrand.scaling_penalty = 5.0
+	
+	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
+	
+	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr,
 	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
 	retraction_method=ProjectionRetraction(),
-	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop],
-	return_state=true
-	)
-	y_star = copy(power, get_solver_result(st_res));
-end
+	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
+	return_state=true)
+	
+	y_star = copy(power, get_solver_result(st_res))
+		
+	for i in range(1,50)
+		integrand.scaling_penalty *= 1.2
+
+		NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
+ 
+		st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr,
+		stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
+		retraction_method=ProjectionRetraction(),
+		debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop],
+		return_state=true
+		)
+		y_star = copy(power, get_solver_result(st_res));
+	end
 ```
 
-This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$.
+This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well (blue).
 
 ```{julia}
 n = 45
@@ -273,7 +282,10 @@ wireframe!(ax, sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
 π3(x) = 1.0*x[3]
 
 scatterlines!(ax, circx, circy, circz; markersize =2, color=:black, linewidth=2)
+
 scatterlines!(ax, π1.(y_star), π2.(y_star), π3.(y_star); markersize =8, color=:orange, linewidth=2)
+
+scatterlines!(ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =8, color=:blue, linewidth=2)
 
 scatter!(ax, π1.([y0]), π2.([y0]), π3.([y0]); markersize = 10, color=:green)
 scatter!(ax, π1.([yT]), π2.([yT]), π3.([yT]); markersize = 10, color=:red)
