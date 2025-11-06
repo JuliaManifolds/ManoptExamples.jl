@@ -155,7 +155,7 @@ It will be easiest to see how it works by looking at how it is initialized:
 
     Tuple{String,Any}[
         ("LS-HZ", M -> Manopt.LineSearchesStepsize(ls_hz)),
-        ("Wolfe-Powell", (M, c1, c2) -> Manopt.WolfePowellLinesearch(; sufficient_decrease = c1, sufficient_curvature = c2)),
+        ("Wolfe-Powell", (M, sufficient_decrease, sufficient_curvature) -> Manopt.WolfePowellLinesearch(; sufficient_decrease = sufficient_decrease, sufficient_curvature = sufficient_curvature)),
     ]
 
 We have a string that identifies the line search method name and a constructor of the line search which takes relevant arguments like the manifold or a numerical parameter.
@@ -202,14 +202,14 @@ function (objective::ObjectiveData)(trial)
     )]
 
     # This parametrizes stepsize selection methods with relevant numerical parameters.
-    local c1_val, c2_val, hz_sigma
+    local sufficient_decrease_val, sufficient_curvature_val, hz_sigma
     if manopt_stepsize_name == "Wolfe-Powell"
-        c1_val = pyconvert(
-            Float64, trial.suggest_float("Wolfe-Powell c1", 1e-5, 1e-2; log=true)
+        sufficient_decrease_val = pyconvert(
+            Float64, trial.suggest_float("Wolfe-Powell sufficient_decrease", 1e-5, 1e-2; log=true)
         )
-        c2_val =
+        sufficient_curvature_val =
             1.0 - pyconvert(
-                Float64, trial.suggest_float("Wolfe-Powell 1-c2", 1e-4, 1e-2; log=true)
+                Float64, trial.suggest_float("Wolfe-Powell 1-sufficient_curvature", 1e-4, 1e-2; log=true)
             )
     elseif manopt_stepsize_name == "Improved HZ"
         hz_sigma = pyconvert(Float64, trial.suggest_float("Improved HZ sigma", 0.1, 0.9))
@@ -230,7 +230,7 @@ function (objective::ObjectiveData)(trial)
         # Here we construct the specific line search to be used
         local ls
         if manopt_stepsize_name == "Wolfe-Powell"
-            ls = manopt_stepsize_constructor(M, c1_val, c2_val)
+            ls = manopt_stepsize_constructor(M, sufficient_decrease_val, sufficient_curvature_val)
         elseif manopt_stepsize_name == "Improved HZ"
             ls = manopt_stepsize_constructor(M, hz_sigma)
         else
@@ -338,7 +338,7 @@ function lbfgs_study(; pruning_coeff::Float64=0.95)
         Tuple{String,Any}[
             ("LS-HZ", M -> Manopt.LineSearchesStepsize(ls_hz)),
             #("Improved HZ", (M, sigma) -> HagerZhangLinesearch(M; sigma=sigma)),
-            ("Wolfe-Powell", (M, c1, c2) -> Manopt.WolfePowellLinesearch(; sufficient_decrease = c1, sufficient_curvature = c2)),
+            ("Wolfe-Powell", (M, sufficient_decrease, sufficient_curvature) -> Manopt.WolfePowellLinesearch(; sufficient_decrease = sufficient_decrease, sufficient_curvature = sufficient_curvature)),
         ],
         10.0,
     )
@@ -348,8 +348,8 @@ function lbfgs_study(; pruning_coeff::Float64=0.95)
         od,
         Dict("mem_len" => 4),
         Dict(
-            "Wolfe-Powell c1" => 1e-4,
-            "Wolfe-Powell 1-c2" => 1e-3,
+            "Wolfe-Powell sufficient_decrease" => 1e-4,
+            "Wolfe-Powell 1-sufficient_curvature" => 1e-3,
             "Improved HZ sigma" => 0.9,
         ),
         Dict(
@@ -377,36 +377,38 @@ end
 lbfgs_study()
 ```
 
-    [I 2025-11-06 14:43:11,297] A new study created in memory with name: L-BFGS
-    [I 2025-11-06 14:43:49,393] Trial 0 finished with value: 6172.973584581584 and parameters: {'mem_len': 20, 'vector_transport_method': 2, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 0 with value: 6172.973584581584.
-    [I 2025-11-06 14:44:26,781] Trial 1 finished with value: 6166.950584581593 and parameters: {'mem_len': 2, 'vector_transport_method': 2, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.008670266895964614, 'Wolfe-Powell 1-c2': 0.00024909887676955974}. Best is trial 1 with value: 6166.950584581593.
-    [I 2025-11-06 14:45:04,665] Trial 2 finished with value: 6340.169084581583 and parameters: {'mem_len': 19, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 1.6758848093259314e-05, 'Wolfe-Powell 1-c2': 0.00012091732836208535}. Best is trial 1 with value: 6166.950584581593.
-    [I 2025-11-06 14:45:45,998] Trial 3 finished with value: 129416.04757313966 and parameters: {'mem_len': 10, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0007029806949377888, 'Wolfe-Powell 1-c2': 0.005045213680628579}. Best is trial 1 with value: 6166.950584581593.
-    [I 2025-11-06 14:46:23,438] Trial 4 finished with value: 6180.653084581554 and parameters: {'mem_len': 7, 'vector_transport_method': 1, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell c1': 0.0005150277237455281, 'Wolfe-Powell 1-c2': 0.0001243994981932201}. Best is trial 1 with value: 6166.950584581593.
-    [I 2025-11-06 14:46:39,074] Trial 5 pruned. 
-    [I 2025-11-06 14:47:16,661] Trial 6 finished with value: 6142.996584581554 and parameters: {'mem_len': 30, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 6 with value: 6142.996584581554.
-    [I 2025-11-06 14:47:32,213] Trial 7 pruned. 
-    [I 2025-11-06 14:47:39,818] Trial 8 pruned. 
-    [I 2025-11-06 14:48:04,163] Trial 9 pruned. 
-    [I 2025-11-06 14:48:11,766] Trial 10 pruned. 
-    [I 2025-11-06 14:48:19,361] Trial 11 pruned. 
-    [I 2025-11-06 14:48:27,494] Trial 12 pruned. 
-    [I 2025-11-06 14:48:35,125] Trial 13 pruned. 
-    [I 2025-11-06 14:48:42,768] Trial 14 pruned. 
-    [I 2025-11-06 14:49:07,325] Trial 15 pruned. 
-    [I 2025-11-06 14:49:31,628] Trial 16 pruned. 
-    [I 2025-11-06 14:49:56,344] Trial 17 pruned. 
-    [I 2025-11-06 14:50:03,934] Trial 18 pruned. 
-    [I 2025-11-06 14:50:28,547] Trial 19 pruned. 
-    [I 2025-11-06 14:50:53,084] Trial 20 pruned. 
-    [I 2025-11-06 14:51:17,487] Trial 21 pruned. 
-    [I 2025-11-06 14:51:41,961] Trial 22 pruned. 
-    Best params is {'mem_len': 30, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1} with value 6142.996584581554
+    [I 2025-11-06 15:01:01,300] A new study created in memory with name: L-BFGS
+    [I 2025-11-06 15:01:39,567] Trial 0 finished with value: 6113.890084581559 and parameters: {'mem_len': 7, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 0 with value: 6113.890084581559.
+    [I 2025-11-06 15:02:20,221] Trial 1 finished with value: 154814.93166376086 and parameters: {'mem_len': 22, 'vector_transport_method': 2, 'retraction_method': 1, 'manifold': 1, 'manopt_stepsize': 2, 'Wolfe-Powell sufficient_decrease': 2.2329267844390062e-05, 'Wolfe-Powell 1-sufficient_curvature': 0.0055127501906131774}. Best is trial 0 with value: 6113.890084581559.
+    [I 2025-11-06 15:02:57,165] Trial 2 finished with value: 6124.912084581583 and parameters: {'mem_len': 15, 'vector_transport_method': 2, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 0 with value: 6113.890084581559.
+    [I 2025-11-06 15:03:31,680] Trial 3 finished with value: 6090.120584581558 and parameters: {'mem_len': 7, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 3 with value: 6090.120584581558.
+    [I 2025-11-06 15:04:06,175] Trial 4 finished with value: 6109.476084581554 and parameters: {'mem_len': 14, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 3 with value: 6090.120584581558.
+    [I 2025-11-06 15:04:40,786] Trial 5 finished with value: 6108.611584581555 and parameters: {'mem_len': 26, 'vector_transport_method': 1, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 3 with value: 6090.120584581558.
+    [I 2025-11-06 15:04:48,235] Trial 6 pruned. 
+    [I 2025-11-06 15:05:22,534] Trial 7 finished with value: 6057.355084581624 and parameters: {'mem_len': 4, 'vector_transport_method': 2, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1}. Best is trial 7 with value: 6057.355084581624.
+    [I 2025-11-06 15:05:29,959] Trial 8 pruned. 
+    [I 2025-11-06 15:05:53,521] Trial 9 pruned. 
+    [I 2025-11-06 15:06:28,408] Trial 10 pruned. 
+    [I 2025-11-06 15:06:54,861] Trial 11 pruned. 
+    [I 2025-11-06 15:07:02,401] Trial 12 pruned. 
+    [I 2025-11-06 15:07:10,090] Trial 13 pruned. 
+    [I 2025-11-06 15:07:26,574] Trial 14 pruned. 
+    [I 2025-11-06 15:07:33,994] Trial 15 pruned. 
+    [I 2025-11-06 15:07:41,526] Trial 16 pruned. 
+    [I 2025-11-06 15:07:49,059] Trial 17 pruned. 
+    [I 2025-11-06 15:08:15,446] Trial 18 pruned. 
+    [I 2025-11-06 15:08:22,923] Trial 19 pruned. 
+    [I 2025-11-06 15:08:30,406] Trial 20 pruned. 
+    [I 2025-11-06 15:08:37,893] Trial 21 pruned. 
+    [I 2025-11-06 15:09:12,437] Trial 22 pruned. 
+    [I 2025-11-06 15:09:19,869] Trial 23 pruned. 
+    [I 2025-11-06 15:09:35,027] Trial 24 pruned. 
+    Best params is {'mem_len': 4, 'vector_transport_method': 2, 'retraction_method': 2, 'manifold': 1, 'manopt_stepsize': 1} with value 6057.355084581624
     Selected manifold: Sphere
     Selected retraction method: ManifoldsBase.ProjectionRetraction()
-    Selected vector transport method: ParallelTransport()
+    Selected vector transport method: ManifoldsBase.ProjectionTransport()
 
-    Python: <optuna.study.study.Study object at 0x7dbe9e7b3890>
+    Python: <optuna.study.study.Study object at 0x7690e17f0d70>
 
 ## Summary
 
@@ -442,7 +444,7 @@ This tutorial is cached. It was last run on the following package versions.
       [f468eda6] QuadraticModels v0.9.14
       [1e40b3f8] RipQP v0.7.0
 
-This tutorial was last rendered November 6, 2025, 14:51:42.
+This tutorial was last rendered November 6, 2025, 15:9:36.
 
 ## Literature
 
