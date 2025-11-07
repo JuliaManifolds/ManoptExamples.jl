@@ -194,6 +194,7 @@ sgm_bm_kwargs = [
     :stopping_criterion =&gt; StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
 ]
 cppa_kwargs = [
+    #=
     :debug =&gt; [
         :Iteration,
         &quot; | &quot;,
@@ -206,6 +207,7 @@ cppa_kwargs = [
         1000,
         :Stop,
     ],
+    =#
     :record =&gt; [:Iteration, :Cost, :Iterate],
     :return_state =&gt; true,
     :stopping_criterion =&gt; StopWhenAny(StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)),
@@ -269,7 +271,7 @@ cppa_record = get_record(cppa)</code></pre><p>… And we benchmark their perform
             header=header,
         )
     end
-end</code></pre><p>We can take a look at how the algorithms compare to each other in their performance with the following table…</p><table><tr><th style="text-align: right">Algorithm</th><th style="text-align: right">Iterations</th><th style="text-align: right">Time (s)</th><th style="text-align: right">Objective</th><th style="text-align: right">Error</th></tr><tr><td style="text-align: right">RCBM</td><td style="text-align: right">5000</td><td style="text-align: right">13.8923</td><td style="text-align: right">0.140232</td><td style="text-align: right">0.0136919</td></tr><tr><td style="text-align: right">PBA</td><td style="text-align: right">5000</td><td style="text-align: right">9.5191</td><td style="text-align: right">0.142887</td><td style="text-align: right">0.0130322</td></tr><tr><td style="text-align: right">SGM</td><td style="text-align: right">5000</td><td style="text-align: right">7.89653</td><td style="text-align: right">0.146216</td><td style="text-align: right">0.0124605</td></tr><tr><td style="text-align: right">CPPA</td><td style="text-align: right">5000</td><td style="text-align: right">3.73857</td><td style="text-align: right">0.131913</td><td style="text-align: right">0.0173612</td></tr></table><p>Lastly, we plot the results.</p><pre><code class="language-julia hljs">if export_result
+end</code></pre><p>We can take a look at how the algorithms compare to each other in their performance with the following table…</p><table><tr><th style="text-align: right"><strong>Algorithm</strong></th><th style="text-align: right"><strong>Iterations</strong></th><th style="text-align: right"><strong>Time (s)</strong></th><th style="text-align: right"><strong>Objective</strong></th><th style="text-align: right"><strong>Error</strong></th></tr><tr><td style="text-align: right">RCBM</td><td style="text-align: right">5000</td><td style="text-align: right">9.24497</td><td style="text-align: right">0.139219</td><td style="text-align: right">0.0139671</td></tr><tr><td style="text-align: right">PBA</td><td style="text-align: right">3461</td><td style="text-align: right">12.0163</td><td style="text-align: right">0.140166</td><td style="text-align: right">0.0134865</td></tr><tr><td style="text-align: right">SGM</td><td style="text-align: right">5000</td><td style="text-align: right">3.40848</td><td style="text-align: right">0.146256</td><td style="text-align: right">0.0124733</td></tr><tr><td style="text-align: right">CPPA</td><td style="text-align: right">5000</td><td style="text-align: right">3.05321</td><td style="text-align: right">0.132025</td><td style="text-align: right">0.0173612</td></tr></table><p>Lastly, we plot the results.</p><pre><code class="language-julia hljs">if export_result
     # Convert hyperboloid points to Poincaré ball points
     ball_b = convert.(PoincareBallPoint, rcbm_result)
     ball_p = convert.(PoincareBallPoint, pba_result)
@@ -299,27 +301,29 @@ end</code></pre><p>We can take a look at how the algorithms compare to each othe
     # plot!(ball_scene, H, ball_s; label=&quot;Subgradient Method&quot;)
     # plot!(ball_scene, H, ball_c; label=&quot;CPPA&quot;)
     display(ball_scene)
-end</code></pre><p><img src="../H2-Signal-TV_files/figure-commonmark/cell-13-output-1.svg" alt/></p><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="language-julia hljs">using Pkg
-Pkg.status()</code></pre><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
-  [6e4b80f9] BenchmarkTools v1.5.0
+end</code></pre><p><img src="../H2-Signal-TV_files/figure-commonmark/cell-13-output-1.svg" alt/></p><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.6.0
   [336ed68f] CSV v0.10.15
-  [35d6a980] ColorSchemes v3.27.1
-⌅ [5ae59095] Colors v0.12.11
-  [a93c6f00] DataFrames v1.7.0
-  [7073ff75] IJulia v1.26.0
-  [682c06a0] JSON v0.21.4
-  [8ac3fa9e] LRUCache v1.6.1
-  [d3d80556] LineSearches v7.3.0
-  [af67fdf4] ManifoldDiff v0.3.13
-  [1cead3c2] Manifolds v0.10.7
-  [3362f125] ManifoldsBase v0.15.22
-  [0fc0a36d] Manopt v0.5.3 `../../Manopt.jl`
-  [5b8d5e80] ManoptExamples v0.1.10 `..`
-  [51fcb6bd] NamedColors v0.2.2
-  [91a5bcdd] Plots v1.40.9
-⌃ [08abe8d2] PrettyTables v2.3.2
-  [6099a3de] PythonCall v0.9.23
-  [f468eda6] QuadraticModels v0.9.7
-  [1e40b3f8] RipQP v0.6.4
-Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`</code></pre><pre><code class="language-julia hljs">using Dates
-now()</code></pre><pre><code class="nohighlight hljs">2024-11-29T17:29:02.109</code></pre><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BHJ24]</dt><dd><div>R. Bergmann, R. Herzog and H. Jasa. <em>The Riemannian Convex Bundle Method</em>, preprint (2024), <a href="https://arxiv.org/abs/2402.13670">arXiv:2402.13670</a>.</div></dd><dt>[FO98]</dt><dd><div>O. Ferreira and P. R. Oliveira. <em>Subgradient algorithm on Riemannian manifolds</em>. <a href="https://doi.org/10.1023/A:1022675100677">Journal of Optimization Theory and Applications <strong>97</strong>, 93–104</a> (1998).</div></dd><dt>[HNP23]</dt><dd><div>N. Hoseini Monjezi, S. Nobakhtian and M. R. Pouryayevali. <em>A proximal bundle algorithm for nonsmooth optimization on Riemannian manifolds</em>. <a href="https://doi.org/10.1093/imanum/drab091">IMA Journal of Numerical Analysis <strong>43</strong>, 293–325</a> (2023).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../RCBM-Median/">« Riemannian Median</a><a class="docs-footer-nextpage" href="../Spectral-Procrustes/">Spectral Procrustes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 16 October 2025 12:15">Thursday 16 October 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  [13f3f980] CairoMakie v0.15.6
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.31.0
+  [5ae59095] Colors v0.13.1
+  [a93c6f00] DataFrames v1.8.0
+  [31c24e10] Distributions v0.25.122
+⌅ [682c06a0] JSON v0.21.4
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+  [d3d80556] LineSearches v7.4.0
+  [ee78f7c6] Makie v0.24.6
+  [af67fdf4] ManifoldDiff v0.4.5
+  [1cead3c2] Manifolds v0.11.0
+  [3362f125] ManifoldsBase v2.0.0
+  [0fc0a36d] Manopt v0.5.25
+  [5b8d5e80] ManoptExamples v0.1.16 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [91a5bcdd] Plots v1.41.1
+  [08abe8d2] PrettyTables v3.1.0
+  [6099a3de] PythonCall v0.9.28
+  [f468eda6] QuadraticModels v0.9.14
+  [1e40b3f8] RipQP v0.7.0
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`</code></pre><p>This tutorial was last rendered October 16, 2025, 11:21:16.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BHJ24]</dt><dd><div>R. Bergmann, R. Herzog and H. Jasa. <em>The Riemannian Convex Bundle Method</em>, preprint (2024), <a href="https://arxiv.org/abs/2402.13670">arXiv:2402.13670</a>.</div></dd><dt>[FO98]</dt><dd><div>O. Ferreira and P. R. Oliveira. <em>Subgradient algorithm on Riemannian manifolds</em>. <a href="https://doi.org/10.1023/A:1022675100677">Journal of Optimization Theory and Applications <strong>97</strong>, 93–104</a> (1998).</div></dd><dt>[HNP23]</dt><dd><div>N. Hoseini Monjezi, S. Nobakhtian and M. R. Pouryayevali. <em>A proximal bundle algorithm for nonsmooth optimization on Riemannian manifolds</em>. <a href="https://doi.org/10.1093/imanum/drab091">IMA Journal of Numerical Analysis <strong>43</strong>, 293–325</a> (2023).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../RCBM-Median/">« Riemannian Median</a><a class="docs-footer-nextpage" href="../Spectral-Procrustes/">Spectral Procrustes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Friday 7 November 2025 08:55">Friday 7 November 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

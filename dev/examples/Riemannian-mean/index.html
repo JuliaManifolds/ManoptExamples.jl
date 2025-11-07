@@ -9,17 +9,17 @@ n = 100
 p = 1 / sqrt(2) * [1.0, 0.0, 1.0]
 data = [exp(M, p,  σ * rand(M; vector_at=p)) for i in 1:n];</code></pre><h2 id="Variant-1:-Using-the-functions"><a class="docs-heading-anchor" href="#Variant-1:-Using-the-functions">Variant 1: Using the functions</a><a id="Variant-1:-Using-the-functions-1"></a><a class="docs-heading-anchor-permalink" href="#Variant-1:-Using-the-functions" title="Permalink"></a></h2><p>We can define both the cost and gradient, <a href="../../objectives/#ManoptExamples.RiemannianMeanCost"><code>RiemannianMeanCost</code></a> and <a href="../../objectives/#ManoptExamples.RiemannianMeanGradient!!"><code>RiemannianMeanGradient!!</code></a>, respectively. For their mathematical derivation and further explanations, we again refer to <a href="https://manoptjl.org/stable/tutorials/getstarted.html">🏔️ Get started with Manopt.jl</a>.</p><pre><code class="language-julia hljs">f = ManoptExamples.RiemannianMeanCost(data)
 grad_f = ManoptExamples.RiemannianMeanGradient!!(M, data)</code></pre><p>Then we can for example directly call a <a href="https://manoptjl.org/stable/solvers/gradient_descent/">gradient descent</a> as</p><pre><code class="language-julia hljs">x1 = gradient_descent(M, f, grad_f, first(data))</code></pre><pre><code class="nohighlight hljs">3-element Vector{Float64}:
- 0.6868392794567202
- 0.006531600696673591
- 0.7267799821044285</code></pre><h2 id="Variant-2:-Using-the-objective"><a class="docs-heading-anchor" href="#Variant-2:-Using-the-objective">Variant 2: Using the objective</a><a id="Variant-2:-Using-the-objective-1"></a><a class="docs-heading-anchor-permalink" href="#Variant-2:-Using-the-objective" title="Permalink"></a></h2><p>A shorter way to directly obtain the <a href="https://manoptjl.org/stable/plans/objective/">Manifold objective</a> including these two functions. Here, we want to specify that the objective can do in-place-evaluations using the <code>evaluation=</code>-keyword. The objective can be obtained calling <a href="../../objectives/#ManoptExamples.Riemannian_mean_objective"><code>Riemannian_mean_objective</code></a> as</p><pre><code class="language-julia hljs">rmo = ManoptExamples.Riemannian_mean_objective(
+ 0.6868392793937866
+ 0.006531600741910336
+ 0.7267799821634966</code></pre><h2 id="Variant-2:-Using-the-objective"><a class="docs-heading-anchor" href="#Variant-2:-Using-the-objective">Variant 2: Using the objective</a><a id="Variant-2:-Using-the-objective-1"></a><a class="docs-heading-anchor-permalink" href="#Variant-2:-Using-the-objective" title="Permalink"></a></h2><p>A shorter way to directly obtain the <a href="https://manoptjl.org/stable/plans/objective/">Manifold objective</a> including these two functions. Here, we want to specify that the objective can do in-place-evaluations using the <code>evaluation=</code>-keyword. The objective can be obtained calling <a href="../../objectives/#ManoptExamples.Riemannian_mean_objective"><code>Riemannian_mean_objective</code></a> as</p><pre><code class="language-julia hljs">rmo = ManoptExamples.Riemannian_mean_objective(
     M, data,
     evaluation=InplaceEvaluation(),
 )</code></pre><p>Together with a manifold, this forms a <a href="https://manoptjl.org/stable/plans/problem/">Manopt Problem</a>, which would usually enable to switch manifolds between solver runs. Here we could for example switch to using <code>Euclidean(3)</code> instead for the same data the objective is build upon.</p><pre><code class="language-julia hljs">rmp = DefaultManoptProblem(M, rmo)</code></pre><p>This enables us to for example solve the task with different, gradient based, solvers. The first is the same as above, just not using the high-level interface</p><pre><code class="language-julia hljs">s1 = GradientDescentState(M; p=copy(M, first(data)))
 solve!(rmp, s1)
 x2 = get_solver_result(s1)</code></pre><pre><code class="nohighlight hljs">3-element Vector{Float64}:
- 0.6868392794567202
- 0.006531600696673591
- 0.7267799821044285</code></pre><p>but we can easily use a conjugate gradient instead</p><pre><code class="language-julia hljs">s2 = ConjugateGradientDescentState(
+ 0.6868392793937866
+ 0.006531600741910336
+ 0.7267799821634966</code></pre><p>but we can easily use a conjugate gradient instead</p><pre><code class="language-julia hljs">s2 = ConjugateGradientDescentState(
     M;
     p=copy(M, first(data)),
     stopping_criterion=StopAfterIteration(100),
@@ -28,30 +28,30 @@ x2 = get_solver_result(s1)</code></pre><pre><code class="nohighlight hljs">3-ele
 )
 solve!(rmp, s2)
 x3 = get_solver_result(s2)</code></pre><pre><code class="nohighlight hljs">3-element Vector{Float64}:
- 0.6868393613136017
- 0.006531541407458413
- 0.7267799052788726</code></pre><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/work/ManoptExamples.jl/ManoptExamples.jl/examples/Project.toml`
-  [6e4b80f9] BenchmarkTools v1.6.1
+ 0.6868393592500729
+ 0.006531543071382776
+ 0.7267799072140452</code></pre><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/work/ManoptExamples.jl/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.6.3
   [336ed68f] CSV v0.10.15
   [13f3f980] CairoMakie v0.15.6
   [0ca39b1e] Chairmarks v1.3.1
   [35d6a980] ColorSchemes v3.31.0
   [5ae59095] Colors v0.13.1
-  [a93c6f00] DataFrames v1.8.0
+  [a93c6f00] DataFrames v1.8.1
   [31c24e10] Distributions v0.25.122
-  [682c06a0] JSON v1.1.0
+  [682c06a0] JSON v1.2.0
   [8ac3fa9e] LRUCache v1.6.2
   [b964fa9f] LaTeXStrings v1.4.0
   [d3d80556] LineSearches v7.4.0
   [ee78f7c6] Makie v0.24.6
   [af67fdf4] ManifoldDiff v0.4.5
-  [1cead3c2] Manifolds v0.11.0
-  [3362f125] ManifoldsBase v2.0.0
-  [0fc0a36d] Manopt v0.5.25
+  [1cead3c2] Manifolds v0.11.3
+  [3362f125] ManifoldsBase v2.2.0
+  [0fc0a36d] Manopt v0.5.26
   [5b8d5e80] ManoptExamples v0.1.17 `..`
   [51fcb6bd] NamedColors v0.2.3
   [91a5bcdd] Plots v1.41.1
   [08abe8d2] PrettyTables v3.1.0
   [6099a3de] PythonCall v0.9.28
   [f468eda6] QuadraticModels v0.9.14
-  [1e40b3f8] RipQP v0.7.0</code></pre><p>This tutorial was last rendered October 16, 2025, 12:13:17.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../RayleighQuotient/">« The Rayleigh Quotient</a><a class="docs-footer-nextpage" href="../NCRPG-Sparse-PCA/">Sparse PCA »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 16 October 2025 12:15">Thursday 16 October 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  [1e40b3f8] RipQP v0.7.0</code></pre><p>This tutorial was last rendered November 7, 2025, 8:52:57.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../RayleighQuotient/">« The Rayleigh Quotient</a><a class="docs-footer-nextpage" href="../NCRPG-Sparse-PCA/">Sparse PCA »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Friday 7 November 2025 08:55">Friday 7 November 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

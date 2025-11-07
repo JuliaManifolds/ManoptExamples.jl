@@ -118,7 +118,7 @@ end</code></pre><h2 id="The-DoC-solver-run"><a class="docs-heading-anchor" href=
 # 90       F(p): -0.82473955142600 |Δp|: 0.01323514050663  |grad f(p)|: 0.18444796  |Δgrad f(p)|: 0.02766167
 # 120      F(p): -0.82473728355230 |Δp|: 0.00759483209486  |grad f(p)|: 0.18442329  |Δgrad f(p)|: 0.01510815
 At iteration 129 the change of the gradient (2.3583539765525604e-13) was less than 1.0e-9.
- 18.184923 seconds (43.58 M allocations: 3.876 GiB, 3.79% gc time, 83.74% compilation time)
+ 18.177453 seconds (43.58 M allocations: 3.876 GiB, 3.85% gc time, 83.83% compilation time)
 
 # Solver state for `Manopt.jl`s Difference of Convex Algorithm
 After 129 iterations
@@ -169,7 +169,7 @@ oracle_fw!(M, q, p, X) = closed_form_solution!(M, q, L, U, p, X)</code></pre><h2
 # 8000     f(x): -0.824762 |Δp|: 0.00199428568529  |grad f(p)|: 0.18468099  |Δgrad f(p)|: 0.00401528
 # 10000    f(x): -0.824762 |Δp|: 0.00150207512138  |grad f(p)|: 0.18468619  |Δgrad f(p)|: 0.00302414
 At iteration 10000 the algorithm reached its maximal number of iterations (10000).
-142.389861 seconds (122.04 M allocations: 92.575 GiB, 4.29% gc time, 1.05% compilation time)
+143.129426 seconds (122.04 M allocations: 92.575 GiB, 5.00% gc time, 1.07% compilation time)
 
 # Solver state for `Manopt.jl`s Frank Wolfe Method
 After 10000 iterations
@@ -218,27 +218,27 @@ costs1_fw = -h.(Ref(M), pk_fw, Ref(w), Ref(q))</code></pre><p>And let’s plot t
 )
 plot!(fig, iter1_dc, costs1_dc .- dc_min, color=indigo, label=&quot;Difference of Convex&quot;)
 plot!(fig, iter1_fw, costs1_fw .- dc_min, color=teal, label=&quot;Frank-Wolfe&quot;)</code></pre><p><img src="../Difference-of-Convex-Frank-Wolfe_files/figure-commonmark/cell-23-output-1.svg" alt/></p><p>This indicates, that the difference off convex algorithm could even stop earlier with a proper stopping criterion, since after that the cost increases a bit again.</p><p>On the other hand, Frank-Wolfe still has not reached this level function value after <code>10^4</code> iterations.</p><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/work/ManoptExamples.jl/ManoptExamples.jl/examples/Project.toml`
-  [6e4b80f9] BenchmarkTools v1.6.1
+  [6e4b80f9] BenchmarkTools v1.6.3
   [336ed68f] CSV v0.10.15
   [13f3f980] CairoMakie v0.15.6
   [0ca39b1e] Chairmarks v1.3.1
   [35d6a980] ColorSchemes v3.31.0
   [5ae59095] Colors v0.13.1
-  [a93c6f00] DataFrames v1.8.0
+  [a93c6f00] DataFrames v1.8.1
   [31c24e10] Distributions v0.25.122
-  [682c06a0] JSON v1.1.0
+  [682c06a0] JSON v1.2.0
   [8ac3fa9e] LRUCache v1.6.2
   [b964fa9f] LaTeXStrings v1.4.0
   [d3d80556] LineSearches v7.4.0
   [ee78f7c6] Makie v0.24.6
   [af67fdf4] ManifoldDiff v0.4.5
-  [1cead3c2] Manifolds v0.11.0
-  [3362f125] ManifoldsBase v2.0.0
-  [0fc0a36d] Manopt v0.5.25
+  [1cead3c2] Manifolds v0.11.3
+  [3362f125] ManifoldsBase v2.2.0
+  [0fc0a36d] Manopt v0.5.26
   [5b8d5e80] ManoptExamples v0.1.17 `..`
   [51fcb6bd] NamedColors v0.2.3
   [91a5bcdd] Plots v1.41.1
   [08abe8d2] PrettyTables v3.1.0
   [6099a3de] PythonCall v0.9.28
   [f468eda6] QuadraticModels v0.9.14
-  [1e40b3f8] RipQP v0.7.0</code></pre><p>This tutorial was last rendered October 16, 2025, 12:7:58.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BFSS24]</dt><dd><div>R. Bergmann, O. P. Ferreira, E. M. Santos and J. C. Souza. <em>The difference of convex algorithm on Hadamard manifolds</em>. <a href="https://doi.org/10.1007/s10957-024-02392-8">Journal of Optimization Theory and Applications</a> (2024).</div></dd><dt>[WS22]</dt><dd><div>M. Weber and S. Sra. <em>Riemannian Optimization via Frank-Wolfe Methods</em>. <a href="https://doi.org/10.1007/s10107-022-01840-5">Mathematical Programming <strong>199</strong>, 525–556</a> (2022).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Difference-of-Convex-Rosenbrock/">« Rosenbrock Metric</a><a class="docs-footer-nextpage" href="../RCBM-Median/">Riemannian Median »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 16 October 2025 12:15">Thursday 16 October 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  [1e40b3f8] RipQP v0.7.0</code></pre><p>This tutorial was last rendered November 7, 2025, 8:47:41.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BFSS24]</dt><dd><div>R. Bergmann, O. P. Ferreira, E. M. Santos and J. C. Souza. <em>The difference of convex algorithm on Hadamard manifolds</em>. <a href="https://doi.org/10.1007/s10957-024-02392-8">Journal of Optimization Theory and Applications</a> (2024).</div></dd><dt>[WS22]</dt><dd><div>M. Weber and S. Sra. <em>Riemannian Optimization via Frank-Wolfe Methods</em>. <a href="https://doi.org/10.1007/s10107-022-01840-5">Mathematical Programming <strong>199</strong>, 525–556</a> (2022).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Difference-of-Convex-Rosenbrock/">« Rosenbrock Metric</a><a class="docs-footer-nextpage" href="../RCBM-Median/">Riemannian Median »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Friday 7 November 2025 08:55">Friday 7 November 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

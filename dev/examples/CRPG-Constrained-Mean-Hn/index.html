@@ -188,7 +188,7 @@ lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label=&quot;PGA&quot;, colo
 axis.xlabel = &quot;Manifold dimension d&quot;
 axis.ylabel = &quot;runtime (sec.)&quot;
 axislegend(axis; position=:lt)
-fig</code></pre><p><img src="../CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-13-output-1.png" alt/></p><p>and the number of iterations reads</p><pre><code class="language-julia hljs">fig2 = Figure()
+fig</code></pre><p>&lt;img src=&quot;CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-13-output-1.png&quot; width=&quot;672&quot; height=&quot;480&quot; /&gt;</p><p>and the number of iterations reads</p><pre><code class="language-julia hljs">fig2 = Figure()
 axis2 = Axis(fig2[1, 1]; title=L&quot;\text{Iterations needed per dimension }$\mathbb{H}^d$&quot;)
 lines!(axis2, n_range, [bi[:CRPG_CN][:Iter] for bi in b]; label=&quot;CRPG constant step&quot;, color=tol_vibrant[1])
 lines!(axis2, n_range, [bi[:CRPG_BT][:Iter] for bi in b]; label=&quot;CRPG backtracked step&quot;, color=tol_vibrant[5],)
@@ -196,29 +196,29 @@ lines!(axis2, n_range, [bi[:PGA][:Iter] for bi in b]; label=&quot;PGA&quot;, col
 axis2.xlabel = &quot;Manifold dimension d&quot;
 axis2.ylabel = &quot;# Iterations&quot;
 axislegend(axis2; position=:rt)
-fig2</code></pre><p><img src="../CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-15-output-1.png" alt/></p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BFNZ25]</dt><dd><div>R. Bergmann, O. P. Ferreira, S. Z. Németh and J. Zhu. <em>On projection mappings and the gradient projection method                on hyperbolic space forms</em>. Preprint, in preparation (2025).</div></dd><dt>[BJJP25a]</dt><dd><div>R. Bergmann, H. Jasa, P. J. John and M. Pfeffer. <em>The Intrinsic Riemannian Proximal Gradient Method for Convex Optimization</em>, preprint (2025), <a href="https://arxiv.org/abs/2507.16055">arXiv:2507.16055</a>.</div></dd></dl></div><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+fig2</code></pre><p>&lt;img src=&quot;CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-15-output-1.png&quot; width=&quot;672&quot; height=&quot;480&quot; /&gt;</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BFNZ25]</dt><dd><div>R. Bergmann, O. P. Ferreira, S. Z. Németh and J. Zhu. <em>On projection mappings and the gradient projection method                on hyperbolic space forms</em>. Preprint, in preparation (2025).</div></dd><dt>[BJJP25a]</dt><dd><div>R. Bergmann, H. Jasa, P. J. John and M. Pfeffer. <em>The Intrinsic Riemannian Proximal Gradient Method for Convex Optimization</em>, preprint (2025), <a href="https://arxiv.org/abs/2507.16055">arXiv:2507.16055</a>.</div></dd></dl></div><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
   [6e4b80f9] BenchmarkTools v1.6.0
   [336ed68f] CSV v0.10.15
-  [13f3f980] CairoMakie v0.15.3
+  [13f3f980] CairoMakie v0.15.6
   [0ca39b1e] Chairmarks v1.3.1
-  [35d6a980] ColorSchemes v3.30.0
-⌅ [5ae59095] Colors v0.12.11
-  [a93c6f00] DataFrames v1.7.0
-  [7073ff75] IJulia v1.29.0
-  [682c06a0] JSON v0.21.4
+  [35d6a980] ColorSchemes v3.31.0
+  [5ae59095] Colors v0.13.1
+  [a93c6f00] DataFrames v1.8.0
+  [31c24e10] Distributions v0.25.122
+⌅ [682c06a0] JSON v0.21.4
   [8ac3fa9e] LRUCache v1.6.2
   [b964fa9f] LaTeXStrings v1.4.0
   [d3d80556] LineSearches v7.4.0
-  [ee78f7c6] Makie v0.24.3
-  [af67fdf4] ManifoldDiff v0.4.4
-  [1cead3c2] Manifolds v0.10.22
-  [3362f125] ManifoldsBase v1.2.0
-  [0fc0a36d] Manopt v0.5.20
-  [5b8d5e80] ManoptExamples v0.1.14 `..`
+  [ee78f7c6] Makie v0.24.6
+  [af67fdf4] ManifoldDiff v0.4.5
+  [1cead3c2] Manifolds v0.11.0
+  [3362f125] ManifoldsBase v2.0.0
+  [0fc0a36d] Manopt v0.5.25
+  [5b8d5e80] ManoptExamples v0.1.16 `..`
   [51fcb6bd] NamedColors v0.2.3
-⌃ [91a5bcdd] Plots v1.40.16
-  [08abe8d2] PrettyTables v2.4.0
-⌃ [6099a3de] PythonCall v0.9.25
-  [f468eda6] QuadraticModels v0.9.13
+  [91a5bcdd] Plots v1.41.1
+  [08abe8d2] PrettyTables v3.1.0
+  [6099a3de] PythonCall v0.9.28
+  [f468eda6] QuadraticModels v0.9.14
   [1e40b3f8] RipQP v0.7.0
-Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`</code></pre><p>This tutorial was last rendered July 26, 2025, 19:50:9.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../CRPG-Sparse-Approximation/">« Sparse Approximation on <span>$\mathbb H^n$</span></a><a class="docs-footer-nextpage" href="../Robust-PCA/">Robust PCA »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 16 October 2025 12:15">Thursday 16 October 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`</code></pre><p>This tutorial was last rendered October 15, 2025, 13:36:39.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../CRPG-Sparse-Approximation/">« Sparse Approximation on <span>$\mathbb H^n$</span></a><a class="docs-footer-nextpage" href="../Robust-PCA/">Robust PCA »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Friday 7 November 2025 08:55">Friday 7 November 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
