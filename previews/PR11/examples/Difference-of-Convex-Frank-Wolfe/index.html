@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Frank Wolfe comparison · ManoptExamples.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox" checked/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li class="is-active"><a class="tocitem" href>Frank Wolfe comparison</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#Common-Functions"><span>Common Functions</span></a></li><li><a class="tocitem" href="#The-Difference-of-Convex-Formulation"><span>The Difference of Convex Formulation</span></a></li><li><a class="tocitem" href="#The-DoC-solver-run"><span>The DoC solver run</span></a></li><li><a class="tocitem" href="#Define-the-Frank-Wolfe-functions"><span>Define the Frank-Wolfe functions</span></a></li><li><a class="tocitem" href="#The-FW-Solver-Run"><span>The FW Solver Run</span></a></li><li><a class="tocitem" href="#Statistics"><span>Statistics</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Difference of Convex</a></li><li class="is-active"><a href>Frank Wolfe comparison</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Frank Wolfe comparison</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/Difference-of-Convex-Frank-Wolfe.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="A-comparison-of-the-Difference-of-Convex-and-Frank-Wolfe-Algorithm"><a class="docs-heading-anchor" href="#A-comparison-of-the-Difference-of-Convex-and-Frank-Wolfe-Algorithm">A comparison of the Difference of Convex and Frank Wolfe Algorithm</a><a id="A-comparison-of-the-Difference-of-Convex-and-Frank-Wolfe-Algorithm-1"></a><a class="docs-heading-anchor-permalink" href="#A-comparison-of-the-Difference-of-Convex-and-Frank-Wolfe-Algorithm" title="Permalink"></a></h1><p>Ronny Bergmann 2023-11-06</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In this example we compare the Difference of Convex Algprithm (DCA) <a href="../../references/#BergmannFerreiraSantosSouza:2023">[BFSS23]</a> with the Frank-Wolfe Algorithm, which was introduced in <a href="../../references/#WeberSra:2022">[WS22]</a>. This example reproduces the results from <a href="../../references/#BergmannFerreiraSantosSouza:2023">[BFSS23]</a>, Section 7.3.</p><pre><code class="language-julia hljs">using LinearAlgebra, Random, Statistics, BenchmarkTools
+using ManifoldsBase, Manifolds, Manopt, ManoptExamples
+using NamedColors, Plots</code></pre><p>and we load a few nice colors</p><pre><code class="language-julia hljs">paul_tol = load_paul_tol()
+indigo = paul_tol[&quot;mutedindigo&quot;]
+teal = paul_tol[&quot;mutedteal&quot;]</code></pre><p>We consider the collowing constraint maximimization problem of the Fréchet mean on the <a href="https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html">symmetric positive definite matrices</a> <span>$\mathcal P(n)$</span> with the <a href="https://juliamanifolds.github.io/Manifolds.jl/latest/manifolds/symmetricpositivedefinite.html#Default-metric:-the-affine-invariant-metric">affine invariant metric</a>. Let <span>$q_1,\ldots,q_m \in \mathcal P(n)$</span> be a set of points and <span>$\mu_1,\ldots,\mu_m$</span> be a set of weights, such that they sum to one. We consider then</p><p class="math-container">\[\operatorname*{arg\,max}_{p\in\mathcal C}\ \ h(p)\]</p><p>with</p><p class="math-container">\[h(p) =
+\sum_{j=1}^m \mu_j d^2(p,q_i),
+\quad \text{ where }
+d^2(p,q_i) = \operatorname{tr}\bigl(
+  \log^2(p^{-\frac{1}{2}}q_jp^{-\frac{1}{2}})
+\big)
+\qquad\text{and}\qquad
+\mathcal C = \{ p\in {\mathcal M}\ |\ \bar L\preceq p \preceq \bar U \},\]</p><p>for a lower bound <span>$L$</span> and an upper bound <span>$U$</span> for the matrices in the positive definite sense <span>$A \preceq B \Leftrightarrow (B-A)$</span> is positive semi-definite</p><p>When every one of the weights <span>${\mu}_1, \ldots {\mu}_m$</span> are equal, this function <span>$h$</span> is known as the of the set <span>$\{q_1, \dots, q_m\}$</span>.</p><p>And for our example we set</p><pre><code class="language-julia hljs">Random.seed!(42)
+n = 20
+m = 100
+M = SymmetricPositiveDefinite(n)
+q = [rand(M) for _ in 1:m];
+w = rand(m)
+w ./=sum(w)</code></pre><p>We use as lower and upper bound the arithmetic and geometric mean <span>$L$</span> and <span>$U$</span>, respectively.</p><pre><code class="language-julia hljs">L = inv( sum( wi * inv(qi) for (wi, qi) in zip(w,q) ) )
+U = sum( wi * qi for (wi, qi) in zip(w,q) )</code></pre><p>As a starting point, the Frank-Wolfe algorithm requires a feasible point. We use</p><pre><code class="language-julia hljs">p0 = (L+U)/2</code></pre><p>And we can check that it is feasible</p><h2 id="Common-Functions"><a class="docs-heading-anchor" href="#Common-Functions">Common Functions</a><a id="Common-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Common-Functions" title="Permalink"></a></h2><p>Given <span>$p \in \mathcal M$</span>, <span>$X \in T_p\mathcal M$</span> on the symmetric positive definite matrices <code>M</code>, this method computes the closed form solution to</p><p class="math-container">\[\operatorname*{arg\,min}_{q\in  {\mathcal C}}\ \langle X, \log_p q\rangle
+  = \operatorname*{arg\,min}_{q\in  {\mathcal C}}\ \operatorname{tr}(S\log(YqY))\]</p><p>where <span>$\mathcal C = \{ q | L \preceq q \preceq U \}$</span>, <span>$S = p^{-1/2}Xp^{-1/2}$</span>, and <span>$Y=p^{-1/2}$</span>.</p><p>The solution is given by <span>$Z=X^{-1}Q\bigl( P^{\mathrm{T}}[-\operatorname{sgn}(D)]_{+}P+\hat{L}\bigr)Q^{\mathrm{T}}X^{-1}$</span>,@ where <span>$S=QDQ^{\mathrm{T}}$</span> is a diagonalization of <span>$S$</span>, <span>$\hat{U}-\hat{L}=P^{\mathrm{T}}P$</span> with <span>$\hat{L}=Q^{\mathrm{T}}XLXQ$</span> and <span>$\hat{U}=Q^{\mathrm{T}}XUXQ$</span>, where <span>$[-\mbox{sgn}(D)]_{+}$</span> is the diagonal matrix</p><p class="math-container">\[\operatorname{diag}\bigl(
+  [-\operatorname{sgn}(d_{11})]_{+}, \ldots, [-\operatorname{sgn}(d_{nn})]_{+}
+\bigr)\]</p><p>and <span>$D=(d_{ij})$</span>.</p><pre><code class="language-julia hljs">@doc raw&quot;&quot;&quot;
+    closed_form_solution!(M, q, L, U, p X)
+
+Compute the closeed form solution of the constraint sub problem in place of ``q``.
+&quot;&quot;&quot;
+function closed_form_solution!(M::SymmetricPositiveDefinite, q, L, U, p, X)
+    # extract p^1/2 and p^{-1/2}
+    (p_sqrt_inv, p_sqrt) = Manifolds.spd_sqrt_and_sqrt_inv(p)
+    # Compute D &amp; Q
+    e2 = eigen(p_sqrt_inv * X * p_sqrt_inv) # decompose Sk  = QDQ&#39;
+    D = Diagonal(1.0 .* (e2.values .&lt; 0))
+    Q = e2.vectors
+    #println(p)
+    Uprime = Q&#39; * p_sqrt_inv * U * p_sqrt_inv * Q
+    Lprime = Q&#39; * p_sqrt_inv * L * p_sqrt_inv * Q
+    P = cholesky(Hermitian(Uprime - Lprime))
+    z = P.U&#39; * D * P.U + Lprime
+    copyto!(M, q, p_sqrt * Q * z * Q&#39; * p_sqrt)
+    return q
+end</code></pre><h2 id="The-Difference-of-Convex-Formulation"><a class="docs-heading-anchor" href="#The-Difference-of-Convex-Formulation">The Difference of Convex Formulation</a><a id="The-Difference-of-Convex-Formulation-1"></a><a class="docs-heading-anchor-permalink" href="#The-Difference-of-Convex-Formulation" title="Permalink"></a></h2><p>We use <span>$g(p) = \iota_{\mathcal C}(p)$</span> as the indicator funtion of the set <span>$\mathcal C$</span>. We use</p><pre><code class="language-julia hljs">function is_pos_def(p; atol=5e-13)
+    e = eigen(Symmetric(p))
+    return all((e.values .+ atol) .&gt; 0)
+end
+function g(p, L, U)
+    return (is_pos_def(p-L) &amp;&amp; is_pos_def(U-p)) ? 0.0 : Inf
+end
+h(M, p, w, q) = sum(wi * distance(M, p, qi)^2 for (wi, qi) in zip(w,q) )</code></pre><p>So we can first check that <code>p0</code> is feasible</p><pre><code class="language-julia hljs">g(p0,L,U) == 0.0</code></pre><pre><code class="nohighlight hljs">true</code></pre><p>Now setting</p><p class="math-container">\[\operatorname*{arg\,min}_{p\in\mathcal M}\ g(p) - h(p)\]</p><p>We look for a maximum of <span>$h$</span>, where <span>$g$</span> is minimal, i.e. <span>$g(p)$</span> is zero or in other words <span>$p \in \mathcal C$</span>.</p><p>The gradient of <span>$h$</span> can also be implemented in closed form as</p><pre><code class="language-julia hljs">grad_h(M, p, w, q) = -2.0 * sum(wi * log(M, p, qi) for (wi, qi) in zip(w, q))
+function grad_h!(M, X, p, w, q)
+    Y = copy(M, p, X)
+    zero_vector!(M, X, p)
+    for (wi, qi) in zip(w,q)
+        log!(M, Y, p, qi)
+        Y .*= - 2.0*wi
+        X .+= Y
+    end
+    return X
+end</code></pre><p>And we can further define the cost, which will just be <span>$+\infty$</span> outside of <span>$\mathcal C$</span>. We define</p><pre><code class="language-julia hljs">f_dc(M, p) = g(p, L, U) - h(M, p, w, q)
+grad_h!(M, X, p) = grad_h!(M, X, p, w, q)
+function grad_f_dc!(M,X, p)
+    grad_h!(M, X, p, w, q)
+    X .*= -1.0
+    return X
+end</code></pre><p>Here we can omit the gradient of <span>$g$</span> in the definition of <span>$\operatorname{grad} f$</span>, since the gradient is zero at the points there it is defined, that is on any point that is not on the boundary of <span>$\mathcal C$</span>.</p><p>As the last step, we can provide the closed form solver for the DC sub problem given at iteration <span>$k$</span> by</p><p class="math-container">\[\operatorname*{arg\,min}_{p\in \mathcal C}\
+  \big\langle -\operatorname{grad} h(p^{(k)}), \exp^{-1}_{p^{(k)}}p\big\rangle.\]</p><p>Which we con compute</p><pre><code class="language-julia hljs">function dc_sub_solution!(M, q, p, X)
+    closed_form_solution!(M, q, L, U, p, -X)
+    return q
+end</code></pre><p>For safety, we might want to avoid ending up at the boundary of <span>$\mathcal C$</span>. That is we reduce the distance we walk towards the solution <span>$q$</span> a bit.</p><pre><code class="language-julia hljs">function dc_sub_solution_safe!(M, q, p, X)
+    p_last = copy(M,p) # since p=q might be in place
+    closed_form_solution!(M, q, L, U, p, -X)
+    q_orig = copy(M,q) # since we do the following in place of q
+    a = minimum(real.(eigen(q-L).values))
+    b = minimum(real.(eigen(U-q).values))
+    s = 1.0
+    d = distance(M, p_last, q_orig);
+    # if we are close to zero, we reduce faster.
+    α = d &lt; 1/(n^2) ? 0.66 : 0.9995;
+    i=0
+    while (a &lt; 0) || (b &lt; 0)
+        s *= α
+        shortest_geodesic!(M, q, p_last, q_orig, s)
+        a = minimum(real.(eigen(q-L).values))
+        b = minimum(real.(eigen(U-q).values))
+        #println(&quot;$i a: $a, b = $b with s=$s&quot;)
+        i=i+1
+        if (i&gt;100) # safety fallback
+            #@warn &quot; $i steps where not enough $s ($α)\n$a $b\n $(distance(M, p_last, q_orig)). Fixing by shifting EVs&quot;
+            qe = eigen(q)
+            if a &lt; 0
+                qe.values .+= min(1e-8, n*abs(min(a,b)))
+            else
+                qe.values .-= min(1e-8, n*abs(min(a,b)))
+            end
+            q .= qe.vectors * Diagonal(qe.values) * (qe.vectors)&#39;
+            a = minimum(real.(eigen(q-L).values))
+            b = minimum(real.(eigen(U-q).values))
+            return q
+        end
+    end
+    return q
+end</code></pre><h2 id="The-DoC-solver-run"><a class="docs-heading-anchor" href="#The-DoC-solver-run">The DoC solver run</a><a id="The-DoC-solver-run-1"></a><a class="docs-heading-anchor-permalink" href="#The-DoC-solver-run" title="Permalink"></a></h2><p>Let’s compare both methods when they have the same stopping criteria</p><pre><code class="language-julia hljs">@time state1_dc = difference_of_convex_algorithm(M, f_dc, g, grad_h!, p0;
+    gradient=grad_f_dc!,
+    sub_problem=dc_sub_solution_safe!,
+    evaluation=InplaceEvaluation(),
+    stopping_criterion = StopAfterIteration(300) |
+        StopWhenChangeLess(1e-14) | StopWhenGradientChangeLess(M, 1e-9),
+    debug = [
+        (:Iteration, &quot;# %-8d &quot;), (:Cost, &quot;F(p): %0.14f&quot;), (:Change, &quot; |Δp|: %0.14f &quot;),
+        (:GradientNorm, &quot; |grad f(p)|: %0.8f &quot;),
+        (:GradientChange, &quot; |Δgrad f(p)|: %0.8f&quot;),
+        30, :Stop, &quot;\n&quot;],
+    record = [:Iteration, :Iterate, :Cost, RecordGradientNorm(), :Change],
+    return_state=true,
+)</code></pre><pre><code class="nohighlight hljs">Initial F(p): -0.77661458292831
+At iteration 23 the change of the gradient (3.192989916935325e-13) was less than 1.0e-9.
+ 16.362823 seconds (16.44 M allocations: 1.558 GiB, 4.79% gc time, 85.93% compilation time)
+
+# Solver state for `Manopt.jl`s Difference of Convex Algorithm
+After 23 iterations
+
+## Parameters
+* sub solver state:
+    | InplaceEvaluation()
+
+## Stopping Criterion
+Stop When _one_ of the following are fulfilled:
+    Max Iteration 300:  not reached
+    |Δp| &lt; 1.0e-14: not reached
+    |Δgrad f| &lt; 1.0e-9: reached
+Overall: reached
+This indicates convergence: No
+
+## Debug
+    :Stop = :Stop
+    :All = [(:Iteration, &quot;# %-8d &quot;), (:Cost, &quot;F(p): %0.14f&quot;), (:Change, &quot; |Δp|: %0.14f &quot;), (:GradientNorm, &quot; |grad f(p)|: %0.8f &quot;), (:GradientChange, &quot; |Δgrad f(p)|: %0.8f&quot;), &quot;\n&quot;, 30]
+
+## Record
+(Iteration = RecordGroup([RecordIteration(), RecordIterate(Matrix{Float64}), RecordCost(), RecordGradientNorm(), RecordChange(; inverse_retraction_method=LogarithmicInverseRetraction())]),)</code></pre><p>Let’s extract the final point and look at its cost</p><pre><code class="language-julia hljs">p1_dc = get_solver_result(state1_dc);
+f_dc(M, p1_dc)</code></pre><pre><code class="nohighlight hljs">-0.784425242474807</code></pre><p>As well as whether (and how well) it is feasible, that is the following values should all be larger than zero.</p><pre><code class="language-julia hljs">[ extrema(eigen(p1_dc-L).values), extrema(eigen(U-p1_dc).values)]</code></pre><pre><code class="nohighlight hljs">2-element Vector{Tuple{Float64, Float64}}:
+ (1.1886583723800445e-12, 0.06669240322431051)
+ (1.3411042178831775e-5, 0.0671353506908023)</code></pre><p>For the statistics we extract the recordings from the state</p><h2 id="Define-the-Frank-Wolfe-functions"><a class="docs-heading-anchor" href="#Define-the-Frank-Wolfe-functions">Define the Frank-Wolfe functions</a><a id="Define-the-Frank-Wolfe-functions-1"></a><a class="docs-heading-anchor-permalink" href="#Define-the-Frank-Wolfe-functions" title="Permalink"></a></h2><p>For Frank wolfe, the cost is just defined as <span>$-h(p)$</span> but the minimisation is constraint to <span>$\mathcal C$</span>, which is enfored by the oracle.</p><pre><code class="language-julia hljs">f_fw(M, p) = -h(M, p, w, q)
+function grad_f_fw!(M,X, p)
+    grad_h!(M, X, p, w, q)
+    X .*= -1.0
+    return X
+end
+oracle_fw!(M, q, p, X) = closed_form_solution!(M, q, L, U, p, X)</code></pre><h2 id="The-FW-Solver-Run"><a class="docs-heading-anchor" href="#The-FW-Solver-Run">The FW Solver Run</a><a id="The-FW-Solver-Run-1"></a><a class="docs-heading-anchor-permalink" href="#The-FW-Solver-Run" title="Permalink"></a></h2><p>Similarly we can run the Frank-Wolfe algorithm with</p><pre><code class="language-julia hljs">@time state1_fw = Frank_Wolfe_method(M, f_fw, grad_f_fw!, p0;
+    sub_problem=oracle_fw!,
+    evaluation=InplaceEvaluation(),
+    stopping_criterion = StopAfterIteration(10^4) |
+        StopWhenChangeLess(1e-14) | StopWhenGradientChangeLess(M, 1e-9),
+    debug = [
+        (:Iteration, &quot;# %-8d &quot;), :Cost, (:Change, &quot; |Δp|: %0.14f &quot;),
+        (:GradientNorm, &quot; |grad f(p)|: %0.8f &quot;),
+        (:GradientChange, &quot; |Δgrad f(p)|: %0.8f&quot;),
+        2*10^3, :Stop, &quot;\n&quot;],
+    record = [:Iteration, :Iterate, :Cost, RecordGradientNorm(), :Change],
+    return_state=true,
+)</code></pre><pre><code class="nohighlight hljs">Initial f(x): -0.776615
+# 2000     f(x): -0.784420 |Δp|: 0.04611942377596  |grad f(p)|: 0.17693408  |Δgrad f(p)|: 0.17555618
+# 4000     f(x): -0.784421 |Δp|: 0.00372201632005  |grad f(p)|: 0.17694619  |Δgrad f(p)|: 0.00749427
+# 6000     f(x): -0.784422 |Δp|: 0.00205683506784  |grad f(p)|: 0.17695204  |Δgrad f(p)|: 0.00414088
+# 8000     f(x): -0.784422 |Δp|: 0.00140675676260  |grad f(p)|: 0.17695565  |Δgrad f(p)|: 0.00283200
+# 10000    f(x): -0.784422 |Δp|: 0.00106177438611  |grad f(p)|: 0.17695815  |Δgrad f(p)|: 0.00213746
+The algorithm reached its maximal number of iterations (10000).
+316.048927 seconds (56.05 M allocations: 93.634 GiB, 4.13% gc time, 0.35% compilation time)
+
+# Solver state for `Manopt.jl`s Frank Wolfe Method
+After 10000 iterations
+
+## Parameters
+* inverse retraction method: LogarithmicInverseRetraction()
+* retraction method: ExponentialRetraction()
+* sub solver state:
+    | InplaceEvaluation()
+
+## Stepsize
+DecreasingStepsize(; length=2.0,  factor=1.0,  subtrahend=0.0,  shift=2)
+
+## Stopping Criterion
+Stop When _one_ of the following are fulfilled:
+    Max Iteration 10000:    reached
+    |Δp| &lt; 1.0e-14: not reached
+    |Δgrad f| &lt; 1.0e-9: not reached
+Overall: reached
+This indicates convergence: No
+
+## Debug
+    :Stop = :Stop
+    :All = [(:Iteration, &quot;# %-8d &quot;), (:Cost, &quot;f(x): %f&quot;), (:Change, &quot; |Δp|: %0.14f &quot;), (:GradientNorm, &quot; |grad f(p)|: %0.8f &quot;), (:GradientChange, &quot; |Δgrad f(p)|: %0.8f&quot;), &quot;\n&quot;, 2000]
+
+## Record
+(Iteration = RecordGroup([RecordIteration(), RecordIterate(Matrix{Float64}), RecordCost(), RecordGradientNorm(), RecordChange(; inverse_retraction_method=LogarithmicInverseRetraction())]),)</code></pre><p>And we take a look at this result as well</p><pre><code class="language-julia hljs">p1_fw = get_solver_result(state1_fw);
+f_dc(M, p1_fw)</code></pre><pre><code class="nohighlight hljs">-0.7844220281765162</code></pre><p>And its feasibility</p><pre><code class="language-julia hljs">[extrema(eigen(p1_fw-L).values), extrema(eigen(U-p1_fw).values)]</code></pre><pre><code class="nohighlight hljs">2-element Vector{Tuple{Float64, Float64}}:
+ (4.904818928410655e-10, 0.06659173821656107)
+ (3.245654983213335e-5, 0.06713970236096602)</code></pre><h2 id="Statistics"><a class="docs-heading-anchor" href="#Statistics">Statistics</a><a id="Statistics-1"></a><a class="docs-heading-anchor-permalink" href="#Statistics" title="Permalink"></a></h2><p>We extract the recorded values</p><pre><code class="language-julia hljs"># DoC
+iter1_dc = get_record(state1_dc, :Iteration, :Iteration)
+pk_dc = get_record(state1_dc,:Iteration,:Iterate)
+costs1_dc = -h.(Ref(M), pk_dc, Ref(w), Ref(q))
+dc_min = minimum(costs1_dc)
+# FW
+iter1_fw = get_record(state1_fw,:Iteration,:Iteration)[1:5:end]
+pk_fw = get_record(state1_fw,:Iteration,:Iterate)[1:5:end]
+costs1_fw = -h.(Ref(M), pk_fw, Ref(w), Ref(q))</code></pre><p>And let’s plot the result, where we measure the cost versus the minimum the difference of convex algorithm attains.</p><pre><code class="language-julia hljs">fig = plot(;
+    legend=:topright,
+    xlabel=raw&quot;Iterations $k$ (log. scale)&quot;, ylabel=raw&quot;Cost $f(x_k)-f^*$ (log. scale)&quot;,
+    yaxis=:log,
+    ylims=(1e-8, 10^-2),
+    xaxis=:log,
+    xlims=(1,10^4),
+)
+plot!(fig, iter1_dc, costs1_dc .- dc_min, color=indigo, label=&quot;Difference of Convex&quot;)
+plot!(fig, iter1_fw, costs1_fw .- dc_min, color=teal, label=&quot;Frank-Wolfe&quot;)</code></pre><p><img src="../Difference-of-Convex-Frank-Wolfe_files/figure-commonmark/cell-23-output-1.svg" alt/></p><p>This indicates, that the difference off convex algorithm could even stop earlier with a proper stopping criterion, since after that the cost increases a bit again.</p><p>On the other hand, Frank-Wolfe still has not reached this level function value after <code>10^4</code> iterations.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BFSS23]</dt>
+<dd>
+<div id="BergmannFerreiraSantosSouza:2023">R. Bergmann, O. P. Ferreira, E. M. Santos and J. C. Souza. <a href='https://arxiv.org/abs/2112.05250'><i>The difference of convex algorithm on Hadamard manifolds</i></a>, arXiv preprint (2023).</div>
+</dd><dt>[WS22]</dt>
+<dd>
+<div id="WeberSra:2022">M. Weber and S. Sra. <i>Riemannian Optimization via Frank-Wolfe Methods</i>. <a href='https://doi.org/10.1007/s10107-022-01840-5'>Mathematical Programming <b>199</b>, 525–556 (2022)</a>.</div>
+</dd>
+</dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Difference-of-Convex-Rosenbrock/">« Rosenbrock Metric</a><a class="docs-footer-nextpage" href="../RayleighQuotient/">The Rayleigh Quotient »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 24 October 2023 02:07">Tuesday 24 October 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
