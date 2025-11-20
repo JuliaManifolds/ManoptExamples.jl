@@ -8,7 +8,7 @@ date: 06/27/2024
 ## Introduction
 
 In this example we compare the Riemannian Convex Bundle Method (RCBM) [BergmannHerzogJasa:2024](@cite)
-with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1], to find the Riemannian median.
+with the Proximal Bundle Algorithm, which was introduced in [HoseiniMonjeziNobakhtianPouryayevali:2021](@cite), and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1](@cite), to find the Riemannian median.
 This example reproduces the results from [BergmannHerzogJasa:2024](@cite), Section 5.
 The runtimes reported in the tables are measured in seconds.
 
@@ -341,13 +341,15 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A1, tf = tf_markdown, header=col_names_1)
+#| output: asis
+benchmarking && pretty_table(A1, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A2, tf = tf_markdown, header=col_names_2)
+#| output: asis
+benchmarking && pretty_table(A2; backend = :markdown, column_labels = col_names_2)
 ```
 
 
@@ -430,13 +432,15 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A1_SPD, tf = tf_markdown, header=col_names_1)
+#| output: asis
+benchmarking && pretty_table(A1_SPD, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A2_SPD, tf = tf_markdown, header=col_names_2)
+#| output: asis
+benchmarking && pretty_table(A2_SPD; backend = :markdown, column_labels = col_names_2)
 ```
 
 ## The Median on the Sphere
@@ -528,13 +532,15 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A1_Sn, tf = tf_markdown, header=col_names_1)
+#| output: asis
+benchmarking && pretty_table(A1_Sn, backend = :markdown, column_labels = col_names_1)
 ```
 ... Whereas the following table refers to the SGM
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(A2_Sn, tf = tf_markdown, header=col_names_2)
+#| output: asis
+benchmarking && pretty_table(A2_Sn, backend = :markdown, column_labels = col_names_2)
 ```
 
 ## Technical details
@@ -543,13 +549,17 @@ This tutorial is cached. It was last run on the following package versions.
 
 ```{julia}
 #| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
 using Pkg
 Pkg.status()
 ```
+
 ```{julia}
-#| code-fold: true
+#| echo: false
+#| output: asis
 using Dates
-now()
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
 ```
 
 ## Literature

@@ -1,0 +1,691 @@
+---
+title: "A 2D illustration of Spectral and Robust Procrustes"
+author: "Ronny Bergmann"
+date: 11/10/2025
+---
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+using Pkg;
+cd(@__DIR__)
+Pkg.activate(".");
+```
+```{julia}
+using CairoMakie, CSV, DataFrames, LinearAlgebra, Manifolds, Manopt, NamedColors, PrettyTables,  Random
+```
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+# Parameters for this Notebook,
+# where to export results to if these get activated
+folder = "duck/"
+(!isdir(folder)) && (mkdir(folder))
+experiment_name = "abstract-duck-"
+# write out CSV files of both point data and results
+write_csv = false
+# save png files of the plots separately in a folder
+write_png = false
+# an export helper to store 2D point data
+function export_point_data(filename, data; active=write_csv, prefix=folder*experiment_name)
+    active && CSV.write(prefix*filename, DataFrame(x=data[1,:], y=data[2,:]))
+end
+# Colors
+paul_tol = load_paul_tol()
+color_duck = paul_tol["lightblue"]
+color_Frobenius = paul_tol["lightyellow"]
+color_spectral = paul_tol["lightorange"]
+color_robust = paul_tol["lightmint"]
+```
+
+This example reproduces the results preented in Section 5 of ``[JasaBergmannKuemmerleAthreyaLubberts:2025](@cite)``{=commonmark} about the effect of the Procrustes problem
+
+```math
+\operatorname*{arg\,min}_{p \in \mathrm{SO}(n)} \lVert A - pB\rVert_s
+```
+
+for different norms $s ∈ \{\mathrm{F},\mathrm{S},\mathrm{R}\}$, namely the Frobenius, spectral and a robust norm, respectively.
+
+We first define a set of points, that originally started with a duch example from [the master thesis of S. Oddsen](https://hdl.handle.net/11250/3189974), hence the name “`duck`”, though for this experiment it is merely an abstract idea of a duck.
+
+```{julia}
+#| output: false
+duck = [
+    # 1 left (a bit moved up), maybe a beak
+    # 2 right (a bit moved down), maybe a tail
+    # 3 top, maybe its head
+    # 4 bottom – feat are under water, so we have an abstract duck!
+    -1/2 1/2 1/2 -1/4 0.0 1/4 -3/8 -1/8 1/8 3/8;
+    1/4 -2/12 -5/12 1/2 1/2 1/2 -1/2 -1/2 -1/2 -1/2
+]
+```
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+export_point_data("-orig.csv", duck)
+```
+
+The general scheme of the following experiments is as follows:
+We first rotate the `duck` by a known angle, then apply certain noises and try to recover the true rotation angle.
+
+```{julia}
+#| output: false
+α_true = 5π/8
+R(α) = [cos(α) sin(α); -sin(α) cos(α)]
+α(R) = atan(R[2,1], R[1,1])
+error_on_nonoutliers(res, remaining_indices) = norm(
+    res[:,remaining_indices]-duck[:,remaining_indices]
+)
+# true exact minimizer if there were not errors
+p_true = R(-α_true) # Point on SO(2), the true reconstruction point we aim for
+rotated_duck = p_true'*duck
+```
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+export_point_data("-rotated.csv", rotated_duck)
+```
+
+## Manifold, costs, and minimizers
+
+```{julia}
+#| output: false
+M = Rotations(2)
+```
+
+```{julia}
+#| output: false
+@doc raw"""
+    Spectral_cost(M, p)
+
+Compute the spectral norm ``\lVert p\cdot B- A\rVert_2``.
+"""
+Spectral_cost(M, p; B=r_duck, A=duck) = opnorm(p*B - A)
+
+@doc raw"""
+    Frobenius_cost(M, p)
+
+Compute the Frobenious norm ``\lVert p\cdot B- A\rVert_{\mathrm{F}}``.
+"""
+Frobenius_cost(M, p; B=r_duck, A=duck) = norm(p*B - A)
+
+@doc raw"""
+    Robust_cost(M, p)
+
+Compute the 2-1-norm ``\lVert p\cdot B- A\rVert_{2,1}``, i.e. the sum of the 2-norms of the columns.
+"""
+Robust_cost(M,p; B=r_duck, A=duck) = sum([norm(c, 2.0) for c in eachcol(p*B-A)])
+```
+
+```{julia}
+p0 = Matrix{Float64}(I,2,2)
+```
+
+```{julia}
+#| output: false
+function Frobenius_minimizer(A,B; p0=p0)
+    svd_AB = svd(A*B')
+    return svd_AB.U*svd_AB.V'
+end
+function spectral_minimizer(A,B; p0=p0)
+    return mesh_adaptive_direct_search(
+        M,
+       (M,p) -> Spectral_cost(M, p; A=A, B=B), p0;
+       debug=[:Iteration, :Cost, "\n", 10, :Stop]
+    )
+end
+function robust_minimizer(A, B; p0=p0)
+    return mesh_adaptive_direct_search(
+         M,
+        (M,p) -> Robust_cost(M, p; A=A, B=B), p0;
+        debug=[:Iteration, :Cost, "\n", 10, :Stop]
+    )
+ end
+```
+
+## Experiment 1: Outliers that are orthogonal and the same distance
+
+We start with two outliers at the same (even) distance
+
+```{julia}
+#| output: false
+sub_experiment1 = "even"
+outlier_shifts1 = [[2.0, 0.0], [0.0,2.0]]
+outlier_indices1 = [2,8]
+remaining_indices1 = [k for k=1:size(duck,2) if k ∉ outlier_indices1]
+```
+
+Since we apply these outliers after rotation, one way to illustrate them on the `duck` is to rotate them back and draw that into the original data.
+
+```{julia}
+#| output: false
+outlier_shifts1_rp = [R(-α_true)x for x in outlier_shifts1]
+outlier_lines1 = [
+    [
+        [
+            duck[xy,outlier_indices1[k]],
+            duck[xy,outlier_indices1[k]] + outlier_shifts1_rp[k][xy]
+        ] for xy = 1:2
+    ]
+    for k=1:length(outlier_indices1)
+]
+```
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+for (i,v) in enumerate(outlier_shifts1_rp)
+    export_point_data(
+        sub_experiment1*"-orig-outlier$(i).csv",
+        hcat(duck[:,outlier_indices1[i]], duck[:,outlier_indices1[i]] .+ outlier_shifts1_rp[i])
+    )
+end
+```
+
+```{julia}
+outliers1_rotated_duck = copy(rotated_duck)
+    # generate outliers on the rotated duck
+    for (i,k) in enumerate(outlier_indices1)
+        outliers1_rotated_duck[:,k] += outlier_shifts1[i]
+    end
+```
+
+We compute the minimizers
+
+```{julia}
+p1F = Frobenius_minimizer(duck, outliers1_rotated_duck)
+p1S = spectral_minimizer(duck, outliers1_rotated_duck)
+p1R = robust_minimizer(duck, outliers1_rotated_duck)
+nothing
+```
+
+and we generate the rotated results
+
+```{julia}
+#| output: false
+duck1F = p1F * outliers1_rotated_duck
+duck1S = p1S * outliers1_rotated_duck
+duck1R = p1R * outliers1_rotated_duck
+```
+
+The result is
+
+```{julia}
+res1_fig = Figure()
+res1_ax = Axis(res1_fig[1, 1], title="Reconstructing the duck “$(sub_experiment1)” ")
+scatter!(res1_ax, duck[1,:], duck[2,:], label="a duck", color=color_duck, markersize=20)
+for k=1:length(outlier_indices1)
+    lines!(res1_ax, outlier_lines1[k][1], outlier_lines1[k][2], color=:black)
+end
+scatter!(res1_ax, duck1F[1,:], duck1F[2,:], label="Frobenius result", color=color_Frobenius, markersize=10)
+scatter!(res1_ax, duck1S[1,:], duck1S[2,:], label="Spectral result", color=color_spectral, markersize=10)
+scatter!(res1_ax, duck1R[1,:], duck1R[2,:], label="Robust result", color=color_robust, markersize=10)
+axislegend(res1_ax,position = :lt)
+res1_fig
+```
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+write_png && save(folder*experiment_name*sub_experiment1*"_results.png",res1_fig)
+```
+
+We can also look at the numbers: How well the angle is reconstructed and how large the error on the non-outliers is;
+
+```{julia}
+#| output: asis
+α_errors = [α(p1F), α(p1S), α(p1R)] .- α_true
+l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck1F, duck1S, duck1R]]
+pretty_table(
+    DataFrame(:rownames => ["angle", "non-outlier"], :F => [α_errors[1], l2_errors[1]], :S => [α_errors[2], l2_errors[2]], :R => [α_errors[3], l2_errors[3]]);
+    backend=:markdown, column_labels = ["error on", "Frobenius", "spectral", "robust"])
+```
+
+We see both in outlier error and angle reconstruction, Frobenius is not reconstructions perfectly, while both spectral and robust do.
+
+## Experiment 2: Outliers that are orthogonal and the same distance
+
+We start with two outliers that are orthogonal but of different length in movement.
+
+```{julia}
+#| output: false
+sub_experiment2 = "orth"
+outlier_shifts2 = [[1.0, 0.0], [0.0,2.0]]
+outlier_indices2 = [2,8]
+remaining_indices2 = [k for k=1:size(duck,2) if k ∉ outlier_indices2]
+```
+
+Since we apply these outliers after rotation, one way to illustrate them on the `duck` is to rotate them back and draw that into the original data.
+
+```{julia}
+#| output: false
+outlier_shifts2_rp = [R(-α_true)x for x in outlier_shifts2]
+outlier_lines2 = [
+    [
+        [
+            duck[xy,outlier_indices2[k]],
+            duck[xy,outlier_indices2[k]] + outlier_shifts2_rp[k][xy]
+        ] for xy = 1:2
+    ]
+    for k=1:length(outlier_indices2)
+]
+```
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+for (i,v) in enumerate(outlier_shifts2_rp)
+    export_point_data(
+        sub_experiment2*"-orig-outlier$(i).csv",
+        hcat(duck[:,outlier_indices2[i]], duck[:,outlier_indices2[i]] .+ outlier_shifts2_rp[i])
+    )
+end
+```
+
+```{julia}
+outliers2_rotated_duck = copy(rotated_duck)
+    # generate outliers on the rotated duck
+    for (i,k) in enumerate(outlier_indices2)
+        outliers2_rotated_duck[:,k] += outlier_shifts2[i]
+    end
+```
+
+We compute the minimizers
+
+```{julia}
+p2F = Frobenius_minimizer(duck, outliers2_rotated_duck)
+p2S = spectral_minimizer(duck, outliers2_rotated_duck)
+p2R = robust_minimizer(duck, outliers2_rotated_duck)
+nothing
+```
+
+and we generate the rotated results
+
+```{julia}
+#| output: false
+duck2F = p2F * outliers2_rotated_duck
+duck2S = p2S * outliers2_rotated_duck
+duck2R = p2R * outliers2_rotated_duck
+```
+
+The result is
+
+```{julia}
+    res2_fig = Figure()
+    res2_ax = Axis(res2_fig[1, 1], title="Reconstructing the duck “$(sub_experiment2)” ")
+    scatter!(res2_ax, duck[1,:], duck[2,:], label="a duck", color=color_duck, markersize=20)
+    for k=1:length(outlier_indices2)
+        lines!(res2_ax, outlier_lines2[k][1], outlier_lines2[k][2], color=:black)
+    end
+    scatter!(res2_ax, duck2F[1,:], duck2F[2,:], label="Frobenius result", color=color_Frobenius, markersize=10)
+    scatter!(res2_ax, duck2S[1,:], duck2S[2,:], label="Spectral result", color=color_spectral, markersize=10)
+    scatter!(res2_ax, duck2R[1,:], duck2R[2,:], label="Robust result", color=color_robust, markersize=10)
+    axislegend(res2_ax,position = :lt)
+    res2_fig
+```
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+write_png && save(folder*experiment_name*sub_experiment2*"_results.png",res2_fig)
+```
+
+Again we can look at both the angle and non-outlier errors:
+
+```{julia}
+#| output: asis
+α_errors = [α(p2F), α(p2S), α(p2R)] .- α_true
+l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck2F, duck2S, duck2R]]
+pretty_table(
+    DataFrame(:rownames => ["angle", "non-outlier"], :F => [α_errors[1], l2_errors[1]], :S => [α_errors[2], l2_errors[2]], :R => [α_errors[3], l2_errors[3]]);
+    backend = :markdown, column_labels = ["error on", "Frobenius", "spectral", "robust"])
+```
+
+For this second experiment both the figure and the errors indicate, that robust is still reconstructing perfectly, while spectral even performs worth than Frobenius.
+
+## Experiment 3: Outliers that are orthogonal and the same distance
+
+We continue with two outliers that are neither of same length nor orthogonal.
+
+```{julia}
+#| output: false
+sub_experiment3 = "orth"
+outlier_shifts3 = [[1.0, 2.0], [0.0,2.0]]
+outlier_indices3 = [2,8]
+remaining_indices3 = [k for k=1:size(duck,2) if k ∉ outlier_indices3]
+```
+
+Since we apply these outliers after rotation, one way to illustrate them on the `duck` is to rotate them back and draw that into the original data.
+
+```{julia}
+#| output: false
+outlier_shifts3_rp = [R(-α_true)x for x in outlier_shifts3]
+outlier_lines3 = [
+    [
+        [
+            duck[xy,outlier_indices3[k]],
+            duck[xy,outlier_indices3[k]] + outlier_shifts3_rp[k][xy]
+        ] for xy = 1:2
+    ]
+    for k=1:length(outlier_indices3)
+]
+```
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+for (i,v) in enumerate(outlier_shifts3_rp)
+    export_point_data(
+        sub_experiment3*"-orig-outlier$(i).csv",
+        hcat(duck[:,outlier_indices3[i]], duck[:,outlier_indices3[i]] .+ outlier_shifts3_rp[i])
+    )
+end
+```
+
+```{julia}
+outliers3_rotated_duck = copy(rotated_duck)
+    # generate outliers on the rotated duck
+    for (i,k) in enumerate(outlier_indices3)
+        outliers3_rotated_duck[:,k] += outlier_shifts3[i]
+    end
+```
+
+We compute the minimizers
+
+```{julia}
+p3F = Frobenius_minimizer(duck, outliers3_rotated_duck)
+p3S = spectral_minimizer(duck, outliers3_rotated_duck)
+p3R = robust_minimizer(duck, outliers3_rotated_duck)
+nothing
+```
+
+and we generate the rotated results
+
+```{julia}
+#| output: false
+duck3F = p3F * outliers3_rotated_duck
+duck3S = p3S * outliers3_rotated_duck
+duck3R = p3R * outliers3_rotated_duck
+```
+
+The result is
+
+```{julia}
+    res3_fig = Figure()
+    res3_ax = Axis(res3_fig[1, 1], title="Reconstructing the duck “$(sub_experiment3)” ")
+    scatter!(res3_ax, duck[1,:], duck[2,:], label="a duck", color=color_duck, markersize=20)
+    for k=1:length(outlier_indices3)
+        lines!(res3_ax, outlier_lines3[k][1], outlier_lines3[k][2], color=:black)
+    end
+    scatter!(res3_ax, duck3F[1,:], duck3F[2,:], label="Frobenius result", color=color_Frobenius, markersize=10)
+    scatter!(res3_ax, duck3S[1,:], duck3S[2,:], label="Spectral result", color=color_spectral, markersize=10)
+    scatter!(res3_ax, duck3R[1,:], duck3R[2,:], label="Robust result", color=color_robust, markersize=10)
+    axislegend(res3_ax,position = :rb)
+    res3_fig
+```
+
+Again we can look at both the angle and non-outlier errors:
+
+```{julia}
+#| output: asis
+α_errors = [α(p3F), α(p3S), α(p3R)] .- α_true
+l2_errors = [error_on_nonoutliers(d, remaining_indices1) for d in [duck3F, duck3S, duck3R]]
+pretty_table(
+    DataFrame(:rownames => ["angle", "non-outlier"], :F => [α_errors[1], l2_errors[1]], :S => [α_errors[2], l2_errors[2]], :R => [α_errors[3], l2_errors[3]]);
+    backend = :markdown, column_labels = ["error on", "Frobenius", "spectral", "robust"])
+```
+
+Also for the third, robust is still performing very well.
+
+
+## Experiment 4: Outliers of rank 1
+
+Next we consider a rank-1 update from the nullspace of the `duck`.
+
+```{julia}
+#| output: false
+sub_experiment4 = "spectral"
+singular_duck = svd(duck)
+V = nullspace(duck)
+v = 1/size(V,2) * sum(V, dims=2)
+u = [1.0, 1.0]
+vt_shift4 = u*v'
+outlier_shifts4_all = [ vt_shift4[:,i] for i in 1:size(singular_duck.Vt,2) ]
+outlier_indices4 = filter(
+    (i) -> norm(outlier_shifts4_all[i])>1e-13,
+    collect(1:length(outlier_shifts4_all))
+)
+σ = 8.0
+outlier_shifts4 = [ σ*outlier_shifts4_all[i] for i in outlier_indices4]
+remaining_indices4 = [k for k=1:size(duck,2) if k ∉ outlier_indices4]
+```
+
+Since we apply these outliers after rotation, one way to illustrate them on the `duck` is to rotate them back and draw that into the original data.
+
+```{julia}
+#| output: false
+outlier_shifts4_rp = [R(-α_true)x for x in outlier_shifts4]
+outlier_lines4 = [
+    [
+        [
+            duck[xy,outlier_indices4[k]],
+            duck[xy,outlier_indices4[k]] + outlier_shifts4_rp[k][xy]
+        ] for xy = 1:2
+    ]
+    for k=1:length(outlier_indices4)
+]
+```
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+for (i,v) in enumerate(outlier_shifts4_rp)
+    export_point_data(
+        sub_experiment4*"-orig-outlier$(i).csv",
+        hcat(duck[:,outlier_indices4[i]], duck[:,outlier_indices4[i]] .+ outlier_shifts4_rp[i])
+    )
+end
+```
+
+```{julia}
+outliers4_rotated_duck = copy(rotated_duck)
+# generate outliers on the rotated duck
+for (i,k) in enumerate(outlier_indices4)
+    outliers4_rotated_duck[:,k] += outlier_shifts4[i]
+end
+```
+
+We compute the minimizers
+
+```{julia}
+p4F = Frobenius_minimizer(duck, outliers4_rotated_duck)
+p4S = spectral_minimizer(duck, outliers4_rotated_duck)
+p4R = robust_minimizer(duck, outliers4_rotated_duck)
+nothing
+```
+
+and we generate the rotated results
+
+```{julia}
+#| output: false
+duck4F = p4F * outliers4_rotated_duck
+duck4S = p4S * outliers4_rotated_duck
+duck4R = p4R * outliers4_rotated_duck
+```
+
+The result is
+
+```{julia}
+    res4_fig = Figure()
+    res4_ax = Axis(res4_fig[1, 1], title="Reconstructing the duck “$(sub_experiment4)” ")
+    scatter!(res4_ax, duck[1,:], duck[2,:], label="a duck", color=color_duck, markersize=20)
+    for k=1:length(outlier_indices4)
+        lines!(res4_ax, outlier_lines4[k][1], outlier_lines4[k][2], color=:black)
+    end
+    scatter!(res4_ax, duck4F[1,:], duck4F[2,:], label="Frobenius result", color=color_Frobenius, markersize=10)
+    scatter!(res4_ax, duck4S[1,:], duck4S[2,:], label="Spectral result", color=color_spectral, markersize=10)
+    scatter!(res4_ax, duck4R[1,:], duck4R[2,:], label="Robust result", color=color_robust, markersize=10)
+    axislegend(res4_ax,position = :rt)
+    res4_fig
+```
+
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+write_png && save(folder*experiment_name*sub_experiment3*"_results.png",res3_fig)
+```
+
+We can also look at the error, though since all points are outliers, we can only look at the angle reconstruction:
+
+```{julia}
+#| output: asis
+α_errors = [α(p4F), α(p4S), α(p4R)] .- α_true
+pretty_table(
+    DataFrame(:rownames => ["angle", ], :F => [α_errors[1],], :S => [α_errors[2],], :R => [α_errors[3],]);
+    backend = :markdown, column_labels = ["error on", "Frobenius", "spectral", "robust"])
+```
+
+now, robust slightly fails, while both Frobenius and spectral perform very well,
+the algorithm for spectral maybe just stopping a bit early.
+
+## Experiment 5: Outliers of rank 1 plus uniform noise
+
+Next we consider a rank-1 update from the nullspace of the `duck` and add uniform noise
+
+```{julia}
+#| output: false
+sub_experiment5 = "spectral_and_uniform"
+Random.seed!(23)
+Rmat = 0.125*rand(size(duck)...)
+vt_shift5 = u*v'.+ Rmat
+outlier_shifts5_all = [ vt_shift5[:,i] for i in 1:size(singular_duck.Vt,2) ]
+outlier_indices5 = filter(
+    (i) -> norm(outlier_shifts5_all[i])>1e-13,
+    collect(1:length(outlier_shifts5_all))
+)
+σ = 4.0
+outlier_shifts5 = [ σ*outlier_shifts5_all[i] for i in outlier_indices5]
+remaining_indices5 = [k for k=1:size(duck,2) if k ∉ outlier_indices5]
+```
+
+Since we apply these outliers after rotation, one way to illustrate them on the `duck` is to rotate them back and draw that into the original data.
+
+```{julia}
+#| output: false
+outlier_shifts5_rp = [R(-α_true)x for x in outlier_shifts5]
+outlier_lines5 = [
+    [
+        [
+            duck[xy,outlier_indices5[k]],
+            duck[xy,outlier_indices5[k]] + outlier_shifts5_rp[k][xy]
+        ] for xy = 1:2
+    ]
+    for k=1:length(outlier_indices5)
+]
+```
+```{julia}
+#| echo: false
+#| code-fold: true
+#| output: false
+for (i,v) in enumerate(outlier_shifts5_rp)
+    export_point_data(
+        sub_experiment5*"-orig-outlier$(i).csv",
+        hcat(duck[:,outlier_indices5[i]], duck[:,outlier_indices5[i]] .+ outlier_shifts5_rp[i])
+    )
+end
+```
+
+```{julia}
+outliers5_rotated_duck = copy(rotated_duck)
+# generate outliers on the rotated duck
+for (i,k) in enumerate(outlier_indices5)
+    outliers5_rotated_duck[:,k] += outlier_shifts5[i]
+end
+```
+
+We compute the minimizers
+
+```{julia}
+p5F = Frobenius_minimizer(duck, outliers5_rotated_duck)
+p5S = spectral_minimizer(duck, outliers5_rotated_duck)
+p5R = robust_minimizer(duck, outliers5_rotated_duck)
+nothing
+```
+
+and we generate the rotated results
+
+```{julia}
+#| output: false
+duck5F = p5F * outliers5_rotated_duck
+duck5S = p5S * outliers5_rotated_duck
+duck5R = p5R * outliers5_rotated_duck
+```
+
+The result is
+
+```{julia}
+    res5_fig = Figure()
+    res5_ax = Axis(res5_fig[1, 1], title="Reconstructing the duck “$(sub_experiment5)” ")
+    scatter!(res5_ax, duck[1,:], duck[2,:], label="a duck", color=color_duck, markersize=20)
+    for k=1:length(outlier_indices5)
+        lines!(res5_ax, outlier_lines5[k][1], outlier_lines5[k][2], color=:black)
+    end
+    scatter!(res5_ax, duck5F[1,:], duck5F[2,:], label="Frobenius result", color=color_Frobenius, markersize=10)
+    scatter!(res5_ax, duck5S[1,:], duck5S[2,:], label="Spectral result", color=color_spectral, markersize=10)
+    scatter!(res5_ax, duck5R[1,:], duck5R[2,:], label="Robust result", color=color_robust, markersize=10)
+    axislegend(res5_ax,position = :rt)
+    res5_fig
+```
+
+We can also look at the error, though since all points are outliers, we can only look at the angle reconstruction:
+
+```{julia}
+#| output: asis
+α_errors = [α(p5F), α(p5S), α(p5R)] .- α_true
+pretty_table(
+    DataFrame(
+        :rownames => ["angle"],
+        :F => [α_errors[1]], :S => [α_errors[2]], :R => [α_errors[3]]
+    );
+    backend = :markdown,
+    column_labels = ["error on", "Frobenius", "spectral", "robust"],
+)
+```
+
+Here, booth robust and Frobenius struggle to reconstruct, while spectral performs best.
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["Spectral-Procrustes-2D.md"]
+Canonical=false
+```
+````

@@ -279,6 +279,7 @@ sgm_bm_kwargs = [
     :stopping_criterion => StopWhenSubgradientNormLess(√atol) | StopAfterIteration(max_iters),
 ]
 cppa_kwargs = [
+    #=
     :debug => [
         :Iteration,
         " | ",
@@ -291,6 +292,7 @@ cppa_kwargs = [
         1000,
         :Stop,
     ],
+    =#
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stopping_criterion => StopWhenAny(StopAfterIteration(max_iters), StopWhenChangeLess(Hn, atol)),
@@ -372,7 +374,8 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 #| echo: false
 #| code-fold: true
-benchmarking && pretty_table(DataFrame(B, :auto); tf=tf_markdown, header=header)
+#| output: asis
+benchmarking && pretty_table(DataFrame(B, :auto); backend = :markdown, column_labels = header)
 ```
 Lastly, we plot the results.
 ```{julia}
@@ -415,13 +418,17 @@ This tutorial is cached. It was last run on the following package versions.
 
 ```{julia}
 #| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
 using Pkg
 Pkg.status()
 ```
+
 ```{julia}
-#| code-fold: true
+#| echo: false
+#| output: asis
 using Dates
-now()
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
 ```
 
 ## Literature

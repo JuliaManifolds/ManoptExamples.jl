@@ -5,6 +5,33 @@ All notable changes to this Julia package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.17] – 16/10/2025
+
+### Added
+  * An example comparing spectral and robust Procrustes
+
+### Changed
+  * update rendering to use the [QuartoNotebookRunner.jl](https://github.com/PumasAI/QuartoNotebookRunner.jl) removing the dependency on Python
+  * switched to [Runic.jl](https://github.com/fredrikekre/Runic.jl) for code formatting
+
+## [0.1.16] – 03/10/2025
+
+### Added
+
+* Two numerical experiments from the Proximal Gradient preprints.
+
+## [0.1.15] – 18/08/2025
+
+### Added
+
+* Numerical experiments from the Proximal Gradient preprints.
+
+## [0.1.14] – 14/04/2025
+
+### Added
+
+* Projected Gradient example.
+
 ## [0.1.13] – 21/03/2025
 
 ### Changed

@@ -66,8 +66,8 @@ E(x) = d_{\mathcal M}^2(f,x) + \alpha\operatorname{TV}(x)
 """
 function L2_Total_Variation_1_2(M::PowerManifold, f, α, β, p)
     return 1 / 2 * distance(M, f, p)^2 +
-           α * Total_Variation(M, p) +
-           β * second_order_Total_Variation(M, p)
+        α * Total_Variation(M, p) +
+        β * second_order_Total_Variation(M, p)
 end
 
 @doc raw"""
@@ -114,7 +114,7 @@ only total variation is present.
 
 [`grad_Total_Variation`](@ref), [`prox_Total_Variation`](@ref), [`second_order_Total_Variation`](@ref)
 """
-function Total_Variation(M::PowerManifold, x, p=1, q=1)
+function Total_Variation(M::PowerManifold, x, p = 1, q = 1)
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
@@ -162,8 +162,8 @@ In long function names, this might be shortened to `TV2`.
 [`grad_second_order_Total_Variation`](@ref), [`prox_second_order_Total_Variation`](@ref), [`Total_Variation`](@ref)
 """
 function second_order_Total_Variation(
-    M::MT, x::Tuple{T,T,T}, p=1
-) where {MT<:AbstractManifold,T}
+        M::MT, x::Tuple{T, T, T}, p = 1
+    ) where {MT <: AbstractManifold, T}
     # note that here mid_point returns the closest to x2 from the e midpoints between x1 x3
     return 1 / p * distance(M, mid_point(M, x[1], x[3]), x[2])^p
 end
@@ -192,7 +192,7 @@ In long function names, this might be shortened to `TV2`.
 
 [`grad_second_order_Total_Variation`](@ref), [`prox_second_order_Total_Variation`](@ref)
 """
-function second_order_Total_Variation(M::PowerManifold, x, p::Int=1, Sum::Bool=true)
+function second_order_Total_Variation(M::PowerManifold, x, p::Int = 1, Sum::Bool = true)
     Tt = Tuple(power_dimensions(M))
     R = CartesianIndices(Tt)
     d = length(Tt)
@@ -246,9 +246,9 @@ function grad_intrinsic_infimal_convolution_TV12(M::AbstractManifold, f, u, v, �
     c = mid_point(M, u, v, f)
     iL = log(M, c, f)
     return adjoint_differential_shortest_geodesic_startpoint(M, u, v, 1 / 2, iL) +
-           α * β * grad_Total_Variation(M, u),
-    adjoint_differential_shortest_geodesic_endpoint(M, u, v, 1 / 2, iL) +
-    α * (1 - β) * grad_second_order_Total_Variation(M, v)
+        α * β * grad_Total_Variation(M, u),
+        adjoint_differential_shortest_geodesic_endpoint(M, u, v, 1 / 2, iL) +
+        α * (1 - β) * grad_second_order_Total_Variation(M, v)
 end
 
 @doc raw"""
@@ -258,7 +258,7 @@ end
 compute the (deterministic) (sub) gradient of ``\frac{1}{p}d^p_{\mathcal M}(x,y)`` with respect
 to both ``x`` and ``y`` (in place of `X` and `Y`).
 """
-function grad_Total_Variation(M::AbstractManifold, q::Tuple{T,T}, p=1) where {T}
+function grad_Total_Variation(M::AbstractManifold, q::Tuple{T, T}, p = 1) where {T}
     if p == 2
         return (-log(M, q[1], q[2]), -log(M, q[2], q[1]))
     else
@@ -270,7 +270,7 @@ function grad_Total_Variation(M::AbstractManifold, q::Tuple{T,T}, p=1) where {T}
         end
     end
 end
-function grad_Total_Variation!(M::AbstractManifold, X, q::Tuple{T,T}, p=1) where {T}
+function grad_Total_Variation!(M::AbstractManifold, X, q::Tuple{T, T}, p = 1) where {T}
     d = distance(M, q[1], q[2])
     if d == 0 # subdifferential containing zero
         zero_vector!(M, X[1], q[1])
@@ -309,7 +309,7 @@ and ``\mathcal I_i`` denotes the forward neighbors of ``i``.
 # Output
 * X – resulting tangent vector in ``T_x\mathcal M``. The computation can also be done in place.
 """
-function grad_Total_Variation(M::PowerManifold, x, p::Int=1)
+function grad_Total_Variation(M::PowerManifold, x, p::Int = 1)
     power_size = power_dimensions(M)
     rep_size = representation_size(M.manifold)
     R = CartesianIndices(Tuple(power_size))
@@ -337,7 +337,7 @@ function grad_Total_Variation(M::PowerManifold, x, p::Int=1)
     end # i in R
     return X
 end
-function grad_Total_Variation!(M::PowerManifold, X, x, p::Int=1)
+function grad_Total_Variation!(M::PowerManifold, X, x, p::Int = 1)
     power_size = power_dimensions(M)
     rep_size = representation_size(M.manifold)
     R = CartesianIndices(Tuple(power_size))
@@ -364,8 +364,8 @@ function grad_Total_Variation!(M::PowerManifold, X, x, p::Int=1)
     return X
 end
 function _subgrad_Total_Variation(
-    s, M::AbstractManifold, q::Tuple{T,T}, k::Int=1; atol=0
-) where {T}
+        s, M::AbstractManifold, q::Tuple{T, T}, k::Int = 1; atol = 0
+    ) where {T}
     if k == 2
         return (-log(M, q[1], q[2]), -log(M, q[2], q[1]))
     else
@@ -374,8 +374,8 @@ function _subgrad_Total_Variation(
             return (zero_vector(M, q[1]), zero_vector(M, q[2]))
         elseif d ≤ atol && s == false
             return (
-                ManifoldDiff.subgrad_distance(M, q[2], q[1], k; atol=atol),
-                ManifoldDiff.subgrad_distance(M, q[1], q[2], k; atol=atol),
+                ManifoldDiff.subgrad_distance(M, q[2], q[1], k; atol = atol),
+                ManifoldDiff.subgrad_distance(M, q[1], q[2], k; atol = atol),
             )
         else
             return (-log(M, q[1], q[2]) / (d^(2 - k)), -log(M, q[2], q[1]) / (d^(2 - k)))
@@ -383,16 +383,16 @@ function _subgrad_Total_Variation(
     end
 end
 function _subgrad_Total_Variation!(
-    s, M::AbstractManifold, X, q::Tuple{T,T}, k=1; atol=0
-) where {T}
+        s, M::AbstractManifold, X, q::Tuple{T, T}, k = 1; atol = 0
+    ) where {T}
     d = distance(M, q[1], q[2])
     if d == 0 && s == true # subdifferential containing zero
         zero_vector!(M, X[1], q[1])
         zero_vector!(M, X[2], q[2])
         return X
     elseif d ≤ atol && s == false
-        ManifoldDiff.subgrad_distance!(M, X[1], q[2], q[1], k; atol=atol)
-        ManifoldDiff.subgrad_distance!(M, X[2], q[1], q[2], k; atol=atol)
+        ManifoldDiff.subgrad_distance!(M, X[1], q[2], q[1], k; atol = atol)
+        ManifoldDiff.subgrad_distance!(M, X[2], q[1], q[2], k; atol = atol)
         return X
     end
     log!(M, X[1], q[1], q[2])
@@ -414,17 +414,17 @@ compute the (randomized) subgradient of ``\frac{1}{k}d^k_{\mathcal M}(p,q)`` wit
 to both ``p`` and ``q`` (in place of `X` and `Y`).
 """
 function subgrad_Total_Variation(
-    M::AbstractManifold, q::Tuple{T,T}, k::Int=1; atol=0
-) where {T}
-    return _subgrad_Total_Variation(false, M, q, k; atol=atol)
+        M::AbstractManifold, q::Tuple{T, T}, k::Int = 1; atol = 0
+    ) where {T}
+    return _subgrad_Total_Variation(false, M, q, k; atol = atol)
 end
 function subgrad_Total_Variation!(
-    M::AbstractManifold, X, q::Tuple{T,T}, k::Int=1; atol=0
-) where {T}
-    return _subgrad_Total_Variation!(false, M, X, q, k; atol=atol)
+        M::AbstractManifold, X, q::Tuple{T, T}, k::Int = 1; atol = 0
+    ) where {T}
+    return _subgrad_Total_Variation!(false, M, X, q, k; atol = atol)
 end
 
-function _subgrad_Total_Variation(s, M::PowerManifold, p, k::Int=1; atol=0)
+function _subgrad_Total_Variation(s, M::PowerManifold, p, k::Int = 1; atol = 0)
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
@@ -439,9 +439,9 @@ function _subgrad_Total_Variation(s, M::PowerManifold, p, k::Int=1; atol=0)
                 if k != 1
                     g =
                         (cost[i] == 0 ? 1 : 1 / cost[i]) .*
-                        _subgrad_Total_Variation(s, M.manifold, (p[i], p[j]), k; atol=atol) # Compute TV on these
+                        _subgrad_Total_Variation(s, M.manifold, (p[i], p[j]), k; atol = atol) # Compute TV on these
                 else
-                    g = _subgrad_Total_Variation(s, M.manifold, (p[i], p[j]), k; atol=atol) # Compute TV on these
+                    g = _subgrad_Total_Variation(s, M.manifold, (p[i], p[j]), k; atol = atol) # Compute TV on these
                 end
                 X[i] += g[1]
                 X[j] += g[2]
@@ -450,7 +450,7 @@ function _subgrad_Total_Variation(s, M::PowerManifold, p, k::Int=1; atol=0)
     end # i in R
     return X
 end
-function _subgrad_Total_Variation!(s, M::PowerManifold, X, p, k::Int=1; atol=0)
+function _subgrad_Total_Variation!(s, M::PowerManifold, X, p, k::Int = 1; atol = 0)
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
@@ -462,7 +462,7 @@ function _subgrad_Total_Variation!(s, M::PowerManifold, X, p, k::Int=1; atol=0)
             el = CartesianIndex(ntuple(i -> (i == l) ? 1 : 0, d)) #l th unit vector
             j = i + el # compute neighbor
             if all(map(<=, j.I, maxInd.I)) # is this neighbor in range?
-                _subgrad_Total_Variation!(s, M.manifold, g, (p[i], p[j]), k; atol=atol) # Compute TV on these
+                _subgrad_Total_Variation!(s, M.manifold, g, (p[i], p[j]), k; atol = atol) # Compute TV on these
                 if k != 1
                     (c[i] != 0) && (g[1] .*= 1 / c[i])
                     (c[i] != 0) && (g[2] .*= 1 / c[i])
@@ -495,11 +495,11 @@ and ``\mathcal I_i`` denotes the forward neighbors of ``i``.
 # Ouput
 * X – resulting tangent vector in ``T_p\mathcal M``. The computation can also be done in place.
 """
-function subgrad_Total_Variation(M::PowerManifold, p, k::Int=1; atol=0)
-    return _subgrad_Total_Variation(false, M, p, k; atol=atol)
+function subgrad_Total_Variation(M::PowerManifold, p, k::Int = 1; atol = 0)
+    return _subgrad_Total_Variation(false, M, p, k; atol = atol)
 end
-function subgrad_Total_Variation!(M::PowerManifold, X, p, k::Int=1; atol=0)
-    return _subgrad_Total_Variation!(false, M, X, p, k; atol=atol)
+function subgrad_Total_Variation!(M::PowerManifold, X, p, k::Int = 1; atol = 0)
+    return _subgrad_Total_Variation!(false, M, X, p, k; atol = atol)
 end
 @doc raw"""
     Y = grad_second_order_Total_Variation(M, q[, p=1])
@@ -524,11 +524,11 @@ the evaluation of an `adjoint_Jacobi_field`.
 
 The derivation of this gradient can be found in [BacakBergmannSteidlWeinmann:2016](@cite).
 """
-function grad_second_order_Total_Variation(M::AbstractManifold, q, p::Int=1)
+function grad_second_order_Total_Variation(M::AbstractManifold, q, p::Int = 1)
     X = [zero_vector(M, x) for x in q]
     return grad_second_order_Total_Variation!(M, X, q, p)
 end
-function grad_second_order_Total_Variation!(M::AbstractManifold, X, q, p::Int=1)
+function grad_second_order_Total_Variation!(M::AbstractManifold, X, q, p::Int = 1)
     c = mid_point(M, q[1], q[3], q[2]) # nearest mid point of x and z to y
     d = distance(M, q[2], c)
     innerLog = -log(M, c, q[2])
@@ -566,11 +566,11 @@ computes the (sub) gradient of ``\frac{1}{p}d_2^p(q_1,q_2,q_3)``
 with respect to all ``q_1,q_2,q_3`` occurring along any array dimension in the
 point `q`, where `M` is the corresponding `PowerManifold`.
 """
-function grad_second_order_Total_Variation(M::PowerManifold, q, p::Int=1)
+function grad_second_order_Total_Variation(M::PowerManifold, q, p::Int = 1)
     X = zero_vector(M, q)
     return grad_second_order_Total_Variation!(M, X, q, p)
 end
-function grad_second_order_Total_Variation!(M::PowerManifold, X, q, p::Int=1)
+function grad_second_order_Total_Variation!(M::PowerManifold, X, q, p::Int = 1)
     power_size = power_dimensions(M)
     rep_size = representation_size(M.manifold)
     R = CartesianIndices(Tuple(power_size))
@@ -587,8 +587,8 @@ function grad_second_order_Total_Variation!(M::PowerManifold, X, q, p::Int=1)
                 if p != 1
                     g =
                         (c[i] == 0 ? 1 : 1 / c[i]) .* grad_second_order_Total_Variation(
-                            M.manifold, (q[jB], q[i], q[jF]), p
-                        ) # Compute TV2 on these
+                        M.manifold, (q[jB], q[i], q[jF]), p
+                    ) # Compute TV2 on these
                 else
                     g = grad_second_order_Total_Variation(
                         M.manifold, (q[jB], q[i], q[jF]), p
@@ -630,8 +630,8 @@ A derivation of this closed form solution is given in see [WeinmannDemaretStorat
   The result can also be computed in place.
 """
 function prox_Total_Variation(
-    M::AbstractManifold, λ::Number, x::Tuple{T,T}, p::Int=1
-) where {T}
+        M::AbstractManifold, λ::Number, x::Tuple{T, T}, p::Int = 1
+    ) where {T}
     d = distance(M, x[1], x[2])
     if p == 1
         t = min(0.5, λ / d)
@@ -650,8 +650,8 @@ function prox_Total_Variation(
     )
 end
 function prox_Total_Variation!(
-    M::AbstractManifold, y, λ::Number, x::Tuple{T,T}, p::Int=1
-) where {T}
+        M::AbstractManifold, y, λ::Number, x::Tuple{T, T}, p::Int = 1
+    ) where {T}
     d = distance(M, x[1], x[2])
     if p == 1
         t = min(0.5, λ / d)
@@ -692,7 +692,7 @@ The parameter `λ` is the prox parameter.
 * `y` – resulting  point containing with all mentioned proximal
   points evaluated (in a cyclic order). The computation can also be done in place
 """
-function prox_Total_Variation(M::PowerManifold, λ, x, p::Int=1)
+function prox_Total_Variation(M::PowerManifold, λ, x, p::Int = 1)
     y = deepcopy(x)
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
@@ -714,7 +714,7 @@ function prox_Total_Variation(M::PowerManifold, λ, x, p::Int=1)
     end # directions
     return y
 end
-function prox_Total_Variation!(M::PowerManifold, y, λ, x, p::Int=1)
+function prox_Total_Variation!(M::PowerManifold, y, λ, x, p::Int = 1)
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
@@ -763,7 +763,7 @@ The parameter `λ` is the prox parameter.
 
 *See also* [`prox_Total_Variation`](@ref)
 """
-function prox_parallel_TV(M::PowerManifold, λ, x::AbstractVector, p::Int=1)
+function prox_parallel_TV(M::PowerManifold, λ, x::AbstractVector, p::Int = 1)
     R = CartesianIndices(x[1])
     d = ndims(x[1])
     if length(x) != 2 * d
@@ -798,8 +798,8 @@ function prox_parallel_TV(M::PowerManifold, λ, x::AbstractVector, p::Int=1)
     return y
 end
 function prox_parallel_TV!(
-    M::PowerManifold, y::AbstractVector, λ, x::AbstractVector, p::Int=1
-)
+        M::PowerManifold, y::AbstractVector, λ, x::AbstractVector, p::Int = 1
+    )
     R = CartesianIndices(x[1])
     d = ndims(x[1])
     if length(x) != 2 * d
@@ -903,14 +903,14 @@ The parameter `λ` is the prox parameter.
     This function requires `Manopt.jl` to be loaded
 """
 function prox_second_order_Total_Variation(
-    M::PowerManifold{N,T}, λ, x, p::Int=1
-) where {N,T}
+        M::PowerManifold{N, T}, λ, x, p::Int = 1
+    ) where {N, T}
     y = deepcopy(x)
     return prox_second_order_Total_Variation!(M, y, λ, x, p)
 end
 function prox_second_order_Total_Variation!(
-    M::PowerManifold{N,T}, y, λ, x, p::Int=1
-) where {N,T}
+        M::PowerManifold{N, T}, y, λ, x, p::Int = 1
+    ) where {N, T}
     power_size = power_dimensions(M)
     R = CartesianIndices(power_size)
     d = length(size(x))
@@ -927,12 +927,12 @@ function prox_second_order_Total_Variation!(
                     all(JForward .<= maxInd) &&
                         all(JBackward .>= minInd) &&
                         prox_second_order_Total_Variation!(
-                            M.manifold,
-                            [y[M, JBackward...], y[M, i.I...], y[M, JForward...]],
-                            λ,
-                            (y[M, JBackward...], y[M, i.I...], y[M, JForward...]),
-                            p,
-                        )
+                        M.manifold,
+                        [y[M, JBackward...], y[M, i.I...], y[M, JForward...]],
+                        λ,
+                        (y[M, JBackward...], y[M, i.I...], y[M, JForward...]),
+                        p,
+                    )
                 end # if mod 3
             end # i in R
         end # for mod 3
@@ -940,8 +940,8 @@ function prox_second_order_Total_Variation!(
     return y
 end
 function prox_second_order_Total_Variation(
-    ::Euclidean, λ, pointTuple::Tuple{T,T,T}, p::Int=1
-) where {T}
+        ::Euclidean, λ, pointTuple::Tuple{T, T, T}, p::Int = 1
+    ) where {T}
     w = [1.0, -2.0, 1.0]
     x = [pointTuple...]
     if p == 1 # Example 3.2 in Bergmann, Laus, Steidl, Weinmann, 2014.
@@ -959,7 +959,7 @@ function prox_second_order_Total_Variation(
         )
     end
 end
-function grad_second_order_Total_Variation(M::NONMUTATINGMANIFOLDS, q, p::Int=1)
+function grad_second_order_Total_Variation(M::NONMUTATINGMANIFOLDS, q, p::Int = 1)
     c = mid_point(M, q[1], q[3], q[2]) # nearest mid point of x and z to y
     d = distance(M, q[2], c)
     innerLog = -log(M, c, q[2])
@@ -986,8 +986,8 @@ function grad_second_order_Total_Variation(M::NONMUTATINGMANIFOLDS, q, p::Int=1)
     return X
 end
 function prox_second_order_Total_Variation(
-    ::NONMUTATINGMANIFOLDS, λ, pointTuple::Tuple{T,T,T}, p::Int=1
-) where {T}
+        ::NONMUTATINGMANIFOLDS, λ, pointTuple::Tuple{T, T, T}, p::Int = 1
+    ) where {T}
     w = [1.0, -2.0, 1.0]
     x = [pointTuple...]
     if p == 1 # Theorem 3.5 in Bergmann, Laus, Steidl, Weinmann, 2014.
@@ -1007,8 +1007,8 @@ function prox_second_order_Total_Variation(
     end
 end
 function prox_second_order_Total_Variation(
-    M::PowerManifold{𝔽,N}, λ, x, p::Int=1
-) where {𝔽,N<:NONMUTATINGMANIFOLDS}
+        M::PowerManifold{𝔽, N}, λ, x, p::Int = 1
+    ) where {𝔽, N <: NONMUTATINGMANIFOLDS}
     power_size = power_dimensions(M)
     R = CartesianIndices(power_size)
     d = length(size(x))
@@ -1056,7 +1056,7 @@ The computation can also be done in place of `Θ`.
 This is adopted from the paper [Duran, Möller, Sbert, Cremers, SIAM J Imag Sci, 2016](@cite DuranMoelleSbertCremers:2016),
 see their Example 3 for details.
 """
-function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p=2.0, q=1.0, α=1.0)
+function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p = 2.0, q = 1.0, α = 1.0)
     pdims = power_dimensions(N)
     if length(pdims) == 1
         d = 1
@@ -1080,9 +1080,9 @@ function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p=2.0, q=1.0, α=
             return max.(normΞ .- λ, 0.0) ./ ((normΞ .== 0) .+ normΞ) .* Ξ
         end
         if p == 2 # Example 3 case 3
-            norms = sqrt.(sum(norm.(Ref(N.manifold), x, Ξ) .^ 2; dims=d + 1))
+            norms = sqrt.(sum(norm.(Ref(N.manifold), x, Ξ) .^ 2; dims = d + 1))
             if length(iRep) > 1
-                norms = repeat(norms; inner=iRep)
+                norms = repeat(norms; inner = iRep)
             end
             # if the norm is zero add 1 to avoid division by zero, also then the
             # nominator is already (max(-λ,0) = 0) so it stays zero then
@@ -1091,14 +1091,14 @@ function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p=2.0, q=1.0, α=
         throw(ErrorException("The case p=$p, q=$q is not yet implemented"))
     elseif q == Inf
         if p == 2
-            norms = sqrt.(sum(norm.(Ref(N.manifold), x, Ξ) .^ 2; dims=d + 1))
+            norms = sqrt.(sum(norm.(Ref(N.manifold), x, Ξ) .^ 2; dims = d + 1))
             if length(iRep) > 1
-                norms = repeat(norms; inner=iRep)
+                norms = repeat(norms; inner = iRep)
             end
         elseif p == 1
-            norms = sum(norm.(Ref(N.manifold), x, Ξ); dims=d + 1)
+            norms = sum(norm.(Ref(N.manifold), x, Ξ); dims = d + 1)
             if length(iRep) > 1
-                norms = repeat(norms; inner=iRep)
+                norms = repeat(norms; inner = iRep)
             end
         elseif p == Inf
             norms = norm.(Ref(N.manifold), x, Ξ)
@@ -1109,17 +1109,17 @@ function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p=2.0, q=1.0, α=
     end # end q
     return throw(ErrorException("The case p=$p, q=$q is not yet implemented"))
 end
-function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p::Int, q::Float64=1.0, α=1.0)
+function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p::Int, q::Float64 = 1.0, α = 1.0)
     return project_collaborative_TV(N, λ, x, Ξ, Float64(p), q, α)
 end
-function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p::Float64, q::Int, α=1.0)
+function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p::Float64, q::Int, α = 1.0)
     return project_collaborative_TV(N, λ, x, Ξ, p, Float64(q), α)
 end
-function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p::Int, q::Int, α=1.0)
+function project_collaborative_TV(N::PowerManifold, λ, x, Ξ, p::Int, q::Int, α = 1.0)
     return project_collaborative_TV(N, λ, x, Ξ, Float64(p), Float64(q), α)
 end
 
-function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p=2.0, q=1.0, α=1.0)
+function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p = 2.0, q = 1.0, α = 1.0)
     pdims = power_dimensions(N)
     if length(pdims) == 1
         d = 1
@@ -1143,9 +1143,9 @@ function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p=2.0, q=1.0
             Θ .= max.(normΞ .- λ, 0.0) ./ ((normΞ .== 0) .+ normΞ) .* Ξ
             return Θ
         elseif p == 2 # Example 3 case 3
-            norms = sqrt.(sum(norm.(Ref(N.manifold), x, Ξ) .^ 2; dims=d + 1))
+            norms = sqrt.(sum(norm.(Ref(N.manifold), x, Ξ) .^ 2; dims = d + 1))
             if length(iRep) > 1
-                norms = repeat(norms; inner=iRep)
+                norms = repeat(norms; inner = iRep)
             end
             # if the norm is zero add 1 to avoid division by zero, also then the
             # nominator is already (max(-λ,0) = 0) so it stays zero then
@@ -1156,11 +1156,11 @@ function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p=2.0, q=1.0
         end
     elseif q == Inf
         if p == 2
-            norms = sqrt.(sum(norm.(Ref(N.manifold), x, Ξ) .^ 2; dims=d + 1))
-            (length(iRep) > 1) && (norms = repeat(norms; inner=iRep))
+            norms = sqrt.(sum(norm.(Ref(N.manifold), x, Ξ) .^ 2; dims = d + 1))
+            (length(iRep) > 1) && (norms = repeat(norms; inner = iRep))
         elseif p == 1
-            norms = sum(norm.(Ref(N.manifold), x, Ξ); dims=d + 1)
-            (length(iRep) > 1) && (norms = repeat(norms; inner=iRep))
+            norms = sum(norm.(Ref(N.manifold), x, Ξ); dims = d + 1)
+            (length(iRep) > 1) && (norms = repeat(norms; inner = iRep))
         elseif p == Inf
             norms = norm.(Ref(N.manifold), x, Ξ)
         else
@@ -1172,14 +1172,14 @@ function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p=2.0, q=1.0
     return throw(ErrorException("The case p=$p, q=$q is not yet implemented"))
 end
 function project_collaborative_TV!(
-    N::PowerManifold, Θ, λ, x, Ξ, p::Int, q::Float64=1.0, α=1.0
-)
+        N::PowerManifold, Θ, λ, x, Ξ, p::Int, q::Float64 = 1.0, α = 1.0
+    )
     return project_collaborative_TV!(N, Θ, λ, x, Ξ, Float64(p), q, α)
 end
-function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p::Float64, q::Int, α=1.0)
+function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p::Float64, q::Int, α = 1.0)
     return project_collaborative_TV!(N, Θ, λ, x, Ξ, p, Float64(q), α)
 end
-function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p::Int, q::Int, α=1.0)
+function project_collaborative_TV!(N::PowerManifold, Θ, λ, x, Ξ, p::Int, q::Int, α = 1.0)
     return project_collaborative_TV!(N, Θ, λ, x, Ξ, Float64(p), Float64(q), α)
 end
 
@@ -1211,7 +1211,7 @@ where ``\mathcal G`` is the set of indices of the `PowerManifold` manifold `M` a
   ``\mathcal N`` is the power manifold with the number of dimensions added to `size(x)`.
   The computation can be done in place of `Y`.
 """
-function forward_logs(M::PowerManifold{𝔽,TM,TSize,TPR}, p) where {𝔽,TM,TSize,TPR}
+function forward_logs(M::PowerManifold{𝔽, TM, TSize, TPR}, p) where {𝔽, TM, TSize, TPR}
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
@@ -1225,7 +1225,7 @@ function forward_logs(M::PowerManifold{𝔽,TM,TSize,TPR}, p) where {𝔽,TM,TSi
     end
     sN = d > 1 ? [power_size..., d] : [power_size...]
     N = PowerManifold(M.manifold, TPR(), sN...)
-    xT = repeat(p; inner=d2)
+    xT = repeat(p; inner = d2)
     X = zero_vector(N, xT)
     e_k_vals = [1 * (1:d .== k) for k in 1:d]
     for i in R # iterate over all pixel
@@ -1240,7 +1240,7 @@ function forward_logs(M::PowerManifold{𝔽,TM,TSize,TPR}, p) where {𝔽,TM,TSi
     end # i in R
     return X
 end
-function forward_logs!(M::PowerManifold{𝔽,TM,TSize,TPR}, X, p) where {𝔽,TM,TSize,TPR}
+function forward_logs!(M::PowerManifold{𝔽, TM, TSize, TPR}, X, p) where {𝔽, TM, TSize, TPR}
     power_size = power_dimensions(M)
     R = CartesianIndices(Tuple(power_size))
     d = length(power_size)
@@ -1299,14 +1299,14 @@ The adjoint differential can be computed in place of `Y`.
   differentials of the logs.
 """
 function adjoint_differential_forward_logs(
-    M::PowerManifold{𝔽,TM,TSize,TPR}, p, X
-) where {𝔽,TM,TSize,TPR}
+        M::PowerManifold{𝔽, TM, TSize, TPR}, p, X
+    ) where {𝔽, TM, TSize, TPR}
     Y = zero_vector(M, p)
     return adjoint_differential_forward_logs!(M, Y, p, X)
 end
 function adjoint_differential_forward_logs!(
-    M::PowerManifold{𝔽,TM,TSize,TPR}, Y, p, X
-) where {𝔽,TM,TSize,TPR}
+        M::PowerManifold{𝔽, TM, TSize, TPR}, Y, p, X
+    ) where {𝔽, TM, TSize, TPR}
     power_size = power_dimensions(M)
     d = length(power_size)
     N = PowerManifold(M.manifold, TPR(), power_size..., d)
@@ -1322,12 +1322,12 @@ function adjoint_differential_forward_logs!(
                 j = CartesianIndex{d}(J...) # neighbour index as Cartesian Index
                 Y[M, I...] =
                     Y[M, I...] + adjoint_differential_log_basepoint(
-                        M.manifold, p[M, I...], p[M, J...], X[N, I..., k]
-                    )
+                    M.manifold, p[M, I...], p[M, J...], X[N, I..., k]
+                )
                 Y[M, J...] =
                     Y[M, J...] + adjoint_differential_log_argument(
-                        M.manifold, p[M, J...], p[M, I...], X[N, I..., k]
-                    )
+                    M.manifold, p[M, J...], p[M, I...], X[N, I..., k]
+                )
             end
         end # directions
     end # i in R
@@ -1368,7 +1368,7 @@ function differential_forward_logs(M::PowerManifold, p, X)
     else
         N = PowerManifold(M.manifold, NestedPowerRepresentation(), power_size...)
     end
-    Y = zero_vector(N, repeat(p; inner=d2))
+    Y = zero_vector(N, repeat(p; inner = d2))
     return differential_forward_logs!(M, Y, p, X)
 end
 function differential_forward_logs!(M::PowerManifold, Y, p, X)
@@ -1391,10 +1391,10 @@ function differential_forward_logs!(M::PowerManifold, Y, p, X)
                 # collects two, namely in kth direction since xi appears as base and arg
                 Y[N, I..., k] =
                     differential_log_basepoint(
-                        M.manifold, p[M, I...], p[M, J...], X[M, I...]
-                    ) .+ differential_log_argument(
-                        M.manifold, p[M, I...], p[M, J...], X[M, J...]
-                    )
+                    M.manifold, p[M, I...], p[M, J...], X[M, I...]
+                ) .+ differential_log_argument(
+                    M.manifold, p[M, I...], p[M, J...], X[M, J...]
+                )
             else
                 Y[N, I..., k] = zero_vector(M.manifold, p[M, I...])
             end

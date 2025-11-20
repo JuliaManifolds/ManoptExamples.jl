@@ -25,6 +25,8 @@ using LineSearches
 # You can install it for example using
 # using CondaPkg
 # ]conda add optuna
+# this has to be done in the Julia environment in which the notebook is rendered
+# *before* running the notebook
 
 optuna = pyimport("optuna")
 
@@ -162,7 +164,7 @@ It will be easiest to see how it works by looking at how it is initialized:
 ```
 Tuple{String,Any}[
     ("LS-HZ", M -> Manopt.LineSearchesStepsize(ls_hz)),
-    ("Wolfe-Powell", (M, c1, c2) -> Manopt.WolfePowellLinesearch(M, c1, c2)),
+    ("Wolfe-Powell", (M, sufficient_decrease, sufficient_curvature) -> Manopt.WolfePowellLinesearch(; sufficient_decrease = sufficient_decrease, sufficient_curvature = sufficient_curvature)),
 ]
 ```
 We have a string that identifies the line search method name and a constructor of the line search which takes relevant arguments like the manifold or a numerical parameter.
@@ -171,7 +173,7 @@ The next part is the trial evaluation procedure.
 This is one of the more important places which need to be customized to your problem.
 This is the point where we tell Optuna about the relevant optimization hyperparameters and use them to define specific problems.
 The hyperparameter optimization is a multiobjective problem: we want as good problem objectives as possible and as low times as possible.
-As Optuna doesn't currently support multicriteria pruning, which is important for obtaining a solution in a reasonable amount of time, we use a linear combination of sub-objectives to turn the problem into a single-criterion optimization. 
+As Optuna doesn't currently support multicriteria pruning, which is important for obtaining a solution in a reasonable amount of time, we use a linear combination of sub-objectives to turn the problem into a single-criterion optimization.
 The hyperparameter optimization objective is a linear combination of achieved objectives the relative weight is controlled by `objective.obj_loss_coeff`.
 
 ```{julia}
@@ -209,14 +211,14 @@ function (objective::ObjectiveData)(trial)
     )]
 
     # This parametrizes stepsize selection methods with relevant numerical parameters.
-    local c1_val, c2_val, hz_sigma
+    local sufficient_decrease_val, sufficient_curvature_val, hz_sigma
     if manopt_stepsize_name == "Wolfe-Powell"
-        c1_val = pyconvert(
-            Float64, trial.suggest_float("Wolfe-Powell c1", 1e-5, 1e-2; log=true)
+        sufficient_decrease_val = pyconvert(
+            Float64, trial.suggest_float("Wolfe-Powell sufficient_decrease", 1e-5, 1e-2; log=true)
         )
-        c2_val =
+        sufficient_curvature_val =
             1.0 - pyconvert(
-                Float64, trial.suggest_float("Wolfe-Powell 1-c2", 1e-4, 1e-2; log=true)
+                Float64, trial.suggest_float("Wolfe-Powell 1-sufficient_curvature", 1e-4, 1e-2; log=true)
             )
     elseif manopt_stepsize_name == "Improved HZ"
         hz_sigma = pyconvert(Float64, trial.suggest_float("Improved HZ sigma", 0.1, 0.9))
@@ -237,7 +239,7 @@ function (objective::ObjectiveData)(trial)
         # Here we construct the specific line search to be used
         local ls
         if manopt_stepsize_name == "Wolfe-Powell"
-            ls = manopt_stepsize_constructor(M, c1_val, c2_val)
+            ls = manopt_stepsize_constructor(M, sufficient_decrease_val, sufficient_curvature_val)
         elseif manopt_stepsize_name == "Improved HZ"
             ls = manopt_stepsize_constructor(M, hz_sigma)
         else
@@ -289,7 +291,7 @@ function benchmark_time_state(
     f,
     g!,
     p0,
-    stepsize::Manopt.Stepsize,
+    stepsize::Union{Manopt.Stepsize,Manopt.ManifoldDefaultsFactory{<:Manopt.Stepsize}},
     mem_len::Int,
     gtol::Real;
     kwargs...,
@@ -346,7 +348,7 @@ function lbfgs_study(; pruning_coeff::Float64=0.95)
         Tuple{String,Any}[
             ("LS-HZ", M -> Manopt.LineSearchesStepsize(ls_hz)),
             #("Improved HZ", (M, sigma) -> HagerZhangLinesearch(M; sigma=sigma)),
-            ("Wolfe-Powell", (M, c1, c2) -> Manopt.WolfePowellLinesearch(M, c1, c2)),
+            ("Wolfe-Powell", (M, sufficient_decrease, sufficient_curvature) -> Manopt.WolfePowellLinesearch(; sufficient_decrease = sufficient_decrease, sufficient_curvature = sufficient_curvature)),
         ],
         10.0,
     )
@@ -356,8 +358,8 @@ function lbfgs_study(; pruning_coeff::Float64=0.95)
         od,
         Dict("mem_len" => 4),
         Dict(
-            "Wolfe-Powell c1" => 1e-4,
-            "Wolfe-Powell 1-c2" => 1e-3,
+            "Wolfe-Powell sufficient_decrease" => 1e-4,
+            "Wolfe-Powell 1-sufficient_curvature" => 1e-3,
             "Improved HZ sigma" => 0.9,
         ),
         Dict(
@@ -390,6 +392,26 @@ lbfgs_study()
 ## Summary
 
 We've shown how to automatically select the best hyperparameter values for your optimization problem.
+
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
 
 ## Literature
 

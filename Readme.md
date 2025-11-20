@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliamanifolds.github.io/ManoptExamples.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliamanifolds.github.io/ManoptExamples.jl/dev)
-[![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
+[![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-black)](https://github.com/fredrikekre/Runic.jl)
 [![CI](https://github.com/JuliaManifolds/ManoptExamples.jl/workflows/CI/badge.svg)](https://github.com/JuliaManifolds/ManoptExamples.jl/actions?query=workflow%3ACI+branch%3Amain)
 [![codecov](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaManifolds/ManoptExamples.jl)
 [![DOI](https://zenodo.org/badge/598065559.svg)](https://zenodo.org/badge/latestdoi/598065559)

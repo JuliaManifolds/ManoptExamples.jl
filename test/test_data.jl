@@ -7,9 +7,9 @@ using ManoptExamples, Test, Manifolds
         @test length(s) == 10
         M = Hyperbolic(2)
         p = [0.0, 0.0, 1.0]
-        q = ManoptExamples.Lemniscate(0.0; manifold=M, p=p)
-        q2 = ManoptExamples.Lemniscate(2π; manifold=M, p=p)
-        r = ManoptExamples.Lemniscate(π / 2; manifold=M, p=p)
+        q = ManoptExamples.Lemniscate(0.0; manifold = M, p = p)
+        q2 = ManoptExamples.Lemniscate(2π; manifold = M, p = p)
+        r = ManoptExamples.Lemniscate(π / 2; manifold = M, p = p)
         isapprox(M; q, q2) # 2π periodic
         isapprox(M; r, p) # 2π periodic
         @test ManoptExamples.artificial_S1_slope_signal(20, 0.0) == repeat([-π / 2], 20)
@@ -35,6 +35,6 @@ using ManoptExamples, Test, Manifolds
 
         @test size(ManoptExamples.artificial_SPD_image2(8)) == (8, 8)
         @test size(ManoptExamples.artificial_SPD_image2(8)[1, 1]) == (3, 3)
-        @test eltype(ManoptExamples.artificial_SPD_image2(8)) == Array{Float64,2}
+        @test eltype(ManoptExamples.artificial_SPD_image2(8)) == Array{Float64, 2}
     end
 end
