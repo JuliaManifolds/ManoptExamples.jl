@@ -19,7 +19,7 @@ using ManoptExamples
 using Manifolds
 using OffsetArrays
 using RecursiveArrayTools
-using GLMakie, Makie, GeometryTypes, Colors
+using CairoMakie, Makie, GeometryTypes, Colors
 ```
 
 # Introduction
