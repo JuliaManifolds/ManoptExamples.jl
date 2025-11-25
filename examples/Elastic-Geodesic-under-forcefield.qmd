@@ -1,16 +1,14 @@
 ---
 title: "Geodesic under Force Field on the Sphere"
 author: "Laura Weigl, Ronny Bergmann, and Anton Schiela"
-date: 2025-07-13
+date: 2025-11-25
 ---
 
 ```{julia}
 #| echo: false
 #| output: false
-# TODO: Change once `vectorbundle_newton` is released in `Manopt.jl`
 using Pkg;
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
-Pkg.develop(; path="../../Manopt.jl") # a trick to work on the local dev version
 ```
 
 ```{julia}
@@ -22,19 +20,20 @@ using CSV, DataFrames
 
 # Introduction
 
-In this example we compute a geodesic under a force field on the sphere by applying Newton's method on vector bundles which was introduced in \ref{paper}. This example reproduces the results from \ref{paper}.
+In this example we compute a geodesic under a force field on the sphere by applying Newton's method on vector bundles which was introduced in ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark}. This example reproduces the results from the example in Sectin 6.1 therein.
 
-We consider the sphere $\mathbb{S}^2$ equipped with the Riemannian metric $\langle \cdot, \cdot \rangle$ given by the Euclidean inner product with corresponding norm $\lVert\cdot\rVert$ and an interval $\Omega \subset \mathbb R$.
-Let $\mathcal X = H^1(\Omega, \mathbb S^2)$ and  $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
+We consider the sphere $\mathbb{S}^2$ equipped with the Riemannian metric $⟨  ⋅ ,  ⋅  ⟩$ given by the Euclidean inner product with corresponding norm $\lVert ⋅ \rVert$ and an interval $Ω ⊂ \mathbb R$.
+Let $\mathcal X = H^1(Ω, \mathbb S^2)$ and  $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
 
-Our goal is to find a zero of the mapping $F \colon \mathcal X \to \mathcal E^*$ with
+Our goal is to find a zero of the mapping $F: \mathcal X → \mathcal E^*$ with
 
-$F(\gamma)\phi \coloneqq \int_\Omega \langle\dot{\gamma}(t), \dot{\phi}(t)\rangle + \omega(\gamma(t))\phi(t) \; dt$
+```math
+F(γ)ϕ := \int_Ω ⟨\dot{γ}(t), \dot{ϕ}(t)⟩ + ω(γ(t))ϕ(t) \; \mathrm{d}t,
+```
+for $γ ∈ \mathcal X$ and $ϕ ∈ T_γ\mathcal X$.
 
-for $\gamma \in \mathcal X$ and $\phi \in T_\gamma\mathcal X$.
-
-Additionally, we have to take into account that boundary conditions $\gamma(0) = \gamma_0$ and $\gamma(T) = \gamma_T$ for given $\gamma_0, \gamma_T \in \mathbb S^2$ are satisfied.
-This yields a geodesic under a given force field $\omega\colon \mathbb S^2 \to T^*\mathbb S^2$ connecting $\gamma_0$ and $\gamma_T$.
+Additionally, we have to take into account that boundary conditions $γ(0) = γ_0$ and $γ(T) = γ_T$ for given $γ_0, γ_T ∈ \mathbb S^2$ are satisfied.
+This yields a geodesic under a given force field $ω: \mathbb S^2 → T^*\mathbb S^2$ connecting $γ_0$ and $γ_T$.
 
 For our example we set
 
@@ -51,25 +50,25 @@ For our example we set
 	test_space = variational_space(S, 1)
 
     start_interval = 0.4
-	end_interval = pi - 0.4
+	end_interval = π - 0.4
 	discrete_time = range(; start = start_interval, stop = end_interval, length=N+2) # equidistant discrete time points
-	
+
 	y0 = [sin(start_interval),0,cos(start_interval)] # startpoint of geodesic
 	yT = [sin(end_interval),0,cos(end_interval)] # endpoint of geodesic
 ```
 
-As a starting point, we use the geodesic connecting $\gamma_0$ and $\gamma_T$:
+As a starting point, we use the geodesic connecting $γ_0$ and $γ_T$:
 
 ```{julia}
 y(t) =  [sin(t), 0, cos(t)]
 discretized_y = [y(ti) for ti in discrete_time[2:end-1]]
 ```
 
-In order to apply Newton's method to find a zero of $F$, we need the linear mapping $Q_{F(\gamma)}^*\circ F'(\gamma)$ ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark} which can be seen as a covariant derivative.
+In order to apply Newton's method to find a zero of $F$, we need the linear mapping $Q_{F(γ)}^*∘ F'(γ)$ ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark} which can be seen as a covariant derivative.
 Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formular
-$Q_{F(\gamma)}^*\circ F'(\gamma)\delta \gamma\,\phi = F(\gamma)(\overset{\rightarrow}{V}_\gamma'(\gamma)\delta \gamma\,\phi) + F_{\mathbb R^3}'(\gamma)\delta \gamma\,\phi$
-for $\delta \gamma, \, \phi \in T_\gamma \mathcal X$, where $\overset{\rightarrow}{V}_\gamma(\hat \gamma) \in L(T_\gamma \mathcal X, T_{\hat{\gamma}}\mathcal X)$ is a vector transport and
-$F_{\mathbb R^3}'(\gamma)\delta \gamma\, \phi = \int_\Omega \langle \dot{\delta \gamma}(t),\dot{\phi}(t)\rangle + \omega'(\gamma(t))\delta \gamma(t)\phi(t) \; dt$
+$Q_{F(γ)}^*∘ F'(γ)δ γ\,ϕ = F(γ)(\overset{→}{V}_γ'(γ)δ γ\,ϕ) + F_{\mathbb R^3}'(γ)δ γ\,ϕ$
+for $δ γ, \, ϕ ∈ T_γ \mathcal X$, where $\overset{→}{V}_γ(\hat γ) ∈ L(T_γ \mathcal X, T_{\hat{γ}}\mathcal X)$ is a vector transport and
+$F_{\mathbb R^3}'(γ)δ γ\, ϕ = \int_Ω ⟨ \dot{δ γ}(t),\dot{ϕ}(t)⟩ + ω'(γ(t))δ γ(t)ϕ(t) \; \mathrm{d}t$
 is the euclidean derivative of $F$.
 
 We define a structure that has to be filled for two purposes:
@@ -87,10 +86,10 @@ end;
 md"""
 The following routines define a vector transport and its euclidean derivative. As seen above, they are needed to derive a covariant derivative of $F$.
 
-As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for $p, q \in \mathbb S^2$ and $X \in T_p\mathbb S^2$ we set
-$\overset{\rightarrow}{V}_{p}(q)X = (I-q\cdot q^T)X \in T_q\mathbb S^2.$
+As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for $p, q ∈ \mathbb S^2$ and $X ∈ T_p\mathbb S^2$ we set
+$\overset{→}{V}_{p}(q)X = (I-q ⋅  q^T)X ∈ T_q\mathbb S^2.$
 The derivative of the vector transport is then given by
-$\left(\frac{d}{dq}\overset{\rightarrow}{V}_{p}(q)\big\vert_{q=p}\delta q\right)X = \left( - \delta q\cdot p^T - p\cdot \delta q^T\right)\cdot X.$
+$\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q ⋅  p^T - p ⋅  δ q^T\right) ⋅  X.$
 ```{julia}
 function transport_by_proj(S, p, X, q)
     return X - q*(q'*X)
@@ -102,9 +101,9 @@ transport=DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothin
 ```
 
 The following two routines define the integrand of $F$ and its euclidean derivative.
-They use a force field $\omega$, which is defined, below. A scaling parameter for the force is also employed.
+They use a force field $ω$, which is defined, below. A scaling parameter for the force is also employed.
 
-In this example we consider the force field $\omega\colon \mathbb S^2 \to T^*\mathbb S^2$ given by the 1-form corresponding to a (scaled) winding field, i.e. for $C\in\mathbb R$ and $y\in \mathbb{S}^2$ we set $\omega(y) \coloneqq \frac{C y_3}{y_1^2+y_2^2} \cdot \bigg\langle \begin{pmatrix} -y_2 \\ y_1 \\ 0 \end{pmatrix}, \cdot \bigg\rangle \in (T_y\mathbb{S}^2)^*.$
+In this example we consider the force field $ω: \mathbb S^2 → T^*\mathbb S^2$ given by the 1-form corresponding to a (scaled) winding field, i.e. for $C∈\mathbb R$ and $y∈ \mathbb{S}^2$ we set $ω(y) := \frac{C y_3}{y_1^2+y_2^2}  ⋅  \bigg⟨ \begin{pmatrix} -y_2 \\ y_1 \\ 0 \end{pmatrix},  ⋅  \bigg⟩ ∈ (T_y\mathbb{S}^2)^*.$
 
 ```{julia}
 w(p, c) = c*p[3]*[-p[2]/(p[1]^2+p[2]^2), p[1]/(p[1]^2+p[2]^2), 0.0];
@@ -115,7 +114,7 @@ Its derivative is given by
 ```{julia}
 function w_prime(p, c)
 	denominator = p[1]^2+p[2]^2
-	
+
 	return c*[p[3]*2*p[1]*p[2]/denominator^2 p[3]*(-1.0/denominator+2.0*p[2]^2/denominator^2) -p[2]/denominator; p[3]*(1.0/denominator-2.0*p[1]^2/(denominator^2)) p[3]*(-2.0*p[1]*p[2]/(denominator^2)) p[1]/denominator; 0.0 0.0 0.0]
 end;
 ```
@@ -132,12 +131,13 @@ integrand=DifferentiableMapping(F_at,F_prime_at,3.0)
 
 ## Newton Equation
 
-In this example we implement a functor to compute the Newton matrix and the right hand side for the Newton equation ``[WeiglBergmannSchiela:2025](@cite)``
+In this example we implement a functor to compute the Newton matrix and the right hand side for the Newton equation ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark}
+
 ```math
-Q^*_{F(\gamma)}\circ F'(\gamma)\delta \gamma + F(\gamma) = 0
+Q^*_{F(γ)}∘ F'(γ)δ γ + F(γ) = 0
 ```
 
-by using the assembler provided in ManoptExamples.jl (cf. Referenz).
+by using the assembler provided in `ManoptExamples.jl`.
 
 It returns the matrix and the right hand side in base representation.
 Moreover, for the computation of the simplified Newton direction (which is necessary for affine covariant damping) a method for assembling the right hand side for the simplified Newton equation is provided.
@@ -169,7 +169,7 @@ function (ne::NewtonEquation)(M, VB, p)
 	ne.b .= zeros(n)
 
 	Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
-	
+
 	ManoptExamples.get_jacobian!(M, Op, evaluate, ne.A, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
 	ManoptExamples.get_right_hand_side!(M, Op, evaluate, ne.b, ne.integrand, ne.time_interval; test_space = ne.test_space)
 end
@@ -177,17 +177,17 @@ end
 function (ne::NewtonEquation)(M, VB, p, p_trial)
 	n = manifold_dimension(M)
 	btrial=zeros(n)
-	
+
 	Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
 	Optrial = OffsetArray([y0, p_trial..., yT], 0:(length(p_trial)+1))
 
 	ManoptExamples.get_right_hand_side_simplified!(M, Op, Optrial, evaluate, btrial, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
-	
+
 	return btrial
 end
 ```
 
-We compute the Newton direction $\delta \gamma$ by solving the linear system given by the base representation of the Newton equation directly and return the Newton direction in vector representation:
+We compute the Newton direction $δ γ$ by solving the linear system given by the base representation of the Newton equation directly and return the Newton direction in vector representation:
 
 ```{julia}
 function solve_in_basis_repr(problem, newtonstate)
@@ -207,7 +207,7 @@ begin
     NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 
     st_res = vectorbundle_newton(power, TangentBundle(power), NE, discretized_y; sub_problem=solve_in_basis_repr,
-	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-12; outer_norm=Inf, inverse_retraction_method=ProjectionInverseRetraction())),
+	stopping_criterion=( StopAfterIteration(150) | StopWhenChangeLess(power,1e-12; outer_norm=Inf, inverse_retraction_method=ProjectionInverseRetraction())),
 	retraction_method=ProjectionRetraction(),
 	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
 	record=[:Iterate, rec => :Change],
@@ -264,39 +264,45 @@ wireframe!(ax, sx, sy, sz; color=RGBA(0.5, 0.5, 0.7, 0.1), transparency=true)
 π2(x) = 1.02 * x[2]
 π3(x) = 1.02 * x[3]
 scatterlines!(
-    ax,
-    π1.(geodesic_final),
-    π2.(geodesic_final),
-    π3.(geodesic_final);
-    markersize=5,
-    color=:orange,
-    linewidth=2,
+    ax, π1.(geodesic_final), π2.(geodesic_final), π3.(geodesic_final);
+    markersize=5, color=:orange, linewidth=2,
 )
 scatterlines!(
-    ax,
-    π1.(geodesic_start),
-    π2.(geodesic_start),
-    π3.(geodesic_start);
-    markersize=5,
-    color=:blue,
-    linewidth=2,
+    ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start);
+    markersize=5, color=:blue, linewidth=2,
 )
 scatter!(ax, π1.([y0, yT]), π2.([y0, yT]), π3.([y0, yT]); markersize=5, color=:red)
 arrows!(
-    ax,
-    π1.(p_res),
-    π2.(p_res),
-    π3.(p_res),
-    π1.(ws),
-    π2.(ws),
-    π3.(ws);
-    color=:green,
-    linewidth=0.01,
-    arrowsize=Vec3f(0.03, 0.03, 0.05),
-    transparency=true,
-    lengthscale=0.07,
+    ax, π1.(p_res), π2.(p_res), π3.(p_res), π1.(ws), π2.(ws), π3.(ws);
+    color=:green, linewidth=0.01,
+    arrowsize=Vec3f(0.03, 0.03, 0.05), transparency=true, lengthscale=0.07,
 )
-cam = cameracontrols(ax.scene)
-cam.lookat[] = [-2.5, 2.5, 2]
+cam = cameracontrols(ax.scene); cam.lookat[] = [-2.5, 2.5, 2]
 fig
 ```
+
+
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+using Dates
+now()
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["Elastic-Geodesic-under-forcefield.md"]
+Canonical=false
+```
+````

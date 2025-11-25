@@ -140,6 +140,12 @@ examples_menu =
     "Robust PCA" => "examples/Robust-PCA.md",
     "Rosenbrock" => "examples/Rosenbrock.md",
     "Total Variation" => "examples/Total-Variation.md",
+    "Vector bundle Newton" => [
+        "Elastic Geodesic under force field" => "examples/Elastic-Geodesic-under-forcefield.md",
+        "Elastic Geodesic Obstacle" => "examples/Elastic-Geodesic-Obstacle.md",
+        "Inextensible Rod" => "examples/Inextensible-Rod.md",
+
+    ]
 ]
 bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style = :alpha)
 links = InterLinks(

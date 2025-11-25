@@ -1,16 +1,14 @@
 ---
 title: "Geodesic on Sphere with Obstacle Avoidance"
 author: "Laura Weigl, Ronny Bergmann, and Anton Schiela"
-date: 2025-07-13
+date: 2025-11-25
 ---
 
 ```{julia}
 #| echo: false
 #| output: false
-# TODO: Change once `vectorbundle_newton` is released in `Manopt.jl`
 using Pkg;
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
-Pkg.develop(; path="../../Manopt.jl") # a trick to work on the local dev version
 ```
 
 ```{julia}
@@ -20,39 +18,41 @@ using GLMakie, Makie, GeometryTypes, Colors, ColorSchemes, NamedColors
 using CSV, DataFrames
 ```
 
-# Introduction 
+# Introduction
 
-In this example we compute a geodesic on the sphere avoiding an obstacle by applying Newton's method on vector bundles which was introduced in \ref{paper}. This example reproduces the results from \ref{paper}.
+In this example we compute a geodesic on the sphere avoiding an obstacle by applying Newton's method on vector bundles which was introduced in ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark}. This example reproduces the results from the example in Section 6.2 therein.
 
-We consider the sphere $$\mathbb{S}^2$$ equipped with the Riemannian metric $\langle \cdot, \cdot \rangle$ given by the Euclidean inner product with corresponding norm $\lVert\cdot\rVert$ and a time interval $\Omega =[0,T]$.
+We consider the sphere $$\mathbb{S}^2$$ equipped with the Riemannian metric $\langle \cdot, \cdot \rangle$ given by the Euclidean inner product with corresponding norm $\lVert\cdot\rVert$ and a time interval $Ω =[0,T]$.
 
-Let $\mathcal X = H^1(\Omega, \mathbb S^2)$ and  $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
+Let $\mathcal X = H^1(Ω, \mathbb S^2)$ and  $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
 
 Consider the minimization problem
 
-$\min_{\gamma \in H^1(\Omega, \mathbb S^2)} \; \frac12 \int_0^T \lVert\dot \gamma(t)\rVert^2 \; dt$
+$\min_{γ ∈ H^1(Ω, \mathbb S^2)} \; \frac12 \int_0^T \lVert\dot γ(t)\rVert^2 \; \mathrm{d}t$
 
-under the constraint that $\gamma_3(t) \leq 1-h_{\mathrm{ref}} \; \text{ for all } t\in [0,T]$ where $\gamma_3(t)$ denotes the third component of $\gamma(t)\in \mathbb{S}^2$ and $h_{\mathrm{ref}} \in (0,1)$ is a given height. Additionally, we have to take into account that boundary conditions $\gamma(0) = \gamma_0$ and $\gamma(T) = \gamma_T$ for given $\gamma_0, \gamma_T \in \mathbb S^2$ are satisfied.
+under the constraint that $γ_3(t) ≤ 1-h_{\mathrm{ref}} \; \text{ for all } t∈ [0,T]$ where $γ_3(t)$ denotes the third component of $γ(t)∈ \mathbb{S}^2$ and $h_{\mathrm{ref}} ∈ (0,1)$ is a given height. Additionally, we have to take into account that boundary conditions $γ(0) = γ_0$ and $γ(T) = γ_T$ for given $γ_0, γ_T ∈ \mathbb S^2$ are satisfied.
 
-Using a penalty method, also known as Moreau-Yosida regularization with a quadratic penalty term we can rewrite this as an unconstrained minimization problem with a penalty coefficient $p\in \mathbb R$:
+Using a penalty method, also known as Moreau-Yosida regularization with a quadratic penalty term we can rewrite this as an unconstrained minimization problem with a penalty coefficient $p∈ \mathbb R$:
 
-$\min_{\gamma \in H^1(\Omega, \mathbb S^2)} \; \underbrace{\frac12 \int_0^T \lVert\dot \gamma(t)\rVert^2 + p \max(0, \gamma_3(t) - 1 + h_{\mathrm{ref}})^2 \; dt}_{=: f(\gamma)}$
+$\min_{γ ∈ H^1(Ω, \mathbb S^2)} \; \underbrace{\frac12 \int_0^T \lVert\dot γ(t)\rVert^2 + p \max(0, γ_3(t) - 1 + h_{\mathrm{ref}})^2 \; \mathrm{d}t}_{=: f(γ)}$
 
-Let $m \colon\mathbb R \to \mathbb R, \, m(x) \coloneqq \max(0, x)$.
-The objective is differentiable function $f : \mathcal X \to \mathbb R$ with derivative
+Let $m: \mathbb R → \mathbb R, \, m(x): eqq \max(0, x)$.
+The objective is differentiable function $f : \mathcal X → \mathbb R$ with derivative
 
-$f'(\gamma)\delta \gamma = \int_0^T \langle \dot\gamma(t), \dot{\delta \gamma}(t)\rangle + p \cdot m(\gamma_3(t) - 1 + h_{\mathrm{ref}})\delta \gamma_3(t)$
+```math
+f'(γ)δ γ = \int_0^T \langle \dotγ(t), \dot{δ γ}(t)\rangle + p \cdot m(γ_3(t) - 1 + h_{\mathrm{ref}})δ γ_3(t)
+```
 
-for $\delta \gamma \in T_\gamma \mathcal X$.
+for $δ γ ∈ T_γ \mathcal X$.
 This mapping is semismooth and our goal is to find a critical point of $f$ by applying Newton's method on $f'$.
 
-This then yields a geodesic avoiding the north pol cap and connecting $\gamma_0$ and $\gamma_T$.
+This then yields a geodesic avoiding the north pol cap and connecting $γ_0$ and $γ_T$.
 
 For our example we set
 
 ```{julia}
 N=200
-	
+
 S = Manifolds.Sphere(2)
 power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
 
@@ -62,25 +62,25 @@ mutable struct variational_space
 end
 
 test_space = variational_space(S, 1)
-	
+
 start_interval = -pi/2 + 0.1
 end_interval = pi/2 - 0.1
 discrete_time = range(; start=start_interval, stop = end_interval, length=N+2) # equidistant discrete time points
-	
-theta = pi/4
-y0 = [sin(theta)*cos(start_interval),sin(theta)*sin(start_interval),cos(theta)] # startpoint of geodesic
-yT = [sin(theta)*cos(end_interval),sin(theta)*sin(end_interval),cos(theta)] # endpoint of geodesic
+
+θ = pi/4
+y0 = [sin(θ)*cos(start_interval),sin(θ)*sin(start_interval),cos(θ)] # startpoint of geodesic
+yT = [sin(θ)*cos(end_interval),sin(θ)*sin(end_interval),cos(θ)] # endpoint of geodesic
 
 h_ref = 0.17
 ```
 
-In order to apply Newton's method to find a zero of $f'$, we need the linear mapping $Q_{f'(\gamma)}^*\circ f''(\gamma)$ (cf. \ref{paper}). Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
+In order to apply Newton's method to find a zero of $f'$, we need the linear mapping $Q_{f'(γ)}^*\circ f''(γ)$ (cf. \ref{paper}). Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
 
-$Q_{f'(\gamma)}^*\circ f''(\gamma)\delta \gamma\,\phi = f'(\gamma)(\overset{\rightarrow}{V}_\gamma'(\gamma)\delta \gamma\,\phi) + f''_{\mathbb R^3}(\gamma)\delta \gamma\,\phi$
+$Q_{f'(γ)}^*\circ f''(γ)δ γ\,\phi = f'(γ)(\overset{→}{V}_γ'(γ)δ γ\,\phi) + f''_{\mathbb R^3}(γ)δ γ\,\phi$
 
-for $\delta \gamma, \, \phi \in T_\gamma \mathcal X$, where $\overset{\rightarrow}{V}_\gamma(\hat \gamma) \in L(T_\gamma \mathcal X, T_{\hat{\gamma}}\mathcal X)$ is a vector transport and
+for $δ γ, \, \phi ∈ T_γ \mathcal X$, where $\overset{→}{V}_γ(\hat γ) ∈ L(T_γ \mathcal X, T_{\hat{γ}}\mathcal X)$ is a vector transport and
 
-$f_{\mathbb R^3}''(\gamma)\delta \gamma\, \phi = \int_0^T \langle \dot{\delta \gamma}(t), \dot{\phi}(t)\rangle + p \cdot m'(\gamma_3(t) - 1 + h_{\mathrm{ref}})\phi_{3}(t) \delta \gamma_{3}(t)$
+$f_{\mathbb R^3}''(γ)δ γ\, \phi = \int_0^T \langle \dot{δ γ}(t), \dot{\phi}(t)\rangle + p \cdot m'(γ_3(t) - 1 + h_{\mathrm{ref}})\phi_{3}(t) δ γ_{3}(t)$
 
 is an (euclidean) Newton-derivative of f'.
 
@@ -96,15 +96,15 @@ mutable struct DifferentiableMapping{F1<:Function,F2<:Function,T}
 end;
 ```
 
-The following routines define a vector transport and its euclidean derivative. As seen above, they are needed to derive $Q_{f'(\gamma)}^*\circ f''(\gamma)$.
+The following routines define a vector transport and its euclidean derivative. As seen above, they are needed to derive $Q_{f'(γ)}^*\circ f''(γ)$.
 
-As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for $p, q \in \mathbb S^2$ and $X \in T_p\mathbb S^2$ we set
+As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for $p, q ∈ \mathbb S^2$ and $X ∈ T_p\mathbb S^2$ we set
 
-$\overset{\rightarrow}{V}_{p}(q)X = (I-q\cdot q^T)X \in T_q\mathbb S^2.$
+$\overset{→}{V}_{p}(q)X = (I-q\cdot q^T)X ∈ T_q\mathbb S^2.$
 
 The derivative of the vector transport is then given by
 
-$\left(\frac{d}{dq}\overset{\rightarrow}{V}_{p}(q)\big\vert_{q=p}\delta q\right)X = \left( - \delta q\cdot p^T - p\cdot \delta q^T\right)\cdot X.$
+$\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q\cdot p^T - p\cdot δ q^T\right)\cdot X.$
 
 ```{julia}
 function transport_by_proj(S, p, X, q)
@@ -119,7 +119,7 @@ transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime,noth
 The following two routines define the integrand of $f'$ and the euclidean second derivative $f''_{\mathbb R^3}$. Here, a Newton-derivative of the maximum function given by
 
 ```math
-m'(x) \coloneqq \begin{cases}
+m'(x): eqq \begin{cases}
         0 &: \; x<0 \\
         \text{arbitrary} &: \; x= 0\\
         1 &: \; x>0
@@ -150,7 +150,7 @@ integrand = DifferentiableMapping(f_prime_at,f_second_at,1.0)
 In this example we implement a functor to compute the Newton matrix and the right hand side for the Newton equation \ref{paper}
 
 ```math
-Q^*_{f''(\gamma)}\circ f''(\gamma)\delta \gamma + f'(\gamma) = 0^*_\gamma
+Q^*_{f''(γ)}\circ f''(γ)δ γ + f'(γ) = 0^*_γ
 ```
 
 by using the assembler provided in ManoptExamples.jl (cf. Referenz).
@@ -182,30 +182,28 @@ function (ne::NewtonEquation)(M, VB, p)
 	n = manifold_dimension(M)
 	ne.A .= spzeros(n,n)
 	ne.b .= zeros(n)
-	
+
 	Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
-	
-	println("Assemble:")
+
 	ManoptExamples.get_jacobian!(M, Op, evaluate, ne.A, ne.integrand, ne.transport, ne.time_interval; test_space=ne.test_space)
-	
+
 	ManoptExamples.get_right_hand_side!(M, Op, evaluate, ne.b, ne.integrand, ne.time_interval; test_space=ne.test_space)
 end
-end;
 ```
 
-We compute the Newton direction $\delta \gamma$ by solving the linear system given by the base representation of the Newton equation directly and return the Newton direction in vector representation:
+We compute the Newton direction $δ γ$ by solving the linear system given by the base representation of the Newton equation directly and return the Newton direction in vector representation:
 
 ```{julia}
-function solve_in_basis_repr(problem, newtonstate) 
+function solve_in_basis_repr(problem, newtonstate)
 	X_base = (problem.newton_equation.A) \ (-problem.newton_equation.b)
 	return get_vector(problem.manifold, newtonstate.p, X_base, DefaultOrthogonalBasis())
 end;
 ```
 
-For the computation of a solution of the penalized problem we use a simple path-following method increasing the penalty parameter by a factor 1.2 in each iteration. For the first iteration we use a curve along the latitude connecting $\gamma_0$ and $\gamma_T$:
+For the computation of a solution of the penalized problem we use a simple path-following method increasing the penalty parameter by a factor 1.2 in each iteration. For the first iteration we use a curve along the latitude connecting $γ_0$ and $γ_T$:
 
 ```{julia}
-y(t) = [sin(theta)*cos(t), sin(theta)*sin(t), cos(theta)]
+y(t) = [sin(θ)*cos(t), sin(θ)*sin(t), cos(θ)]
 discretized_y = [y(ti) for ti in discrete_time[2:end-1]];
 ```
 
@@ -213,22 +211,22 @@ discretized_y = [y(ti) for ti in discrete_time[2:end-1]];
 y_star = copy(power, discretized_y)
 
 	integrand.scaling_penalty = 5.0
-	
+
 	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
-	
+
 	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr,
 	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
 	retraction_method=ProjectionRetraction(),
 	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
 	return_state=true)
-	
+
 	y_star = copy(power, get_solver_result(st_res))
-		
+
 	for i in range(1,50)
 		integrand.scaling_penalty *= 1.2
 
 		NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
- 
+
 		st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr,
 		stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
 		retraction_method=ProjectionRetraction(),
@@ -239,7 +237,7 @@ y_star = copy(power, discretized_y)
 	end
 ```
 
-This yields the geodesic shown below avoiding the north pole cap and connecting two points $\gamma_0$ and $\gamma_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well (blue).
+This yields the geodesic shown below avoiding the north pole cap and connecting two points $γ_0$ and $γ_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well (blue).
 
 ```{julia}
 n = 45
@@ -292,3 +290,28 @@ scatter!(ax, π1.([yT]), π2.([yT]), π3.([yT]); markersize = 10, color=:red)
 
 fig
 ```
+
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+using Dates
+now()
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["Elastic-Geodesic-Obstacle.md"]
+Canonical=false
+```
+````

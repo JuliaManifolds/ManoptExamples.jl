@@ -1,153 +1,156 @@
 ---
 title: "Geodesic on Sphere with Obstacle Avoidance"
 author: "Laura Weigl, Ronny Bergmann, and Anton Schiela"
-date: 2025-07-13
+date: 2025-11-25
 ---
 
 ```{julia}
 #| echo: false
 #| output: false
-# TODO: Change once `vectorbundle_newton` is released in `Manopt.jl`
 using Pkg;
 Pkg.activate("."); # for reproducibility use the local tutorial environment.
-Pkg.develop(; path="../../Manopt.jl") # a trick to work on the local dev version
 ```
 
 ```{julia}
-	using LinearAlgebra
-	using SparseArrays
-	using Manopt
-	using ManoptExamples
-	using Manifolds
-	using OffsetArrays
-	using RecursiveArrayTools
-    using WGLMakie, Makie, GeometryTypes, Colors
-	using CairoMakie
+using LinearAlgebra
+using SparseArrays
+using Manopt
+using ManoptExamples
+using Manifolds
+using OffsetArrays
+using RecursiveArrayTools
+using GLMakie, Makie, GeometryTypes, Colors
 ```
 
 # Introduction
 
-In this example we compute equilibrium states of an inextensible elastic rod by applying Newton's method on vector bundles which was introduced in \ref{paper}. This example reproduces the results from \ref{paper}.
+In this example we compute equilibrium states of an inextensible elastic rod by applying Newton's method on vector bundles which was introduced in [WeiglBergmannSchiela:2025](@cite)``{=commonmark}. This example reproduces the results from the example in Sectin 6.3 therein.
 
-We start with the following energy minimization problem 
+We start with the following energy minimization problem
 
 ```math
-\min_{y\in \mathcal M}\frac{1}{2}\int_{0}^{1} \sigma(s) \langle \ddot y(s),\ddot y(s)\rangle ds
+\min_{y∈ \mathcal M}\frac{1}{2}\int_{0}^{1} σ(s) ⟨ \ddot y(s),\ddot y(s)⟩ \mathrm{d}s
 ```
 
-where $\mathcal M := \{y\mid y\in H^2([0,1];\mathbb{R}^3),\dot y(s)\in \mathbb S^2  \, \mbox{on} \, [0,1] \}.$ The quantity $\overline \sigma > \sigma(s)\ge \underline \sigma>0$ is the flexural stiffness of the rod, and $\dot y$, $\ddot y$ are the derivatives of $y$ with respect to $s\in[0,1]$. Since $\dot y(s) \in \mathbb{S}^2$ for all $s\in [0,1]$ the rod is inextensible with fixed length 1.
+where $\mathcal M := \{y\mid y∈ H^2([0,1];\mathbb{R}^3),\dot y(s)∈ \mathbb S^2  \, \mbox{on} \, [0,1] \}.$ The quantity $\overline σ > σ(s) ≥ \underline σ>0$ is the flexural stiffness of the rod, and $\dot y$, $\ddot y$ are the derivatives of $y$ with respect to $s∈[0,1]$. Since $\dot y(s) ∈ \mathbb{S}^2$ for all $s∈ [0,1]$ the rod is inextensible with fixed length 1.
 
 In addition the following boundary conditions are imposed:
 
 ```math
-y(0)=y_a \in \mathbb{R}^3, \, \dot y(0)=v_a\in \mathbb{S}^2, \;
-y(1)=y_b \in \mathbb{R}^3, \, \dot y(1)=v_b\in \mathbb{S}^2.
+y(0)=y_a ∈ \mathbb{R}^3, \, \dot y(0)=v_a∈ \mathbb{S}^2, \;
+y(1)=y_b ∈ \mathbb{R}^3, \, \dot y(1)=v_b∈ \mathbb{S}^2.
 ```
 
 Introducing $v(s):=\dot y(s)$ we reformulate the problem as a mixed problem:
 
 ```math
-\min_{(y,v)\in Y\times \mathcal V} \frac{1}{2}\int_{0}^{1} \sigma \langle \dot v,\dot v\rangle \, ds
+\min_{(y,v)∈ Y × \mathcal V} \frac{1}{2}\int_{0}^{1} σ ⟨ \dot v,\dot v⟩ \, \mathrm{d}s
 \quad \mbox{ s.t. } \quad \dot y-v =0
 ```
 
-where 
-
-$Y=\{y\in H^2([0,1];\mathbb{R}^3)\,\, : \,\, y(0)=y_a,\,\, y(1)=y_b  \},$ 
-
-$\mathcal V=\{v\in H^1([0,1];\mathbb{S}^2)\,\, :\,\, v(0)=v_a,\,\, v(1)=v_b  \}.$
+where
+```math
+\begin{align}
+Y&=\{y∈ H^2([0,1];\mathbb{R}^3)\,\, : \,\, y(0)=y_a,\,\, y(1)=y_b  \},\\
+\mathcal V&=\{v∈ H^1([0,1];\mathbb{S}^2)\,\, :\,\, v(0)=v_a,\,\, v(1)=v_b \}.
+\end{align}
+```
 
 To derive equilibrium conditions for this problem we define the Lagrangian function
 
-$L(y,v,\lambda) =\int_{0}^{1} \frac{1}{2}  \sigma \left\langle \dot v,\dot v \right\rangle+\lambda (\dot y-v)\, ds$
+```math
+L(y,v,λ) =\int_{0}^{1} \frac{1}{2}  σ \left⟨ \dot v,\dot v \right⟩+λ (\dot y-v)\, \mathrm{d}s
+```
 
-using a Lagrangian multiplier $\lambda \in \Lambda \coloneqq L_2([0,1];\mathbb R^3)$.
+using a Lagrangian multiplier $λ ∈ Λ := L_2([0,1];\mathbb R^3)$.
 
 We obtain the following equilibrium conditions via setting the derivatives of the Lagrangian to zero:
 
-$\int_0^1 \lambda (\dot{\phi_y})\, ds=0 \quad \forall \phi_y\in Y$
-
-$\int_{0}^{1} \sigma \left\langle  \dot v,\dot{\phi_v}\right\rangle -  \lambda(\phi_v) ds=0 \quad \forall \phi_v\in T_v \mathcal V$
-
-$\int_{0}^{1}  \phi_\lambda(\dot y-v) ds=0 \quad \forall \phi_\lambda\in \Lambda$
+```math
+\begin{align}
+\int_0^1 λ (\dot{ϕ_y})\, \mathrm{d}s &= 0 \quad ∀ ϕ_y∈ Y\\
+\int_{0}^{1} σ \left⟨  \dot v,\dot{ϕ_v}\right⟩ -  λ(ϕ_v) \mathrm{d}s &= 0 \quad ∀ ϕ_v ∈ T_v \mathcal V,\\
+\int_{0}^{1}  ϕ_λ(\dot y-v) \mathrm{d} s &= 0 \quad ∀ ϕ_λ ∈ Λ.
+\end{align}
+```
 
 Hence, have to find a zero of the mapping
 
 ```math
-F : Y \times \mathcal V \times \Lambda \to Y^* \times T^*\mathcal V\times \Lambda^*
+F : Y × \mathcal V × Λ → Y^* × T^*\mathcal V× Λ^*
 ```
 
 defined by the equilibrium conditions.
 
-For brevity we set $\mathcal X=Y \times \mathcal V \times \Lambda$ and $x=(y,v,\lambda)$ and obtain a mapping $F:\mathcal X \to T^*\mathcal X$.
+For brevity we set $\mathcal X=Y × \mathcal V × Λ$ and $x=(y,v,λ)$ and obtain a mapping $F:\mathcal X → T^*\mathcal X$.
 
-For our example we set $\sigma \equiv 1$ and 
+For our example we set $σ \equiv 1$ and
 
 ```{julia}
-	N=50
+N=50
 
-	S = Manifolds.Sphere(2)
-	R3 = Manifolds.Euclidean(3)	
-	powerS = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
-	powerR3 = PowerManifold(R3, NestedPowerRepresentation(), N) # power manifold of R^3
-	powerR3_λ = PowerManifold(R3, NestedPowerRepresentation(), N+1) # power manifold of R^3
-	product = ProductManifold(powerR3, powerS, powerR3_λ) # product manifold
+S = Manifolds.Sphere(2)
+R3 = Manifolds.Euclidean(3)
+powerS = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
+powerR3 = PowerManifold(R3, NestedPowerRepresentation(), N) # power manifold of R^3
+powerR3_λ = PowerManifold(R3, NestedPowerRepresentation(), N+1) # power manifold of R^3
+product = ProductManifold(powerR3, powerS, powerR3_λ) # product manifold
 
-	mutable struct variational_space
-		manifold::AbstractManifold
-		degree::Integer
-	end
+mutable struct variational_space
+	manifold::AbstractManifold
+	degree::Integer
+end
 
-	test_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
+test_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
 
-	ansatz_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
-	
-	start_interval = 0.0
-	end_interval = 1.0
-	discrete_time = range(; start=start_interval, stop = end_interval, length=N+2)
-	
-	y0 = [0,0,0] # startpoint of rod
-	y1 = [0.8,0,0] # endpoint of rod
+ansatz_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
 
-	v0 = 1/norm([1,0,2])*[1,0,2] # start direction of rod
-	v1 = 1/norm([1,0,0.8])*[1,0,0.8] # end direction of rod
+start_interval = 0.0
+end_interval = 1.0
+discrete_time = range(; start=start_interval, stop = end_interval, length=N+2)
+
+y0 = [0,0,0] # startpoint of rod
+y1 = [0.8,0,0] # endpoint of rod
+
+v0 = 1/norm([1,0,2])*[1,0,2] # start direction of rod
+v1 = 1/norm([1,0,0.8])*[1,0,0.8] # end direction of rod
 ```
 
 As a starting point, we use
 
 ```{julia}
-	y(t) = [t*0.8, 0.1*t*(1-t), 0]
-	
-	v(t) = [sin(t*pi/2+pi/4), cos(t*pi/2+pi/4), 0]
-	
-	λ(t) = [0.1, 0.1, 0.1]
+y(t) = [t*0.8, 0.1*t*(1-t), 0]
+v(t) = [sin(t*π/2+π/4), cos(t*π/2+π/4), 0]
+λ(t) = [0.1, 0.1, 0.1]
 
-	discretized_y = [y(ti) for ti in discrete_time[2:end-1]]
-	discretized_v = [v(ti) for ti in discrete_time[2:end-1]]
-	discretized_λ = [λ(ti) for ti in discrete_time[1:end-1]]
-
-	disc_point = ArrayPartition(discretized_y, discretized_v, discretized_λ)
-
+discretized_y = [y(ti) for ti in discrete_time[2:end-1]]
+discretized_v = [v(ti) for ti in discrete_time[2:end-1]]
+discretized_λ = [λ(ti) for ti in discrete_time[1:end-1]]
+disc_point = ArrayPartition(discretized_y, discretized_v, discretized_λ)
 ```
 
 
-In order to apply Newton's method to find a zero of $F$, we need the linear mapping $Q_{F(x)}^*\circ F'(x)$ (cf. \ref{paper}). Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula 
+In order to apply Newton's method to find a zero of $F$, we need the linear mapping $Q_{F(x)}^*∘ F'(x)$. Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
 
 ```math
-Q_{F(x)}^*\circ F'(x)\delta x\,\phi = F(x)(\overset{\rightarrow}{V}_x'(x)\delta x\,\phi) + F_{\mathbb R^9}'(x)\delta x\,\phi
+Q_{F(x)}^*∘ F'(x)δx\,ϕ = F(x)(\overset{→}{V}_x'(x)δx\,ϕ) + F_{\mathbb R^9}'(x)δx\,ϕ
 ```
 
-for $x\in \mathcal X$ and $\delta x, \, \phi \in T_x \mathcal X$, where $\overset{\rightarrow}{V}_x(\hat x) \in L(T_x \mathcal X, T_{\hat{x}}\mathcal X)$ is a vector transport and 
+for $x∈ \mathcal X$ and $δx, \, ϕ ∈ T_x \mathcal X$, where $\overset{→}{V}_x(\hat x) ∈ L(T_x \mathcal X, T_{\hat{x}}\mathcal X)$ is a vector transport and
 
-$F_{\mathbb R^9}'(x)\delta x^2\, \delta x^1 = \int_0^1 \delta \lambda(\dot \phi_y) + \sigma \langle \dot{\delta v}, \dot\phi_v \rangle  -\delta \lambda(\phi_v) + \phi_\lambda(\dot{\delta y})  - \phi_\lambda(\delta v) \, ds$
+```math
+F_{\mathbb R^9}'(x)δx^2\, δx^1 = \int_0^1 δλ(\dot ϕ_y) + σ ⟨ \dot{δv}, \dot ϕ_v ⟩  -δλ(ϕ_v) + ϕ_λ(\dot{δy})  - ϕ_λ(δv) \, \mathrm{d}s
+```
 
 is the euclidean derivative of $F$.
 
-The part, introduced by the connection is given by 
+The part, introduced by the connection is given by
 
-$F(x)(\overset{\rightarrow}{V}_x'(x)\delta x\,\phi) = \int_0^1 \langle \dot v, (P'(v)\delta v \, \phi_v)\dot{} \, \rangle - \lambda(P'(v)\delta v \, \phi_v) \, ds$
+```math
+F(x)(\overset{→}{V}_x'(x)δx\,ϕ) = \int_0^1 ⟨ \dot v, (P'(v)δv \, ϕ_v)\dot{} \, ⟩ - λ(P'(v)δv \, ϕ_v) \, \mathrm{d}s
+```
 
-where $P(v) :\mathbb{R}^3 \to T_v\mathbb{S}^2$ denotes the orthogonal projection.
+where $P(v) :\mathbb{R}^3 → T_v\mathbb{S}^2$ denotes the orthogonal projection.
 
 We define a structure that has to be filled for two purposes:
 * Definition of an integrands and their derivatives
@@ -162,64 +165,68 @@ end
 
 The following routines define a vector transport and its euclidean derivative. As seen above, they are needed to derive a covariant derivative of $F$.
 
-As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for $p, q \in \mathbb S^2$ and $X \in T_p\mathbb S^2$ we set 
+As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for $p, q ∈ \mathbb S^2$ and $X ∈ T_p\mathbb S^2$ we set
 
-$\overset{\rightarrow}{V}_{p}(q)X = (I-q\cdot q^T)X \in T_q\mathbb S^2.$
+```math
+\overset{→}{V}_{p}(q)X = (I-q ⋅ q^T)X ∈ T_q\mathbb S^2.
+```
 
-The derivative of the vector transport is then given by 
+The derivative of the vector transport is then given by
 
-$\left(\frac{d}{dq}\overset{\rightarrow}{V}_{p}(q)\big\vert_{q=p}\delta q\right)X = \left( - \delta q\cdot p^T - p\cdot \delta q^T\right)\cdot X.$
+```math
+\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δq\right)X = \left( - δq ⋅ p^T - p ⋅ δq^T\right) ⋅ X.
+```
 
 ```{julia}
-	function transport_by_proj(S, p, X, q)
-		return X - q*(q'*X)
-	end
+function transport_by_proj(S, p, X, q)
+	return X - q*(q'*X)
+end
 
-	function transport_by_proj_prime(S, p, X, dq)
-		return (- dq*p' - p*dq')*X
-	end
+function transport_by_proj_prime(S, p, X, dq)
+	return (- dq*p' - p*dq')*X
+end
 
-	transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime)
+transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime)
 ```
 
 The following routines define the integrand of $F$ and its euclidean derivative.
 
 ```{julia}
-	Fy_at(Integrand, y, ydot, T, Tdot) = Tdot'*y.x[3] # y component of F
-	Fv_at(Integrand, y, ydot, T, Tdot) = ydot.x[2]'*Tdot-T'*y.x[3] # v component of F
-	Fλ_at(Integrand, y, ydot, T, Tdot) = (ydot.x[1]-y.x[2])'*T # λ component of F
-	
-	F_prime_yλ_at(Integrand,y,ydot,B,Bdot,T,Tdot) = Tdot'*B # derivative of Fy_at w.r.t. λ (others are zero)
+Fy_at(Integrand, y, ydot, T, Tdot) = Tdot'*y.x[3] # y component of F
+Fv_at(Integrand, y, ydot, T, Tdot) = ydot.x[2]'*Tdot-T'*y.x[3] # v component of F
+Fλ_at(Integrand, y, ydot, T, Tdot) = (ydot.x[1]-y.x[2])'*T # λ component of F
 
-	F_prime_vv_at(Integrand,y,ydot,B,Bdot,T,Tdot) = Bdot'*Tdot # derivative of Fv_at w.r.t. v (others are zero)
+F_prime_yλ_at(Integrand,y,ydot,B,Bdot,T,Tdot) = Tdot'*B # derivative of Fy_at w.r.t. λ (others are zero)
 
-	F_prime_λv_at(Integrand,y,ydot,B,Bdot,T,Tdot) = -B'*T # derivative of Fλ_at w.r.t. v (others are zero)
-	
-	integrand_vv = DifferentiableMapping(Fv_at,F_prime_vv_at)
-	integrand_yλ = DifferentiableMapping(Fy_at,F_prime_yλ_at)
-	integrand_λv = DifferentiableMapping(Fλ_at,F_prime_λv_at)
+F_prime_vv_at(Integrand,y,ydot,B,Bdot,T,Tdot) = Bdot'*Tdot # derivative of Fv_at w.r.t. v (others are zero)
+
+F_prime_λv_at(Integrand,y,ydot,B,Bdot,T,Tdot) = -B'*T # derivative of Fλ_at w.r.t. v (others are zero)
+
+integrand_vv = DifferentiableMapping(Fv_at,F_prime_vv_at)
+integrand_yλ = DifferentiableMapping(Fy_at,F_prime_yλ_at)
+integrand_λv = DifferentiableMapping(Fλ_at,F_prime_λv_at)
 ```
 
 If no vector transport is needed, leave it away, then the identity transport is used as dummy
 
 ```{julia}
-	identity_transport(S, p, X, q) = X
-	identity_transport_prime(S, p, X, dq) = 0.0*X
-	
-	id_transport = DifferentiableMapping(identity_transport,identity_transport_prime)
+identity_transport(S, p, X, q) = X
+identity_transport_prime(S, p, X, dq) = 0.0*X
+
+id_transport = DifferentiableMapping(identity_transport,identity_transport_prime)
 ```
 
 
-##NewtonEquation
+## NewtonEquation
 
-In this example we implement a functor to compute the Newton matrix and the right hand side for the Newton equation \ref{paper}
+In this example we implement a functor to compute the Newton matrix and the right hand side for the Newton equation
 
 ```math
-Q^*_{F(x)}\circ F'(x)\delta x + F(x) = 0
+Q^*_{F(x)}∘ F'(x)δx + F(x) = 0
 ```
 
-by using the assembler provided in ManoptExamples.jl (cf. Referenz).
-	
+by using the assembler provided in `ManoptExamples.jl``
+
 It returns the matrix and the right hand side in base representation.
 Moreover, for the computation of the simplified Newton direction (which is necessary for affine covariant damping) a method for assembling the right hand side for the simplified Newton equation is provided.
 
@@ -228,11 +235,11 @@ The assembly routines need a function for evaluating the test functions at the l
 
 ```{julia}
 function evaluate(y, i, tloc)
-	return ArrayPartition(
-		(1.0-tloc)*y.x[1][i-1]+tloc*y.x[1][i],
-		(1.0-tloc)*y.x[2][i-1]+tloc*y.x[2][i],
-		y.x[3][i]
-	)
+return ArrayPartition(
+	(1.0-tloc)*y.x[1][i-1]+tloc*y.x[1][i],
+	(1.0-tloc)*y.x[2][i-1]+tloc*y.x[2][i],
+	y.x[3][i]
+)
 end;
 ```
 
@@ -264,60 +271,62 @@ function NewtonEquation(M, inty, intv, intλ, test_spaces, ansatz_spaces, VT, di
 	A13 = spzeros(n1,n3)
 	A22 = spzeros(n2,n2)
 	A32 = spzeros(n3,n2)
-	
+
 	A = spzeros(n1+n2+n3, n1+n2+n3)
-	
+
 	b1 = zeros(n1)
 	b2 = zeros(n2)
 	b3 = zeros(n3)
 	b = zeros(n1+n2+n3)
-	
+
 	return NewtonEquation{typeof(inty), typeof(intv), typeof(intλ), typeof(test_spaces), typeof(ansatz_spaces), typeof(VT), typeof(discrete_time), typeof(A13), typeof(b1)}(inty, intv, intλ, test_spaces, ansatz_spaces, VT, discrete_time, A13, A22, A32, A, b1, b2, b3, b)
 end
-	
+
 function (ne::NewtonEquation)(M, VB, p)
 	n1 = Int(manifold_dimension(submanifold(M, 1)))
 	n2 = Int(manifold_dimension(submanifold(M, 2)))
 	n3 = Int(manifold_dimension(submanifold(M, 3)))
-	
+
 	ne.A13 .= spzeros(n1,n3)
 	ne.A22 .= spzeros(n2,n2)
 	ne.A32 .= spzeros(n3,n2)
-	
+
 	ne.b1 .= zeros(n1)
 	ne.b2 .= zeros(n2)
 	ne.b3 .= zeros(n3)
-	
+
 	Op_y = OffsetArray([y0, p[M, 1]..., y1], 0:(length(p[M, 1])+1))
 	Op_v = OffsetArray([v0, p[M, 2]..., v1], 0:(length(p[M, 2])+1))
 	Op_λ = OffsetArray(p[M, 3], 1:length(p[M, 3]))
-	
+
 	Op = ArrayPartition(Op_y,Op_v,Op_λ);
-    
+
 	# assemble (2,2)-block using the connection
 	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A22, ne.integrand_v, ne.vectortransport, ne.discrete_time_interval; row_index = 2, column_index = 2, test_space = ne.test_spaces.x[2], ansatz_space = ne.ansatz_spaces.x[2])
 
 
 	# assemble (1,3)-block without connection
-	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A13, ne.integrand_y, id_transport, ne.discrete_time_interval; row_index = 1, column_index = 3, test_space = ne.test_spaces.x[1], ansatz_space = ne.ansatz_spaces.x[3]) 
+	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A13, ne.integrand_y, id_transport, ne.discrete_time_interval; row_index = 1, column_index = 3, test_space = ne.test_spaces.x[1], ansatz_space = ne.ansatz_spaces.x[3])
 
 
 	# assemble (3,2)-block without connection
-	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A32, ne.integrand_λ, id_transport, ne.discrete_time_interval; row_index = 3, column_index = 2, test_space = ne.test_spaces.x[3], ansatz_space = ne.ansatz_spaces.x[2]) 
-    
-    
+	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A32, ne.integrand_λ, id_transport, ne.discrete_time_interval; row_index = 3, column_index = 2, test_space = ne.test_spaces.x[3], ansatz_space = ne.ansatz_spaces.x[2])
+
+
 	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b1, ne.integrand_y, ne.discrete_time_interval; row_index=1, test_space = ne.test_spaces.x[1])
-    
+
 	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b2, ne.integrand_v, ne.discrete_time_interval,; row_index=2, test_space = ne.test_spaces.x[2])
-	 
+
 	ManoptExamples.get_right_hand_side_row!(M, Op, evaluate, ne.b3, ne.integrand_λ, ne.discrete_time_interval,; row_index=3, test_space = ne.test_spaces.x[3])
 
-    
-	ne.A .= vcat(hcat(spzeros(n1,n1) , spzeros(n1,n2) , ne.A13), 
-			  hcat(spzeros(n2,n1), ne.A22 , ne.A32'), 
-			  hcat(ne.A13', ne.A32, spzeros(n3,n3)))
+
+	ne.A .= vcat(
+		hcat(spzeros(n1,n1) , spzeros(n1,n2) , ne.A13),
+		hcat(spzeros(n2,n1), ne.A22 , ne.A32'),
+		hcat(ne.A13', ne.A32, spzeros(n3,n3))
+	)
 	ne.b .= vcat(ne.b1, ne.b2, ne.b3)
-	return
+	return #TODO: Is this correct?
 end
 
 
@@ -325,36 +334,35 @@ function (ne::NewtonEquation)(M, VB, p, p_trial)
 	n1 = Int(manifold_dimension(submanifold(M, 1)))
 	n2 = Int(manifold_dimension(submanifold(M, 2)))
 	n3 = Int(manifold_dimension(submanifold(M, 3)))
-	
+
 	btrial_y = zeros(n1)
 	btrial_v = zeros(n2)
 	btrial_λ = zeros(n3)
-	
+
 	Op_y = OffsetArray([y0, p[M, 1]..., y1], 0:(length(p[M, 1])+1))
 	Op_v = OffsetArray([v0, p[M, 2]..., v1], 0:(length(p[M, 2])+1))
 	Op_λ = OffsetArray(p[M, 3], 1:length(p[M, 3]))
 	Op = ArrayPartition(Op_y,Op_v,Op_λ);
 
-	
 	Optrial_y = OffsetArray([y0, p_trial[M,1]..., y1], 0:(length(p_trial[M,1])+1))
 	Optrial_v = OffsetArray([v0, p_trial[M,2]..., v1], 0:(length(p_trial[M,2])+1))
 	Optrial_λ = OffsetArray(p_trial[M,3], 1:length(p_trial[M,3]))
 	Optrial = ArrayPartition(Optrial_y,Optrial_v,Optrial_λ);
 
 	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_y, ne.integrand_y, id_transport, ne.discrete_time_interval; row_index=1, test_space = ne.test_spaces.x[1])
-	
+
 	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_v, ne.integrand_v, ne.vectortransport, ne.discrete_time_interval; row_index=2, test_space = ne.test_spaces.x[2])
 
 	ManoptExamples.get_right_hand_side_simplified_row!(M, Op, Optrial, evaluate, btrial_λ, ne.integrand_λ, id_transport, ne.discrete_time_interval; row_index=3, test_space = ne.test_spaces.x[3])
-	
+
 	return vcat(btrial_y, btrial_v, btrial_λ)
 end
 ```
 
-We compute the Newton direction $\delta x$ by solving the linear system given by the base representation of the Newton equation directly and return the Newton direction in vector representation:
+We compute the Newton direction $δx$ by solving the linear system given by the base representation of the Newton equation directly and return the Newton direction in vector representation:
 
 ```{julia}
-function solve_in_basis_repr(problem, newtonstate) 
+function solve_in_basis_repr(problem, newtonstate)
 	X = (problem.newton_equation.A) \ (-problem.newton_equation.b)
 	return get_vector(problem.manifold, newtonstate.p, X, DefaultOrthogonalBasis())
 end;
@@ -363,17 +371,19 @@ end;
 We adjust the norms for computation of damping factors and stopping criterion
 
 ```{julia}
-	pr_inv = Manifolds.InverseProductRetraction(LogarithmicInverseRetraction(), ProjectionInverseRetraction(), LogarithmicInverseRetraction())
-	rec = RecordChange(product;
+pr_inv = Manifolds.InverseProductRetraction(LogarithmicInverseRetraction(), ProjectionInverseRetraction(), LogarithmicInverseRetraction())
+rec = RecordChange(product;
     inverse_retraction_method=pr_inv);
 ```
 
 ```{julia}
-	y_0 = copy(product, disc_point)
-	
-	NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_λv, test_spaces, ansatz_spaces, transport, discrete_time)
-		
-	st_res = vectorbundle_newton(product, TangentBundle(product), NE, y_0; sub_problem=solve_in_basis_repr,
+y_0 = copy(product, disc_point)
+
+NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_λv, test_spaces, ansatz_spaces, transport, discrete_time)
+
+st_res = vectorbundle_newton(
+	product, TangentBundle(product), NE, y_0;
+	sub_problem=solve_in_basis_repr,
 	stopping_criterion=(StopAfterIteration(100)|StopWhenChangeLess(product,1e-12; outer_norm=Inf, inverse_retraction_method=pr_inv)),
 	retraction_method=ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
 	stepsize=Manopt.AffineCovariantStepsize(product, θ_des=0.5, outer_norm=Inf),
@@ -395,21 +405,21 @@ and plot the result, where we measure the norms of the Newton direction in each 
 
 ```{julia}
 f = Figure(;)
-	
-    row, col = fldmod1(1, 2)
-	
-	Axis(f[row, col], yscale = log10, title = string("Semilogarithmic Plot of the norms of the Newton direction"), xminorgridvisible = true, xticks = (1:length(change)), xlabel = "Iteration", ylabel = "‖δx‖")
+
+row, col = fldmod1(1, 2)
+
+Axis(f[row, col], yscale = log10, title = string("Semilogarithmic Plot of the norms of the Newton direction"), xminorgridvisible = true, xticks = (1:length(change)), xlabel = "Iteration", ylabel = "‖δx‖")
     scatterlines!(change, color = :blue)
-	f
+f
 ```
 
 the stepsizes computed via the affine covariant damping strategy,
 
 ```{julia}
 f_st = Figure(;)
-	
+
 row_st, col_st = fldmod1(1, 2)
-	
+
 Axis(f_st[row_st, col_st], title = string("Stepsizes"), xminorgridvisible = true, xticks = (1:length(stepsizes)), xlabel = "Iteration", ylabel = "α")
 scatterlines!(stepsizes[1:end-1], color = :blue)
 f_st
@@ -419,21 +429,39 @@ and the resulting rod (orange). The starting rod (red) is plotted as well.
 
 ```{julia}
 fig = Figure(size = (1000, 500))
-ax = Axis3(fig[1, 1], aspect = :data, viewmode = :fitzoom, azimuth=-3pi/4 + 0.3, elevation=pi/8 + 0.15)
-
-
-    π1(x) = x[1]
-    π2(x) = x[2]
-    π3(x) = x[3]
-
-	scatter!(ax, π1.(p_res[product, 1]), 0.3 .+ 0.0.*π2.(p_res[product, 1]), π3.(p_res[product, 1]); markersize =8, color = RGBAf(0.9, 0.7, 0.5, 0.5))
-
-	scatter!(ax, π1.(discretized_y), 0.3 .+ 0.0.*π2.(discretized_y), π3.(discretized_y); markersize =8, color = RGBAf(0.8, 0.5, 0.5, 0.5))
-	
-	scatter!(ax, π1.(p_res[product, 1]), π2.(p_res[product, 1]), π3.(p_res[product, 1]); markersize =8, color=:orange)
-	
-	scatter!(ax, π1.([y0, y1]), π2.([y0, y1]), π3.([y0, y1]); markersize =8, color=:red)
-	scatter!(ax, π1.(discretized_y), π2.(discretized_y), π3.(discretized_y); markersize =8, color=:red)
-
-	fig
+ax = Axis3(fig[1, 1], aspect = :data, viewmode = :fitzoom, azimuth=-3π/4 + 0.3, elevation=π/8 + 0.15)
+π1(x) = x[1]
+π2(x) = x[2]
+π3(x) = x[3]
+scatter!(ax, π1.(p_res[product, 1]), 0.3 .+ 0.0.*π2.(p_res[product, 1]), π3.(p_res[product, 1]); markersize =8, color = RGBAf(0.9, 0.7, 0.5, 0.5))
+scatter!(ax, π1.(discretized_y), 0.3 .+ 0.0.*π2.(discretized_y), π3.(discretized_y); markersize =8, color = RGBAf(0.8, 0.5, 0.5, 0.5))
+scatter!(ax, π1.(p_res[product, 1]), π2.(p_res[product, 1]), π3.(p_res[product, 1]); markersize =8, color=:orange)
+scatter!(ax, π1.([y0, y1]), π2.([y0, y1]), π3.([y0, y1]); markersize =8, color=:red)
+scatter!(ax, π1.(discretized_y), π2.(discretized_y), π3.(discretized_y); markersize =8, color=:red)
+fig
 ```
+
+
+## Technical details
+
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+using Pkg
+Pkg.status()
+```
+```{julia}
+#| code-fold: true
+using Dates
+now()
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["Inextensible-Rod.md"]
+Canonical=false
+```
+````
