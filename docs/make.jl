@@ -145,7 +145,7 @@ examples_menu =
         "Elastic Geodesic Obstacle" => "examples/Elastic-Geodesic-Obstacle.md",
         "Inextensible Rod" => "examples/Inextensible-Rod.md",
 
-    ]
+    ],
 ]
 bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style = :alpha)
 links = InterLinks(
