@@ -1,5 +1,5 @@
 ---
-title: "Geodesic on Sphere with Obstacle Avoidance"
+title: "Elastic Geodesic on Sphere with Obstacle Avoidance"
 author: "Laura Weigl, Ronny Bergmann, and Anton Schiela"
 date: 2025-11-25
 ---
@@ -20,23 +20,23 @@ using CSV, DataFrames
 
 # Introduction
 
-In this example we compute a geodesic on the sphere avoiding an obstacle by applying Newton's method on vector bundles which was introduced in ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark}. This example reproduces the results from the example in Section 6.2 therein.
+In this example we compute an elastic geodesic on the sphere avoiding an obstacle by applying Newton's method on vector bundles which was introduced in ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark}. This example reproduces the results from the example in Section 6.2 therein.
 
-We consider the sphere $$\mathbb{S}^2$$ equipped with the Riemannian metric $\langle \cdot, \cdot \rangle$ given by the Euclidean inner product with corresponding norm $\lVert\cdot\rVert$ and a time interval $Ω =[0,T]$.
+We consider the sphere $$\mathbb{S}^2$$ equipped with the Riemannian metric $\langle \cdot, \cdot \rangle$ given by the Euclidean inner product with corresponding norm $\lVert\cdot\rVert$ and a time interval $I =[0,T]$.
 
-Let $\mathcal X = H^1(Ω, \mathbb S^2)$ and  $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
+Let $\mathcal X = H^1(I, \mathbb S^2)$ and  $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
 
 Consider the minimization problem
 
-$\min_{γ ∈ H^1(Ω, \mathbb S^2)} \; \frac12 \int_0^T \lVert\dot γ(t)\rVert^2 \; \mathrm{d}t$
+$\min_{γ ∈ H^1(I, \mathbb S^2)} \; \frac12 \int_0^T \lVert\dot γ(t)\rVert^2 \; \mathrm{d}t$
 
 under the constraint that $γ_3(t) ≤ 1-h_{\mathrm{ref}} \; \text{ for all } t∈ [0,T]$ where $γ_3(t)$ denotes the third component of $γ(t)∈ \mathbb{S}^2$ and $h_{\mathrm{ref}} ∈ (0,1)$ is a given height. Additionally, we have to take into account that boundary conditions $γ(0) = γ_0$ and $γ(T) = γ_T$ for given $γ_0, γ_T ∈ \mathbb S^2$ are satisfied.
 
-Using a penalty method, also known as Moreau-Yosida regularization with a quadratic penalty term we can rewrite this as an unconstrained minimization problem with a penalty coefficient $p∈ \mathbb R$:
+Using a penalty method, also known as Moreau-Yosida regularization, with a quadratic penalty term we can rewrite this as an unconstrained minimization problem with a penalty coefficient $p∈ \mathbb R$:
 
-$\min_{γ ∈ H^1(Ω, \mathbb S^2)} \; \underbrace{\frac12 \int_0^T \lVert\dot γ(t)\rVert^2 + p \max(0, γ_3(t) - 1 + h_{\mathrm{ref}})^2 \; \mathrm{d}t}_{=: f(γ)}$
+$\min_{γ ∈ H^1(I, \mathbb S^2)} \; \underbrace{\frac12 \int_0^T \lVert\dot γ(t)\rVert^2 + p \max(0, γ_3(t) - 1 + h_{\mathrm{ref}})^2 \; \mathrm{d}t}_{=: f(γ)}$
 
-Let $m: \mathbb R → \mathbb R, \, m(x): eqq \max(0, x)$.
+Let $m: \mathbb R → \mathbb R, \, m(x) := \max(0, x)$.
 The objective is differentiable function $f : \mathcal X → \mathbb R$ with derivative
 
 ```math
@@ -46,7 +46,7 @@ f'(γ)δ γ = \int_0^T \langle \dotγ(t), \dot{δ γ}(t)\rangle + p \cdot m(γ_3
 for $δ γ ∈ T_γ \mathcal X$.
 This mapping is semismooth and our goal is to find a critical point of $f$ by applying Newton's method on $f'$.
 
-This then yields a geodesic avoiding the north pol cap and connecting $γ_0$ and $γ_T$.
+This then yields an elastic geodesic avoiding the north pol cap and connecting $γ_0$ and $γ_T$.
 
 For our example we set
 
@@ -70,11 +70,9 @@ discrete_time = range(; start=start_interval, stop = end_interval, length=N+2) #
 θ = pi/4
 y0 = [sin(θ)*cos(start_interval),sin(θ)*sin(start_interval),cos(θ)] # startpoint of geodesic
 yT = [sin(θ)*cos(end_interval),sin(θ)*sin(end_interval),cos(θ)] # endpoint of geodesic
-
-h_ref = 0.17
 ```
 
-In order to apply Newton's method to find a zero of $f'$, we need the linear mapping $Q_{f'(γ)}^*\circ f''(γ)$ (cf. \ref{paper}). Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
+In order to apply Newton's method to find a zero of $f'$, we need the linear mapping $Q_{f'(γ)}^*\circ f''(γ)$ (cf. ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark}). Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
 
 $Q_{f'(γ)}^*\circ f''(γ)δ γ\,\phi = f'(γ)(\overset{→}{V}_γ'(γ)δ γ\,\phi) + f''_{\mathbb R^3}(γ)δ γ\,\phi$
 
@@ -93,6 +91,7 @@ mutable struct DifferentiableMapping{F1<:Function,F2<:Function,T}
 	value::F1
 	derivative::F2
 	scaling_penalty::T
+	h_ref::T
 end;
 ```
 
@@ -113,13 +112,13 @@ end
 function transport_by_proj_prime(S, p, X, dq)
 	return (- dq*p' - p*dq')*X
 end
-transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothing)
+transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothing,nothing)
 ```
 
 The following two routines define the integrand of $f'$ and the euclidean second derivative $f''_{\mathbb R^3}$. Here, a Newton-derivative of the maximum function given by
 
 ```math
-m'(x): eqq \begin{cases}
+m'(x):= \begin{cases}
         0 &: \; x<0 \\
         \text{arbitrary} &: \; x= 0\\
         1 &: \; x>0
@@ -130,9 +129,9 @@ is used. A scaling parameter for the penalty parameter is also employed.
 
 ```{julia}
 function f_prime_at(Integrand, y, ydot, B, Bdot)
-  	return ydot'*Bdot + Integrand.scaling_penalty * max(0.0, y[3] - 1.0 + h_ref)*B[3]
+  	return ydot'*Bdot + Integrand.scaling_penalty * max(0.0, y[3] - 1.0 + Integrand.h_ref)*B[3]
 end
-function max_prime(y)
+function max_prime(y, h_ref)
 	if y[3] < 1.0 - h_ref
 		return 0.0
 	else
@@ -140,9 +139,9 @@ function max_prime(y)
 	end
 end
 function f_second_at(Integrand,y,ydot,B1,B1dot,B2,B2dot)
-	return B1dot'*B2dot + Integrand.scaling_penalty*max_prime(y)*B1[3]*B2[3]
+	return B1dot'*B2dot + Integrand.scaling_penalty*max_prime(y, Integrand.h_ref)*B1[3]*B2[3]
 end
-integrand = DifferentiableMapping(f_prime_at,f_second_at,1.0)
+integrand = DifferentiableMapping(f_prime_at,f_second_at,1.0,0.1)
 ```
 
 ##  Newton Equation
@@ -153,7 +152,7 @@ In this example we implement a functor to compute the Newton matrix and the righ
 Q^*_{f''(γ)}\circ f''(γ)δ γ + f'(γ) = 0^*_γ
 ```
 
-by using the assembler provided in ManoptExamples.jl (cf. Referenz).
+by using the assembler provided in `ManoptExamples.jl`.
 
 It returns the matrix and the right hand side in base representation.
 
@@ -207,11 +206,17 @@ y(t) = [sin(θ)*cos(t), sin(θ)*sin(t), cos(θ)]
 discretized_y = [y(ti) for ti in discrete_time[2:end-1]];
 ```
 
+We compute the resulting elastic geodesic for $h_{\mathrm{ref}} = 0.1$ and $h_{\mathrm{ref}} = 0.2$.
+
 ```{julia}
+h_refs = [0.1, 0.2]
 y_star = copy(power, discretized_y)
+res = []
+for h_ref in h_refs
 
 	integrand.scaling_penalty = 5.0
-
+	integrand.h_ref = h_ref
+		
 	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 	
 	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
@@ -221,7 +226,7 @@ y_star = copy(power, discretized_y)
 		return_state=true)
 	
 	y_star = copy(power, get_solver_result(st_res))
-
+		
 	for i in range(1,50)
 		integrand.scaling_penalty *= 1.2
 
@@ -242,57 +247,57 @@ y_star = copy(power, discretized_y)
 end
 ```
 
-This yields the geodesic shown below avoiding the north pole cap and connecting two points $γ_0$ and $γ_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well (blue).
+This yields the elastic geodesics shown below avoiding the north pole cap ($h_{\mathrm{ref}}=0.1$ (left), $h_{\mathrm{ref}}=0.2$ (right)) and connecting two points $γ_0$ and $γ_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well (blue).
 
 ```{julia}
-n = 45
+n = 30
 u = range(0,stop=2*π,length=n);
 v = range(0,stop=π,length=n);
-sx = zeros(n,n); sy = zeros(n,n); sz = zeros(n,n)
+	
+sx = [cos(ui) * sin(vj) for ui in u, vj in v]
+sy = [sin(ui) * sin(vj) for ui in u, vj in v]
+sz = [cos(vj) for ui in u, vj in v]
 
-for i in 1:n
-    for j in 1:n
-        sx[i,j] = cos.(u[i]) * sin(v[j]);
-        sy[i,j] = sin.(u[i]) * sin(v[j]);
-        sz[i,j] = cos(v[j]);
-    end
-end
-
-x = acos(1-h_ref)
-
-circx = zeros(n)
-circy = zeros(n)
-circz = zeros(n)
-for i in 1:n
-	circx[i] = cos.(u[i]) * sin(x);
-	circy[i] = sin.(u[i]) * sin(x);
-	circz[i] = cos(x);
-end
-
-fig, ax, plt = meshscatter(
-  sx,sy,sz,
-  color = fill(RGBA(1.,1.,1.,0.), n, n),
-  shading = Makie.automatic,
-  transparency=true
-)
+π1(x) = 1.01*x[1]
+π2(x) = 1.01*x[2]
+π3(x) = 1.01*x[3]
 
 geodesic_start = [y0, discretized_y ...,yT]
 
-ax.show_axis = false
-wireframe!(ax, sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
-π1(x) = 1.0*x[1]
-π2(x) = 1.0*x[2]
-π3(x) = 1.0*x[3]
+fig = Figure(resolution = (1400, 900), padding=0)
+ax1 = Axis3(fig[1, 1]; aspect =:data)
+hidedecorations!(ax1)
+hidespines!(ax1)
 
-scatterlines!(ax, circx, circy, circz; markersize =2, color=:black, linewidth=2)
+ax2 = Axis3(fig[1, 2]; aspect =:data)
+hidedecorations!(ax2)
+hidespines!(ax2)
 
-scatterlines!(ax, π1.(y_star), π2.(y_star), π3.(y_star); markersize =8, color=:orange, linewidth=2)
+ax = [ax1, ax2]
 
-scatterlines!(ax, π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =8, color=:blue, linewidth=2)
+for i in 1:length(ax)
+	x = acos(1-h_refs[i])
 
-scatter!(ax, π1.([y0]), π2.([y0]), π3.([y0]); markersize = 10, color=:green)
-scatter!(ax, π1.([yT]), π2.([yT]), π3.([yT]); markersize = 10, color=:red)
+	circx = [cos(ui)*sin(x) for ui in u]
+	circy = [sin(ui)*sin(x) for ui in u]
+	circz = fill(cos(x), n)
 
+	wireframe!(ax[i], sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
+
+	scatterlines!(ax[i], circx, circy, circz; markersize =2, color=:black, linewidth=2)
+	
+	scatterlines!(ax[i], π1.(res[i]), π2.(res[i]), π3.(res[i]); markersize =8, color=:orange, linewidth=2)
+
+	scatterlines!(ax[i], π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =8, color=:blue, linewidth=2)
+	
+	scatter!(ax[i], π1.([y0]), π2.([y0]), π3.([y0]); markersize = 10, color=:green)
+	scatter!(ax[i], π1.([yT]), π2.([yT]), π3.([yT]); markersize = 10, color=:red)
+	
+	ax[i].azimuth[] += 14.445
+	ax[i].elevation[] = 35.02
+
+	limits!(ax[i], -1.5, 1.5, -1.5, 1.5, -1.5, 1.5)
+end
 fig
 ```
 
