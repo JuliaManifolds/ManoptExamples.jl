@@ -213,13 +213,13 @@ y_star = copy(power, discretized_y)
 	integrand.scaling_penalty = 5.0
 
 	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
-
-	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr,
-	stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
-	retraction_method=ProjectionRetraction(),
-	debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop, (:Stepsize, "Stepsize: %1.8e"), "\n",],
-	return_state=true)
-
+	
+	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+		stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
+		retraction_method=ProjectionRetraction(),
+		debug = [:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop],
+		return_state=true)
+	
 	y_star = copy(power, get_solver_result(st_res))
 
 	for i in range(1,50)
@@ -227,14 +227,19 @@ y_star = copy(power, discretized_y)
 
 		NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 
-		st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr,
-		stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
-		retraction_method=ProjectionRetraction(),
-		debug=[:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop],
-		return_state=true
-		)
+		(i > 1) && print(".")
+ 
+		st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+			stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
+			retraction_method=ProjectionRetraction(),
+			debug = ((i > 1) ? [] : [:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop]),
+			return_state=true
+			)
 		y_star = copy(power, get_solver_result(st_res));
 	end
+	println("")
+	push!(res, y_star)
+end
 ```
 
 This yields the geodesic shown below avoiding the north pole cap and connecting two points $γ_0$ and $γ_T$ (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well (blue).
