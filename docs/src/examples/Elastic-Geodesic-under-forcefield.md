@@ -1,4 +1,4 @@
-# Geodesic under Force Field on the Sphere
+# Elastic Geodesic under Force Field on the Sphere
 Laura Weigl, Ronny Bergmann, and Anton Schiela
 2025-11-25
 
@@ -11,21 +11,21 @@ using CSV, DataFrames
 
 # Introduction
 
-In this example we compute a geodesic under a force field on the sphere by applying Newton’s method on vector bundles which was introduced in [WeiglBergmannSchiela:2025](@cite). This example reproduces the results from the example in Sectin 6.1 therein.
+In this example we compute an elastic geodesic under a force field on the sphere by applying Newton’s method on vector bundles which was introduced in [WeiglBergmannSchiela:2025](@cite). This example reproduces the results from the example in Section 6.1 therein.
 
-We consider the sphere $\mathbb{S}^2$ equipped with the Riemannian metric $⟨  ⋅ ,  ⋅  ⟩$ given by the Euclidean inner product with corresponding norm $\lVert ⋅ \rVert$ and an interval $Ω ⊂ \mathbb R$.
-Let $\mathcal X = H^1(Ω, \mathbb S^2)$ and $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
+We consider the sphere $\mathbb{S}^2$ equipped with the Riemannian metric $⟨  ⋅ ,  ⋅  ⟩$ given by the Euclidean inner product with corresponding norm $\lVert ⋅ \rVert$ and an interval $I ⊂ \mathbb R$.
+Let $\mathcal X = H^1(I, \mathbb S^2)$ and $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
 
 Our goal is to find a zero of the mapping $F: \mathcal X → \mathcal E^*$ with
 
 ``` math
-F(γ)ϕ := \int_Ω ⟨\dot{γ}(t), \dot{ϕ}(t)⟩ + ω(γ(t))ϕ(t) \; \mathrm{d}t,
+F(γ)ϕ := \int_I ⟨\dot{γ}(t), \dot{ϕ}(t)⟩ + ω(γ(t))ϕ(t) \; \mathrm{d}t,
 ```
 
 for $γ ∈ \mathcal X$ and $ϕ ∈ T_γ\mathcal X$.
 
 Additionally, we have to take into account that boundary conditions $γ(0) = γ_0$ and $γ(T) = γ_T$ for given $γ_0, γ_T ∈ \mathbb S^2$ are satisfied.
-This yields a geodesic under a given force field $ω: \mathbb S^2 → T^*\mathbb S^2$ connecting $γ_0$ and $γ_T$.
+This yields an elastic geodesic under a given force field $ω: \mathbb S^2 → T^*\mathbb S^2$ connecting $γ_0$ and $γ_T$.
 
 For our example we set
 
@@ -84,15 +84,20 @@ discretized_y = [y(ti) for ti in discrete_time[2:end-1]]
      [0.43128230890356006, 0.0, -0.9022170304460086]
 
 In order to apply Newton’s method to find a zero of $F$, we need the linear mapping $Q_{F(γ)}^*∘ F'(γ)$ [WeiglBergmannSchiela:2025](@cite) which can be seen as a covariant derivative.
-Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formular
-$Q_{F(γ)}^*∘ F'(γ)δ γ\,ϕ = F(γ)(\overset{→}{V}_γ'(γ)δ γ\,ϕ) + F_{\mathbb R^3}'(γ)δ γ\,ϕ$
+Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
+
+``` math
+Q_{F(γ)}^*∘ F'(γ)δ γ\,ϕ = F(γ)(\overset{→}{V}_γ'(γ)δ γ\,ϕ) + F_{\mathbb R^3}'(γ)δ γ\,ϕ
+```
+
 for $δ γ, \, ϕ ∈ T_γ \mathcal X$, where $\overset{→}{V}_γ(\hat γ) ∈ L(T_γ \mathcal X, T_{\hat{γ}}\mathcal X)$ is a vector transport and
-$F_{\mathbb R^3}'(γ)δ γ\, ϕ = \int_Ω ⟨ \dot{δ γ}(t),\dot{ϕ}(t)⟩ + ω'(γ(t))δ γ(t)ϕ(t) \; \mathrm{d}t$
+$F_{\mathbb R^3}'(γ)δ γ\, ϕ = \int_I ⟨ \dot{δ γ}(t),\dot{ϕ}(t)⟩ + ω'(γ(t))δ γ(t)ϕ(t) \; \mathrm{d}t$
 is the euclidean derivative of $F$.
 
 We define a structure that has to be filled for two purposes:
-\* Definition of an integrand and its derivative
-\* Definition of a vector transport and its derivative
+
+1)  Definition of an integrand and its derivative
+2)  Definition of a vector transport and its derivative
 
 ``` julia
 mutable struct DifferentiableMapping{F1<:Function,F2<:Function,T}
@@ -102,13 +107,12 @@ mutable struct DifferentiableMapping{F1<:Function,F2<:Function,T}
 end;
 ```
 
-md”“”
 The following routines define a vector transport and its euclidean derivative. As seen above, they are needed to derive a covariant derivative of $F$.
 
 As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for $p, q ∈ \mathbb S^2$ and $X ∈ T_p\mathbb S^2$ we set
-$\overset{→}{V}_{p}(q)X = (I-q ⋅  q^T)X ∈ T_q\mathbb S^2.$
+math`\overset{→}{V}_{p}(q)X = (I-q ⋅  q^T)X ∈ T_q\mathbb S^2.`
 The derivative of the vector transport is then given by
-$\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q ⋅  p^T - p ⋅  δ q^T\right) ⋅  X.$
+math`\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q ⋅  p^T - p ⋅  δ q^T\right) ⋅  X.`
 
 ``` julia
 function transport_by_proj(S, p, X, q)
@@ -158,13 +162,12 @@ integrand=DifferentiableMapping(F_at,F_prime_at,3.0)
 In this example we implement a functor to compute the Newton matrix and the right hand side for the Newton equation [WeiglBergmannSchiela:2025](@cite)
 
 ``` math
-Q^*_{F(γ)}∘ F'(γ)δ γ + F(γ) = 0
+Q^*_{F(γ)}∘ F'(γ)δ γ + F(γ) = 0^*_γ
 ```
 
 by using the assembler provided in `ManoptExamples.jl`.
 
 It returns the matrix and the right hand side in base representation.
-Moreover, for the computation of the simplified Newton direction (which is necessary for affine covariant damping) a method for assembling the right hand side for the simplified Newton equation is provided.
 
 The assembly routines need a function for evaluation the iterates at the left and right quadrature point.
 
@@ -196,18 +199,6 @@ function (ne::NewtonEquation)(M, VB, p)
 
     ManoptExamples.get_jacobian!(M, Op, evaluate, ne.A, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
     ManoptExamples.get_right_hand_side!(M, Op, evaluate, ne.b, ne.integrand, ne.time_interval; test_space = ne.test_space)
-end
-
-function (ne::NewtonEquation)(M, VB, p, p_trial)
-    n = manifold_dimension(M)
-    btrial=zeros(n)
-
-    Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
-    Optrial = OffsetArray([y0, p_trial..., yT], 0:(length(p_trial)+1))
-
-    ManoptExamples.get_right_hand_side_simplified!(M, Op, Optrial, evaluate, btrial, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
-
-    return btrial
 end
 ```
 
@@ -315,14 +306,14 @@ and plot the result, where we measure the norms of the Newton direction in each 
 ``` julia
 f = Figure(;)
 row, col = fldmod1(1, 2)
-Axis(f[row, col], yscale = log10, title = string("Norms of the Newton directions (semilogarithmic)"), xminorgridvisible = true, xticks = (1:length(change)), xlabel = "Iteration", ylabel = "‖δx‖")
+Axis(f[row, col], yscale = log10, title = string("Norms of the Newton directions (semilogarithmic)"), xminorgridvisible = true, xticks = (1:length(change)), xlabel = "Iteration", ylabel = "‖δ γ‖")
 scatterlines!(change[1:end], color = :blue)
 f
 ```
 
 ![](Elastic-Geodesic-under-forcefield_files/figure-commonmark/cell-16-output-1.png)
 
-and the resulting geodesic under the force field (orange).
+and the resulting elastic geodesic under the force field (orange).
 The starting geodesic (blue) is plotted as well. The force acting on each point of the geodesic is visualized by green arrows.
 
 ``` julia
@@ -386,7 +377,7 @@ using Pkg
 Pkg.status()
 ```
 
-    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+    Status `~/Documents/julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.6.3
       [336ed68f] CSV v0.10.15
       [13f3f980] CairoMakie v0.15.7
@@ -401,12 +392,12 @@ Pkg.status()
       [682c06a0] JSON v1.3.0
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
-      [d3d80556] LineSearches v7.4.1
+      [d3d80556] LineSearches v7.5.1
       [ee78f7c6] Makie v0.24.7
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.6
+      [1cead3c2] Manifolds v0.11.7
       [3362f125] ManifoldsBase v2.2.1
-      [0fc0a36d] Manopt v0.5.28
+      [0fc0a36d] Manopt v0.5.29
       [5b8d5e80] ManoptExamples v0.1.17 `..`
       [51fcb6bd] NamedColors v0.2.3
       [6fe1bfb0] OffsetArrays v1.17.0
@@ -422,7 +413,7 @@ using Dates
 now()
 ```
 
-    2025-11-25T16:36:23.956
+    2025-11-28T16:03:02.056
 
 ## Literature
 
