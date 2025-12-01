@@ -134,15 +134,6 @@ end
 
     evaluate(p, i, tloc) = (1.0 - tloc) * p[i - 1] + tloc * p[i]
 
-    struct NewtonEquation{F, TS, T, I, NM, Nrhs}
-        integrand::F
-        test_space::TS
-        transport::T
-        time_interval::I
-        A::NM
-        b::Nrhs
-    end
-
     function NewtonEquation(M, F, test_space, VT, interval)
         n = manifold_dimension(M)
         A = spzeros(n, n)
