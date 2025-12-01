@@ -215,14 +215,14 @@ end
 	powerR3_λ = PowerManifold(R3, NestedPowerRepresentation(), N+1) # power manifold of R^3
 	product = ProductManifold(powerR3, powerS, powerR3_λ) # product manifold
 
-	mutable struct variational_space
+	mutable struct VariationalSpace
 		manifold::AbstractManifold
 		degree::Integer
 	end
 
-	test_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
+	test_spaces = ArrayPartition(VariationalSpace(R3, 1), VariationalSpace(S, 1), VariationalSpace(R3, 0))
 
-	ansatz_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
+	ansatz_spaces = ArrayPartition(VariationalSpace(R3, 1), VariationalSpace(S, 1), VariationalSpace(R3, 0))
 	
 	start_interval = 0.0
 	end_interval = 1.0
@@ -399,14 +399,14 @@ end
 	powerR3_λ = PowerManifold(R3, NestedPowerRepresentation(), N+1) # power manifold of R^3
 	product = ProductManifold(powerR3, powerS, powerR3_λ) # product manifold
 
-	mutable struct variational_space
+	mutable struct VariationalSpace
 		manifold::AbstractManifold
 		degree::Integer
 	end
 
-	test_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
+	test_spaces = ArrayPartition(VariationalSpace(R3, 1), VariationalSpace(S, 1), VariationalSpace(R3, 0))
 
-	ansatz_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
+	ansatz_spaces = ArrayPartition(VariationalSpace(R3, 1), VariationalSpace(S, 1), VariationalSpace(R3, 0))
 	
 	start_interval = 0.0
 	end_interval = 1.0

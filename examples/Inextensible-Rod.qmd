@@ -94,14 +94,14 @@ powerR3 = PowerManifold(R3, NestedPowerRepresentation(), N) # power manifold of 
 powerR3_λ = PowerManifold(R3, NestedPowerRepresentation(), N+1) # power manifold of R^3
 product = ProductManifold(powerR3, powerS, powerR3_λ) # product manifold
 
-mutable struct variational_space
+mutable struct VariationalSpace
 	manifold::AbstractManifold
 	degree::Integer
 end
 
-test_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
+test_spaces = ArrayPartition(VariationalSpace(R3, 1), VariationalSpace(S, 1), VariationalSpace(R3, 0))
 
-ansatz_spaces = ArrayPartition(variational_space(R3, 1), variational_space(S, 1), variational_space(R3, 0))
+ansatz_spaces = ArrayPartition(VariationalSpace(R3, 1), VariationalSpace(S, 1), VariationalSpace(R3, 0))
 
 start_interval = 0.0
 end_interval = 1.0
@@ -177,13 +177,9 @@ The derivative of the vector transport is then given by
 ```
 
 ```{julia}
-function transport_by_proj(S, p, X, q)
-	return X - q*(q'*X)
-end
+transport_by_proj(S, p, X, q) = X - q*(q'*X)
 
-function transport_by_proj_prime(S, p, X, dq)
-	return (- dq*p' - p*dq')*X
-end
+transport_by_proj_prime(S, p, X, dq) =  (- dq*p' - p*dq')*X
 
 transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime)
 ```
@@ -303,10 +299,8 @@ function (ne::NewtonEquation)(M, VB, p)
 	# assemble (2,2)-block using the connection
 	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A22, ne.integrand_v, ne.vectortransport, ne.discrete_time_interval; row_index = 2, column_index = 2, test_space = ne.test_spaces.x[2], ansatz_space = ne.ansatz_spaces.x[2])
 
-
 	# assemble (1,3)-block without connection
 	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A13, ne.integrand_y, id_transport, ne.discrete_time_interval; row_index = 1, column_index = 3, test_space = ne.test_spaces.x[1], ansatz_space = ne.ansatz_spaces.x[3])
-
 
 	# assemble (3,2)-block without connection
 	ManoptExamples.get_jacobian_block!(M, Op, evaluate, ne.A32, ne.integrand_λ, id_transport, ne.discrete_time_interval; row_index = 3, column_index = 2, test_space = ne.test_spaces.x[3], ansatz_space = ne.ansatz_spaces.x[2])

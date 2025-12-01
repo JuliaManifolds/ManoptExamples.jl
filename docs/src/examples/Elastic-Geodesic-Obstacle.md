@@ -47,12 +47,12 @@ N=200
 S = Manifolds.Sphere(2)
 power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
 
-mutable struct variational_space
+mutable struct VariationalSpace
     manifold::AbstractManifold
     degree::Integer
 end
 
-test_space = variational_space(S, 1)
+test_space = VariationalSpace(S, 1)
 
 start_interval = -pi/2 + 0.1
 end_interval = pi/2 - 0.1
@@ -102,12 +102,10 @@ The derivative of the vector transport is then given by
 $\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q\cdot p^T - p\cdot δ q^T\right)\cdot X.$
 
 ``` julia
-function transport_by_proj(S, p, X, q)
-    return X - q*(q'*X)
-end
-function transport_by_proj_prime(S, p, X, dq)
-    return (- dq*p' - p*dq')*X
-end
+transport_by_proj(S, p, X, q) = X - q*(q'*X)
+
+transport_by_proj_prime(S, p, X, dq) = (- dq*p' - p*dq')*X
+
 transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothing,nothing)
 ```
 
@@ -383,7 +381,7 @@ using Dates
 now()
 ```
 
-    2025-11-28T16:21:50.822
+    2025-12-01T17:59:26.322
 
 ## Literature
 

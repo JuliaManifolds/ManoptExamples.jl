@@ -34,12 +34,12 @@ For our example we set
     S = Manifolds.Sphere(2)
     power = PowerManifold(S, NestedPowerRepresentation(), N)
 
-    mutable struct variational_space
+    mutable struct VariationalSpace
         manifold::AbstractManifold
         degree::Integer
     end
 
-    test_space = variational_space(S, 1)
+    test_space = VariationalSpace(S, 1)
 
     start_interval = 0.4
     end_interval = π - 0.4
@@ -115,12 +115,10 @@ The derivative of the vector transport is then given by
 math`\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q ⋅  p^T - p ⋅  δ q^T\right) ⋅  X.`
 
 ``` julia
-function transport_by_proj(S, p, X, q)
-    return X - q*(q'*X)
-end
-function transport_by_proj_prime(S, p, X, dq)
-    return (- dq*p' - p*dq')*X
-end
+transport_by_proj(S, p, X, q) =  X - q*(q'*X)
+
+transport_by_proj_prime(S, p, X, dq) = (- dq*p' - p*dq')*X
+
 transport=DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothing)
 ```
 
@@ -146,12 +144,10 @@ end;
 ```
 
 ``` julia
-function F_at(Integrand, y, ydot, B, Bdot)
-    return ydot'*Bdot+w(y,Integrand.scaling)'*B
-end
-function F_prime_at(Integrand,y,ydot,B1,B1dot,B2,B2dot)
-    return B1dot'*B2dot+(w_prime(y,Integrand.scaling)*B1)'*B2
-end
+F_at(Integrand, y, ydot, B, Bdot) = ydot'*Bdot+w(y,Integrand.scaling)'*B
+
+F_prime_at(Integrand,y,ydot,B1,B1dot,B2,B2dot) = B1dot'*B2dot+(w_prime(y,Integrand.scaling)*B1)'*B2
+
 integrand=DifferentiableMapping(F_at,F_prime_at,3.0)
 ```
 
@@ -413,7 +409,7 @@ using Dates
 now()
 ```
 
-    2025-11-28T16:03:02.056
+    2025-12-01T18:00:15.900
 
 ## Literature
 
