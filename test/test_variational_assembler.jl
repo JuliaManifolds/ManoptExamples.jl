@@ -106,11 +106,6 @@ end
     S = Manifolds.Sphere(2)
     power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
 
-    mutable struct VariationalSpace
-        manifold::AbstractManifold
-        degree::Integer
-    end
-
     test_space = VariationalSpace(S, 1)
 
     start_interval = 0.4
@@ -122,12 +117,6 @@ end
 
     y(t) = [sin(t), 0, cos(t)]
     discretized_y = [y(ti) for ti in discrete_time[2:(end - 1)]]
-
-    mutable struct Mapping{F1 <: Function, F2 <: Function, T}
-        value::F1
-        derivative::F2
-        scaling::T
-    end
 
     transport_by_proj(S, p, X, q) = X - q * (q' * X)
     transport_by_proj_prime(S, p, X, dq) = (- dq * p' - p * dq') * X
