@@ -86,13 +86,13 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
             stopping_criterion = (StopAfterIteration(15) | StopWhenChangeLess(power, 1.0e-12; outer_norm = Inf, inverse_retraction_method = ProjectionInverseRetraction())),
             retraction_method = ProjectionRetraction(),
             return_state = true
-            )
+        )
 
-            @test all(get_solver_result(st_res) .≈ [[0.586381584046008, -0.4818143937953777, 0.6511616756407638], [1.0, -3.0171701154889116e-15, 5.346718841666071e-16], [0.5863815840460105, 0.4818143937953751, -0.6511616756407635]])
+        @test all(get_solver_result(st_res) .≈ [[0.586381584046008, -0.4818143937953777, 0.6511616756407638], [1.0, -3.0171701154889116e-15, 5.346718841666071e-16], [0.5863815840460105, 0.4818143937953751, -0.6511616756407635]])
     end
 
     @testset "Test matrix and rhs" begin # Testset für Assemblierung der Jacobi-Matrix und der rechten Seite in der ersten Interation
-    
+
         function (ne::NewtonEquation)(M, VB, p)
             n = manifold_dimension(M)
             ne.A .= spzeros(n, n)
@@ -116,7 +116,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
             stopping_criterion = (StopAfterIteration(1) | StopWhenChangeLess(power, 1.0e-12; outer_norm = Inf, inverse_retraction_method = ProjectionInverseRetraction())),
             retraction_method = ProjectionRetraction(),
             return_state = true
-            )
+        )
     end
 
     @testset "Test assembly of simplified right hand side" begin # Testset für Assemblierung der rechte Seite für vereinfachten Newton (für Dämpfung) in der ersten Iteration
@@ -136,12 +136,11 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
         NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 
         st_res3 = vectorbundle_newton(
-                power, TangentBundle(power), NE, discretized_γ; sub_problem = solve_in_basis_repr, sub_state = AllocatingEvaluation(),
-                stopping_criterion = (StopAfterIteration(1) | StopWhenChangeLess(power, 1.0e-12; outer_norm = Inf, inverse_retraction_method = ProjectionInverseRetraction())),
-                retraction_method = ProjectionRetraction(),
-                stepsize = Manopt.AffineCovariantStepsize(power, θ_des = 0.1),
-                return_state = true
-            )
+            power, TangentBundle(power), NE, discretized_γ; sub_problem = solve_in_basis_repr, sub_state = AllocatingEvaluation(),
+            stopping_criterion = (StopAfterIteration(1) | StopWhenChangeLess(power, 1.0e-12; outer_norm = Inf, inverse_retraction_method = ProjectionInverseRetraction())),
+            retraction_method = ProjectionRetraction(),
+            stepsize = Manopt.AffineCovariantStepsize(power, θ_des = 0.1),
+            return_state = true
+        )
     end
 end
-
