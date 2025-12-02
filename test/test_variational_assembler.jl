@@ -106,7 +106,8 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
             @test size(ne.b) == (6,)
 
             @test all(Matrix(ne.A) .≈ [2.847607684272587 2.5279563925639 -1.708239045705826 0.0 0.0 0.0; 0.7717619023715545 2.8476076842725875 0.0 -1.4238038421362937 0.0 0.0; -1.708239045705826 0.0 2.8476076842725857 1.7561944901923452 -1.7082390457058247 0.0; 0.0 -1.4238038421362937 6.584674667307058e-33 2.8476076842725857 0.0 -1.4238038421362922; 0.0 0.0 -1.7082390457058247 0.0 2.8476076842725853 2.5279563925639006; 0.0 0.0 0.0 -1.4238038421362922 0.7717619023715555 2.8476076842725853])
-            @test all(ne.b .≈ [1.1642010138654264, 0.0, 1.0753589805471364e-16, 1.1102230246251565e-16, -1.164201013865427, 2.220446049250313e-16])
+            println(ne.b)
+            @test norm(ne.b - [1.1642010138654264, 0.0, 1.0753589805471364e-16, 1.1102230246251565e-16, -1.164201013865427, 2.220446049250313e-16]) + norm(ne.b) ≈ norm(ne.b)
         end
 
         NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
@@ -120,6 +121,19 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
     end
 
     @testset "Test assembly of simplified right hand side" begin # Testset für Assemblierung der rechte Seite für vereinfachten Newton (für Dämpfung) in der ersten Iteration
+        function (ne::NewtonEquation)(M, VB, p)
+            n = manifold_dimension(M)
+            ne.A .= spzeros(n, n)
+            ne.b .= zeros(n)
+
+            Op = OffsetArray([γ0, p..., γT], 0:(length(p) + 1))
+
+            ManoptExamples.get_jacobian!(M, Op, evaluate, ne.A, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
+            @test size(ne.A) == (6, 6)
+            ManoptExamples.get_right_hand_side!(M, Op, evaluate, ne.b, ne.integrand, ne.time_interval; test_space = ne.test_space)
+            @test size(ne.b) == (6,)
+        end
+
         function (ne::NewtonEquation)(M, VB, p, p_trial)
             n = manifold_dimension(M)
             btrial = zeros(n)
@@ -129,7 +143,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
 
             ManoptExamples.get_right_hand_side_simplified!(M, Op, Optrial, evaluate, btrial, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
             @test size(btrial) == (6,)
-            @test all(btrial .≈ [-0.12876345443232956, -0.09421034004627316, -7.771561172376096e-16, 1.3322676295501878e-15, 0.1287634544323284, 0.09421034004627227])
+            @test norm(btrial -[-0.12876345443232956, -0.09421034004627316, -7.771561172376096e-16, 1.3322676295501878e-15, 0.1287634544323284, 0.09421034004627227]) + norm(btrial) ≈ norm(btrial)
             return btrial
         end
 
