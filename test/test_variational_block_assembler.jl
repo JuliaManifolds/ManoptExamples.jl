@@ -117,7 +117,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
     y_0 = copy(product, disc_point)
 
     @testset "Test Variational Block Assembler (Inextensible rod) runs" begin # testset for result of the whole Newton iteration
-        
+
         function (ne::NewtonEq)(M, VB, p)
             n1 = Int(manifold_dimension(submanifold(M, 1)))
             n2 = Int(manifold_dimension(submanifold(M, 2)))
@@ -157,26 +157,26 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
 
 
             ne.A .= vcat(
-                    hcat(spzeros(n1, n1), spzeros(n1, n2), ne.A13),
-                    hcat(spzeros(n2, n1), ne.A22, ne.A32'),
-                    hcat(ne.A13', ne.A32, spzeros(n3, n3))
-                )
+                hcat(spzeros(n1, n1), spzeros(n1, n2), ne.A13),
+                hcat(spzeros(n2, n1), ne.A22, ne.A32'),
+                hcat(ne.A13', ne.A32, spzeros(n3, n3))
+            )
             ne.b .= vcat(ne.b1, ne.b2, ne.b3)
-                
+
             return
         end
 
         NE = NewtonEq(product, integrand_yλ, integrand_vv, integrand_λv, test_spaces, ansatz_spaces, transport, discrete_time_interval)
 
         st_res = vectorbundle_newton(
-                product, TangentBundle(product), NE, y_0; sub_problem = solve_in_basis_repr, sub_state = AllocatingEvaluation(),
-                stopping_criterion = (StopAfterIteration(15) | StopWhenChangeLess(product, 1.0e-12; outer_norm = Inf)),
-                retraction_method = ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
-                return_state = true
-            )
+            product, TangentBundle(product), NE, y_0; sub_problem = solve_in_basis_repr, sub_state = AllocatingEvaluation(),
+            stopping_criterion = (StopAfterIteration(15) | StopWhenChangeLess(product, 1.0e-12; outer_norm = Inf)),
+            retraction_method = ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
+            return_state = true
+        )
         res = get_solver_result(st_res)
 
-        @test norm(res[product, 1] - [[0.17939616371786352, 3.8563733738218966e-42, 0.09246128699172507], [0.3797679482303294, 0.0, -0.02544490371304304], [0.5795183336410239, 2.8698592549372254e-42, -0.10104793173942489]]) + norm(res[product, 1]) ≈ norm(res[product, 1]) 
+        @test norm(res[product, 1] - [[0.17939616371786352, 3.8563733738218966e-42, 0.09246128699172507], [0.3797679482303294, 0.0, -0.02544490371304304], [0.5795183336410239, 2.8698592549372254e-42, -0.10104793173942489]]) + norm(res[product, 1]) ≈ norm(res[product, 1])
         @test norm(res[product, 2] - [[0.9879557142429503, 3.0850986990575173e-41, -0.15473689506611538], [0.615018561856777, -4.591774807899561e-41, -0.7885126305720296], [0.982984521428779, -2.2958874039497803e-41, 0.18368840636097478]]) + norm(res[product, 2]) ≈ norm(res[product, 2])
         @test norm(res[product, 3] - [[-32.46424394115326, -8.609577764811676e-41, 0.7280993274418598], [-32.46424394115326, -8.609577764811676e-41, 0.7280993274418598], [-32.46424394115326, -8.609577764811676e-41, 0.7280993274418598], [-32.46424394115326, -8.609577764811676e-41, 0.7280993274418598]]) + norm(res[product, 3]) ≈ norm(res[product, 3])
 
@@ -222,14 +222,13 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
 
 
             ne.A .= vcat(
-                    hcat(spzeros(n1, n1), spzeros(n1, n2), ne.A13),
-                    hcat(spzeros(n2, n1), ne.A22, ne.A32'),
-                    hcat(ne.A13', ne.A32, spzeros(n3, n3))
-                )
+                hcat(spzeros(n1, n1), spzeros(n1, n2), ne.A13),
+                hcat(spzeros(n2, n1), ne.A22, ne.A32'),
+                hcat(ne.A13', ne.A32, spzeros(n3, n3))
+            )
             ne.b .= vcat(ne.b1, ne.b2, ne.b3)
 
             @test norm(Matrix(ne.A22) - [5.380868154339828 0.0 -3.695518130045147 0.0 0.0 0.0; -9.316796552482789e-17 5.380868154339828 0.0 -4.0 0.0 0.0; -3.695518130045147 0.0 7.416036260090294 0.0 -3.695518130045147 0.0; 0.0 -4.0 0.0 7.416036260090294 0.0 -4.0; 0.0 0.0 -3.695518130045147 0.0 6.594762875032289 0.0; 0.0 0.0 0.0 -4.0 4.39376565883322e-17 6.5947628750322895]) + norm(Matrix(ne.A22)) ≈ norm(Matrix(ne.A22))
-
 
 
             @test norm(Matrix(ne.A13) - [1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0]) + norm(Matrix(ne.A13)) ≈ norm(Matrix(ne.A13))
@@ -245,20 +244,20 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
 
 
             @test norm(ne.b3 - [0.028613358998594428, -0.029085429045636227, -0.11180339887498948, -0.04048494156391083, -0.04158542904563624, 0.0, -0.040484941563910776, 0.0415854290456362, 0.0, -0.013093542744289671, 0.029085429045636213, -0.07808688094430304]) + norm(ne.b3) ≈ norm(ne.b3)
-                
+
             return
         end
 
         NE = NewtonEq(product, integrand_yλ, integrand_vv, integrand_λv, test_spaces, ansatz_spaces, transport, discrete_time_interval)
 
         st_res = vectorbundle_newton(
-                product, TangentBundle(product), NE, y_0; sub_problem = solve_in_basis_repr, sub_state = AllocatingEvaluation(),
-                stopping_criterion = (StopAfterIteration(1) | StopWhenChangeLess(product, 1.0e-12; outer_norm = Inf)),
-                retraction_method = ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
-                return_state = true
-            )
+            product, TangentBundle(product), NE, y_0; sub_problem = solve_in_basis_repr, sub_state = AllocatingEvaluation(),
+            stopping_criterion = (StopAfterIteration(1) | StopWhenChangeLess(product, 1.0e-12; outer_norm = Inf)),
+            retraction_method = ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
+            return_state = true
+        )
     end
-        
+
     @testset "Test assembly simplified right hand side for block system" begin # testset for assembling the right-hand side for simplified Newton (for damping) in the first iteration
         function (ne::NewtonEq)(M, VB, p)
             n1 = Int(manifold_dimension(submanifold(M, 1)))
@@ -299,12 +298,12 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
 
 
             ne.A .= vcat(
-                    hcat(spzeros(n1, n1), spzeros(n1, n2), ne.A13),
-                    hcat(spzeros(n2, n1), ne.A22, ne.A32'),
-                    hcat(ne.A13', ne.A32, spzeros(n3, n3))
-                )
+                hcat(spzeros(n1, n1), spzeros(n1, n2), ne.A13),
+                hcat(spzeros(n2, n1), ne.A22, ne.A32'),
+                hcat(ne.A13', ne.A32, spzeros(n3, n3))
+            )
             ne.b .= vcat(ne.b1, ne.b2, ne.b3)
-                
+
             return
         end
 
@@ -343,13 +342,13 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
         end
 
         NE = NewtonEq(product, integrand_yλ, integrand_vv, integrand_λv, test_spaces, ansatz_spaces, transport, discrete_time_interval)
-            
+
         st_res2 = vectorbundle_newton(
-                product, TangentBundle(product), NE, y_0; sub_problem = solve_in_basis_repr, sub_state = AllocatingEvaluation(),
-                stopping_criterion = (StopAfterIteration(1) | StopWhenChangeLess(product, 1.0e-12; outer_norm = Inf)),
-                retraction_method = ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
-                stepsize = Manopt.AffineCovariantStepsize(product, θ_des = 1.1, outer_norm = Inf),
-                return_state = true
+            product, TangentBundle(product), NE, y_0; sub_problem = solve_in_basis_repr, sub_state = AllocatingEvaluation(),
+            stopping_criterion = (StopAfterIteration(1) | StopWhenChangeLess(product, 1.0e-12; outer_norm = Inf)),
+            retraction_method = ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
+            stepsize = Manopt.AffineCovariantStepsize(product, θ_des = 1.1, outer_norm = Inf),
+            return_state = true
         )
-        end
     end
+end
