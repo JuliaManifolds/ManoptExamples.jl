@@ -2,7 +2,7 @@ using Manifolds, Manopt, ManoptExamples, Test
 using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
 
 @testset "Variational problem assembler" begin
-    N = 3 
+    N = 3
     S = Manifolds.Sphere(2)
     mutable struct VariationalSpace
         manifold::AbstractManifold
@@ -269,7 +269,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
                 hcat(ne.A13', ne.A32, spzeros(n3, n3))
             )
             ne.b .= vcat(ne.b1, ne.b2, ne.b3)
-            
+
             if test_matrix_rhs
                 @test all(Matrix(ne.A22) .≈ [5.380868154339828 0.0 -3.695518130045147 0.0 0.0 0.0; -9.316796552482789e-17 5.380868154339828 0.0 -4.0 0.0 0.0; -3.695518130045147 0.0 7.416036260090294 0.0 -3.695518130045147 0.0; 0.0 -4.0 0.0 7.416036260090294 0.0 -4.0; 0.0 0.0 -3.695518130045147 0.0 6.594762875032289 0.0; 0.0 0.0 0.0 -4.0 4.39376565883322e-17 6.5947628750322895])
                 @test all(Matrix(ne.A13) .≈ [1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 -1.0])
