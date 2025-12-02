@@ -1,7 +1,7 @@
 using Manifolds, Manopt, ManoptExamples, Test
 using LinearAlgebra, SparseArrays, OffsetArrays
 
-@testset "Variational problem assembler (Elastic geodesic under force)" begin # testset für nicht-Block-Assemblierer bestehend aus drei Teilen
+@testset "Variational problem assembler (Elastic geodesic under force)" begin # testset for non-block-assembler (consists of 3 parts)
     # gemeinsame Definitionen für alle drei testsets:
     N = 3
     S = Manifolds.Sphere(2)
@@ -65,7 +65,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays
         X_base = (problem.newton_equation.A) \ (-problem.newton_equation.b)
         return get_vector(problem.manifold, newtonstate.p, X_base, DefaultOrthogonalBasis())
     end
-    @testset "Test Variational Assembler (Elastic geodesic under force) runs" begin # Testset für Ergebnis der gesamten Newton-Iteration
+    @testset "Test Variational Assembler (Elastic geodesic under force) runs" begin # testset for result of the whole Newton iteration
         function (ne::NewtonEquation)(M, VB, p)
             n = manifold_dimension(M)
             ne.A .= spzeros(n, n)
@@ -91,7 +91,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays
         @test all(get_solver_result(st_res) .≈ [[0.586381584046008, -0.4818143937953777, 0.6511616756407638], [1.0, -3.0171701154889116e-15, 5.346718841666071e-16], [0.5863815840460105, 0.4818143937953751, -0.6511616756407635]])
     end
 
-    @testset "Test matrix and rhs" begin # Testset für Assemblierung der Jacobi-Matrix und der rechten Seite in der ersten Interation
+    @testset "Test matrix and rhs" begin # testset for assembling the Jacobi matrix and the right-hand side in the first iteration
 
         function (ne::NewtonEquation)(M, VB, p)
             n = manifold_dimension(M)
@@ -106,7 +106,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays
             @test size(ne.b) == (6,)
 
             @test all(Matrix(ne.A) .≈ [2.847607684272587 2.5279563925639 -1.708239045705826 0.0 0.0 0.0; 0.7717619023715545 2.8476076842725875 0.0 -1.4238038421362937 0.0 0.0; -1.708239045705826 0.0 2.8476076842725857 1.7561944901923452 -1.7082390457058247 0.0; 0.0 -1.4238038421362937 6.584674667307058e-33 2.8476076842725857 0.0 -1.4238038421362922; 0.0 0.0 -1.7082390457058247 0.0 2.8476076842725853 2.5279563925639006; 0.0 0.0 0.0 -1.4238038421362922 0.7717619023715555 2.8476076842725853])
-            println(ne.b)
+
             @test norm(ne.b - [1.1642010138654264, 0.0, 1.0753589805471364e-16, 1.1102230246251565e-16, -1.164201013865427, 2.220446049250313e-16]) + norm(ne.b) ≈ norm(ne.b)
         end
 
@@ -120,7 +120,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays
         )
     end
 
-    @testset "Test assembly of simplified right hand side" begin # Testset für Assemblierung der rechte Seite für vereinfachten Newton (für Dämpfung) in der ersten Iteration
+    @testset "Test assembly of simplified right hand side" begin # testset for assembling the right-hand side for simplified Newton (for damping) in the first iteration
         function (ne::NewtonEquation)(M, VB, p)
             n = manifold_dimension(M)
             ne.A .= spzeros(n, n)
