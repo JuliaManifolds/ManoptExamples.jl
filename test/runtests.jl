@@ -10,4 +10,5 @@ using Manifolds, Manopt, ManoptExamples, Test
     include("test_Rosenbrock.jl")
     include("test_total_variation.jl")
     include("test_variational_assembler.jl")
+    include("test_variational_block_assembler.jl")
 end
