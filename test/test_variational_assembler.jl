@@ -143,7 +143,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays
 
             ManoptExamples.get_right_hand_side_simplified!(M, Op, Optrial, evaluate, btrial, ne.integrand, ne.transport, ne.time_interval; test_space = ne.test_space)
             @test size(btrial) == (6,)
-            @test norm(btrial -[-0.12876345443232956, -0.09421034004627316, -7.771561172376096e-16, 1.3322676295501878e-15, 0.1287634544323284, 0.09421034004627227]) + norm(btrial) ≈ norm(btrial)
+            @test norm(btrial - [-0.12876345443232956, -0.09421034004627316, -7.771561172376096e-16, 1.3322676295501878e-15, 0.1287634544323284, 0.09421034004627227]) + norm(btrial) ≈ norm(btrial)
             return btrial
         end
 
