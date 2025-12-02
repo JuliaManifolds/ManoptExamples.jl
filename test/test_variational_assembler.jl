@@ -1,5 +1,5 @@
 using Manifolds, Manopt, ManoptExamples, Test
-using LinearAlgebra, SparseArrays, OffsetArrays, RecursiveArrayTools
+using LinearAlgebra, SparseArrays, OffsetArrays
 
 @testset "Variational problem assembler (Elastic geodesic under force)" begin # testset für nicht-Block-Assemblierer bestehend aus drei Teilen
     # gemeinsame Definitionen für alle drei testsets:
