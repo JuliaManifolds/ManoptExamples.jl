@@ -14,7 +14,6 @@ using LinearAlgebra, SparseArrays, OffsetArrays
     transport_by_proj_prime(S, p, X, dq) = (- dq * p' - p * dq') * X
 
     power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
-    test_space = VariationalSpace(S, 1)
     start_interval = 0.4
     end_interval = pi - 0.4
     discrete_time = range(; start = start_interval, stop = end_interval, length = N + 2) # equidistant discrete time points
@@ -66,6 +65,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays
         return get_vector(problem.manifold, newtonstate.p, X_base, DefaultOrthogonalBasis())
     end
     @testset "Test Variational Assembler (Elastic geodesic under force) runs" begin # testset for result of the whole Newton iteration
+        test_space = VariationalSpace(S, 1)
         function (ne::NewtonEquation)(M, VB, p)
             n = manifold_dimension(M)
             ne.A .= spzeros(n, n)
@@ -92,7 +92,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays
     end
 
     @testset "Test matrix and rhs" begin # testset for assembling the Jacobi matrix and the right-hand side in the first iteration
-
+        test_space = VariationalSpace(S, 1)
         function (ne::NewtonEquation)(M, VB, p)
             n = manifold_dimension(M)
             ne.A .= spzeros(n, n)
@@ -121,6 +121,7 @@ using LinearAlgebra, SparseArrays, OffsetArrays
     end
 
     @testset "Test assembly of simplified right hand side" begin # testset for assembling the right-hand side for simplified Newton (for damping) in the first iteration
+        test_space = VariationalSpace(S, 1)
         function (ne::NewtonEquation)(M, VB, p)
             n = manifold_dimension(M)
             ne.A .= spzeros(n, n)
@@ -156,5 +157,19 @@ using LinearAlgebra, SparseArrays, OffsetArrays
             stepsize = Manopt.AffineCovariantStepsize(power, θ_des = 0.1),
             return_state = true
         )
+    end
+    @testset "Test error cases" begin
+        test_space = VariationalSpace(S, 0)
+        n = manifold_dimension(power)
+        matrix = spzeros(n, n)
+        rhs = zeros(n)
+        rhs_trial = zeros(n)
+
+        Op = OffsetArray([γ0, discretized_γ..., γT], 0:(length(discretized_γ) + 1))
+        Optrial = OffsetArray([γ0, discretized_γ..., γT], 0:(length(discretized_γ) + 1))
+
+        @test_throws ErrorException ManoptExamples.get_jacobian!(power, Op, evaluate, matrix, integrand, transport, discrete_time; test_space = test_space)
+        @test_throws ErrorException ManoptExamples.get_right_hand_side!(power, Op, evaluate, rhs, integrand, discrete_time; test_space = test_space)
+        @test_throws ErrorException ManoptExamples.get_right_hand_side_simplified!(power, Op, Optrial, evaluate, rhs, integrand, transport, discrete_time; test_space = test_space)
     end
 end
