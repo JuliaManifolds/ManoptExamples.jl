@@ -13,7 +13,7 @@ using CSV, DataFrames
 
 In this example we compute an elastic geodesic under a force field on the sphere by applying Newton’s method on vector bundles which was introduced in [WeiglBergmannSchiela:2025](@cite). This example reproduces the results from the example in Section 6.1 therein.
 
-We consider the sphere $\mathbb{S}^2$ equipped with the Riemannian metric $⟨  ⋅ ,  ⋅  ⟩$ given by the Euclidean inner product with corresponding norm $\lVert ⋅ \rVert$ and an interval $I ⊂ \mathbb R$.
+We consider the sphere $\mathbb{S}^2$ equipped with the Riemannian metric $⟨  ⋅ ,  ⋅  ⟩$ given by the Euclidean inner product with corresponding norm $\lVert ⋅ \rVert$ and an interval $I = [0,T] ⊂ \mathbb R$.
 Let $\mathcal X = H^1(I, \mathbb S^2)$ and $\mathcal E^* = T^*\mathcal X$ its cotangent bundle.
 
 Our goal is to find a zero of the mapping $F: \mathcal X → \mathcal E^*$ with
@@ -87,10 +87,10 @@ In order to apply Newton’s method to find a zero of $F$, we need the linear ma
 Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
 
 ``` math
-Q_{F(γ)}^*∘ F'(γ)δ γ\,ϕ = F(γ)(\overset{→}{V}_γ'(γ)δ γ\,ϕ) + F_{\mathbb R^3}'(γ)δ γ\,ϕ
+Q_{F(γ)}^*∘ F'(γ)δ γ\,ϕ = F(γ)(\overset{→}{V_γ'}(γ)δ γ\,ϕ) + F_{\mathbb R^3}'(γ)δ γ\,ϕ
 ```
 
-for $δ γ, \, ϕ ∈ T_γ \mathcal X$, where $\overset{→}{V}_γ(\hat γ) ∈ L(T_γ \mathcal X, T_{\hat{γ}}\mathcal X)$ is a vector transport and
+for $δ γ, \, ϕ ∈ T_γ \mathcal X$, where $\overset{→}{V_γ}(\hat γ) ∈ L(T_γ \mathcal X, T_{\hat{γ}}\mathcal X)$ is a vector transport and
 $F_{\mathbb R^3}'(γ)δ γ\, ϕ = \int_I ⟨ \dot{δ γ}(t),\dot{ϕ}(t)⟩ + ω'(γ(t))δ γ(t)ϕ(t) \; \mathrm{d}t$
 is the euclidean derivative of $F$.
 
@@ -110,9 +110,16 @@ end;
 The following routines define a vector transport and its euclidean derivative. As seen above, they are needed to derive a covariant derivative of $F$.
 
 As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for $p, q ∈ \mathbb S^2$ and $X ∈ T_p\mathbb S^2$ we set
-math`\overset{→}{V}_{p}(q)X = (I-q ⋅  q^T)X ∈ T_q\mathbb S^2.`
+
+``` math
+\overset{→}{V}_{p}(q)X = (I-q ⋅  q^T)X ∈ T_q\mathbb S^2.
+```
+
 The derivative of the vector transport is then given by
-math`\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q ⋅  p^T - p ⋅  δ q^T\right) ⋅  X.`
+
+``` math
+\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q ⋅  p^T - p ⋅  δ q^T\right) ⋅  X.
+```
 
 ``` julia
 transport_by_proj(S, p, X, q) =  X - q*(q'*X)
@@ -127,7 +134,11 @@ transport=DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothin
 The following two routines define the integrand of $F$ and its euclidean derivative.
 They use a force field $ω$, which is defined, below. A scaling parameter for the force is also employed.
 
-In this example we consider the force field $ω: \mathbb S^2 → T^*\mathbb S^2$ given by the 1-form corresponding to a (scaled) winding field, i.e. for $C∈\mathbb R$ and $y∈ \mathbb{S}^2$ we set $ω(y) := \frac{C y_3}{y_1^2+y_2^2}  ⋅  \bigg⟨ \begin{pmatrix} -y_2 \\ y_1 \\ 0 \end{pmatrix},  ⋅  \bigg⟩ ∈ (T_y\mathbb{S}^2)^*.$
+In this example we consider the force field $ω: \mathbb S^2 → T^*\mathbb S^2$ given by the 1-form corresponding to a (scaled) winding field, i.e. for $C∈\mathbb R$ and $y∈ \mathbb{S}^2$ we set
+
+``` math
+ω(y) := \frac{C y_3}{y_1^2+y_2^2}  ⋅  \bigg⟨ \begin{pmatrix} -y_2 \\ y_1 \\ 0 \end{pmatrix},  ⋅  \bigg⟩ ∈ (T_y\mathbb{S}^2)^*.
+```
 
 ``` julia
 w(p, c) = c*p[3]*[-p[2]/(p[1]^2+p[2]^2), p[1]/(p[1]^2+p[2]^2), 0.0];
@@ -409,7 +420,7 @@ using Dates
 now()
 ```
 
-    2025-12-01T18:00:15.900
+    2025-12-03T13:34:48.888
 
 ## Literature
 

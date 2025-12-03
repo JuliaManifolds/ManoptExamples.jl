@@ -129,9 +129,8 @@ disc_point = ArrayPartition(discretized_y, discretized_v, discretized_λ)
 
 
 In order to apply Newton's method to find a zero of $F$, we need the linear mapping $Q_{F(x)}^*∘ F'(x)$. Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
-
 ```math
-Q_{F(x)}^*∘ F'(x)δx\,ϕ = F(x)(\overset{→}{V}_x'(x)δx\,ϕ) + F_{\mathbb R^9}'(x)δx\,ϕ
+Q_{F(x)}^*∘ F'(x)δx\,ϕ =  F_{\mathbb R^9}'(x)δx\,ϕ + F(x)(\overset{→}{V_x'}(x)δx\,ϕ)
 ```
 
 for $x∈ \mathcal X$ and $δx, \, ϕ ∈ T_x \mathcal X$, where $\overset{→}{V}_x(\hat x) ∈ L(T_x \mathcal X, T_{\hat{x}}\mathcal X)$ is a vector transport and
@@ -145,7 +144,7 @@ is the euclidean derivative of $F$.
 The part, introduced by the connection is given by
 
 ```math
-F(x)(\overset{→}{V}_x'(x)δx\,ϕ) = \int_0^1 ⟨ \dot v, (P'(v)δv \, ϕ_v)\dot{} \, ⟩ - λ(P'(v)δv \, ϕ_v) \, \mathrm{d}s
+F(x)(\overset{→}{V_x'}(x)δx\,ϕ) = \int_0^1 ⟨ \dot v, (P'(v)δv \, ϕ_v)\dot{} \, ⟩ - λ(P'(v)δv \, ϕ_v) \, \mathrm{d}s
 ```
 
 where $P(v) :\mathbb{R}^3 → T_v\mathbb{S}^2$ denotes the orthogonal projection.

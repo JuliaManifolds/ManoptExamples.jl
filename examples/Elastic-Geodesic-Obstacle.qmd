@@ -74,7 +74,7 @@ yT = [sin(θ)*cos(end_interval),sin(θ)*sin(end_interval),cos(θ)] # endpoint of
 
 In order to apply Newton's method to find a zero of $f'$, we need the linear mapping $Q_{f'(γ)}^*\circ f''(γ)$ (cf. ``[WeiglBergmannSchiela:2025](@cite)``{=commonmark}). Since the sphere is an embedded submanifold of $\mathbb R^3$, we can use the formula
 
-$Q_{f'(γ)}^*\circ f''(γ)δ γ\,\phi = f'(γ)(\overset{→}{V}_γ'(γ)δ γ\,\phi) + f''_{\mathbb R^3}(γ)δ γ\,\phi$
+$Q_{f'(γ)}^*\circ f''(γ)δ γ\,\phi = f'(γ)(\overset{→}{V_γ}'(γ)δ γ\,\phi) + f''_{\mathbb R^3}(γ)δ γ\,\phi$
 
 for $δ γ, \, \phi ∈ T_γ \mathcal X$, where $\overset{→}{V}_γ(\hat γ) ∈ L(T_γ \mathcal X, T_{\hat{γ}}\mathcal X)$ is a vector transport and
 
@@ -83,8 +83,9 @@ $f_{\mathbb R^3}''(γ)δ γ\, \phi = \int_0^T \langle \dot{δ γ}(t), \dot{\phi}
 is an (euclidean) Newton-derivative of f'.
 
 We define a structure that has to be filled for two purposes:
-* Definition of an integrand and its derivative
-* Definition of a vector transport and its derivative
+
+1) Definition of an integrands and their derivatives
+2) Definition of a vector transport and its derivative
 
 ```{julia}
 mutable struct DifferentiableMapping{F1<:Function,F2<:Function,T}
