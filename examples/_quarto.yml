@@ -7,6 +7,8 @@ project:
     - "!Constrained-Mean-H2.qmd"
     - "!Constrained-Mean-Hn.qmd"
     - "!Difference-of-Convex-Benchmark.qmd"
+    - "!Elastic-Geodesic-Obstacle.qmd"
+    - "!Elastic-Geodesic-under-forcefield.qmd"
     - "!HyperparameterOptimization.qmd"
     - "!RCBM-Median.qmd"
     - "!Spectral-Procrustes.qmd"

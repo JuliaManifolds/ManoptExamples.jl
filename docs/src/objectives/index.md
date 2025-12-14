@@ -66,6 +66,15 @@ Order = [:type, :function]
 Private = true
 ```
 
+## [Variational Problem Assembler](@id VariationalProblemAssembler)
+
+```@autodocs
+Modules = [ManoptExamples]
+Pages = ["objectives/VariationalProblemAssembler.jl", "objectives/ProductVariationalProblemAssembler.jl"]
+Order = [:type, :function]
+Private = true
+```
+
 ## Literature
 
 ```@bibliography

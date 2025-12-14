@@ -7,7 +7,7 @@ if "--help" ∈ ARGS
         """
             docs/make.jl
 
-        Render the `ManoptExamples.jl` documenation with optional arguments
+        Render the `ManoptExamples.jl` documenation.
 
         Arguments
         * `--exclude-examples` - exclude the examples from the menu of Documenter,
@@ -68,7 +68,7 @@ using DocumenterCitations
 
 # (d) add contributing.md and Changelog.md to docs
 
-function add_links(line::String, url::String = "https://github.com/JuliaManifolds/Manifolds.jl")
+function add_links(line::String, url::String = "https://github.com/JuliaManifolds/ManoptExamples.jl")
     # replace issues (#XXXX) -> ([#XXXX](url/issue/XXXX))
     while (m = match(r"\(\#([0-9]+)\)", line)) !== nothing
         id = m.captures[1]
@@ -140,6 +140,12 @@ examples_menu =
     "Robust PCA" => "examples/Robust-PCA.md",
     "Rosenbrock" => "examples/Rosenbrock.md",
     "Total Variation" => "examples/Total-Variation.md",
+    "Vector bundle Newton" => [
+        "Elastic Geodesic under force field" => "examples/Elastic-Geodesic-under-forcefield.md",
+        "Elastic Geodesic Obstacle" => "examples/Elastic-Geodesic-Obstacle.md",
+        "Inextensible Rod" => "examples/Inextensible-Rod.md",
+
+    ],
 ]
 bib = CitationBibliography(joinpath(@__DIR__, "src", "references.bib"); style = :alpha)
 links = InterLinks(

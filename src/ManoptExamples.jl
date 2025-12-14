@@ -10,6 +10,8 @@ module ManoptExamples
 using LinearAlgebra: dot, Symmetric, Diagonal, I
 using ManifoldsBase, Manifolds, ManifoldDiff
 using ManifoldsBase: TypeParameter
+using OffsetArrays
+using SparseArrays
 import ManifoldsBase: exp!, exp, inner, log, log!
 import Manifolds:
     change_representer, change_representer!, local_metric, inverse_local_metric
@@ -46,6 +48,8 @@ include("objectives/RiemannianMean.jl")
 include("objectives/RobustPCA.jl")
 include("objectives/Rosenbrock.jl")
 include("objectives/TotalVariation.jl")
+include("objectives/VariationalProblemAssembler.jl")
+
 
 include("data/artificial_signals.jl")
 include("data/artificial_images.jl")
