@@ -215,24 +215,24 @@ for h_ref in h_refs
 
 	integrand.scaling_penalty = 5.0
 	integrand.h_ref = h_ref
-		
+
 	NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
-	
+
 	st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
 		stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
 		retraction_method=ProjectionRetraction(),
 		debug = [:Iteration, (:Change, "Change: %1.8e"), "\n", :Stop],
 		return_state=true)
-	
+
 	y_star = copy(power, get_solver_result(st_res))
-		
+
 	for i in range(1,50)
 		integrand.scaling_penalty *= 1.2
 
 		NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
 
 		(i > 1) && print(".")
- 
+
 		st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
 			stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
 			retraction_method=ProjectionRetraction(),
@@ -252,7 +252,7 @@ This yields the elastic geodesics shown below avoiding the north pole cap ($h_{\
 n = 30
 u = range(0,stop=2*π,length=n);
 v = range(0,stop=π,length=n);
-	
+
 sx = [cos(ui) * sin(vj) for ui in u, vj in v]
 sy = [sin(ui) * sin(vj) for ui in u, vj in v]
 sz = [cos(vj) for ui in u, vj in v]
@@ -284,14 +284,14 @@ for i in 1:length(ax)
 	wireframe!(ax[i], sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
 
 	scatterlines!(ax[i], circx, circy, circz; markersize =2, color=:black, linewidth=2)
-	
+
 	scatterlines!(ax[i], π1.(res[i]), π2.(res[i]), π3.(res[i]); markersize =8, color=:orange, linewidth=2)
 
 	scatterlines!(ax[i], π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =8, color=:blue, linewidth=2)
-	
+
 	scatter!(ax[i], π1.([y0]), π2.([y0]), π3.([y0]); markersize = 10, color=:green)
 	scatter!(ax[i], π1.([yT]), π2.([yT]), π3.([yT]); markersize = 10, color=:red)
-	
+
 	ax[i].azimuth[] += 14.445
 	ax[i].elevation[] = 35.02
 
@@ -300,20 +300,23 @@ end
 fig
 ```
 
-
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
 ```{julia}
 #| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
 using Pkg
 Pkg.status()
 ```
+
 ```{julia}
-#| code-fold: true
+#| echo: false
+#| output: asis
 using Dates
-now()
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
 ```
 
 ## Literature

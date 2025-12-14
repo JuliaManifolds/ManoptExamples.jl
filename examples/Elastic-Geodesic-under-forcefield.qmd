@@ -107,7 +107,7 @@ transport=DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothin
 The following two routines define the integrand of $F$ and its euclidean derivative.
 They use a force field $ω$, which is defined, below. A scaling parameter for the force is also employed.
 
-In this example we consider the force field $ω: \mathbb S^2 → T^*\mathbb S^2$ given by the 1-form corresponding to a (scaled) winding field, i.e. for $C∈\mathbb R$ and $y∈ \mathbb{S}^2$ we set 
+In this example we consider the force field $ω: \mathbb S^2 → T^*\mathbb S^2$ given by the 1-form corresponding to a (scaled) winding field, i.e. for $C∈\mathbb R$ and $y∈ \mathbb{S}^2$ we set
 ```math
 ω(y) := \frac{C y_3}{y_1^2+y_2^2}  ⋅  \bigg⟨ \begin{pmatrix} -y_2 \\ y_1 \\ 0 \end{pmatrix},  ⋅  \bigg⟩ ∈ (T_y\mathbb{S}^2)^*.
 ```
@@ -272,21 +272,23 @@ cam = cameracontrols(ax.scene); cam.lookat[] = [-2.5, 2.5, 2]
 fig
 ```
 
-
-
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
 ```{julia}
 #| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
 using Pkg
 Pkg.status()
 ```
+
 ```{julia}
-#| code-fold: true
+#| echo: false
+#| output: asis
 using Dates
-now()
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
 ```
 
 ## Literature
