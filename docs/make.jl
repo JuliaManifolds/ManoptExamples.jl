@@ -68,7 +68,7 @@ using DocumenterCitations
 
 # (d) add contributing.md and Changelog.md to docs
 
-function add_links(line::String, url::String = "https://github.com/JuliaManifolds/Manifolds.jl")
+function add_links(line::String, url::String = "https://github.com/JuliaManifolds/ManoptExamples.jl")
     # replace issues (#XXXX) -> ([#XXXX](url/issue/XXXX))
     while (m = match(r"\(\#([0-9]+)\)", line)) !== nothing
         id = m.captures[1]
