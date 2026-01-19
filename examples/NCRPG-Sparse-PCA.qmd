@@ -43,24 +43,24 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 
 ## The Problem
 
-Let ``\mathcal M = \mathrm{OB}(n,r)`` be the oblique manifold, i.e., the set of ``n \times r`` matrices with unit-norm columns.
-Let ``g \colon \mathcal M \to \mathbb R`` be defined by
+Let $\mathcal M = \mathrm{OB}(n,r)$ be the oblique manifold, i.e., the set of $n \times r$ matrices with unit-norm columns.
+Let $g \colon \mathcal M \to \mathbb R$ be defined by
 
 ```math
 g(X) = \frac{1}{2} \Vert X^\top A^\top A X - D^2 \Vert^2,
 ```
 
-where ``A \in \mathbb R^{m \times n}`` is a data matrix, ``D = \mathrm{diag}(d_1, \ldots, d_r)`` is a diagonal matrix containing the top ``r`` singular values of ``A``, and ``\Vert \cdot \Vert`` is the Frobenius norm.
+where $A \in \mathbb R^{m \times n}$ is a data matrix, $D = \mathrm{diag}(d_1, \ldots, d_r)$ is a diagonal matrix containing the top $r$ singular values of $A$, and $\Vert \cdot \Vert$ is the Frobenius norm.
 
-Let ``h \colon \mathcal M \to \mathbb R`` be defined by
+Let $h \colon \mathcal M \to \mathbb R$ be defined by
 
 ```math
 h(X) = \mu \Vert X \Vert_1
 ```
-be the sparsity-enforcing term given by the ``\ell_1``-norm, where ``\mu \ge 0`` is a regularization parameter.
+be the sparsity-enforcing term given by the $\ell_1$-norm, where $\mu \ge 0$ is a regularization parameter.
 
-We define our total objective function as ``f = g + h``.
-The goal is to find the minimizer of ``f`` on ``\mathcal M``, which is heuristically the point that diagonalizes ``A^\top A`` as much as possible while being sparse.
+We define our total objective function as $f = g + h$.
+The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically the point that diagonalizes $A^\top A$ as much as possible while being sparse.
 
 
 ## Numerical Experiment
