@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Rosenbrock · ManoptExamples.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li class="is-active"><a class="tocitem" href>Rosenbrock</a><ul class="internal"><li><a class="tocitem" href="#Gradient-Descent"><span>Gradient Descent</span></a></li><li><a class="tocitem" href="#Quasi-Newton"><span>Quasi Newton</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Rosenbrock</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Rosenbrock</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/Rosenbrock.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="The-Rosenbrock-Function"><a class="docs-heading-anchor" href="#The-Rosenbrock-Function">The Rosenbrock Function</a><a id="The-Rosenbrock-Function-1"></a><a class="docs-heading-anchor-permalink" href="#The-Rosenbrock-Function" title="Permalink"></a></h1><p>Ronny Bergmann 2023-01-03</p><p>After loading the necessary packages</p><pre><code class="language-julia hljs">using Pkg;
+cd(@__DIR__)
+Pkg.activate(&quot;.&quot;); # use the example environment,</code></pre><pre><code class="language-julia hljs">using Manifolds, Manopt, ManoptExamples
+using Plots</code></pre><p>We fix the parameters for the <a href="https://en.wikipedia.org/wiki/Rosenbrock_function">📖 Rosenbrock</a> (where the wikipedia page has a slightly different parameter naming).</p><pre><code class="language-julia hljs">a = 100.0
+b = 1.0
+p0 = [1/10, 2/10]</code></pre><p>which is defined on <span>$\mathbb R^2$</span>, so we need</p><pre><code class="language-julia hljs">M = ℝ^2</code></pre><pre><code class="nohighlight hljs">Euclidean(2; field = ℝ)</code></pre><p>and can then generate both the cost and the gradient</p><pre><code class="language-julia hljs">f = ManoptExamples.RosenbrockCost(M; a=a, b=b)
+grad_f = ManoptExamples.RosenbrockGradient!!(M; a=a, b=b)</code></pre><pre><code class="nohighlight hljs">ManoptExamples.RosenbrockGradient!!{Float64}(100.0, 1.0)</code></pre><p>For comparison, we look at the initial cost</p><pre><code class="language-julia hljs">f(M, p0)</code></pre><pre><code class="nohighlight hljs">4.42</code></pre><p>And to illustrate, we run two small solvers with their default settings as a comparison.</p><h2 id="Gradient-Descent"><a class="docs-heading-anchor" href="#Gradient-Descent">Gradient Descent</a><a id="Gradient-Descent-1"></a><a class="docs-heading-anchor-permalink" href="#Gradient-Descent" title="Permalink"></a></h2><p>We start with the <a href="https://manoptjl.org/stable/solvers/gradient_descent/#Manopt.gradient_descent">gradient descent solver</a>.</p><p>Since we need the state anyways to access the record, we also get from the <code>return_state=true</code> a short summary of the solver run.</p><pre><code class="language-julia hljs">gd_state = gradient_descent(M, f, grad_f, p0; record = [:Iteration, :Cost], return_state=true)</code></pre><pre><code class="nohighlight hljs"># Solver state for `Manopt.jl`s Gradient Descent
+After 200 iterations
+
+## Parameters
+* retraction method: ExponentialRetraction()
+
+## Stepsize
+ArmijoLineseach() with keyword parameters
+  * initial_stepsize    = 1.0
+  * retraction_method   = ExponentialRetraction()
+  * contraction_factor  = 0.95
+  * sufficient_decrease = 0.1
+
+## Stopping Criterion
+Stop When _one_ of the following are fulfilled:
+    Max Iteration 200:  reached
+    |grad f| &lt; 1.0e-9: not reached
+Overall: reached
+This indicates convergence: No
+
+## Record
+(Iteration = RecordGroup([RecordIteration(), RecordCost()]),)</code></pre><p>From the summary we see, that the gradient is not yet small enough, but we hit the 200 iterations (default) iteration limit. Collecting the cost recording and printing the final cost</p><pre><code class="language-julia hljs">gd_x = get_record(gd_state, :Iteration, :Iteration)
+gd_y =  get_record(gd_state, :Iteration, :Cost)
+f(M, get_solver_result(gd_state))</code></pre><pre><code class="nohighlight hljs">0.10562873187751265</code></pre><h2 id="Quasi-Newton"><a class="docs-heading-anchor" href="#Quasi-Newton">Quasi Newton</a><a id="Quasi-Newton-1"></a><a class="docs-heading-anchor-permalink" href="#Quasi-Newton" title="Permalink"></a></h2><p>We can improve this using the <a href="https://manoptjl.org/stable/solvers/quasi_Newton/#Manopt.quasi_Newton">quasi Newton</a> algorithm</p><pre><code class="language-julia hljs">qn_state = quasi_Newton(M, f, grad_f, p0;
+    record = [:Iteration, :Cost], return_state=true
+)</code></pre><pre><code class="nohighlight hljs"># Solver state for `Manopt.jl`s Quasi Newton Method
+After 44 iterations
+
+## Parameters
+* direction update:        limited memory InverseBFGS (size 2), projections, and ParallelTransport() as vector transport.
+* retraction method:       ExponentialRetraction()
+* vector trnasport method: ParallelTransport()
+
+## Stepsize
+WolfePowellLinesearch(DefaultManifold(), 0.0001, 0.999) with keyword arguments
+  * retraction_method = ExponentialRetraction()
+  * vector_transport_method = ParallelTransport()
+
+## Stopping Criterion
+Stop When _one_ of the following are fulfilled:
+    Max Iteration 1000: not reached
+    |grad f| &lt; 1.0e-6: reached
+Overall: reached
+This indicates convergence: Yes
+
+## Record
+(Iteration = RecordGroup([RecordIteration(), RecordCost()]),)</code></pre><p>And we see it stops far earlier, after 45 Iterations. We again collect the recorded values</p><pre><code class="language-julia hljs">qn_x = get_record(qn_state, :Iteration, :Iteration)
+qn_y =  get_record(qn_state, :Iteration, :Cost)
+f(M, get_solver_result(qn_state))</code></pre><pre><code class="nohighlight hljs">2.359559352025148e-14</code></pre><p>and see that the final value is close to the one of the minimizer</p><pre><code class="language-julia hljs">f(M, ManoptExamples.minimizer(f))</code></pre><pre><code class="nohighlight hljs">0.0</code></pre><p>which we also see if we plot the recorded cost.</p><pre><code class="language-julia hljs">fig = plot(gd_x, gd_y; linewidth=1, label=&quot;Gradient Descent&quot;);
+plot!(fig, qn_x, qn_y; linewidth=1, label=&quot;Quasi Newton&quot;)</code></pre><p><img src="../Rosenbrock_files/figure-commonmark/fig-pca-output-1.svg" alt="Figure 1: The result of the robust PCA vs. SVD"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Robust-PCA/">« Robust PCA</a><a class="docs-footer-nextpage" href="../../objectives/">Objectives »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Tuesday 13 June 2023 08:15">Tuesday 13 June 2023</span>. Using Julia version 1.9.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

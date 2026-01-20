@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Hyperparameter optimziation · ManoptExamples.jl</title><meta name="title" content="Hyperparameter optimziation · ManoptExamples.jl"/><meta property="og:title" content="Hyperparameter optimziation · ManoptExamples.jl"/><meta property="twitter:title" content="Hyperparameter optimziation · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li class="is-active"><a class="tocitem" href>Hyperparameter optimziation</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#General-definitions"><span>General definitions</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Hyperparameter optimziation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Hyperparameter optimziation</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/HyperparameterOptimization.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Hyperparameter-optimization"><a class="docs-heading-anchor" href="#Hyperparameter-optimization">Hyperparameter optimization</a><a id="Hyperparameter-optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Hyperparameter-optimization" title="Permalink"></a></h1><p>Mateusz Baran 2024-08-03</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>This example shows how to automatically select the best values of hyperparameters of optimization procedures such as retraction, vector transport, size of memory in L-BFGS or line search coefficients. Hyperparameter optimization relies on the <a href="https://optuna.org/">Optuna</a> [<a href="../../references/#AkibaSanoYanaseToshihikoTakeruKoyama:2019">ASY+19</a>] Python library because it is much more advanced than similar Julia projects, offering Bayesian optimization with conditional hyperparameters and early stopping.</p><h2 id="General-definitions"><a class="docs-heading-anchor" href="#General-definitions">General definitions</a><a id="General-definitions-1"></a><a class="docs-heading-anchor-permalink" href="#General-definitions" title="Permalink"></a></h2><p>Here are some general definitions that you will most likely be able to directly use for your problem without any changes. Just remember to install <code>optuna</code>, for example using <code>CondaPkg</code> Julia library.</p><pre><code class="language-julia hljs">using Manifolds, Manopt
+using PythonCall
+using BenchmarkTools
+using LineSearches
+
+# This script requires optuna to be available through PythonCall
+# You can install it for example using
+# using CondaPkg
+# ]conda add optuna
+
+optuna = pyimport(&quot;optuna&quot;)
+
+norm_inf(M::AbstractManifold, p, X) = norm(X, Inf)
+
+# TTsuggest_ structs collect data from a calibrating optimization run
+# that is handled by compute_pruning_losses function
+
+struct TTsuggest_int
+    suggestions::Dict{String,Int}
+end
+function (s::TTsuggest_int)(name::String, a, b)
+    return s.suggestions[name]
+end
+struct TTsuggest_float
+    suggestions::Dict{String,Float64}
+end
+function (s::TTsuggest_float)(name::String, a, b; log::Bool=false)
+    return s.suggestions[name]
+end
+struct TTsuggest_categorical
+    suggestions::Dict{String,Any}
+end
+function (s::TTsuggest_categorical)(name::String, vals)
+    return s.suggestions[name]
+end
+struct TTreport
+    reported_vals::Vector{Float64}
+end
+function (r::TTreport)(val, i)
+    return push!(r.reported_vals, val)
+end
+struct TTshould_prune end
+(::TTshould_prune)() = Py(false)
+struct TracingTrial
+    suggest_int::TTsuggest_int
+    suggest_float::TTsuggest_float
+    suggest_categorical::TTsuggest_categorical
+    report::TTreport
+    should_prune::TTshould_prune
+end
+
+function compute_pruning_losses(
+    od,
+    int_suggestions::Dict{String,Int},
+    float_suggestions::Dict{String,Float64},
+    categorical_suggestions::Dict{String,Int},
+)
+    tt = TracingTrial(
+        TTsuggest_int(int_suggestions),
+        TTsuggest_float(float_suggestions),
+        TTsuggest_categorical(categorical_suggestions),
+        TTreport(Float64[]),
+        TTshould_prune(),
+    )
+    od(tt)
+    return tt.report.reported_vals
+end</code></pre><p>The next part is your hyperparameter optimization objective. The <code>ObjectiveData</code> struct contains all relevant information about the sequence of specific problems. The outermost key part is the <code>N_range</code> field. Early stopping requires a series of progressively more complex problems. They will be attempted from the most simple one to the most complex one, and are specified by the values of <code>N</code> in that vector.</p><pre><code class="language-julia hljs">mutable struct ObjectiveData{TObj,TGrad}
+    obj::TObj
+    grad::TGrad
+    N_range::Vector{Int}
+    gtol::Float64
+    vts::Vector{AbstractVectorTransportMethod}
+    retrs::Vector{AbstractRetractionMethod}
+    manifold_constructors::Vector{Tuple{String,Any}}
+    pruning_losses::Vector{Float64}
+    manopt_stepsize::Vector{Tuple{String,Any}}
+    obj_loss_coeff::Float64
+end</code></pre><p>In the example below we optimize hyperparameters on a sequence of Rosenbrock-type problems restricted to spheres:</p><p class="math-container">\[\arg\min_{p \in S^{N-1}} \sum_{i=1}^{N/2} (1-p_{2i})^2 + 100 (p_{2i+1} - p_{2i}^2)^2,\]</p><p>where <span>$N \in [2, 16, 128, 1024, 8192, 65536]$</span>.</p><p><code>obj</code> and <code>grad</code> are the objective and gradient, here defined as below. Note that gradient works in-place and variants without manifolds are also provided for easier comparison with other libraries like <code>Optim.jl</code>. It is easiest when problems for different values <code>N</code> can be distinguished by being defined on successively larger manifolds but the script could be modified so that it’s not necessary.</p><p><code>pruning_losses</code> and <code>compute_pruning_losses</code> are related to early pruning used in Optuna and you shouldn’t have to modify them.</p><pre><code class="language-julia hljs">function f_rosenbrock(x)
+    result = 0.0
+    for i in 1:2:length(x)
+        result += (1.0 - x[i])^2 + 100.0 * (x[i + 1] - x[i]^2)^2
+    end
+    return result
+end
+function f_rosenbrock(::AbstractManifold, x)
+    return f_rosenbrock(x)
+end
+
+function g_rosenbrock!(storage, x)
+    for i in 1:2:length(x)
+        storage[i] = -2.0 * (1.0 - x[i]) - 400.0 * (x[i + 1] - x[i]^2) * x[i]
+        storage[i + 1] = 200.0 * (x[i + 1] - x[i]^2)
+    end
+    return storage
+end
+function g_rosenbrock!(M::AbstractManifold, storage, x)
+    g_rosenbrock!(storage, x)
+    riemannian_gradient!(M, storage, x, storage)
+    return storage
+end</code></pre><p>Next, <code>gtol</code> is the tolerance used for the stopping criterion in optimization. <code>vts</code> and <code>retrs</code> are, respectively, vector transports and retraction methods selected through hyperparameter optimization. Some items need to be different for different values of <code>N</code>, for example the manifold over which the problem is defined. This is handled by <code>manifold_constructors</code> which is then defined as <code>Tuple{String,Any}[(&quot;Sphere&quot;, N -&gt; Manifolds.Sphere(N - 1))]</code>, where the string <code>&quot;Sphere&quot;</code> is used to identify the manifold family and the next element is a function that transforms the value of <code>N</code> to the manifold for the problem of size <code>N</code>.</p><p>Similarly, different stepsize selection methods may be considered. This is handled by the field <code>manopt_stepsize</code>. It will be easiest to see how it works by looking at how it is initialized:</p><pre><code class="nohighlight hljs">Tuple{String,Any}[
+    (&quot;LS-HZ&quot;, M -&gt; Manopt.LineSearchesStepsize(ls_hz)),
+    (&quot;Wolfe-Powell&quot;, (M, c1, c2) -&gt; Manopt.WolfePowellLinesearch(M, c1, c2)),
+]</code></pre><p>We have a string that identifies the line search method name and a constructor of the line search which takes relevant arguments like the manifold or a numerical parameter.</p><p>The next part is the trial evaluation procedure. This is one of the more important places which need to be customized to your problem. This is the point where we tell Optuna about the relevant optimization hyperparameters and use them to define specific problems. The hyperparameter optimization is a multiobjective problem: we want as good problem objectives as possible and as low times as possible. As Optuna doesn’t currently support multicriteria pruning, which is important for obtaining a solution in a reasonable amount of time, we use a linear combination of sub-objectives to turn the problem into a single-criterion optimization. The hyperparameter optimization objective is a linear combination of achieved objectives the relative weight is controlled by <code>objective.obj_loss_coeff</code>.</p><pre><code class="language-julia hljs">function (objective::ObjectiveData)(trial)
+    # Here we use optuna to select memory length for L-BFGS -- an integer in the range between 2 and 30, referenced by name &quot;mem_len&quot;
+    mem_len = trial.suggest_int(&quot;mem_len&quot;, 2, 30)
+
+    # Here we select a vector transport and retraction methods, one of those specified in the `ObjectiveData`.
+    vt = objective.vts[pyconvert(
+        Int,
+        trial.suggest_categorical(
+            &quot;vector_transport_method&quot;, Vector(eachindex(objective.vts))
+        ),
+    )]
+    retr = objective.retrs[pyconvert(
+        Int,
+        trial.suggest_categorical(&quot;retraction_method&quot;, Vector(eachindex(objective.retrs))),
+    )]
+
+    # Here we select the manifold constructor, in case we want to try different manifolds for our problem. For example one could try defining a problem with orthogonality constraints on Stiefel, Grassmann or flag manifold.
+    manifold_name, manifold_constructor = objective.manifold_constructors[pyconvert(
+        Int,
+        trial.suggest_categorical(
+            &quot;manifold&quot;, Vector(eachindex(objective.manifold_constructors))
+        ),
+    )]
+
+    # Here the stepsize selection method type is selected.
+    manopt_stepsize_name, manopt_stepsize_constructor = objective.manopt_stepsize[pyconvert(
+        Int,
+        trial.suggest_categorical(
+            &quot;manopt_stepsize&quot;, Vector(eachindex(objective.manopt_stepsize))
+        ),
+    )]
+
+    # This parametrizes stepsize selection methods with relevant numerical parameters.
+    local c1_val, c2_val, hz_sigma
+    if manopt_stepsize_name == &quot;Wolfe-Powell&quot;
+        c1_val = pyconvert(
+            Float64, trial.suggest_float(&quot;Wolfe-Powell c1&quot;, 1e-5, 1e-2; log=true)
+        )
+        c2_val =
+            1.0 - pyconvert(
+                Float64, trial.suggest_float(&quot;Wolfe-Powell 1-c2&quot;, 1e-4, 1e-2; log=true)
+            )
+    elseif manopt_stepsize_name == &quot;Improved HZ&quot;
+        hz_sigma = pyconvert(Float64, trial.suggest_float(&quot;Improved HZ sigma&quot;, 0.1, 0.9))
+    end
+
+    # The current loss estimate, taking into account estimated loss values for larger, not-yet-evaluated values of `N`.
+    loss = sum(objective.pruning_losses)
+
+    # Here iterate over problems we want to optimize for
+    # from smallest to largest; pruning should stop the iteration early
+    # if the hyperparameter set is not promising
+    cur_i = 0
+    for N in objective.N_range
+        # Here we define the initial point for the optimization procedure
+        p0 = zeros(N)
+        p0[1] = 1
+        M = manifold_constructor(N)
+        # Here we construct the specific line search to be used
+        local ls
+        if manopt_stepsize_name == &quot;Wolfe-Powell&quot;
+            ls = manopt_stepsize_constructor(M, c1_val, c2_val)
+        elseif manopt_stepsize_name == &quot;Improved HZ&quot;
+            ls = manopt_stepsize_constructor(M, hz_sigma)
+        else
+            ls = manopt_stepsize_constructor(M)
+        end
+        manopt_time, manopt_iters, manopt_obj = benchmark_time_state(
+            ManoptQN(),
+            M,
+            N,
+            objective.obj,
+            objective.grad,
+            p0,
+            ls,
+            pyconvert(Int, mem_len),
+            objective.gtol;
+            vector_transport_method=vt,
+            retraction_method=retr,
+        )
+        # TODO: turn this into multi-criteria optimization when Optuna starts supporting
+        # pruning in such problems
+        loss -= objective.pruning_losses[cur_i + 1]
+        loss += manopt_time + objective.obj_loss_coeff * manopt_obj
+        trial.report(loss, cur_i)
+        if pyconvert(Bool, trial.should_prune().__bool__())
+            throw(PyException(optuna.TrialPruned()))
+        end
+        cur_i += 1
+    end
+    return loss
+end</code></pre><p>In the following benchmarking code you will most likely have to adapt solver parameters. This is designed around <code>quasi_Newton</code> but can be adapted to any solver as needed. The example below performs a small number of trials for quick rendering but in practice you should aim for at least a few thousand trials (the <code>n_trials</code> parameter).</p><pre><code class="language-julia hljs"># An abstract type in case we want to try different optimization packages.
+abstract type AbstractOptimConfig end
+struct ManoptQN &lt;: AbstractOptimConfig end
+
+# Benchmark that evaluates hyperparameters. Returns time to reach the solution, number of iterations and final value of the objective.
+function benchmark_time_state(
+    ::ManoptQN,
+    M::AbstractManifold,
+    N,
+    f,
+    g!,
+    p0,
+    stepsize::Manopt.Stepsize,
+    mem_len::Int,
+    gtol::Real;
+    kwargs...,
+)
+    manopt_sc = StopWhenGradientNormLess(gtol; norm=norm_inf) | StopAfterIteration(1000)
+    mem_len = min(mem_len, manifold_dimension(M))
+    manopt_state = quasi_Newton(
+        M,
+        f,
+        g!,
+        p0;
+        stepsize=stepsize,
+        evaluation=InplaceEvaluation(),
+        return_state=true,
+        memory_size=mem_len,
+        stopping_criterion=manopt_sc,
+        debug=[],
+        kwargs...,
+    )
+    bench_manopt = @benchmark quasi_Newton(
+        $M,
+        $f,
+        $g!,
+        $p0;
+        stepsize=$(stepsize),
+        evaluation=$(InplaceEvaluation()),
+        memory_size=$mem_len,
+        stopping_criterion=$(manopt_sc),
+        debug=[],
+        $kwargs...,
+    )
+    iters = get_count(manopt_state, :Iterations)
+    final_val = f(M, manopt_state.p)
+    return median(bench_manopt.times) / 1000, iters, final_val
+end
+
+&quot;&quot;&quot;
+    lbfgs_study(; pruning_coeff::Float64=0.95)
+
+Set up the example hyperparameter optimization study.
+&quot;&quot;&quot;
+function lbfgs_study(; pruning_coeff::Float64=0.95)
+    Ns = [2^n for n in 1:3:12]
+    ls_hz = LineSearches.HagerZhang()
+    od = ObjectiveData(
+        f_rosenbrock,
+        g_rosenbrock!,
+        Ns,
+        1e-5,
+        AbstractVectorTransportMethod[ParallelTransport(), ProjectionTransport()],
+        [ExponentialRetraction(), ProjectionRetraction()],
+        Tuple{String,Any}[(&quot;Sphere&quot;, N -&gt; Manifolds.Sphere(N - 1))],
+        zeros(Float64, eachindex(Ns)),
+        Tuple{String,Any}[
+            (&quot;LS-HZ&quot;, M -&gt; Manopt.LineSearchesStepsize(ls_hz)),
+            #(&quot;Improved HZ&quot;, (M, sigma) -&gt; HagerZhangLinesearch(M; sigma=sigma)),
+            (&quot;Wolfe-Powell&quot;, (M, c1, c2) -&gt; Manopt.WolfePowellLinesearch(M, c1, c2)),
+        ],
+        10.0,
+    )
+
+    # Here you need to define baseline values of all hyperparameters
+    baseline_pruning_losses = compute_pruning_losses(
+        od,
+        Dict(&quot;mem_len&quot; =&gt; 4),
+        Dict(
+            &quot;Wolfe-Powell c1&quot; =&gt; 1e-4,
+            &quot;Wolfe-Powell 1-c2&quot; =&gt; 1e-3,
+            &quot;Improved HZ sigma&quot; =&gt; 0.9,
+        ),
+        Dict(
+            &quot;vector_transport_method&quot; =&gt; 1,
+            &quot;retraction_method&quot; =&gt; 1,
+            &quot;manifold&quot; =&gt; 1,
+            &quot;manopt_stepsize&quot; =&gt; 1,
+        ),
+    )
+    od.pruning_losses = pruning_coeff * baseline_pruning_losses
+
+    study = optuna.create_study(; study_name=&quot;L-BFGS&quot;)
+    # Here you can specify number of trials and timeout (in seconds).
+    study.optimize(od; n_trials=1000, timeout=500)
+    println(&quot;Best params is $(study.best_params) with value $(study.best_value)&quot;)
+    selected_manifold = od.manifold_constructors[pyconvert(Int, study.best_params[&quot;manifold&quot;])][1]
+    selected_retraction_method = od.retrs[pyconvert(Int, study.best_params[&quot;retraction_method&quot;])]
+    selected_vector_transport = od.vts[pyconvert(Int, study.best_params[&quot;vector_transport_method&quot;])]
+    println(&quot;Selected manifold: $(selected_manifold)&quot;)
+    println(&quot;Selected retraction method: $(selected_retraction_method)&quot;)
+    println(&quot;Selected vector transport method: $(selected_vector_transport)&quot;)
+    return study
+end
+
+lbfgs_study()</code></pre><pre><code class="nohighlight hljs">Best params is {&#39;mem_len&#39;: 3, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.0006125542888545935, &#39;Wolfe-Powell 1-c2&#39;: 0.0010744467792321093} with value 5510.963227438757
+Selected manifold: Sphere
+Selected retraction method: ExponentialRetraction()
+Selected vector transport method: ProjectionTransport()
+
+[I 2024-03-16 18:04:17,965] A new study created in memory with name: L-BFGS
+[I 2024-03-16 18:04:45,996] Trial 0 finished with value: 5639.789870295856 and parameters: {&#39;mem_len&#39;: 26, &#39;vector_transport_method&#39;: 1, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.00027288064367948073, &#39;Wolfe-Powell 1-c2&#39;: 0.00026503788892114045}. Best is trial 0 with value: 5639.789870295856.
+[I 2024-03-16 18:05:11,860] Trial 1 finished with value: 5635.936370295855 and parameters: {&#39;mem_len&#39;: 11, &#39;vector_transport_method&#39;: 1, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.002743250060163298, &#39;Wolfe-Powell 1-c2&#39;: 0.00037986521186922096}. Best is trial 1 with value: 5635.936370295855.
+[I 2024-03-16 18:05:39,386] Trial 2 finished with value: 5673.101441724422 and parameters: {&#39;mem_len&#39;: 26, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 2, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.00043339485784312605, &#39;Wolfe-Powell 1-c2&#39;: 0.0027302649933974173}. Best is trial 1 with value: 5635.936370295855.
+[I 2024-03-16 18:06:10,279] Trial 3 finished with value: 7410.818084581564 and parameters: {&#39;mem_len&#39;: 26, &#39;vector_transport_method&#39;: 1, &#39;retraction_method&#39;: 2, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 1}. Best is trial 1 with value: 5635.936370295855.
+[I 2024-03-16 18:06:37,995] Trial 4 finished with value: 5756.566226449636 and parameters: {&#39;mem_len&#39;: 25, &#39;vector_transport_method&#39;: 1, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 1}. Best is trial 1 with value: 5635.936370295855.
+[I 2024-03-16 18:06:42,755] Trial 5 pruned. 
+[I 2024-03-16 18:06:58,577] Trial 6 pruned. 
+[I 2024-03-16 18:07:15,366] Trial 7 pruned. 
+[I 2024-03-16 18:07:40,605] Trial 8 finished with value: 5581.7437274386975 and parameters: {&#39;mem_len&#39;: 7, &#39;vector_transport_method&#39;: 1, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.0010567355712112379, &#39;Wolfe-Powell 1-c2&#39;: 0.003948002490203636}. Best is trial 8 with value: 5581.7437274386975.
+[I 2024-03-16 18:07:46,021] Trial 9 pruned. 
+[I 2024-03-16 18:08:11,512] Trial 10 finished with value: 5510.963227438757 and parameters: {&#39;mem_len&#39;: 3, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.0006125542888545935, &#39;Wolfe-Powell 1-c2&#39;: 0.0010744467792321093}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:08:35,914] Trial 11 finished with value: 5521.388656010121 and parameters: {&#39;mem_len&#39;: 2, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.0006738829952322474, &#39;Wolfe-Powell 1-c2&#39;: 0.0010639659137420014}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:09:00,317] Trial 12 finished with value: 5521.36958458155 and parameters: {&#39;mem_len&#39;: 2, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.00010975606104676191, &#39;Wolfe-Powell 1-c2&#39;: 0.0007663843095951679}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:09:24,680] Trial 13 finished with value: 5520.7020845815505 and parameters: {&#39;mem_len&#39;: 2, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 6.743450835567536e-05, &#39;Wolfe-Powell 1-c2&#39;: 0.0008779759729737719}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:09:50,268] Trial 14 pruned. 
+[I 2024-03-16 18:10:15,494] Trial 15 finished with value: 5595.119584581556 and parameters: {&#39;mem_len&#39;: 6, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 8.147444451747575e-05, &#39;Wolfe-Powell 1-c2&#39;: 0.00012268601197923553}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:10:25,264] Trial 16 pruned. 
+[I 2024-03-16 18:10:50,209] Trial 17 finished with value: 5572.474513153012 and parameters: {&#39;mem_len&#39;: 5, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.0015998473664092935, &#39;Wolfe-Powell 1-c2&#39;: 0.0005109172020536229}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:10:54,772] Trial 18 pruned. 
+[I 2024-03-16 18:11:04,534] Trial 19 pruned. 
+[I 2024-03-16 18:11:28,873] Trial 20 finished with value: 5512.3824417244705 and parameters: {&#39;mem_len&#39;: 3, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 1.1581668103921961e-05, &#39;Wolfe-Powell 1-c2&#39;: 0.0002691056199427656}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:11:53,327] Trial 21 finished with value: 5529.088227438692 and parameters: {&#39;mem_len&#39;: 4, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 1.3645031886009879e-05, &#39;Wolfe-Powell 1-c2&#39;: 0.0001863385753491203}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:12:17,911] Trial 22 finished with value: 5522.041370295835 and parameters: {&#39;mem_len&#39;: 2, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 1.0030173525937465e-05, &#39;Wolfe-Powell 1-c2&#39;: 0.000543991948003312}. Best is trial 10 with value: 5510.963227438757.
+[I 2024-03-16 18:12:27,645] Trial 23 pruned. 
+[I 2024-03-16 18:12:52,163] Trial 24 finished with value: 5528.840941724406 and parameters: {&#39;mem_len&#39;: 4, &#39;vector_transport_method&#39;: 2, &#39;retraction_method&#39;: 1, &#39;manifold&#39;: 1, &#39;manopt_stepsize&#39;: 2, &#39;Wolfe-Powell c1&#39;: 0.000245400433292576, &#39;Wolfe-Powell 1-c2&#39;: 0.000133639324295565}. Best is trial 10 with value: 5510.963227438757.
+
+Python: &lt;optuna.study.study.Study object at 0x70dd985d9b50&gt;</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>We’ve shown how to automatically select the best hyperparameter values for your optimization problem.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[ASY+19]</dt><dd><div>T. Akiba, S. Sano, T. Yanase, T. Ohta and M. Koyama. <a href="https://doi.org/10.1145/3292500.3330701"><em>Optuna: A Next-generation Hyperparameter Optimization Framework</em></a>. In: <em>Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</em> (2019), <a href="https://arxiv.org/abs/1907.10902">arXiv:1907.10902</a>.</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Spectral-Procrustes/">« Spectral Procrustes</a><a class="docs-footer-nextpage" href="../RayleighQuotient/">The Rayleigh Quotient »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.5.0 on <span class="colophon-date" title="Friday 28 June 2024 10:21">Friday 28 June 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Sparse PCA · ManoptExamples.jl</title><meta name="title" content="Sparse PCA · ManoptExamples.jl"/><meta property="og:title" content="Sparse PCA · ManoptExamples.jl"/><meta property="twitter:title" content="Sparse PCA · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-8" type="checkbox" checked/><label class="tocitem" for="menuitem-2-8"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Sparse PCA</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#The-Problem"><span>The Problem</span></a></li><li><a class="tocitem" href="#Numerical-Experiment"><span>Numerical Experiment</span></a></li><li><a class="tocitem" href="#Technical-details"><span>Technical details</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li><a class="tocitem" href="../NCRPG-Row-Sparse-Low-Rank/">Row-Sparse Low-Rank Matrix Recovery</a></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li><a class="tocitem" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span></a></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Proximal Gradient Methods</a></li><li class="is-active"><a href>Sparse PCA</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Sparse PCA</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/NCRPG-Sparse-PCA.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Sparse-PCA"><a class="docs-heading-anchor" href="#Sparse-PCA">Sparse PCA</a><a id="Sparse-PCA-1"></a><a class="docs-heading-anchor-permalink" href="#Sparse-PCA" title="Permalink"></a></h1><p>Paula John, Hajg Jasa 2025-10-01</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In this example we use the Nonconvex Riemannian Proximal Gradient (NCRPG) method [<a href="../../references/#BergmannJasaJohnPfeffer_2025_1">BJJP25b</a>] and compare it to the Riemannian Proximal Gradient (RPG) method [<a href="../../references/#HuangWei_2021_1">HW21</a>]. This example reproduces the results from [<a href="../../references/#BergmannJasaJohnPfeffer_2025_1">BJJP25b</a>], Section 6.1. The numbers may vary slightly due to having run this notebook on a different machine.</p><pre><code class="language-julia hljs">using PrettyTables
+using BenchmarkTools
+using CSV, DataFrames
+using ColorSchemes, Plots, LaTeXStrings
+using Random, LinearAlgebra, LRUCache, Distributions
+using ManifoldDiff, Manifolds, Manopt, ManoptExamples</code></pre><h2 id="The-Problem"><a class="docs-heading-anchor" href="#The-Problem">The Problem</a><a id="The-Problem-1"></a><a class="docs-heading-anchor-permalink" href="#The-Problem" title="Permalink"></a></h2><p>Let <span>$\mathcal M = \mathrm{OB}(n,r)$</span> be the oblique manifold, i.e., the set of <span>$n \times r$</span> matrices with unit-norm columns. Let <span>$g \colon \mathcal M \to \mathbb R$</span> be defined by</p><p class="math-container">\[g(X) = \frac{1}{2} \Vert X^\top A^\top A X - D^2 \Vert^2,\]</p><p>where <span>$A \in \mathbb R^{m \times n}$</span> is a data matrix, <span>$D = \mathrm{diag}(d_1, \ldots, d_r)$</span> is a diagonal matrix containing the top <span>$r$</span> singular values of <span>$A$</span>, and <span>$\Vert \cdot \Vert$</span> is the Frobenius norm.</p><p>Let <span>$h \colon \mathcal M \to \mathbb R$</span> be defined by</p><p class="math-container">\[h(X) = \mu \Vert X \Vert_1\]</p><p>be the sparsity-enforcing term given by the <span>$\ell_1$</span>-norm, where <span>$\mu \ge 0$</span> is a regularization parameter.</p><p>We define our total objective function as <span>$f = g + h$</span>. The goal is to find the minimizer of <span>$f$</span> on <span>$\mathcal M$</span>, which is heuristically the point that diagonalizes <span>$A^\top A$</span> as much as possible while being sparse.</p><h2 id="Numerical-Experiment"><a class="docs-heading-anchor" href="#Numerical-Experiment">Numerical Experiment</a><a id="Numerical-Experiment-1"></a><a class="docs-heading-anchor-permalink" href="#Numerical-Experiment" title="Permalink"></a></h2><p>We initialize the experiment parameters, as well as some utility functions.</p><pre><code class="language-julia hljs"># Set random seed for reproducibility
+random_seed = 1520
+Random.seed!(random_seed)
+BenchmarkTools.DEFAULT_PARAMETERS.seconds = 2.0 
+m_tests = 10 # number of tests for each parameter setting
+means = 20 # number of means to compute
+
+atol = 1e-7
+max_iters = 100000
+n_p_array = [(100,5), (200,5), (300, 5)]
+μs = [t for t in [0.1, 0.5, 1.0]]</code></pre><p>We define a function to generate the test data for the Sparse PCA problem.</p><pre><code class="language-julia hljs">function gen_test_data_SPCA(n, m, p)
+    A = rand(Normal(0, 1.0), (m, n))
+    for i in 1:n
+        A[:, i] = A[:, i] .- mean(A[:, i])
+        A[:, i] = A[:, i] / std(A[:, i])
+    end 
+    svdA = svd(A)
+    Vt = svdA.Vt
+    PCs = Vt[:, 1:p]
+    d = svdA.S[1:p]
+    return A, PCs, d
+end</code></pre><p>We define the proximal operator for the <span>$\ell_1$</span>-norm on the oblique manifold, following [<a href="../../references/#BergmannJasaJohnPfeffer_2025_1">BJJP25b</a>].</p><pre><code class="language-julia hljs"># Returns prox_{μ||.||_1}(M,x) on the Oblique Manifold OB(n,p) with respect to riemannian distance
+function prox_l1_OB(n, p, μ; tol = 1e-10, max_iters = 10)
+    return function prox_l1_OB_μ(M, λ, X)
+        μλ = μ * λ
+        prox_X = Array{Float64}(undef, n, p)
+        for k in 1:p 
+            x = X[:, k]
+            t = μλ
+            px_t = X[:, k]
+            for _ in 1:max_iters 
+                t_old = t
+
+                z = abs.(x) .- t 
+                prox_Rn_t = (z .&gt; 0) .* sign.(x) .* z
+
+                px_t = prox_Rn_t/norm(prox_Rn_t)
+                xpx_t = x&#39;px_t
+                if xpx_t &lt; 1
+                    t = μλ * sqrt(1-(xpx_t)^2)/acos(xpx_t)
+                else
+                    px_t = x
+                    prox_X[:, k] = x
+                    break
+                end 
+                if abs(t - t_old) &lt; tol 
+                    prox_X[:, k] = px_t
+                    break
+                end 
+            end 
+            prox_X[:, k] = px_t
+        end 
+        return prox_X
+    end 
+end</code></pre><pre><code class="language-julia hljs"># Objective, gradient, and proxes
+g(M, X, H, D) = 0.5 * norm(X&#39;H * X - D)^2 
+function grad_g(M, X, H, D)
+    HX = H*X
+    return project(M, X, 2*HX*(X&#39;HX - D))
+end
+h(M, X, μ) = μ * norm(X, 1)
+f(M, X, H, D, μ) = 0.5 * norm(X&#39;H * X - D)^2 + μ * norm(X, 1)</code></pre><p>We introduce an implementation of the RPG method for the Sparse PCA problem on the oblique manifold, following [<a href="../../references/#HuangWei_2021_1">HW21</a>].</p><pre><code class="language-julia hljs"># Implementation of the proximal operator for the ℓ1-norm on the Oblique manifold
+function RPG_prox_OB(S, X, grad_fX, λ, L, n, p; max_iters  = 10, tol=1e-10)
+    λ̃ = λ/L
+    d = 0 
+    for k in 1:p
+        x = X[:,k] 
+        ξ_x = 1/L * grad_fX[:,k]
+        
+        neg∇h = (x-ξ_x)/λ̃
+        i_max = argmax(abs.(neg∇h))
+        if abs(neg∇h[i_max]) &lt;= 1.0
+            y = sign(neg∇h[i_max])*(1:n .== i_max)
+        else
+            z = abs.(neg∇h) .- 1.0
+            Act_set = z .&gt; 0  
+            y = Act_set .* sign.(neg∇h) .* z
+            y = y/norm(y)
+        end
+        for j in 1:max_iters  
+            xty = x&#39;y 
+            if xty &gt;= 1
+                sy = -1 
+                ty = 1
+            else 
+                ξty = ξ_x&#39;y
+                acosxty = acos(xty)
+                α = 1-xty^2 
+                sy = - acosxty/sqrt(α) - ξty/α + acosxty * ξty * xty / sqrt(α^3)
+                ty = acosxty/sqrt(α)
+            end
+            neg∇h = -(sy*x+ty*ξ_x)/λ̃
+            
+            i_max = argmax(abs.(neg∇h))
+            if abs(neg∇h[i_max]) &lt;= 1.0
+                y_new = sign(neg∇h[i_max])*(1:n .== i_max)
+            else
+                z = abs.(neg∇h) .- 1.0
+                Act_set = z .&gt; 0  
+                y_new = Act_set .* sign.(neg∇h) .* z
+                y_new = y_new/norm(y_new)
+            end
+            
+            if max(abs(xty-x&#39;y_new), abs(ξ_x&#39;y-ξ_x&#39;y_new)) &lt; tol 
+                break 
+            end 
+            y = y_new 
+        end 
+
+        d += distance(S, x,y)^2
+        X[:,k] = y
+    end 
+    return sqrt(d)
+end
+#
+# RPG implementation for Sparse PCA on the Oblique manifold
+function RPG_SPCA_OB(M, H, D, μ, L, start, prox_fun; max_iters  = 1000, stop = 1e-8, record = false)
+    n, p = size(start)
+    S = Sphere(n-1)
+    cost_fun(M,X) =  0.5*norm(X&#39;H*X-D)^2 + μ*norm(X,1)
+    function grad_f(M,X, D=D)
+        HX = H*X
+        return project(M, X, 2*HX*(X&#39;HX-D))
+    end
+    X = copy(start) 
+    if !record 
+        for i in 1:max_iters 
+            change = prox_fun(S, X, grad_f(M,X,D), μ, L, n, p)
+            if L*change &lt; stop
+                return X, i
+            end 
+        end 
+        return X, max_iters  
+    else 
+        Iterates = []
+        for i in 1:max_iters 
+            change = prox_fun(S, X, grad_f(M,X,D), μ, L, n, p)
+            push!(Iterates, copy(X))
+            if L*change &lt; stop
+                return Iterates, i
+            end 
+        end 
+        return Iterates, max_iters  
+    end
+end</code></pre><p>We set up some variables to collect the results of the experiments and initialize the dataframes</p><p>And run the experiments</p><pre><code class="language-julia hljs">for (n, p) in n_p_array
+    # Define manifold
+    OB = Oblique(n, p)
+    for m in 1:m_tests
+        # Construct problem 
+        A, PCs, d = gen_test_data_SPCA(n, means, p)
+        H = A&#39;A / norm(A&#39;A) * 10
+        D = diagm(svd(H).S[1:p])
+        L = 2 * tr(H)
+
+        for (c, μ) in enumerate(μs)
+            # Localize functions
+            g(M, X) = g(M, X, H, D)
+            grad_g(M, X) = grad_g(M, X, H, D)
+            h(M, X) = h(M, X, μ)
+            prox_norm1_NCRPG = prox_l1_OB(n, p, μ)
+            f(M, X) = f(M, X, H, D, μ)
+            #
+            # Parameters
+            step_size = 1/L
+            init_step_size_bt = 10 * step_size
+            stop_step_size_bt = atol
+            stop_RPG = atol
+            stop_NCRPG = atol
+            stop_NCRPG_bt = atol
+            #
+            # Fix starting point
+            start = rand(OB)
+            #
+            # Optimization
+            # NCRPG
+            rec_NCRPG = proximal_gradient_method(OB, f, g, grad_g, start;
+                prox_nonsmooth = prox_norm1_NCRPG, 
+                stepsize = ConstantLength(step_size),
+                record = [:Iteration, :Iterate],
+                return_state = true,
+                stopping_criterion = StopAfterIteration(max_iters)| StopWhenGradientMappingNormLess(stop_NCRPG)
+            )
+            # Benchmark NCRPG
+            bm_NCRPG = @benchmark proximal_gradient_method(``OB, ``f, ``g, ``grad_g, ``start;
+                prox_nonsmooth = ``prox_norm1_NCRPG,  
+                stepsize = ConstantLength(``step_size),
+                stopping_criterion = StopAfterIteration(``max_iters)| StopWhenGradientMappingNormLess(``stop_NCRPG)
+            )
+            # NCRPG with backtracking
+            rec_NCRPG_bt = proximal_gradient_method(OB, f, g, grad_g, start;
+                prox_nonsmooth = prox_norm1_NCRPG, 
+                stepsize = ProximalGradientMethodBacktracking(; 
+                    strategy = :nonconvex, 
+                    initial_stepsize = init_step_size_bt, 
+                    stop_when_stepsize_less = stop_step_size_bt
+                ),
+                record = [:Iteration, :Iterate],
+                return_state = true,
+                stopping_criterion = StopAfterIteration(max_iters)| StopWhenGradientMappingNormLess(stop_NCRPG_bt)
+            )
+            # Benchmark NCRPG with backtracking
+            bm_NCRPG_bt = @benchmark proximal_gradient_method(``OB, ``f, ``g, ``grad_g, ``start;
+                prox_nonsmooth = ``prox_norm1_NCRPG,  
+                stepsize = ProximalGradientMethodBacktracking(; 
+                    strategy = :nonconvex, 
+                    initial_stepsize = ``init_step_size_bt, 
+                    stop_when_stepsize_less = ``stop_step_size_bt
+                ),
+                stopping_criterion = StopAfterIteration(``max_iters)| StopWhenGradientMappingNormLess(``stop_NCRPG_bt)
+            )
+            # RPG 
+            Iterates_RPG, it_RPG = RPG_SPCA_OB(OB, H, D, μ, L, start, RPG_prox_OB;
+                max_iters = max_iters, 
+                stop = stop_RPG, 
+                record = true
+            )
+            bm_RPG = @benchmark RPG_SPCA_OB(``OB, ``H, ``D, ``μ, ``L, ``start, ``RPG_prox_OB; 
+                max_iters = ``max_iters, 
+                stop = ``stop_RPG
+            )
+            #
+            # Collect test results
+            Iterates_NCRPG  = get_record(rec_NCRPG, :Iteration, :Iterate)
+            res_NCRPG       = Iterates_NCRPG[end]
+            time_NCRPG      = time(median(bm_NCRPG))/1e9
+            obj_NCRPG       = f(OB, res_NCRPG)
+            spar_NCRPG      = sum(abs.(res_NCRPG).&lt; 1e-8)/n/p
+            it_NCRPG        = length(Iterates_NCRPG)
+            orth_NCRPG      = norm(res_NCRPG&#39;*res_NCRPG - I(p))
+            # NCRPG with backtracking
+            Iterates_NCRPG_bt  = get_record(rec_NCRPG_bt, :Iteration, :Iterate)
+            res_NCRPG_bt       = Iterates_NCRPG_bt[end]
+            time_NCRPG_bt      = time(median(bm_NCRPG_bt))/1e9
+            obj_NCRPG_bt       = f(OB, res_NCRPG_bt)
+            spar_NCRPG_bt      = sum(abs.(res_NCRPG_bt).&lt; 1e-8)/n/p
+            it_NCRPG_bt        = length(Iterates_NCRPG_bt)
+            orth_NCRPG_bt      = norm(res_NCRPG_bt&#39;*res_NCRPG_bt - I(p))
+            # RPG
+            res_RPG         = Iterates_RPG[end]
+            time_RPG        = time(median(bm_RPG))/1e9
+            obj_RPG         = f(OB, res_RPG)
+            spar_RPG        = sum(abs.(res_RPG).&lt; 1e-8)/n/p
+            orth_RPG        = norm(res_RPG&#39;*res_RPG - I(p))
+            #
+            # Update results
+            # Time values
+            time_NCRPG_tmp[c]      += time_NCRPG
+            time_NCRPG_bt_tmp[c]   += time_NCRPG_bt
+            time_RPG_tmp[c]        += time_RPG
+            # Objective values
+            obj_NCRPG_tmp[c]       += obj_NCRPG
+            obj_NCRPG_bt_tmp[c]    += obj_NCRPG_bt
+            obj_RPG_tmp[c]         += obj_RPG
+            # Sparsity values
+            spar_NCRPG_tmp[c]      += spar_NCRPG
+            spar_NCRPG_bt_tmp[c]   += spar_NCRPG_bt
+            spar_RPG_tmp[c]        += spar_RPG
+            # Orthogonality values
+            orth_NCRPG_tmp[c]      += orth_NCRPG
+            orth_NCRPG_bt_tmp[c]   += orth_NCRPG_bt
+            orth_RPG_tmp[c]        += orth_RPG
+            # Iteration values
+            it_NCRPG_tmp[c]        += it_NCRPG
+            it_NCRPG_bt_tmp[c]     += it_NCRPG_bt
+            it_RPG_tmp[c]          += it_RPG
+        end 
+    end 
+    for (c, μ) in enumerate(μs)
+        push!(df_results_RPG, 
+            [μ, n, p, time_RPG_tmp[c]/m_tests, obj_RPG_tmp[c]/m_tests, spar_RPG_tmp[c]/m_tests, it_RPG_tmp[c]/m_tests, orth_RPG_tmp[c]/m_tests]
+        )
+        push!(df_results_NCRPG, 
+            [μ, n, p, time_NCRPG_tmp[c]/m_tests, obj_NCRPG_tmp[c]/m_tests, spar_NCRPG_tmp[c]/m_tests, it_NCRPG_tmp[c]/m_tests, orth_NCRPG_tmp[c]/m_tests]
+        )
+        push!(df_results_NCRPG_bt, 
+            [μ, n, p, time_NCRPG_bt_tmp[c]/m_tests, obj_NCRPG_bt_tmp[c]/m_tests, spar_NCRPG_bt_tmp[c]/m_tests, it_NCRPG_bt_tmp[c]/m_tests, orth_NCRPG_bt_tmp[c]/m_tests]
+        )
+    end
+    #
+    # Reset data collection variables
+    time_RPG_tmp      .= zeros(length(μs))
+    time_NCRPG_tmp    .= zeros(length(μs))
+    time_NCRPG_bt_tmp .= zeros(length(μs))
+    obj_RPG_tmp       .= zeros(length(μs))
+    obj_NCRPG_tmp     .= zeros(length(μs))
+    obj_NCRPG_bt_tmp  .= zeros(length(μs))
+    spar_RPG_tmp      .= zeros(length(μs))
+    spar_NCRPG_tmp    .= zeros(length(μs))
+    spar_NCRPG_bt_tmp .= zeros(length(μs))
+    it_RPG_tmp        .= zeros(length(μs))
+    it_NCRPG_tmp      .= zeros(length(μs))
+    it_NCRPG_bt_tmp   .= zeros(length(μs))
+    orth_RPG_tmp      .= zeros(length(μs))
+    orth_NCRPG_tmp    .= zeros(length(μs))
+    orth_NCRPG_bt_tmp .= zeros(length(μs))
+end</code></pre><p>We export the results to CSV files</p><pre><code class="language-julia hljs"># Sort the dataframes by the parameter μ and create the final results dataframes
+df_results_NCRPG = sort(df_results_NCRPG, :μ)
+df_results_NCRPG_bt = sort(df_results_NCRPG_bt, :μ)
+df_results_RPG = sort(df_results_RPG, :μ)
+df_results_time_iter = DataFrame(
+    μ             = df_results_NCRPG.μ,
+    n             = Int.(df_results_NCRPG.n), 
+    p             = Int.(df_results_NCRPG.p),
+    NCRPG_time     = df_results_NCRPG.time, 
+    NCRPG_iter     = Int.(round.(df_results_NCRPG.iterations, digits = 0)), 
+    NCRPG_bt_time  = df_results_NCRPG_bt.time, 
+    NCRPG_bt_iter  = Int.(round.(df_results_NCRPG_bt.iterations, digits = 0)),
+    RPG_time     = df_results_RPG.time, 
+    RPG_iter     = Int.(round.(df_results_RPG.iterations, digits = 0)),
+)
+df_results_obj_spar_orth = DataFrame(
+    μ               = df_results_NCRPG.μ,
+    n               = Int.(df_results_NCRPG.n), 
+    p               = Int.(df_results_NCRPG.p),
+    NCRPG_obj       = df_results_NCRPG.objective, 
+    NCRPG_sparsity  = df_results_NCRPG.sparsity,  
+    NCRPG_orth      = df_results_NCRPG.orthogonality,
+    NCRPG_bt_obj    = df_results_NCRPG_bt.objective, 
+    NCRPG_bt_sparsity = df_results_NCRPG_bt.sparsity,
+    NCRPG_bt_orth   = df_results_NCRPG_bt.orthogonality,  
+    RPG_obj         = df_results_RPG.objective, 
+    RPG_sparsity    = df_results_RPG.sparsity, 
+    RPG_orth        = df_results_RPG.orthogonality,
+)
+# Write the results to CSV files
+CSV.write(joinpath(results_folder, &quot;results-OB-time-iter-``(m_tests).csv&quot;), df_results_time_iter)
+CSV.write(joinpath(results_folder, &quot;results-OB-obj-spar-orth-``(m_tests).csv&quot;), df_results_obj_spar_orth)</code></pre><p>We can take a look at how the algorithms compare to each other in their performance with the following tables. First, we look at the time and number of iterations for each algorithm.</p><table><tr><th style="text-align: right"><strong>μ</strong></th><th style="text-align: right"><strong>n</strong></th><th style="text-align: right"><strong>p</strong></th><th style="text-align: right"><strong>NCRPG_const_time</strong></th><th style="text-align: right"><strong>NCRPG_const_iter</strong></th><th style="text-align: right"><strong>NCRPG_bt_time</strong></th><th style="text-align: right"><strong>NCRPG_bt_iter</strong></th><th style="text-align: right"><strong>RPG_time</strong></th><th style="text-align: right"><strong>RPG_iter</strong></th></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">100</td><td style="text-align: right">5</td><td style="text-align: right">0.684749</td><td style="text-align: right">30786</td><td style="text-align: right">0.529327</td><td style="text-align: right">4416</td><td style="text-align: right">1.08593</td><td style="text-align: right">30786</td></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">200</td><td style="text-align: right">5</td><td style="text-align: right">1.62113</td><td style="text-align: right">31345</td><td style="text-align: right">1.00647</td><td style="text-align: right">3819</td><td style="text-align: right">2.39352</td><td style="text-align: right">31346</td></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">300</td><td style="text-align: right">5</td><td style="text-align: right">3.75444</td><td style="text-align: right">35681</td><td style="text-align: right">1.64839</td><td style="text-align: right">3079</td><td style="text-align: right">5.23643</td><td style="text-align: right">35683</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">100</td><td style="text-align: right">5</td><td style="text-align: right">0.279035</td><td style="text-align: right">11953</td><td style="text-align: right">0.0954497</td><td style="text-align: right">809</td><td style="text-align: right">0.411548</td><td style="text-align: right">11957</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">200</td><td style="text-align: right">5</td><td style="text-align: right">0.966696</td><td style="text-align: right">17982</td><td style="text-align: right">0.465404</td><td style="text-align: right">1495</td><td style="text-align: right">1.37787</td><td style="text-align: right">17796</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">300</td><td style="text-align: right">5</td><td style="text-align: right">2.42251</td><td style="text-align: right">21983</td><td style="text-align: right">1.1225</td><td style="text-align: right">1638</td><td style="text-align: right">3.12809</td><td style="text-align: right">22019</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">100</td><td style="text-align: right">5</td><td style="text-align: right">0.23533</td><td style="text-align: right">9808</td><td style="text-align: right">0.179321</td><td style="text-align: right">1090</td><td style="text-align: right">0.33349</td><td style="text-align: right">9817</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">200</td><td style="text-align: right">5</td><td style="text-align: right">0.487548</td><td style="text-align: right">9601</td><td style="text-align: right">0.420006</td><td style="text-align: right">819</td><td style="text-align: right">0.699072</td><td style="text-align: right">9614</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">300</td><td style="text-align: right">5</td><td style="text-align: right">0.0342426</td><td style="text-align: right">331</td><td style="text-align: right">0.00969333</td><td style="text-align: right">26</td><td style="text-align: right">0.0528303</td><td style="text-align: right">331</td></tr></table><p>Second, we look at the objective values, sparsity, and orthogonality of the solutions found by each algorithm.</p><table><tr><th style="text-align: right"><strong>μ</strong></th><th style="text-align: right"><strong>n</strong></th><th style="text-align: right"><strong>p</strong></th><th style="text-align: right"><strong>NCRPG_const_obj</strong></th><th style="text-align: right"><strong>NCRPG_const_spar</strong></th><th style="text-align: right"><strong>NCRPG_const_orth</strong></th><th style="text-align: right"><strong>NCRPG_bt_obj</strong></th><th style="text-align: right"><strong>NCRPG_bt_spar</strong></th><th style="text-align: right"><strong>NCRPG_bt_orth</strong></th><th style="text-align: right"><strong>RPG_obj</strong></th><th style="text-align: right"><strong>RPG_spar</strong></th><th style="text-align: right"><strong>RPG_orth</strong></th></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">100</td><td style="text-align: right">5</td><td style="text-align: right">3.20343</td><td style="text-align: right">0.475</td><td style="text-align: right">0.145636</td><td style="text-align: right">3.20463</td><td style="text-align: right">0.4756</td><td style="text-align: right">0.14826</td><td style="text-align: right">3.20343</td><td style="text-align: right">0.475</td><td style="text-align: right">0.145636</td></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">200</td><td style="text-align: right">5</td><td style="text-align: right">4.38751</td><td style="text-align: right">0.5203</td><td style="text-align: right">0.124219</td><td style="text-align: right">4.38662</td><td style="text-align: right">0.5178</td><td style="text-align: right">0.124448</td><td style="text-align: right">4.38751</td><td style="text-align: right">0.5203</td><td style="text-align: right">0.124219</td></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">300</td><td style="text-align: right">5</td><td style="text-align: right">5.22587</td><td style="text-align: right">0.546533</td><td style="text-align: right">0.0992134</td><td style="text-align: right">5.22137</td><td style="text-align: right">0.5494</td><td style="text-align: right">0.0984192</td><td style="text-align: right">5.22587</td><td style="text-align: right">0.546533</td><td style="text-align: right">0.0992134</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">100</td><td style="text-align: right">5</td><td style="text-align: right">13.0305</td><td style="text-align: right">0.7356</td><td style="text-align: right">0.105535</td><td style="text-align: right">13.039</td><td style="text-align: right">0.7334</td><td style="text-align: right">0.111901</td><td style="text-align: right">13.0305</td><td style="text-align: right">0.7356</td><td style="text-align: right">0.105535</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">200</td><td style="text-align: right">5</td><td style="text-align: right">16.8312</td><td style="text-align: right">0.8125</td><td style="text-align: right">0.0786428</td><td style="text-align: right">16.8541</td><td style="text-align: right">0.8154</td><td style="text-align: right">0.0822406</td><td style="text-align: right">16.8193</td><td style="text-align: right">0.8124</td><td style="text-align: right">0.080326</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">300</td><td style="text-align: right">5</td><td style="text-align: right">19.2926</td><td style="text-align: right">0.867667</td><td style="text-align: right">0.0621717</td><td style="text-align: right">19.2791</td><td style="text-align: right">0.869733</td><td style="text-align: right">0.0622674</td><td style="text-align: right">19.2926</td><td style="text-align: right">0.867667</td><td style="text-align: right">0.0621717</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">100</td><td style="text-align: right">5</td><td style="text-align: right">22.0226</td><td style="text-align: right">0.874</td><td style="text-align: right">0.0620929</td><td style="text-align: right">21.9882</td><td style="text-align: right">0.8742</td><td style="text-align: right">0.0581779</td><td style="text-align: right">22.0226</td><td style="text-align: right">0.874</td><td style="text-align: right">0.0620929</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">200</td><td style="text-align: right">5</td><td style="text-align: right">25.5495</td><td style="text-align: right">0.9783</td><td style="text-align: right">0.0540715</td><td style="text-align: right">25.5905</td><td style="text-align: right">0.9822</td><td style="text-align: right">0.0540714</td><td style="text-align: right">25.5495</td><td style="text-align: right">0.9783</td><td style="text-align: right">0.0540715</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">300</td><td style="text-align: right">5</td><td style="text-align: right">25.0829</td><td style="text-align: right">0.996667</td><td style="text-align: right">0.0</td><td style="text-align: right">25.0812</td><td style="text-align: right">0.996667</td><td style="text-align: right">0.0</td><td style="text-align: right">25.0829</td><td style="text-align: right">0.996667</td><td style="text-align: right">0.0</td></tr></table><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="language-julia hljs">using Pkg
+Pkg.status()</code></pre><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.6.0
+  [336ed68f] CSV v0.10.15
+  [13f3f980] CairoMakie v0.15.6
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.31.0
+⌅ [5ae59095] Colors v0.12.11
+  [a93c6f00] DataFrames v1.8.0
+  [31c24e10] Distributions v0.25.120
+  [7073ff75] IJulia v1.30.4
+  [682c06a0] JSON v0.21.4
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+  [d3d80556] LineSearches v7.4.0
+  [ee78f7c6] Makie v0.24.6
+  [af67fdf4] ManifoldDiff v0.4.4
+  [1cead3c2] Manifolds v0.10.23
+  [3362f125] ManifoldsBase v1.2.0
+  [0fc0a36d] Manopt v0.5.23 `../../Manopt.jl`
+  [5b8d5e80] ManoptExamples v0.1.15 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [91a5bcdd] Plots v1.41.1
+  [08abe8d2] PrettyTables v3.0.11
+  [6099a3de] PythonCall v0.9.28
+  [f468eda6] QuadraticModels v0.9.14
+  [1e40b3f8] RipQP v0.7.0
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`</code></pre><p>This tutorial was last rendered October 1, 2025, 22:15:43.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BJJP25b]</dt><dd><div>R. Bergmann, H. Jasa, P. J. John and M. Pfeffer. <em>The Intrinsic Riemannian Proximal Gradient Method for Nononvex Optimization</em>, preprint (2025), <a href="https://arxiv.org/abs/2506.09775">arXiv:2506.09775</a>.</div></dd><dt>[HW21]</dt><dd><div>W. Huang and K. Wei. <em>Riemannian proximal gradient methods</em>. <a href="https://doi.org/10.1007/s10107-021-01632-3">Mathematical Programming <strong>194</strong>, 371–413</a> (2021).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Riemannian-mean/">« Riemannian Mean</a><a class="docs-footer-nextpage" href="../NCRPG-Grassmann/">Grassmann Experiment »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Monday 6 October 2025 09:01">Monday 6 October 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

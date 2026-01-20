@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Total Variation · ManoptExamples.jl</title><meta name="title" content="Total Variation · ManoptExamples.jl"/><meta property="og:title" content="Total Variation · ManoptExamples.jl"/><meta property="twitter:title" content="Total Variation · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">LTMADS</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Spectral-Procrustes-2D/">Spectral &amp; Robust Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-5" type="checkbox"/><label class="tocitem" for="menuitem-2-5"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-9" type="checkbox"/><label class="tocitem" for="menuitem-2-9"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NCRPG-Sparse-PCA/">Sparse PCA</a></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li><a class="tocitem" href="../NCRPG-Row-Sparse-Low-Rank/">Row-Sparse Low-Rank Matrix Recovery</a></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li><a class="tocitem" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span></a></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li class="is-active"><a class="tocitem" href>Total Variation</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#The-manifold-valued-ROF-model"><span>The manifold-valued ROF model</span></a></li><li><a class="tocitem" href="#The-Cyclic-Proximal-Point-algorithm"><span>The Cyclic Proximal Point algorithm</span></a></li><li><a class="tocitem" href="#The-Optimsation"><span>The Optimsation</span></a></li><li><a class="tocitem" href="#Outlook"><span>Outlook</span></a></li><li><a class="tocitem" href="#Technical-details"><span>Technical details</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-13" type="checkbox"/><label class="tocitem" for="menuitem-2-13"><span class="docs-label">Vector bundle Newton</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Elastic-Geodesic-under-forcefield/">Elastic Geodesic under force field</a></li><li><a class="tocitem" href="../Elastic-Geodesic-Obstacle/">Elastic Geodesic Obstacle</a></li><li><a class="tocitem" href="../Inextensible-Rod/">Inextensible Rod</a></li></ul></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Total Variation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Total Variation</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/Total-Variation.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Total-Variation-Minimization"><a class="docs-heading-anchor" href="#Total-Variation-Minimization">Total Variation Minimization</a><a id="Total-Variation-Minimization-1"></a><a class="docs-heading-anchor-permalink" href="#Total-Variation-Minimization" title="Permalink"></a></h1><p>Ronny Bergmann 2023-06-06</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p><a href="https://en.wikipedia.org/wiki/Total_variation_denoising">Total Variation denoising</a> is an optimization problem used to denoise signals and images. The corresponding (Euclidean) objective is often called Rudin-Osher-Fatemi (ROF) model based on the paper [<a href="../../references/#RudinOsherFatemi_1992">ROF92</a>].</p><p>This was generalized to manifolds in [<a href="../../references/#WeinmannDemaretStorath_2014">WDS14</a>]. In this short example we will look at the ROF model for manifold-valued data, its generalizations, and how they can be solved using <a href="https://www.manoptjl.org">Manopt.jl</a>.</p><h2 id="The-manifold-valued-ROF-model"><a class="docs-heading-anchor" href="#The-manifold-valued-ROF-model">The manifold-valued ROF model</a><a id="The-manifold-valued-ROF-model-1"></a><a class="docs-heading-anchor-permalink" href="#The-manifold-valued-ROF-model" title="Permalink"></a></h2><p>Generalizing the ROF model to manifolds can be phrased as follows: Given a (discrete) signal on a manifold <span>$s = (s_i)_{i=1}^N \in \mathbb M^n$</span> of length <span>$n \in \mathbb N$</span>, we usually assume that this signal might be noisy. For the (Euclidean) ROF model we assume that the noise is Gaussian. Then variational models for denoising usually consist of a data term <span>$D(p,s)$</span> to “stay close to” <span>$s$</span> and a regularizer <span>$R(p)$</span>. For TV regularization the data term is the squared distance and the regularizer models that without noise, neighboring values are close. We obtain</p><p class="math-container">\[\operatorname*{arg\,min}_{p\in\mathcal M^n}
+f(p),
+\qquad
+f(p) = D(p,s) + α R(p) = \sum_{i=1}^n d_{\mathcal M}^2(s_i,p_i) + α\sum_{i=1}^{n-1} d_{\mathcal M}(p_i,p_{i+1}),\]</p><p>where <span>$α &gt; 0$</span> is a weight parameter.</p><p>The challenge here is that most classical algorithm, like gradient descent or Quasi Newton, assume the cost <span>$f(p)$</span> to be smooth such that the gradient exists at every point. In our setting that is not the case since the distacen is not differentiable for any <span>$p_i=p_{i+1}$</span>. So we have to use another technique.</p><h2 id="The-Cyclic-Proximal-Point-algorithm"><a class="docs-heading-anchor" href="#The-Cyclic-Proximal-Point-algorithm">The Cyclic Proximal Point algorithm</a><a id="The-Cyclic-Proximal-Point-algorithm-1"></a><a class="docs-heading-anchor-permalink" href="#The-Cyclic-Proximal-Point-algorithm" title="Permalink"></a></h2><p>If the cost consists of a sum of functions, where each of the proximal maps is “easy to evaluate”, for best of cases in closed form, we can “apply the proximal maps in a cyclic fashion” and optain the <a href="https://manoptjl.org/stable/solvers/cyclic_proximal_point/">Cyclic Proximal Point Algorithm</a> [<a href="../../references/#Bacak_2014">Bac14</a>].</p><p>Both for the distance and the squared distance, we have <a href="https://juliamanifolds.github.io/ManifoldDiff.jl/stable/library/#Proximal-Maps">generic implementations</a>; since this happens in a cyclic manner, there is also always one of the arguments involved in the prox and never both. We can improve the performance slightly by computing all proes in parallel that do not interfer. To be precise we can compute first all proxes of distances in the regularizer that start with an odd index in parallel. Afterwards all that start with an even index.</p><h2 id="The-Optimsation"><a class="docs-heading-anchor" href="#The-Optimsation">The Optimsation</a><a id="The-Optimsation-1"></a><a class="docs-heading-anchor-permalink" href="#The-Optimsation" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Manifolds, Manopt, ManoptExamples, ManifoldDiff
+using ManifoldDiff: prox_distance
+using ManoptExamples: prox_Total_Variation
+n = 500 #Signal length
+σ = 0.2 # amount of noise
+α = 0.5# in the TV model</code></pre><p>We define a few colors</p><pre><code class="language-julia hljs">using Colors, NamedColors, ColorSchemes, Plots, Random
+data_color = RGBA{Float64}(colorant&quot;black&quot;)
+light_color = RGBA{Float64}(colorant&quot;brightgrey&quot;)
+recon_color = RGBA{Float64}(colorant&quot;vibrantorange&quot;)
+noisy_color = RGBA{Float64}(colorant&quot;vibrantteal&quot;)</code></pre><p>And we generate our data on the <a href="https://juliamanifolds.github.io/Manifolds.jl/stable/manifolds/circle.html">Circle</a>, since that is easy to plot and nice to compare to the Euclidean case of a real-valued signal.</p><pre><code class="language-julia hljs">Random.seed!(23)
+M = Circle()
+N = PowerManifold(M, n)
+data = ManoptExamples.artificial_S1_signal(n)
+s = [exp(M, d, rand(M; vector_at=d, σ=0.2)) for d in data]
+t = range(0.0, 1.0; length=n)
+scene = scatter(
+    t,
+    data;
+    markercolor=data_color,
+    markerstrokecolor=data_color,
+    markersize=2,
+    lab=&quot;original&quot;,
+)
+scatter!(
+    scene,
+    t,
+    s;
+    markersize=2,
+    markercolor=noisy_color,
+    markerstrokecolor=noisy_color,
+    lab=&quot;noisy&quot;,
+)
+yticks!(
+    [-π, -π / 2, 0, π / 2, π],
+    [raw&quot;$-\pi$&quot;, raw&quot;$-\frac{\pi}{2}$&quot;, raw&quot;$0$&quot;, raw&quot;$\frac{\pi}{2}$&quot;, raw&quot;$\pi$&quot;],
+)</code></pre><p><img src="../Total-Variation_files/figure-commonmark/cell-6-output-1.svg" alt/></p><p>As mentioned above, total variation now minimized different neighbors – while keeping jumps if the are large enough. One notable difference between Euclidean and Cyclic data is, that the y-axis is in our case periodic, hence the first jump is actually not a jump but a “linear increase” that “wraps around” and the second large jump –or third overall– is actually only as small as the second jump.</p><p>Defining cost and the proximal maps, which are actually 3 proxes to be precise.</p><pre><code class="language-julia hljs">f(N, p) = ManoptExamples.L2_Total_Variation(N, s, α, p)
+proxes_f = ((N, λ, p) -&gt; prox_distance(N, λ, s, p, 2), (N, λ, p) -&gt; prox_Total_Variation(N, α * λ, p))</code></pre><p>We run the algorithm</p><pre><code class="language-julia hljs">o = cyclic_proximal_point(
+    N,
+    f,
+    proxes_f,
+    s;
+    λ=i -&gt; π / (2 * i),
+    debug=[
+        :Iteration,
+        &quot; | &quot;,
+        DebugProximalParameter(),
+        &quot; | &quot;,
+        :Cost,
+        &quot; | &quot;,
+        :Change,
+        &quot;\n&quot;,
+        1000,
+        :Stop,
+    ],
+    record=[:Iteration, :Cost, :Change, :Iterate],
+    return_state=true,
+);</code></pre><pre><code class="nohighlight hljs">Initial  | λ:Inf | f(x): 59.187445 | 
+# 1000   | λ:0.0015707963267948967 | f(x): 13.963912 | Last Change: 1.773283
+# 2000   | λ:0.0007853981633974483 | f(x): 13.947124 | Last Change: 0.011678
+# 3000   | λ:0.0005235987755982988 | f(x): 13.941538 | Last Change: 0.003907
+# 4000   | λ:0.00039269908169872416 | f(x): 13.938748 | Last Change: 0.001957
+# 5000   | λ:0.0003141592653589793 | f(x): 13.937075 | Last Change: 0.001175
+At iteration 5000 the algorithm reached its maximal number of iterations (5000).</code></pre><p>We can see that the cost reduces nicely. Let’s extract the result an the recorded values</p><pre><code class="language-julia hljs">recon = get_solver_result(o)
+record = get_record(o)</code></pre><p>We get</p><pre><code class="language-julia hljs">scene = scatter(
+    t,
+    data;
+    markercolor=data_color,
+    markerstrokecolor=data_color,
+    markersize=2,
+    lab=&quot;original&quot;,
+)
+scatter!(
+    scene,
+    t,
+    s;
+    markersize=2,
+    markercolor=light_color,
+    markerstrokecolor=light_color,
+    lab=&quot;noisy&quot;,
+)
+scatter!(
+    scene,
+    t,
+    recon;
+    markersize=2,
+    markercolor=recon_color,
+    markerstrokecolor=recon_color,
+    lab=&quot;reconstruction&quot;,
+)</code></pre><p><img src="../Total-Variation_files/figure-commonmark/cell-10-output-1.svg" alt/></p><p>Which contains the usual stair casing one expects for TV regularization, but here in a “cyclic manner”</p><h2 id="Outlook"><a class="docs-heading-anchor" href="#Outlook">Outlook</a><a id="Outlook-1"></a><a class="docs-heading-anchor-permalink" href="#Outlook" title="Permalink"></a></h2><p>We can generalize the total variation also to a second order total variation. Again intuitively, while TV prefers constant areas, the <span>$\operatorname{TV}_2$</span> yields a cost 0 for anything linear, which on manifolds can be generalized to equidistant on a geodesic [<a href="../../references/#BacakBergmannSteidlWeinmann_2016">BBSW16</a>]. Here we can again derive proximal maps, which for the circle again have a closed form solutoin [<a href="../../references/#BergmannLausSteidlWeinmann_2014_1">BLSW14</a>] but on general manifolds these have again to be approximated.</p><p>Another extension for both first and second order TV is to apply this for manifold-valued images <span>$S = (S_{i,j})_{i,j=1}^{m,n} \in \mathcal M^{m,n}$</span>, where the distances in the regularizer are then used in both the first dimension <span>$i$</span> and the second dimension <span>$j$</span> in the data.</p><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This version of the example was generated with the following package versions.</p><pre><code class="language-julia hljs">Pkg.status()</code></pre><pre><code class="nohighlight hljs">Status `~/work/ManoptExamples.jl/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.6.3
+  [336ed68f] CSV v0.10.15
+  [13f3f980] CairoMakie v0.15.8
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.31.0
+  [5ae59095] Colors v0.13.1
+  [a93c6f00] DataFrames v1.8.1
+  [31c24e10] Distributions v0.25.122
+  [e9467ef8] GLMakie v0.13.8
+  [4d00f742] GeometryTypes v0.8.5
+  [7073ff75] IJulia v1.33.0
+  [682c06a0] JSON v1.3.0
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+  [d3d80556] LineSearches v7.5.1
+  [ee78f7c6] Makie v0.24.8
+  [af67fdf4] ManifoldDiff v0.4.5
+  [1cead3c2] Manifolds v0.11.8
+  [3362f125] ManifoldsBase v2.3.0
+  [0fc0a36d] Manopt v0.5.30
+  [5b8d5e80] ManoptExamples v0.1.18 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [6fe1bfb0] OffsetArrays v1.17.0
+  [91a5bcdd] Plots v1.41.2
+  [08abe8d2] PrettyTables v3.1.2
+  [6099a3de] PythonCall v0.9.30
+  [f468eda6] QuadraticModels v0.9.14
+  [731186ca] RecursiveArrayTools v3.39.0
+  [1e40b3f8] RipQP v0.7.0</code></pre><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[Bac14]</dt><dd><div>M. Bačák. <em>Computing medians and means in Hadamard spaces</em>. <a href="https://doi.org/10.1137/140953393">SIAM Journal on Optimization <strong>24</strong>, 1542–1566</a> (2014), <a href="https://arxiv.org/abs/1210.2145">arXiv:1210.2145</a>.</div></dd><dt>[BBSW16]</dt><dd><div>M. Bačák, R. Bergmann, G. Steidl and A. Weinmann. <em>A second order non-smooth variational model for restoring manifold-valued images</em>. <a href="https://doi.org/10.1137/15M101988X">SIAM Journal on Scientific Computing <strong>38</strong>, A567–A597</a> (2016), <a href="https://arxiv.org/abs/1506.02409">arXiv:1506.02409</a>.</div></dd><dt>[BLSW14]</dt><dd><div>R. Bergmann, F. Laus, G. Steidl and A. Weinmann. <em>Second order differences of cyclic data and applications in variational denoising</em>. <a href="https://doi.org/10.1137/140969993">SIAM Journal on Imaging Sciences <strong>7</strong>, 2916–2953</a> (2014), <a href="https://arxiv.org/abs/1405.5349">arXiv:1405.5349</a>.</div></dd><dt>[ROF92]</dt><dd><div>L. I. Rudin, S. Osher and E. Fatemi. <em>Nonlinear total variation based noise removal algorithms</em>. <a href="https://doi.org/10.1016/0167-2789(92)90242-f">Physica D: Nonlinear Phenomena <strong>60</strong>, 259–268</a> (1992).</div></dd><dt>[WDS14]</dt><dd><div>A. Weinmann, L. Demaret and M. Storath. <em>Total variation regularization for manifold-valued data</em>. <a href="https://doi.org/10.1137/130951075">SIAM Journal on Imaging Sciences <strong>7</strong>, 2226–2257</a> (2014).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Rosenbrock/">« Rosenbrock</a><a class="docs-footer-nextpage" href="../Elastic-Geodesic-under-forcefield/">Elastic Geodesic under force field »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 14 December 2025 12:09">Sunday 14 December 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

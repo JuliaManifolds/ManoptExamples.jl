@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Row-Sparse Low-Rank Matrix Recovery · ManoptExamples.jl</title><meta name="title" content="Row-Sparse Low-Rank Matrix Recovery · ManoptExamples.jl"/><meta property="og:title" content="Row-Sparse Low-Rank Matrix Recovery · ManoptExamples.jl"/><meta property="twitter:title" content="Row-Sparse Low-Rank Matrix Recovery · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">LTMADS</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Spectral-Procrustes-2D/">Spectral &amp; Robust Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-5" type="checkbox"/><label class="tocitem" for="menuitem-2-5"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-9" type="checkbox" checked/><label class="tocitem" for="menuitem-2-9"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NCRPG-Sparse-PCA/">Sparse PCA</a></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li class="is-active"><a class="tocitem" href>Row-Sparse Low-Rank Matrix Recovery</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#The-Problem"><span>The Problem</span></a></li><li><a class="tocitem" href="#Numerical-Experiment"><span>Numerical Experiment</span></a></li><li><a class="tocitem" href="#Technical-details"><span>Technical details</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li><a class="tocitem" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span></a></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li><li><input class="collapse-toggle" id="menuitem-2-13" type="checkbox"/><label class="tocitem" for="menuitem-2-13"><span class="docs-label">Vector bundle Newton</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Elastic-Geodesic-under-forcefield/">Elastic Geodesic under force field</a></li><li><a class="tocitem" href="../Elastic-Geodesic-Obstacle/">Elastic Geodesic Obstacle</a></li><li><a class="tocitem" href="../Inextensible-Rod/">Inextensible Rod</a></li></ul></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Proximal Gradient Methods</a></li><li class="is-active"><a href>Row-Sparse Low-Rank Matrix Recovery</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Row-Sparse Low-Rank Matrix Recovery</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/NCRPG-Row-Sparse-Low-Rank.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Row-sparse-Low-rank-Matrix-Recovery"><a class="docs-heading-anchor" href="#Row-sparse-Low-rank-Matrix-Recovery">Row-sparse Low-rank Matrix Recovery</a><a id="Row-sparse-Low-rank-Matrix-Recovery-1"></a><a class="docs-heading-anchor-permalink" href="#Row-sparse-Low-rank-Matrix-Recovery" title="Permalink"></a></h1><p>Paula John, Hajg Jasa 2025-10-01</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In this example we use the Nonconvex Riemannian Proximal Gradient (NCRPG) method [<a href="../../references/#BergmannJasaJohnPfeffer_2025_1">BJJP25b</a>] and compare it to the Riemannian Alternating Direction Method of Multipliers (RADMM) [<a href="../../references/#JiaxiangShiqianTejes_2022_1">LMS22</a>]. This example reproduces the results from [<a href="../../references/#BergmannJasaJohnPfeffer_2025_1">BJJP25b</a>], Section 6.3. The numbers may vary slightly due to having run this notebook on a different machine.</p><pre><code class="language-julia hljs">using PrettyTables
+using BenchmarkTools
+using CSV, DataFrames
+using ColorSchemes, Plots, LaTeXStrings
+using Random, LinearAlgebra, LRUCache, Distributions
+using ManifoldDiff, Manifolds, Manopt, ManoptExamples</code></pre><h2 id="The-Problem"><a class="docs-heading-anchor" href="#The-Problem">The Problem</a><a id="The-Problem-1"></a><a class="docs-heading-anchor-permalink" href="#The-Problem" title="Permalink"></a></h2><p>Let <code>\mathcal M = \mathcal M_r</code> be the manifold of rank <code>r</code> matrices. Let <code>g \colon \mathcal M \to \mathbb R</code> be defined by</p><p class="math-container">\[g(X) = \Vert\mathbb A (X) - y\Vert_2^2,\]</p><p>where <code>\mathbb A \colon \mathbb R^{M \times N} \to \mathbb R^m</code> is a linear measurement operator.</p><p>Let <code>h \colon \mathcal M \to \mathbb R</code> be defined by</p><p class="math-container">\[h(X) = \mu \Vert X \Vert_{1, 2}\]</p><p>be the row sparsity-enforcing term given by the <code>\ell_{1,2}</code>-norm, where <code>\mu \ge 0</code> is a regularization parameter.</p><p>We define our total objective function as <code>f = g + h</code>. The goal is to recover the (low-rank and row-sparse) signal <code>X</code> from as few measurements <code>y</code> as possible.</p><h2 id="Numerical-Experiment"><a class="docs-heading-anchor" href="#Numerical-Experiment">Numerical Experiment</a><a id="Numerical-Experiment-1"></a><a class="docs-heading-anchor-permalink" href="#Numerical-Experiment" title="Permalink"></a></h2><p>We initialize the experiment parameters, as well as some utility functions.</p><pre><code class="language-julia hljs"># Set random seed for reproducibility
+random_seed = 1520
+BenchmarkTools.DEFAULT_PARAMETERS.seconds = 180.0
+
+atol = 1e-7
+max_iters = 5000
+c = 1e-4    # penalty parameter
+M = 500     # amount of rows
+N = 100     # amount of columns
+s = 10      # amount of non-zero rows
+r_m_array = [(1, 300), (2, 500), (3, 700)] # (rank, number of measurements)
+step_size = 0.25
+init_step_size_bt = 2 * step_size
+stop_NCRPG = atol
+stop_RADMM = stop_NCRPG * step_size</code></pre><pre><code class="language-julia hljs">function mean_error_zero_rows(Mr, X, zero_rows)
+    err = 0.0
+    for j in zero_rows
+        err += norm(X.U[j, :] .* X.S)
+    end
+    return err/length(zero_rows)
+end</code></pre><p>We define a function to generate the test data for the Sparse PCA problem.</p><pre><code class="language-julia hljs">function generate_data(M, N, r, m, s)
+    # Generate rank r matrix with s non-zero rows
+    X = rand(M, r) * transpose(Matrix(qr(rand(N, r)).Q[:, 1:r]))
+    smpl = sample(1:M, M - s , replace = false)
+    X[smpl, :] .= 0.0
+
+    # Normalize
+    X = X/norm(X)
+
+    # Generate measurement operator A and signal y
+    A = rand(Normal(0, 1/sqrt(m)), m, M * N)
+    y = A * vec(X)
+    return X, A, y, smpl
+end</code></pre><p>We implement the proximal operators for the <code>\ell_{1, 2}</code>-norm on the fixed-rank manifold, following [<a href="../../references/#BergmannJasaJohnPfeffer_2025_1">BJJP25b</a>] and [<a href="../../references/#JiaxiangShiqianTejes_2022_1">LMS22</a>].</p><pre><code class="language-julia hljs"># NCRPG
+function prox_norm12_global(Mr::FixedRankMatrices, prox_param, X::SVDMPoint; c = c)
+    λ = prox_param * c
+    M, N, k = Manifolds.get_parameter(Mr.size)
+    YU = zeros(M, k)
+    for i in 1:M
+        normx1_i = norm(X.U[i, :] .* X.S)
+        if  normx1_i &gt; λ
+            YU[i, :] = ((normx1_i - λ)/normx1_i) * X.U[i, :]
+        end
+    end
+    Z = SVDMPoint(YU * diagm(X.S))
+    return SVDMPoint(Z.U, Z.S, Z.Vt * X.Vt)
+end
+#
+#RADMM
+function prox_norm12_global(Mr::FixedRankMatrices, prox_param, X1::Matrix{Float64}; c = c)
+    λ = prox_param * c
+    M, N, k = Manifolds.get_parameter(Mr.size)
+    Y1 = zeros(M, N)
+    for i in 1:M
+        normx1_i = norm(X1[i, :])
+        if  normx1_i &gt; λ
+            Y1[i, :] = ((normx1_i - λ)/normx1_i) * X1[i, :]
+        end
+    end
+    return Y1
+end</code></pre><p>Next, we define the objective function, its gradient, and the proximal operator for the <code>\ell_{1,2}</code>-norm on the fixed-rank manifold.</p><pre><code class="language-julia hljs"># Objective(s), gradient, and proxes
+function norm12(X::SVDMPoint)
+    M = size(X.U)[1]
+    sum([norm(X.U[i, :] .* X.S) for i = 1:M])
+end
+function f_global(M::FixedRankMatrices, X::SVDMPoint, A, c, y, max_cost = 1e5)
+    X_vec = vec(embed(M, X))
+    cost =  0.5 * (norm(A*X_vec - y))^2 + c * norm12(X)
+    if cost &gt;= max_cost
+        return NaN
+    else
+        return cost
+    end
+end
+#
+g_global(M::FixedRankMatrices, X::SVDMPoint, A, c, y) = 0.5*(norm(A*vec(embed(M, X)) - y))^2
+function grad_g_global(M::FixedRankMatrices, X::SVDMPoint, A, c, y)
+    X_mat = embed(M, X)
+    return project(M, X, reshape(A&#39;*(A*vec(X_mat) - y), size(X_mat)))
+end
+h_global(M::FixedRankMatrices, X::SVDMPoint, A, c, y) = c * norm12(X)</code></pre><p>We introduce an implementation of the RADMM method for the Row-sparse Low-rank Matrix Recovery problem on the oblique manifold, following [<a href="../../references/#JiaxiangShiqianTejes_2022_1">LMS22</a>].</p><pre><code class="language-julia hljs">&quot;&quot;&quot;
+\argmin F(X) = 0.5||AX-y||^2 + c *||X||_{1,2}
+f(X) = 0.5||AX - y||^2
+g(X) = c * ||X||_{1,2}
+L_{ρ,γ}(X, Z, Λ) = f(X) + g_γ(Z) + &lt;Λ, X - Z&gt; + ρ/2 * ||X - Z||^2
+grad_X L_{ρ,γ}(X, Z, Λ) = project(A&#39;(AX - y) + Λ + ρ(X - Z))
+
+&quot;&quot;&quot;
+function RADMM_blind_deconv(
+    A,
+    M, # rows
+    N, # columns
+    rank,
+    c,  # penalty parameter
+    y, # signal
+    prox_l12;
+    η = 1e-1,
+    ρ = 0.1,
+    γ = 1e-7,
+    stop = 1e-8,
+    max_iters  = 100,
+    start = 0,
+    record = false,
+    ϵ_spars = 1e-5,
+    max_cost = 1e5
+)
+    flag_succ = false
+    Mr = FixedRankMatrices(M, N, rank)
+    γρ = γ * ρ
+    F(X) = 0.5 * norm(A*vec(X) - y)^2 + c * sum([norm(X[i, :]) for i=1:M])
+    grad_augLagr(X::SVDMPoint, X_mat::Matrix, Λ::Matrix, Z::Matrix) = project(Mr, X, reshape(A&#39;*(A*vec(X_mat) - y) + vec(Λ + ρ*(X_mat - Z)), (M, N)))
+
+    if start == 0
+        X = rand(Mr)
+    else
+        X = start
+    end
+    X_mat = embed(Mr, X)
+    Z = X_mat
+    Λ = zeros(M, N)
+    it = -1
+    if !record
+        for i in 1:max_iters
+            descent_dir = -η * grad_augLagr(X, X_mat, Λ, Z)
+            X = retract(Mr, X, descent_dir)
+            X_mat = embed(Mr, X)
+            Y = prox_l12(Mr, (1 + γρ)/ρ , X_mat + 1/ρ * Λ; c = c)
+            Z = (1/γ * Y + Λ + ρ * X_mat)/ (1/γ + ρ)
+            Λ = Λ + ρ * (X_mat - Z)
+            if (norm(embed(Mr, X, descent_dir)) &lt; stop)
+                flag_succ = true
+                it = i
+                break
+            end
+        end
+        if it == -1
+            it = max_iters
+        end
+        return X, flag_succ, it
+    else
+        Iterates = []
+        for i in 1:max_iters
+            descent_dir = -η * grad_augLagr(X, X_mat, Λ, Z)
+            X = retract(Mr, X, descent_dir)
+            push!(Iterates, X)
+            X_mat = embed(Mr, X)
+            Y = prox_l12(Mr, (1 + γρ)/ρ , X_mat + 1/ρ * Λ; c = c)
+            Z = (1/γ * Y + Λ + ρ * X_mat)/ (1/γ + ρ)
+            Λ = Λ + ρ * (X_mat - Z)
+            if (norm(embed(Mr, X, descent_dir)) &lt; stop)
+                flag_succ = true
+                it = i
+                break
+            end
+            # if i%100 == 0
+            #     println(i, &quot;\t&quot;, norm(embed(Mr, X, descent_dir)))
+            # end
+        end
+        if it == -1
+            it = max_iters
+        end
+        return X, flag_succ, it, Iterates
+    end
+end</code></pre><p>We set up some variables to collect the results of the experiments and initialize the dataframes</p><p>And run the experiments</p><pre><code class="language-julia hljs">for (r, m) in r_m_array
+    # Set random seed for reproducibility
+    Random.seed!(random_seed)
+    #
+    # Define manifold
+    Mr = FixedRankMatrices(M, N, r) #fixed rank manifold
+    #
+    # Generate rank r matrix with s non-zero rows
+    Sol_mat, A, y, zero_rows = generate_data(M, N, r, m, s)
+    Sol = SVDMPoint(Sol_mat, r)
+    # Local starting point
+    Y = rand(Normal(0, 0.01/sqrt(r)), M, N)
+    start = SVDMPoint(Sol_mat + Y, r)
+    dist_start_sol = distance(Mr, Sol, start, OrthographicInverseRetraction())
+    # Localize objectives
+    f(Mr, X) = f_global(Mr, X, A, c, y)
+    g(Mr, X) = g_global(Mr, X, A, c, y)
+    grad_g(Mr, X) = grad_g_global(Mr, X, A, c, y)
+    h(Mr, X) = h_global(Mr, X, A, c, y)
+    prox_norm12(Mr, prox_param, X) = prox_norm12_global(Mr, prox_param, X; c = c)
+    #
+    # Optimization
+    # NCRPG
+    rec_NCRPG = proximal_gradient_method(Mr, f, g, grad_g, start;
+        prox_nonsmooth=prox_norm12,
+        retraction_method=OrthographicRetraction(),
+        inverse_retraction_method=OrthographicInverseRetraction(),
+        stepsize = ConstantLength(step_size),
+        record=[:Iteration, :Iterate],
+        return_state=true,
+        debug=[
+            :Iteration,( &quot;|Δp|: %1.9f |&quot;),
+            DebugChange(; inverse_retraction_method= OrthographicInverseRetraction()),
+            (:Cost, &quot; F(x): %1.11f | &quot;),
+            &quot;\n&quot;,
+            :Stop,
+            100
+        ],
+        stopping_criterion =  StopAfterIteration(max_iters )|StopWhenGradientMappingNormLess(stop_NCRPG)
+    )
+    bm_NCRPG = @benchmark proximal_gradient_method($Mr, $f, $g, $grad_g, $start;
+        prox_nonsmooth=$prox_norm12,
+        retraction_method=OrthographicRetraction(),
+        inverse_retraction_method=OrthographicInverseRetraction(),
+        stepsize = ConstantLength($step_size),
+        stopping_criterion = StopAfterIteration($max_iters )|StopWhenGradientMappingNormLess($stop_NCRPG)
+    )
+    it_NCRPG, res_NCRPG = get_record(rec_NCRPG)[end]
+    # NCRPG with backtracking
+    rec_NCRPG_bt = proximal_gradient_method(Mr, f, g, grad_g, start;
+        prox_nonsmooth=prox_norm12,
+        retraction_method=OrthographicRetraction(),
+        inverse_retraction_method=OrthographicInverseRetraction(),
+        stepsize = ProximalGradientMethodBacktracking(;
+            strategy=:nonconvex,
+            initial_stepsize=init_step_size_bt
+        ),
+        record=[:Iteration, :Iterate],
+        return_state=true,
+        debug=[
+            :Iteration,( &quot;|Δp|: %1.9f |&quot;),
+            DebugChange(; inverse_retraction_method=OrthographicInverseRetraction()),
+            (:Cost, &quot; F(x): %1.11f | &quot;),
+            &quot;\n&quot;,
+            :Stop,
+            100
+        ],
+        stopping_criterion = StopAfterIteration(max_iters )|    StopWhenGradientMappingNormLess(stop_NCRPG)
+    )
+    bm_NCRPG_bt = @benchmark proximal_gradient_method($Mr, $f, $g, $grad_g, $start;
+        prox_nonsmooth=$prox_norm12,
+        retraction_method=OrthographicRetraction(),
+        inverse_retraction_method=OrthographicInverseRetraction(),
+        stepsize = ProximalGradientMethodBacktracking(; strategy=:nonconvex, initial_stepsize=$init_step_size_bt),
+        stopping_criterion = StopAfterIteration($max_iters )|  StopWhenGradientMappingNormLess($stop_NCRPG)
+    )
+    it_NCRPG_bt, res_NCRPG_bt = get_record(rec_NCRPG_bt)[end]
+    # RADMM
+    res_RADMM, succ, it_RADMM = RADMM_blind_deconv(A, M, N, r, c, y, prox_norm12_global;
+        max_iters  = max_iters ,
+        start = start,
+        η = step_size,
+        stop = stop_RADMM
+    )
+    bm_RADMM = @benchmark RADMM_blind_deconv($A, $M, $N, $r, $c, $y, $prox_norm12_global;
+        max_iters  = max_iters ,
+        start = $start,
+        η = $step_size,
+        stop = stop_RADMM
+    )
+    #
+    # Collect results
+    # Distances between the results
+    dist_NCRPG_RADMM = distance(Mr, res_NCRPG, res_RADMM, OrthographicInverseRetraction())
+    dist_NCRPG_bt_RADMM = distance(Mr, res_NCRPG_bt, res_RADMM, OrthographicInverseRetraction())
+    dist_NCRPG_NCRPG_bt = distance(Mr, res_NCRPG, res_NCRPG_bt, OrthographicInverseRetraction())
+    # Times
+    time_RADMM    = median(bm_RADMM   ).time/1e9
+    time_NCRPG    = median(bm_NCRPG   ).time/1e9
+    time_NCRPG_bt = median(bm_NCRPG_bt).time/1e9
+    # Errors
+    error_RADMM    = distance(Mr, Sol, res_RADMM,    OrthographicInverseRetraction())
+    error_NCRPG    = distance(Mr, Sol, res_NCRPG,    OrthographicInverseRetraction())
+    error_NCRPG_bt = distance(Mr, Sol, res_NCRPG_bt, OrthographicInverseRetraction())
+    # Mean zero row errors
+    mean_zero_row_error_NCRPG    = mean_error_zero_rows(Mr, res_NCRPG, zero_rows    )
+    mean_zero_row_error_NCRPG_bt = mean_error_zero_rows(Mr, res_NCRPG_bt, zero_rows )
+    mean_zero_row_error_RADMM    = mean_error_zero_rows(Mr, res_RADMM, zero_rows    )
+    #
+    # Push results to dataframes
+    push!(df_RADMM,
+        [
+            M, N, m, r, s,
+            step_size,
+            time_RADMM,
+            error_RADMM,
+            it_RADMM,
+            mean_zero_row_error_RADMM
+        ]
+    )
+    push!(df_NCRPG,
+        [
+            M, N, m, r, s,
+            step_size,
+            time_NCRPG,
+            error_NCRPG,
+            it_NCRPG,
+            mean_zero_row_error_NCRPG
+        ]
+    )
+    push!(df_NCRPG_bt,
+        [
+            M, N, m, r, s,
+            init_step_size_bt,
+            time_NCRPG_bt,
+            error_NCRPG_bt,
+            it_NCRPG_bt,
+            mean_zero_row_error_NCRPG_bt
+        ]
+    )
+    push!(df_distances,
+        [
+            M, N, m, r, s,
+            dist_NCRPG_NCRPG_bt,
+            dist_NCRPG_RADMM,
+            dist_NCRPG_bt_RADMM
+        ]
+    )
+end</code></pre><p>We export the results to CSV files</p><p>&lt;details class=&quot;code-fold&quot;&gt; &lt;summary&gt;Code&lt;/summary&gt;</p><pre><code class="language-julia hljs">CSV.write(joinpath(results_folder, &quot;results-fixed-rank-RADMM.csv&quot;), df_RADMM)
+CSV.write(joinpath(results_folder, &quot;results-fixed-rank-NCRPG.csv&quot;), df_NCRPG)
+CSV.write(joinpath(results_folder, &quot;results-fixed-rank-NCRPG-bt.csv&quot;), df_NCRPG_bt)
+CSV.write(joinpath(results_folder, &quot;results-fixed-rank-distances.csv&quot;), df_distances )</code></pre><p>&lt;/details&gt;</p><p>We can take a look at how the algorithms compare to each other in their performance with the following tables. The first table shows the performance RADMM.</p><table><tr><th style="text-align: right"><strong>M</strong></th><th style="text-align: right"><strong>N</strong></th><th style="text-align: right"><strong>m</strong></th><th style="text-align: right"><strong>r</strong></th><th style="text-align: right"><strong>s</strong></th><th style="text-align: right"><strong>stepsize</strong></th><th style="text-align: right"><strong>time (s)</strong></th><th style="text-align: right"><strong>error</strong></th><th style="text-align: right"><strong>iterations</strong></th><th style="text-align: right"><strong>mean zero row error</strong></th></tr><tr><td style="text-align: right">500.0</td><td style="text-align: right">100.0</td><td style="text-align: right">300.0</td><td style="text-align: right">1.0</td><td style="text-align: right">10.0</td><td style="text-align: right">0.25</td><td style="text-align: right">10.2648</td><td style="text-align: right">0.00052812</td><td style="text-align: right">1431.0</td><td style="text-align: right">5.37441e-9</td></tr><tr><td style="text-align: right">500.0</td><td style="text-align: right">100.0</td><td style="text-align: right">500.0</td><td style="text-align: right">2.0</td><td style="text-align: right">10.0</td><td style="text-align: right">0.25</td><td style="text-align: right">16.7196</td><td style="text-align: right">0.000725431</td><td style="text-align: right">1354.0</td><td style="text-align: right">6.09862e-9</td></tr><tr><td style="text-align: right">500.0</td><td style="text-align: right">100.0</td><td style="text-align: right">700.0</td><td style="text-align: right">3.0</td><td style="text-align: right">10.0</td><td style="text-align: right">0.25</td><td style="text-align: right">19.2542</td><td style="text-align: right">0.000772805</td><td style="text-align: right">1414.0</td><td style="text-align: right">7.4266e-9</td></tr></table><p>The next table shows the performance of NCRPG with a constant stepsize.</p><pre><code class="nohighlight hljs">| **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** |   **error** | **iterations** | **mean zero row error** |
+|------:|------:|------:|------:|------:|-------------:|-------------:|------------:|---------------:|------------------------:|
+| 500.0 | 100.0 | 300.0 |   1.0 |  10.0 |         0.25 |      7.75729 | 0.000528145 |         1049.0 |                     0.0 |
+| 500.0 | 100.0 | 500.0 |   2.0 |  10.0 |         0.25 |      11.6917 | 0.000725859 |         1047.0 |             1.58429e-21 |
+| 500.0 | 100.0 | 700.0 |   3.0 |  10.0 |         0.25 |      16.4164 | 0.000775127 |         1120.0 |             6.52608e-21 |</code></pre><p>The next table shows the performance of NCRPG with a backtracked stepsize. In this case, the column “stepsize” indicates the initial stepsize for the backtracking procedure.</p><pre><code class="nohighlight hljs">| **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** |   **error** | **iterations** | **mean zero row error** |
+|------:|------:|------:|------:|------:|-------------:|-------------:|------------:|---------------:|------------------------:|
+| 500.0 | 100.0 | 300.0 |   1.0 |  10.0 |          0.5 |      8.07119 | 0.000528144 |          562.0 |                     0.0 |
+| 500.0 | 100.0 | 500.0 |   2.0 |  10.0 |          0.5 |      15.0202 | 0.000725847 |          604.0 |             3.19594e-21 |
+| 500.0 | 100.0 | 700.0 |   3.0 |  10.0 |          0.5 |      1325.19 | 0.000778709 |         5000.0 |             3.79913e-20 |</code></pre><p>Second, we look at the distances of the solutions found by each algorithm.</p><table><tr><th style="text-align: right"><strong>M</strong></th><th style="text-align: right"><strong>N</strong></th><th style="text-align: right"><strong>m</strong></th><th style="text-align: right"><strong>r</strong></th><th style="text-align: right"><strong>s</strong></th><th style="text-align: right"><strong>dist<em>NCRPG</em>NCRPG_bt</strong></th><th style="text-align: right"><strong>dist<em>NCRPG</em>RADMM</strong></th><th style="text-align: right"><strong>dist<em>NCRPG</em>NCRPG_bt</strong></th></tr><tr><td style="text-align: right">500.0</td><td style="text-align: right">100.0</td><td style="text-align: right">300.0</td><td style="text-align: right">1.0</td><td style="text-align: right">10.0</td><td style="text-align: right">1.08617e-8</td><td style="text-align: right">5.59207e-7</td><td style="text-align: right">5.49924e-7</td></tr><tr><td style="text-align: right">500.0</td><td style="text-align: right">100.0</td><td style="text-align: right">500.0</td><td style="text-align: right">2.0</td><td style="text-align: right">10.0</td><td style="text-align: right">2.18404e-8</td><td style="text-align: right">7.53362e-7</td><td style="text-align: right">7.33125e-7</td></tr><tr><td style="text-align: right">500.0</td><td style="text-align: right">100.0</td><td style="text-align: right">700.0</td><td style="text-align: right">3.0</td><td style="text-align: right">10.0</td><td style="text-align: right">1.38496e-5</td><td style="text-align: right">2.39003e-5</td><td style="text-align: right">2.51754e-5</td></tr></table><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.6.0
+  [336ed68f] CSV v0.10.15
+  [13f3f980] CairoMakie v0.15.6
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.31.0
+  [5ae59095] Colors v0.13.1
+  [a93c6f00] DataFrames v1.8.0
+  [31c24e10] Distributions v0.25.122
+⌅ [682c06a0] JSON v0.21.4
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+  [d3d80556] LineSearches v7.4.0
+  [ee78f7c6] Makie v0.24.6
+  [af67fdf4] ManifoldDiff v0.4.5
+  [1cead3c2] Manifolds v0.11.0
+  [3362f125] ManifoldsBase v2.0.0
+  [0fc0a36d] Manopt v0.5.25
+  [5b8d5e80] ManoptExamples v0.1.16 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [91a5bcdd] Plots v1.41.1
+  [08abe8d2] PrettyTables v3.1.0
+  [6099a3de] PythonCall v0.9.28
+  [f468eda6] QuadraticModels v0.9.14
+  [1e40b3f8] RipQP v0.7.0
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`</code></pre><p>This tutorial was last rendered October 15, 2025, 18:40:14.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BJJP25b]</dt><dd><div>R. Bergmann, H. Jasa, P. J. John and M. Pfeffer. <em>The Intrinsic Riemannian Proximal Gradient Method for Nononvex Optimization</em>, preprint (2025), <a href="https://arxiv.org/abs/2506.09775">arXiv:2506.09775</a>.</div></dd><dt>[HW21]</dt><dd><div>W. Huang and K. Wei. <em>Riemannian proximal gradient methods</em>. <a href="https://doi.org/10.1007/s10107-021-01632-3">Mathematical Programming <strong>194</strong>, 371–413</a> (2021).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../NCRPG-Grassmann/">« Grassmann Experiment</a><a class="docs-footer-nextpage" href="../CRPG-Convex-SPD/">Convex Example on SPDs »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 15 December 2025 07:25">Monday 15 December 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

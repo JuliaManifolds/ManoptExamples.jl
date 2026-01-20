@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Sparse Approximation on mathbb H^n · ManoptExamples.jl</title><meta name="title" content="Sparse Approximation on mathbb H^n · ManoptExamples.jl"/><meta property="og:title" content="Sparse Approximation on mathbb H^n · ManoptExamples.jl"/><meta property="twitter:title" content="Sparse Approximation on mathbb H^n · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">LTMADS</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Spectral-Procrustes-2D/">Spectral &amp; Robust Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-5" type="checkbox"/><label class="tocitem" for="menuitem-2-5"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-9" type="checkbox" checked/><label class="tocitem" for="menuitem-2-9"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NCRPG-Sparse-PCA/">Sparse PCA</a></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li><a class="tocitem" href="../NCRPG-Row-Sparse-Low-Rank/">Row-Sparse Low-Rank Matrix Recovery</a></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li class="is-active"><a class="tocitem" href>Sparse Approximation on <span>$\mathbb H^n$</span></a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#The-Problem"><span>The Problem</span></a></li><li><a class="tocitem" href="#Numerical-Experiment"><span>Numerical Experiment</span></a></li><li><a class="tocitem" href="#Technical-details"><span>Technical details</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Proximal Gradient Methods</a></li><li class="is-active"><a href>Sparse Approximation on <span>$\mathbb H^n$</span></a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Sparse Approximation on <span>$\mathbb H^n$</span></a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/CRPG-Sparse-Approximation.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="A-Sparse-Approximation-Problem-on-Hadamard-Manifolds"><a class="docs-heading-anchor" href="#A-Sparse-Approximation-Problem-on-Hadamard-Manifolds">A Sparse Approximation Problem on Hadamard Manifolds</a><a id="A-Sparse-Approximation-Problem-on-Hadamard-Manifolds-1"></a><a class="docs-heading-anchor-permalink" href="#A-Sparse-Approximation-Problem-on-Hadamard-Manifolds" title="Permalink"></a></h1><p>Hajg Jasa, Paula John 2025-07-02</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In this example we use the Convex Riemannian Proximal Gradient (CRPG) method [<a href="../../references/#BergmannJasaJohnPfeffer_2025_2">BJJP25a</a>] with the Cyclic Proximal Point Algorithm, which was introduced in [<a href="../../references/#Bacak_2014">Bac14</a>], on the hyperbolic space. This example reproduces the results from [<a href="../../references/#BergmannJasaJohnPfeffer_2025_2">BJJP25a</a>], Section 6.2.</p><pre><code class="language-julia hljs">using PrettyTables
+using BenchmarkTools
+using CSV, DataFrames
+using ColorSchemes, Plots
+using Random, LinearAlgebra, LRUCache
+using ManifoldDiff, Manifolds, Manopt, ManoptExamples</code></pre><h2 id="The-Problem"><a class="docs-heading-anchor" href="#The-Problem">The Problem</a><a id="The-Problem-1"></a><a class="docs-heading-anchor-permalink" href="#The-Problem" title="Permalink"></a></h2><p>Let <span>$\mathcal M = \mathcal H^n$</span> be the Hadamard manifold given by the hyperbolic space, and <span>$\{q_1,\ldots,q_N\} \in \mathcal M$</span> denote <span>$N = 1000$</span> Gaussian random data points. Let <span>$g \colon \mathcal M \to \mathbb R$</span> be defined by</p><p class="math-container">\[g(p) = \frac{1}{2} \sum_{j = 1}^N w_j \, \mathrm{dist}(p, q_j)^2,\]</p><p>where <span>$w_j$</span>, <span>$j = 1, \ldots, N$</span> are positive weights such that <span>$\sum_{j = 1}^N w_j = 1$</span>. In our experiments, we choose the weights <span>$w_j = \frac{1}{N}$</span>. Observe that the function <span>$g$</span> is strongly convex with respect to the Riemannian metric on <span>$\mathcal M$</span>.</p><p>Let <span>$h \colon \mathcal M \to \mathbb R$</span> be defined by</p><p class="math-container">\[h(p) = \mu \Vert p \Vert_1\]</p><p>be the sparsity-enforcing term given by the <span>$\ell_1$</span>-norm, where <span>$\mu &gt; 0$</span> is a regularization parameter.</p><p>We define our total objective function as <span>$f = g + h$</span>. Notice that this objective function is strongly convex with respect to the Riemannian metric on <span>$\mathcal M$</span> thanks to <span>$g$</span>. The goal is to find the minimizer of <span>$f$</span> on <span>$\mathcal M$</span>, which is heuristically the point that is closest to the data points <span>$q_j$</span> in the sense of the Riemannian metric on <span>$\mathcal M$</span> and has a sparse representation.</p><h2 id="Numerical-Experiment"><a class="docs-heading-anchor" href="#Numerical-Experiment">Numerical Experiment</a><a id="Numerical-Experiment-1"></a><a class="docs-heading-anchor-permalink" href="#Numerical-Experiment" title="Permalink"></a></h2><p>We initialize the experiment parameters, as well as some utility functions.</p><pre><code class="language-julia hljs">random_seed = 42
+n_tests = 10 # number of tests for each parameter setting
+
+atol = 1e-7
+max_iters = 5000
+N = 1000 # number of data points
+dims = [2, 10, 100] 
+μs = [0.1, 0.5, 1.0]
+σ = 1.0 # standard deviation for the Gaussian random data points</code></pre><pre><code class="language-julia hljs"># Objective, gradient, and proxes
+g(M, p, data) = 1/2length(data) * sum(distance.(Ref(M), data, Ref(p)).^2)
+grad_g(M, p, data) = 1/length(data) * sum(ManifoldDiff.grad_distance.(Ref(M), data, Ref(p), 2))
+# 
+# Proximal map for the $\ell_1$-norm on the hyperbolic space
+function prox_l1_Hn(Hn, μ, x; t_0 = μ, max_it = 20, tol = 1e-7)
+    n = manifold_dimension(Hn)
+    t = t_0
+    y = zeros(n+1)
+    y[end] = x[end] + t
+    for i in 1:n
+        y[i] = sign(x[i])*max(0, abs(x[i]) - t)
+    end 
+    y /= sqrt(abs(minkowski_metric(y, y)))
+    for k in 1:max_it 
+        t_new = μ * sqrt(abs(minkowski_metric(x, y)^2 - 1 ))/distance(Hn, x, y)
+        if abs(t_new - t) ≤ tol
+            return y
+        end 
+        y[end] = x[end] + t_new
+        for i in 1:n
+            y[i] = sign(x[i])*max(0, abs(x[i]) - t_new)
+        end 
+        y /= sqrt(abs(minkowski_metric(y, y)))
+        t = copy(t_new)
+    end 
+    return y
+end
+h(M, p, μ) = μ * norm(p, 1)
+prox_h(M, λ, p, μ) = prox_l1_Hn(M, λ * μ, p)
+# 
+f(M, p, data, μ) = g(M, p, data) + h(M, p, μ)
+# CPPA needs the proximal operators for the total objective
+function proxes_f(data, μ)
+    proxes = Function[(M, λ, p) -&gt; ManifoldDiff.prox_distance(M, λ / length(data), di, p, 2) for di in data]
+    push!(proxes, (M, λ, p) -&gt; prox_l1_Hn(M, λ * μ, p))
+    return proxes
+end
+# Function to generate points close to the given point p
+function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
+    X = rand(M; vector_at = p)
+    X .= tol * rand() * X / norm(M, p, X)
+    return retract(M, p, X, retraction_method)
+end
+# Estimate Lipschitz constant of the gradient of g
+function estimate_lipschitz_constant(M, g, grad_g, anchor, R, N=10_000)
+    constants = []
+    for i in 1:N
+        p = close_point(M, anchor, R)
+        q = close_point(M, anchor, R)
+
+        push!(constants, 2/distance(M, q, p)^2 * (g(M, q) - g(M, p) - inner(M, p, grad_g(M, p), log(M, p, q))))
+    end
+    return maximum(constants)
+end</code></pre><p>We introduce some keyword arguments for the solvers we will use in this experiment</p><pre><code class="language-julia hljs"># Keyword arguments for CRPG with a constant stepsize 
+pgm_kwargs_cn(constant_stepsize) = [
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+    :stepsize =&gt; ConstantLength(constant_stepsize),
+    :stopping_criterion =&gt; StopWhenAny(
+        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
+    ),
+]
+pgm_bm_kwargs_cn(constant_stepsize) = [
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+    :stepsize =&gt; ConstantLength(constant_stepsize),
+    :stopping_criterion =&gt; StopWhenAny(
+        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
+    ), 
+]
+# Keyword arguments for CRPG with a backtracked stepsize
+pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+    :stepsize =&gt; ProximalGradientMethodBacktracking(; 
+        contraction_factor=contraction_factor,
+        initial_stepsize=initial_stepsize,
+        strategy=:convex, 
+        warm_start_factor=warm_start_factor,
+    ),
+    :stopping_criterion =&gt; StopWhenAny(
+        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
+    ),
+]
+pgm_bm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor) = [
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+    :stepsize =&gt; ProximalGradientMethodBacktracking(; 
+        contraction_factor=contraction_factor,
+        initial_stepsize=initial_stepsize,
+        strategy=:convex,
+        warm_start_factor=warm_start_factor,
+    ),
+    :stopping_criterion =&gt; StopWhenAny(
+        StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
+    ), 
+]
+# Keyword arguments for CPPA
+cppa_kwargs(M) = [
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+    :stopping_criterion =&gt; StopWhenAny(
+        StopAfterIteration(max_iters), StopWhenCriterionWithIterationCondition(StopWhenChangeLess(M, 1e-5*atol), 20)
+    ),
+]
+cppa_bm_kwargs(M) = [
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+    :stopping_criterion =&gt; StopWhenAny(
+        StopAfterIteration(max_iters), StopWhenCriterionWithIterationCondition(StopWhenChangeLess(M, 1e-5*atol), 20)
+    ),
+]</code></pre><p>We set up some variables to collect the results of the experiments and initialize the dataframes</p><p>And run the experiments</p><pre><code class="language-julia hljs">for n in dims
+    # Set random seed for reproducibility
+    Random.seed!(random_seed)
+    
+    # Define manifold
+    M = Hyperbolic(n)
+
+    for test in 1:n_tests
+        # Generate random data
+        anchor = rand(M)
+        data = [exp(M, anchor, rand(M; vector_at=anchor, σ=σ)) for _ in 1:N]
+
+        for (c, μ) in enumerate(μs)
+            # Initialize starting point for the optimization
+            p0 = rand(M) 
+
+            # Initialize functions
+            g_hn(M, p) = g(M, p, data)
+            grad_g_hn(M, p) = grad_g(M, p, data)
+            proxes_f_hn = proxes_f(data, μ)
+            prox_h_hn(M, λ, p) = prox_h(M, λ, p, μ)
+            f_hn(M, p) = f(M, p, data, μ)
+            #
+            # Estimate stepsizes
+            D = 2.05 * maximum([distance(M, p0, di) for di in vcat(data, [anchor])])
+            L_g = Manopt.ζ_1(-1.0, D)
+            constant_stepsize = 1/L_g
+            initial_stepsize = 3/2 * constant_stepsize
+            contraction_factor = 0.9
+            warm_start_factor = 2.0
+            #
+            # Optimization
+            # Constant stepsize
+            pgm_cn = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
+                prox_nonsmooth=prox_h_hn,
+                pgm_kwargs_cn(constant_stepsize)...
+            )
+            pgm_result_cn = get_solver_result(pgm_cn)
+            pgm_record_cn = get_record(pgm_cn)
+            #
+            # Backtracked stepsize
+            pgm_bt = proximal_gradient_method(M, f_hn, g_hn, grad_g_hn, p0; 
+                prox_nonsmooth=prox_h_hn,
+                pgm_kwargs_bt(contraction_factor, initial_stepsize, warm_start_factor)...
+            )
+            pgm_result_bt = get_solver_result(pgm_bt)
+            pgm_record_bt = get_record(pgm_bt)
+            #
+            # CPPA
+            cppa = cyclic_proximal_point(M, f_hn, proxes_f_hn, p0; cppa_kwargs(M)...)
+            cppa_result = get_solver_result(cppa)
+            cppa_record = get_record(cppa)
+            #
+            # Benchmark the algorithms
+            # Constant stepsize
+            pgm_bm_cn = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
+                prox_nonsmooth=$prox_h_hn,
+                $pgm_bm_kwargs_cn($constant_stepsize)...
+            )
+            # Backtracked stepsize
+            pgm_bm_bt = @benchmark proximal_gradient_method($M, $f_hn, $g_hn, $grad_g_hn, $p0; 
+                prox_nonsmooth=$prox_h_hn,
+                $pgm_bm_kwargs_bt($contraction_factor, $initial_stepsize, $warm_start_factor)...
+            )
+            # CPPA
+            cppa_bm = @benchmark cyclic_proximal_point($M, $f_hn, $proxes_f_hn, $p0; cppa_bm_kwargs($M)...)
+            #
+            # Collect times
+            time_pgm_cn = time(median(pgm_bm_cn)) * 1e-9
+            time_pgm_bt = time(median(pgm_bm_bt)) * 1e-9
+            time_cppa = time(median(cppa_bm)) * 1e-9
+            time_pgm_cn_means[c] += time_pgm_cn
+            time_pgm_bt_means[c] += time_pgm_bt
+            time_cppa_means[c] += time_cppa
+            #
+            # Collect sparsities
+            sparsity_pgm_cn = sum(abs.(pgm_result_cn) .&lt; atol)/n
+            sparsity_pgm_bt = sum(abs.(pgm_result_bt) .&lt; atol)/n
+            sparsity_cppa = sum(abs.(cppa_result) .&lt; atol)/n
+            sparsity_pgm_cn_means[c] += sparsity_pgm_cn
+            sparsity_pgm_bt_means[c] += sparsity_pgm_bt
+            sparsity_cppa_means[c] += sparsity_cppa
+            #
+            # Collect objective values
+            objective_pgm_cn = f_hn(M, pgm_result_cn)
+            objective_pgm_bt = f_hn(M, pgm_result_bt)
+            objective_cppa = f_hn(M, cppa_result)
+            objective_pgm_cn_means[c] += objective_pgm_cn
+            objective_pgm_bt_means[c] += objective_pgm_bt
+            objective_cppa_means[c] += objective_cppa
+            #
+            # Collect iterations
+            iterations_pgm_cn = length(pgm_record_cn)
+            iterations_pgm_bt = length(pgm_record_bt)
+            iterations_cppa = length(cppa_record)
+            iterations_pgm_cn_means[c] += iterations_pgm_cn
+            iterations_pgm_bt_means[c] += iterations_pgm_bt
+            iterations_cppa_means[c] += iterations_cppa      
+        end
+    end
+    for (c, μ) in enumerate(μs)
+        push!(df_pgm_cn, 
+            [
+                μ, n, iterations_pgm_cn_means[c]/n_tests, time_pgm_cn_means[c]/n_tests, objective_pgm_cn_means[c]/n_tests, sparsity_pgm_cn_means[c]/n_tests
+            ]
+        )
+        push!(df_pgm_bt, 
+            [
+                μ, n, iterations_pgm_bt_means[c]/n_tests, time_pgm_bt_means[c]/n_tests, objective_pgm_bt_means[c]/n_tests, sparsity_pgm_bt_means[c]/n_tests
+            ]
+        )
+        push!(df_cppa, 
+            [
+                μ, n, iterations_cppa_means[c]/n_tests, time_cppa_means[c]/n_tests, objective_cppa_means[c]/n_tests, sparsity_cppa_means[c]/n_tests
+            ]
+        )
+    end
+    #
+    # Reset data collection variables
+    iterations_pgm_cn_means .= zeros(length(μs))
+    iterations_pgm_bt_means .= zeros(length(μs))
+    iterations_cppa_means .= zeros(length(μs))
+    time_pgm_cn_means .= zeros(length(μs))
+    time_pgm_bt_means .= zeros(length(μs))
+    time_cppa_means .= zeros(length(μs))
+    sparsity_pgm_cn_means .= zeros(length(μs))
+    sparsity_pgm_bt_means .= zeros(length(μs))
+    sparsity_cppa_means .= zeros(length(μs))
+    objective_pgm_cn_means .= zeros(length(μs))
+    objective_pgm_bt_means .= zeros(length(μs))
+    objective_cppa_means .= zeros(length(μs)) 
+end</code></pre><p>We export the results to CSV files</p><pre><code class="language-julia hljs"># Sort the dataframes by the parameter μ and create the final results dataframes
+df_pgm_cn = sort(df_pgm_cn, :μ)
+df_pgm_bt = sort(df_pgm_bt, :μ)
+df_cppa = sort(df_cppa, :μ)
+df_results_time_iter = DataFrame(
+    μ             = df_pgm_cn.μ,
+    n             = Int.(df_pgm_cn.n), 
+    CRPG_iter     = Int.(round.(df_pgm_cn.iterations, digits = 0)), 
+    CRPG_time     = df_pgm_cn.time, 
+    CRPG_bt_iter  = Int.(round.(df_pgm_bt.iterations, digits = 0)),
+    CRPG_bt_time  = df_pgm_bt.time, 
+    CPPA_iter  = Int.(round.(df_cppa.iterations, digits = 0)),
+    CPPA_time     = df_cppa.time, 
+)
+df_results_obj_spar = DataFrame(
+    μ               = df_pgm_cn.μ,
+    n               = Int.(df_pgm_cn.n), 
+    CRPG_obj       = df_pgm_cn.objective, 
+    CRPG_sparsity  = df_pgm_cn.sparsity,  
+    CRPG_bt_obj    = df_pgm_bt.objective, 
+    CRPG_bt_sparsity = df_pgm_bt.sparsity,  
+    CPPA_obj         = df_cppa.objective, 
+    CPPA_sparsity    = df_cppa.sparsity, 
+)
+# Write the results to CSV files
+CSV.write(joinpath(results_folder, &quot;results-Hn-time-iter-$(n_tests)-$(dims[end]).csv&quot;), df_results_time_iter)
+CSV.write(joinpath(results_folder, &quot;results-Hn-obj-spar-$(n_tests)-$(dims[end]).csv&quot;), df_results_obj_spar)</code></pre><p>We can take a look at how the algorithms compare to each other in their performance with the following tables. First, we look at the time and number of iterations for each algorithm.</p><table><tr><th style="text-align: right"><strong>μ</strong></th><th style="text-align: right"><strong>n</strong></th><th style="text-align: right"><strong>CRPG_const_iter</strong></th><th style="text-align: right"><strong>CRPG_const_time</strong></th><th style="text-align: right"><strong>CRPG_bt_iter</strong></th><th style="text-align: right"><strong>CRPG_bt_time</strong></th><th style="text-align: right"><strong>CPPA_iter</strong></th><th style="text-align: right"><strong>CPPA_time</strong></th></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">2</td><td style="text-align: right">204</td><td style="text-align: right">0.055911</td><td style="text-align: right">2181</td><td style="text-align: right">1.1538</td><td style="text-align: right">5000</td><td style="text-align: right">2.70869</td></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">10</td><td style="text-align: right">101</td><td style="text-align: right">0.0366215</td><td style="text-align: right">1636</td><td style="text-align: right">1.9697</td><td style="text-align: right">5000</td><td style="text-align: right">3.40173</td></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">100</td><td style="text-align: right">49</td><td style="text-align: right">0.0382509</td><td style="text-align: right">4144</td><td style="text-align: right">19.185</td><td style="text-align: right">5000</td><td style="text-align: right">5.92673</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">2</td><td style="text-align: right">143</td><td style="text-align: right">0.0367069</td><td style="text-align: right">586</td><td style="text-align: right">0.485252</td><td style="text-align: right">5000</td><td style="text-align: right">2.67662</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">10</td><td style="text-align: right">83</td><td style="text-align: right">0.02751</td><td style="text-align: right">491</td><td style="text-align: right">0.412215</td><td style="text-align: right">4004</td><td style="text-align: right">2.72047</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">100</td><td style="text-align: right">48</td><td style="text-align: right">0.0365263</td><td style="text-align: right">1974</td><td style="text-align: right">8.39718</td><td style="text-align: right">5000</td><td style="text-align: right">6.19089</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">2</td><td style="text-align: right">104</td><td style="text-align: right">0.0257036</td><td style="text-align: right">530</td><td style="text-align: right">0.271966</td><td style="text-align: right">3507</td><td style="text-align: right">1.92153</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">10</td><td style="text-align: right">56</td><td style="text-align: right">0.016988</td><td style="text-align: right">113</td><td style="text-align: right">0.106215</td><td style="text-align: right">3507</td><td style="text-align: right">2.36858</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">100</td><td style="text-align: right">48</td><td style="text-align: right">0.0376193</td><td style="text-align: right">2207</td><td style="text-align: right">8.4336</td><td style="text-align: right">4502</td><td style="text-align: right">5.43228</td></tr></table><p>Second, we look at the objective values and sparsity of the solutions found by each algorithm.</p><table><tr><th style="text-align: right"><strong>μ</strong></th><th style="text-align: right"><strong>n</strong></th><th style="text-align: right"><strong>CRPG_const_obj</strong></th><th style="text-align: right"><strong>CRPG_const_spar</strong></th><th style="text-align: right"><strong>CRPG_bt_obj</strong></th><th style="text-align: right"><strong>CRPG_bt_spar</strong></th><th style="text-align: right"><strong>CPPA_obj</strong></th><th style="text-align: right"><strong>CPPA_spar</strong></th></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">2</td><td style="text-align: right">3.74126</td><td style="text-align: right">0.05</td><td style="text-align: right">3.74126</td><td style="text-align: right">0.05</td><td style="text-align: right">3.74126</td><td style="text-align: right">0.05</td></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">10</td><td style="text-align: right">7.82812</td><td style="text-align: right">0.08</td><td style="text-align: right">7.82812</td><td style="text-align: right">0.08</td><td style="text-align: right">7.82812</td><td style="text-align: right">0.08</td></tr><tr><td style="text-align: right">0.1</td><td style="text-align: right">100</td><td style="text-align: right">54.2988</td><td style="text-align: right">0.066</td><td style="text-align: right">54.2988</td><td style="text-align: right">0.066</td><td style="text-align: right">54.2988</td><td style="text-align: right">0.066</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">2</td><td style="text-align: right">4.57092</td><td style="text-align: right">0.2</td><td style="text-align: right">4.57092</td><td style="text-align: right">0.2</td><td style="text-align: right">4.57092</td><td style="text-align: right">0.2</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">10</td><td style="text-align: right">9.00006</td><td style="text-align: right">0.42</td><td style="text-align: right">9.00006</td><td style="text-align: right">0.42</td><td style="text-align: right">9.00007</td><td style="text-align: right">0.44</td></tr><tr><td style="text-align: right">0.5</td><td style="text-align: right">100</td><td style="text-align: right">57.5651</td><td style="text-align: right">0.369</td><td style="text-align: right">57.5651</td><td style="text-align: right">0.369</td><td style="text-align: right">57.5651</td><td style="text-align: right">0.369</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">2</td><td style="text-align: right">5.23394</td><td style="text-align: right">0.5</td><td style="text-align: right">5.23394</td><td style="text-align: right">0.5</td><td style="text-align: right">5.23394</td><td style="text-align: right">0.55</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">10</td><td style="text-align: right">9.85087</td><td style="text-align: right">0.71</td><td style="text-align: right">9.85087</td><td style="text-align: right">0.71</td><td style="text-align: right">9.85087</td><td style="text-align: right">0.71</td></tr><tr><td style="text-align: right">1.0</td><td style="text-align: right">100</td><td style="text-align: right">59.5296</td><td style="text-align: right">0.69</td><td style="text-align: right">59.5296</td><td style="text-align: right">0.69</td><td style="text-align: right">59.5298</td><td style="text-align: right">0.693</td></tr></table><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="language-julia hljs">using Pkg
+Pkg.status()</code></pre><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.6.0
+  [336ed68f] CSV v0.10.15
+  [13f3f980] CairoMakie v0.15.3
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.30.0
+⌅ [5ae59095] Colors v0.12.11
+  [a93c6f00] DataFrames v1.7.0
+  [7073ff75] IJulia v1.29.0
+  [682c06a0] JSON v0.21.4
+  [8ac3fa9e] LRUCache v1.6.2
+  [d3d80556] LineSearches v7.4.0
+  [ee78f7c6] Makie v0.24.3
+  [af67fdf4] ManifoldDiff v0.4.4
+  [1cead3c2] Manifolds v0.10.22
+  [3362f125] ManifoldsBase v1.2.0
+  [0fc0a36d] Manopt v0.5.20
+  [5b8d5e80] ManoptExamples v0.1.14 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [91a5bcdd] Plots v1.40.16
+  [08abe8d2] PrettyTables v2.4.0
+  [6099a3de] PythonCall v0.9.25
+  [f468eda6] QuadraticModels v0.9.13
+  [1e40b3f8] RipQP v0.7.0
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`</code></pre><p>This tutorial was last rendered July 15, 2025, 15:56:59.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[Bac14]</dt><dd><div>M. Bačák. <em>Computing medians and means in Hadamard spaces</em>. <a href="https://doi.org/10.1137/140953393">SIAM Journal on Optimization <strong>24</strong>, 1542–1566</a> (2014), <a href="https://arxiv.org/abs/1210.2145">arXiv:1210.2145</a>.</div></dd><dt>[BJJP25a]</dt><dd><div>R. Bergmann, H. Jasa, P. J. John and M. Pfeffer. <em>The Intrinsic Riemannian Proximal Gradient Method for Convex Optimization</em>, preprint (2025), <a href="https://arxiv.org/abs/2507.16055">arXiv:2507.16055</a>.</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../CRPG-Convex-SPD/">« Convex Example on SPDs</a><a class="docs-footer-nextpage" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span> »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 16 October 2025 12:35">Thursday 16 October 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

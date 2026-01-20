@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Elastic Geodesic Obstacle · ManoptExamples.jl</title><meta name="title" content="Elastic Geodesic Obstacle · ManoptExamples.jl"/><meta property="og:title" content="Elastic Geodesic Obstacle · ManoptExamples.jl"/><meta property="twitter:title" content="Elastic Geodesic Obstacle · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">LTMADS</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Spectral-Procrustes-2D/">Spectral &amp; Robust Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-5" type="checkbox"/><label class="tocitem" for="menuitem-2-5"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-9" type="checkbox"/><label class="tocitem" for="menuitem-2-9"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NCRPG-Sparse-PCA/">Sparse PCA</a></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li><a class="tocitem" href="../NCRPG-Row-Sparse-Low-Rank/">Row-Sparse Low-Rank Matrix Recovery</a></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li><a class="tocitem" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span></a></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li><li><input class="collapse-toggle" id="menuitem-2-13" type="checkbox" checked/><label class="tocitem" for="menuitem-2-13"><span class="docs-label">Vector bundle Newton</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Elastic-Geodesic-under-forcefield/">Elastic Geodesic under force field</a></li><li class="is-active"><a class="tocitem" href>Elastic Geodesic Obstacle</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#Newton-Equation"><span>Newton Equation</span></a></li><li><a class="tocitem" href="#Technical-details"><span>Technical details</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../Inextensible-Rod/">Inextensible Rod</a></li></ul></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Vector bundle Newton</a></li><li class="is-active"><a href>Elastic Geodesic Obstacle</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Elastic Geodesic Obstacle</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/Elastic-Geodesic-Obstacle.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Elastic-Geodesic-on-Sphere-with-Obstacle-Avoidance"><a class="docs-heading-anchor" href="#Elastic-Geodesic-on-Sphere-with-Obstacle-Avoidance">Elastic Geodesic on Sphere with Obstacle Avoidance</a><a id="Elastic-Geodesic-on-Sphere-with-Obstacle-Avoidance-1"></a><a class="docs-heading-anchor-permalink" href="#Elastic-Geodesic-on-Sphere-with-Obstacle-Avoidance" title="Permalink"></a></h1><p>Laura Weigl, Ronny Bergmann, and Anton Schiela 2025-11-25</p><pre><code class="language-julia hljs">using LinearAlgebra, SparseArrays, OffsetArrays
+using Manifolds, Manopt, ManoptExamples
+using GLMakie, Makie, GeometryTypes, Colors, ColorSchemes, NamedColors
+using CSV, DataFrames</code></pre><h1 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h1><p>In this example we compute an elastic geodesic on the sphere avoiding an obstacle by applying Newton’s method on vector bundles which was introduced in [<a href="../../references/#WeiglBergmannSchiela_2025">WBS25</a>]. This example reproduces the results from the example in Section 6.2 therein.</p><p>We consider the sphere <span>$\mathbb{S}^2$</span> equipped with the Riemannian metric <span>$\langle \cdot, \cdot \rangle$</span> given by the Euclidean inner product with corresponding norm <span>$\lVert\cdot\rVert$</span> and a time interval <span>$I =[0,T]$</span>.</p><p>Let <span>$\mathcal X = H^1(I, \mathbb S^2)$</span> and <span>$\mathcal E^* = T^*\mathcal X$</span> its cotangent bundle.</p><p>Consider the minimization problem</p><p class="math-container">\[\min_{γ ∈ H^1(I, \mathbb S^2)} \; \frac12 \int_0^T \lVert\dot γ(t)\rVert^2 \; \mathrm{d}t\]</p><p>under the constraint that <span>$γ_3(t) ≤ 1-h_{\mathrm{ref}} \; \text{ for all } t∈ [0,T]$</span> where <span>$γ_3(t)$</span> denotes the third component of <span>$γ(t)∈ \mathbb{S}^2$</span> and <span>$h_{\mathrm{ref}} ∈ (0,1)$</span> is a given height. Additionally, we have to take into account that boundary conditions <span>$γ(0) = γ_0$</span> and <span>$γ(T) = γ_T$</span> for given <span>$γ_0, γ_T ∈ \mathbb S^2$</span> are satisfied.</p><p>Using a penalty method, also known as Moreau-Yosida regularization, with a quadratic penalty term we can rewrite this as an unconstrained minimization problem with a penalty coefficient <span>$p∈ \mathbb R$</span>:</p><p class="math-container">\[\min_{γ ∈ H^1(I, \mathbb S^2)} \; \underbrace{\frac12 \int_0^T \lVert\dot γ(t)\rVert^2 + p \max(0, γ_3(t) - 1 + h_{\mathrm{ref}})^2 \; \mathrm{d}t}_{=: f(γ)}\]</p><p>Let <span>$m: \mathbb R → \mathbb R, \, m(x) := \max(0, x)$</span>. The objective is differentiable function <span>$f : \mathcal X → \mathbb R$</span> with derivative</p><p class="math-container">\[f&#39;(γ)δ γ = \int_0^T \langle \dotγ(t), \dot{δ γ}(t)\rangle + p \cdot m(γ_3(t) - 1 + h_{\mathrm{ref}})δ γ_3(t)\]</p><p>for <span>$δ γ ∈ T_γ \mathcal X$</span>. This mapping is semismooth and our goal is to find a critical point of <span>$f$</span> by applying Newton’s method on <span>$f&#39;$</span>.</p><p>This then yields an elastic geodesic avoiding the north pol cap and connecting <span>$γ_0$</span> and <span>$γ_T$</span>.</p><p>For our example we set</p><pre><code class="language-julia hljs">N=200
+
+S = Manifolds.Sphere(2)
+power = PowerManifold(S, NestedPowerRepresentation(), N) # power manifold of S
+
+mutable struct VariationalSpace
+    manifold::AbstractManifold
+    degree::Integer
+end
+
+test_space = VariationalSpace(S, 1)
+
+start_interval = -pi/2 + 0.1
+end_interval = pi/2 - 0.1
+discrete_time = range(; start=start_interval, stop = end_interval, length=N+2) # equidistant discrete time points
+
+θ = pi/4
+y0 = [sin(θ)*cos(start_interval),sin(θ)*sin(start_interval),cos(θ)] # startpoint of geodesic
+yT = [sin(θ)*cos(end_interval),sin(θ)*sin(end_interval),cos(θ)] # endpoint of geodesic</code></pre><pre><code class="nohighlight hljs">3-element Vector{Float64}:
+ 0.07059288589999425
+ 0.7035741925769522
+ 0.7071067811865476</code></pre><p>In order to apply Newton’s method to find a zero of <span>$f&#39;$</span>, we need the linear mapping <span>$Q_{f&#39;(γ)}^*\circ f&#39;&#39;(γ)$</span> (cf. [<a href="../../references/#WeiglBergmannSchiela_2025">WBS25</a>]). Since the sphere is an embedded submanifold of <span>$\mathbb R^3$</span>, we can use the formula</p><p class="math-container">\[Q_{f&#39;(γ)}^*\circ f&#39;&#39;(γ)δ γ\,\phi = f&#39;(γ)(\overset{→}{V_γ}&#39;(γ)δ γ\,\phi) + f&#39;&#39;_{\mathbb R^3}(γ)δ γ\,\phi\]</p><p>for <span>$δ γ, \, \phi ∈ T_γ \mathcal X$</span>, where <span>$\overset{→}{V}_γ(\hat γ) ∈ L(T_γ \mathcal X, T_{\hat{γ}}\mathcal X)$</span> is a vector transport and</p><p class="math-container">\[f_{\mathbb R^3}&#39;&#39;(γ)δ γ\, \phi = \int_0^T \langle \dot{δ γ}(t), \dot{\phi}(t)\rangle + p \cdot m&#39;(γ_3(t) - 1 + h_{\mathrm{ref}})\phi_{3}(t) δ γ_{3}(t)\]</p><p>is an (euclidean) Newton-derivative of f’.</p><p>We define a structure that has to be filled for two purposes:</p><ol><li>Definition of an integrands and their derivatives</li><li>Definition of a vector transport and its derivative</li></ol><pre><code class="language-julia hljs">mutable struct DifferentiableMapping{F1&lt;:Function,F2&lt;:Function,T}
+    value::F1
+    derivative::F2
+    scaling_penalty::T
+    h_ref::T
+end;</code></pre><p>The following routines define a vector transport and its euclidean derivative. As seen above, they are needed to derive <span>$Q_{f&#39;(γ)}^*\circ f&#39;&#39;(γ)$</span>.</p><p>As a vector transport we use the (pointwise) orthogonal projection onto the tangent spaces, i.e. for <span>$p, q ∈ \mathbb S^2$</span> and <span>$X ∈ T_p\mathbb S^2$</span> we set</p><p class="math-container">\[\overset{→}{V}_{p}(q)X = (I-q\cdot q^T)X ∈ T_q\mathbb S^2.\]</p><p>The derivative of the vector transport is then given by</p><p class="math-container">\[\left(\frac{d}{dq}\overset{→}{V}_{p}(q)\big\vert_{q=p}δ q\right)X = \left( - δ q\cdot p^T - p\cdot δ q^T\right)\cdot X.\]</p><pre><code class="language-julia hljs">transport_by_proj(S, p, X, q) = X - q*(q&#39;*X)
+
+transport_by_proj_prime(S, p, X, dq) = (- dq*p&#39; - p*dq&#39;)*X
+
+transport = DifferentiableMapping(transport_by_proj,transport_by_proj_prime,nothing,nothing)</code></pre><pre><code class="nohighlight hljs">DifferentiableMapping{typeof(transport_by_proj), typeof(transport_by_proj_prime), Nothing}(transport_by_proj, transport_by_proj_prime, nothing, nothing)</code></pre><p>The following two routines define the integrand of <span>$f&#39;$</span> and the euclidean second derivative <span>$f&#39;&#39;_{\mathbb R^3}$</span>. Here, a Newton-derivative of the maximum function given by</p><p class="math-container">\[m&#39;(x):= \begin{cases}
+        0 &amp;: \; x&lt;0 \\
+        \text{arbitrary} &amp;: \; x= 0\\
+        1 &amp;: \; x&gt;0
+    \end{cases}\]</p><p>is used. A scaling parameter for the penalty parameter is also employed.</p><pre><code class="language-julia hljs">function f_prime_at(Integrand, y, ydot, B, Bdot)
+    return ydot&#39;*Bdot + Integrand.scaling_penalty * max(0.0, y[3] - 1.0 + Integrand.h_ref)*B[3]
+end
+function max_prime(y, h_ref)
+    if y[3] &lt; 1.0 - h_ref
+        return 0.0
+    else
+        return 1.0
+    end
+end
+function f_second_at(Integrand,y,ydot,B1,B1dot,B2,B2dot)
+    return B1dot&#39;*B2dot + Integrand.scaling_penalty*max_prime(y, Integrand.h_ref)*B1[3]*B2[3]
+end
+integrand = DifferentiableMapping(f_prime_at,f_second_at,1.0,0.1)</code></pre><pre><code class="nohighlight hljs">DifferentiableMapping{typeof(f_prime_at), typeof(f_second_at), Float64}(f_prime_at, f_second_at, 1.0, 0.1)</code></pre><h2 id="Newton-Equation"><a class="docs-heading-anchor" href="#Newton-Equation">Newton Equation</a><a id="Newton-Equation-1"></a><a class="docs-heading-anchor-permalink" href="#Newton-Equation" title="Permalink"></a></h2><p>In this example we implement a functor to compute the Newton matrix and the right hand side for the Newton equation</p><p class="math-container">\[Q^*_{f&#39;&#39;(γ)}\circ f&#39;&#39;(γ)δ γ + f&#39;(γ) = 0^*_γ\]</p><p>by using the assembler provided in <code>ManoptExamples.jl</code>.</p><p>It returns the matrix and the right hand side in base representation.</p><p>The assembly routines need a function for evaluation the iterates at the left and right quadrature point.</p><pre><code class="language-julia hljs">evaluate(p, i, tloc) = (1.0-tloc)*p[i-1]+tloc*p[i];
+
+struct NewtonEquation{F, TS, T, I, NM, Nrhs}
+    integrand::F
+    test_space::TS
+    transport::T
+    time_interval::I
+    A::NM
+    b::Nrhs
+end
+
+function NewtonEquation(M, F, test_space, VT, interval)
+    n = manifold_dimension(M)
+    A = spzeros(n,n)
+    b = zeros(n)
+    return NewtonEquation{typeof(F), typeof(test_space), typeof(VT), typeof(interval), typeof(A), typeof(b)}(F, test_space, VT, interval, A, b)
+end
+
+function (ne::NewtonEquation)(M, VB, p)
+    n = manifold_dimension(M)
+    ne.A .= spzeros(n,n)
+    ne.b .= zeros(n)
+
+    Op = OffsetArray([y0, p..., yT], 0:(length(p)+1))
+
+    ManoptExamples.get_jacobian!(M, Op, evaluate, ne.A, ne.integrand, ne.transport, ne.time_interval; test_space=ne.test_space)
+
+    ManoptExamples.get_right_hand_side!(M, Op, evaluate, ne.b, ne.integrand, ne.time_interval; test_space=ne.test_space)
+end</code></pre><p>We compute the Newton direction <span>$δ γ$</span> by solving the linear system given by the base representation of the Newton equation directly and return the Newton direction in vector representation:</p><pre><code class="language-julia hljs">function solve_in_basis_repr(problem, newtonstate)
+    X_base = (problem.newton_equation.A) \ (-problem.newton_equation.b)
+    return get_vector(problem.manifold, newtonstate.p, X_base, DefaultOrthogonalBasis())
+end;</code></pre><p>For the computation of a solution of the penalized problem we use a simple path-following method increasing the penalty parameter by a factor 1.2 in each iteration. For the first iteration we use a curve along the latitude connecting <span>$γ_0$</span> and <span>$γ_T$</span>:</p><pre><code class="language-julia hljs">y(t) = [sin(θ)*cos(t), sin(θ)*sin(t), cos(θ)]
+discretized_y = [y(ti) for ti in discrete_time[2:end-1]];</code></pre><p>We compute the resulting elastic geodesic for <span>$h_{\mathrm{ref}} = 0.1$</span> and <span>$h_{\mathrm{ref}} = 0.2$</span>.</p><pre><code class="language-julia hljs">h_refs = [0.1, 0.2]
+y_star = copy(power, discretized_y)
+res = []
+for h_ref in h_refs
+
+    integrand.scaling_penalty = 5.0
+    integrand.h_ref = h_ref
+        
+    NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
+    
+    st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+        stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
+        retraction_method=ProjectionRetraction(),
+        debug = [:Iteration, (:Change, &quot;Change: %1.8e&quot;), &quot;\n&quot;, :Stop],
+        return_state=true)
+    
+    y_star = copy(power, get_solver_result(st_res))
+        
+    for i in range(1,50)
+        integrand.scaling_penalty *= 1.2
+
+        NE = NewtonEquation(power, integrand, test_space, transport, discrete_time)
+
+        (i &gt; 1) &amp;&amp; print(&quot;.&quot;)
+ 
+        st_res = vectorbundle_newton(power, TangentBundle(power), NE, y_star; sub_problem=solve_in_basis_repr, sub_state=AllocatingEvaluation(),
+            stopping_criterion=(StopAfterIteration(150)|StopWhenChangeLess(power,1e-13; outer_norm=Inf)),
+            retraction_method=ProjectionRetraction(),
+            debug = ((i &gt; 1) ? [] : [:Iteration, (:Change, &quot;Change: %1.8e&quot;), &quot;\n&quot;, :Stop]),
+            return_state=true
+            )
+        y_star = copy(power, get_solver_result(st_res));
+    end
+    println(&quot;&quot;)
+    push!(res, y_star)
+end</code></pre><pre><code class="nohighlight hljs">Initial 
+# 1     Change: 7.33716599e+00
+# 2     Change: 1.09269188e+00
+# 3     Change: 1.57343110e-02
+# 4     Change: 3.48909794e-05
+# 5     Change: 1.51861742e-10
+# 6     Change: 5.26159425e-15
+At iteration 6 the algorithm performed a step with a change (5.338891568193822e-16) less than 1.0e-13.
+Initial 
+# 1     Change: 1.36854874e-01
+# 2     Change: 2.85972773e-03
+# 3     Change: 1.48331704e-06
+# 4     Change: 3.99564289e-13
+At iteration 4 the algorithm performed a step with a change (4.1765954767618633e-14) less than 1.0e-13.
+.................................................
+Initial 
+# 1     Change: 7.94587041e-01
+# 2     Change: 2.06153348e-01
+# 3     Change: 1.21842504e-02
+# 4     Change: 4.06216523e-05
+# 5     Change: 4.49374037e-10
+# 6     Change: 1.69919912e-14
+At iteration 6 the algorithm performed a step with a change (1.869333381474851e-15) less than 1.0e-13.
+Initial 
+# 1     Change: 5.25153574e-01
+# 2     Change: 6.87239776e-02
+# 3     Change: 1.33983224e-03
+# 4     Change: 5.07882458e-07
+# 5     Change: 7.72342326e-14
+At iteration 5 the algorithm performed a step with a change (7.982032576245276e-15) less than 1.0e-13.
+.................................................</code></pre><p>This yields the elastic geodesics shown below avoiding the north pole cap (<span>$h_{\mathrm{ref}}=0.1$</span> (left), <span>$h_{\mathrm{ref}}=0.2$</span> (right)) and connecting two points <span>$γ_0$</span> and <span>$γ_T$</span> (orange). The curve along the latitude connecting the two points (used as initial curve for the first iteration) is plotted as well (blue).</p><pre><code class="language-julia hljs">n = 30
+u = range(0,stop=2*π,length=n);
+v = range(0,stop=π,length=n);
+    
+sx = [cos(ui) * sin(vj) for ui in u, vj in v]
+sy = [sin(ui) * sin(vj) for ui in u, vj in v]
+sz = [cos(vj) for ui in u, vj in v]
+
+π1(x) = 1.01*x[1]
+π2(x) = 1.01*x[2]
+π3(x) = 1.01*x[3]
+
+geodesic_start = [y0, discretized_y ...,yT]
+
+fig = Figure(resolution = (1400, 900), padding=0)
+ax1 = Axis3(fig[1, 1]; aspect =:data)
+hidedecorations!(ax1)
+hidespines!(ax1)
+
+ax2 = Axis3(fig[1, 2]; aspect =:data)
+hidedecorations!(ax2)
+hidespines!(ax2)
+
+ax = [ax1, ax2]
+
+for i in 1:length(ax)
+    x = acos(1-h_refs[i])
+
+    circx = [cos(ui)*sin(x) for ui in u]
+    circy = [sin(ui)*sin(x) for ui in u]
+    circz = fill(cos(x), n)
+
+    wireframe!(ax[i], sx, sy, sz, color = RGBA(0.5,0.5,0.7,0.1); transparency=true)
+
+    scatterlines!(ax[i], circx, circy, circz; markersize =2, color=:black, linewidth=2)
+    
+    scatterlines!(ax[i], π1.(res[i]), π2.(res[i]), π3.(res[i]); markersize =8, color=:orange, linewidth=2)
+
+    scatterlines!(ax[i], π1.(geodesic_start), π2.(geodesic_start), π3.(geodesic_start); markersize =8, color=:blue, linewidth=2)
+    
+    scatter!(ax[i], π1.([y0]), π2.([y0]), π3.([y0]); markersize = 10, color=:green)
+    scatter!(ax[i], π1.([yT]), π2.([yT]), π3.([yT]); markersize = 10, color=:red)
+    
+    ax[i].azimuth[] += 14.445
+    ax[i].elevation[] = 35.02
+
+    limits!(ax[i], -1.5, 1.5, -1.5, 1.5, -1.5, 1.5)
+end
+fig</code></pre><pre><code class="nohighlight hljs">┌ Warning: Found `resolution` in the theme when creating a `Scene`. The `resolution` keyword for `Scene`s and `Figure`s has been deprecated. Use `Figure(; size = ...` or `Scene(; size = ...)` instead, which better reflects that this is a unitless size and not a pixel resolution. The key could also come from `set_theme!` calls or related theming functions.
+└ @ Makie ~/.julia/packages/Makie/TOy8O/src/scenes.jl:264</code></pre><p><img src="../Elastic-Geodesic-Obstacle_files/figure-commonmark/cell-12-output-2.png" alt/></p><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.6.3
+  [336ed68f] CSV v0.10.15
+⌃ [13f3f980] CairoMakie v0.15.7
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.31.0
+  [5ae59095] Colors v0.13.1
+  [a93c6f00] DataFrames v1.8.1
+  [31c24e10] Distributions v0.25.122
+⌃ [e9467ef8] GLMakie v0.13.7
+  [4d00f742] GeometryTypes v0.8.5
+  [7073ff75] IJulia v1.33.0
+  [682c06a0] JSON v1.3.0
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+⌃ [d3d80556] LineSearches v7.4.1
+⌅ [ee78f7c6] Makie v0.24.7
+  [af67fdf4] ManifoldDiff v0.4.5
+⌃ [1cead3c2] Manifolds v0.11.6
+⌃ [3362f125] ManifoldsBase v2.2.1
+⌃ [0fc0a36d] Manopt v0.5.28
+  [5b8d5e80] ManoptExamples v0.1.17 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [6fe1bfb0] OffsetArrays v1.17.0
+  [91a5bcdd] Plots v1.41.2
+  [08abe8d2] PrettyTables v3.1.2
+  [6099a3de] PythonCall v0.9.30
+  [f468eda6] QuadraticModels v0.9.14
+  [731186ca] RecursiveArrayTools v3.39.0
+  [1e40b3f8] RipQP v0.7.0
+Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`</code></pre><p>This tutorial was last rendered December 14, 2025, 11:22:40.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[WBS25]</dt><dd><div>L. Weigl, R. Bergmann and A. Schiela. <em>Newton&#39;s method into vector bundles Part II: : Application to Variational Problems on Manifolds</em>, <a href="https://doi.org/10.48550/ARXIV.2507.13836">arXiv Preprint</a> (2025).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Elastic-Geodesic-under-forcefield/">« Elastic Geodesic under force field</a><a class="docs-footer-nextpage" href="../Inextensible-Rod/">Inextensible Rod »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 15 December 2025 07:25">Monday 15 December 2025</span>. Using Julia version 1.11.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
