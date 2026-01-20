@@ -19,25 +19,25 @@ using ManifoldDiff, Manifolds, Manopt, ManoptExamples
 
 ## The Problem
 
-Let `\mathcal M = \mathrm{OB}(n,r)` be the oblique manifold, i.e., the set of `n \times r` matrices with unit-norm columns.
-Let `g \colon \mathcal M \to \mathbb R` be defined by
+Let $\mathcal M = \mathrm{OB}(n,r)$ be the oblique manifold, i.e., the set of $n \times r$ matrices with unit-norm columns.
+Let $g \colon \mathcal M \to \mathbb R$ be defined by
 
 ``` math
 g(X) = \frac{1}{2} \Vert X^\top A^\top A X - D^2 \Vert^2,
 ```
 
-where `A \in \mathbb R^{m \times n}` is a data matrix, `D = \mathrm{diag}(d_1, \ldots, d_r)` is a diagonal matrix containing the top `r` singular values of `A`, and `\Vert \cdot \Vert` is the Frobenius norm.
+where $A \in \mathbb R^{m \times n}$ is a data matrix, $D = \mathrm{diag}(d_1, \ldots, d_r)$ is a diagonal matrix containing the top $r$ singular values of $A$, and $\Vert \cdot \Vert$ is the Frobenius norm.
 
-Let `h \colon \mathcal M \to \mathbb R` be defined by
+Let $h \colon \mathcal M \to \mathbb R$ be defined by
 
 ``` math
 h(X) = \mu \Vert X \Vert_1
 ```
 
-be the sparsity-enforcing term given by the `\ell_1`-norm, where `\mu \ge 0` is a regularization parameter.
+be the sparsity-enforcing term given by the $\ell_1$-norm, where $\mu \ge 0$ is a regularization parameter.
 
-We define our total objective function as `f = g + h`.
-The goal is to find the minimizer of `f` on `\mathcal M`, which is heuristically the point that diagonalizes `A^\top A` as much as possible while being sparse.
+We define our total objective function as $f = g + h$.
+The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically the point that diagonalizes $A^\top A$ as much as possible while being sparse.
 
 ## Numerical Experiment
 
@@ -374,9 +374,6 @@ end
 
 We export the results to CSV files
 
-<details class="code-fold">
-<summary>Code</summary>
-
 ``` julia
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_results_NCRPG = sort(df_results_NCRPG, :μ)
@@ -412,79 +409,76 @@ CSV.write(joinpath(results_folder, "results-OB-time-iter-$(m_tests).csv"), df_re
 CSV.write(joinpath(results_folder, "results-OB-obj-spar-orth-$(m_tests).csv"), df_results_obj_spar_orth)
 ```
 
-</details>
-
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
 
 | **μ** | **n** | **p** | **NCRPG_const_time** | **NCRPG_const_iter** | **NCRPG_bt_time** | **NCRPG_bt_iter** | **RPG_time** | **RPG_iter** |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.1 | 100 | 5 | 0.748053 | 42874 | 0.578981 | 6234 | 1.25998 | 42874 |
-| 0.1 | 200 | 5 | 1.29457 | 31795 | 0.711506 | 3494 | 2.02036 | 31814 |
-| 0.1 | 300 | 5 | 3.19935 | 40532 | 1.5 | 3694 | 4.65004 | 40535 |
-| 0.5 | 100 | 5 | 0.196853 | 10588 | 0.0955647 | 985 | 0.299515 | 10590 |
-| 0.5 | 200 | 5 | 0.627545 | 14398 | 0.288494 | 1230 | 0.930948 | 14407 |
-| 0.5 | 300 | 5 | 2.16516 | 26057 | 0.631828 | 1292 | 2.94764 | 26080 |
-| 1.0 | 100 | 5 | 0.178784 | 9705 | 0.180771 | 1472 | 0.262947 | 9732 |
-| 1.0 | 200 | 5 | 0.237726 | 5903 | 0.271266 | 626 | 0.35452 | 5911 |
-| 1.0 | 300 | 5 | 0.0358025 | 449 | 0.00785541 | 27 | 0.0564122 | 449 |
+| 0.1 | 100 | 5 | 0.557614 | 30611 | 0.414584 | 4315 | 0.881888 | 30607 |
+| 0.1 | 200 | 5 | 1.32795 | 31701 | 0.62706 | 2904 | 2.07484 | 31702 |
+| 0.1 | 300 | 5 | 3.46168 | 43584 | 1.59039 | 3888 | 5.06904 | 43589 |
+| 0.5 | 100 | 5 | 0.173558 | 8721 | 0.0750915 | 774 | 0.249546 | 8723 |
+| 0.5 | 200 | 5 | 0.647338 | 14245 | 0.256883 | 935 | 0.937679 | 14253 |
+| 0.5 | 300 | 5 | 1.58775 | 18910 | 0.717006 | 1327 | 2.17608 | 18928 |
+| 1.0 | 100 | 5 | 0.173952 | 8988 | 0.120466 | 940 | 0.253129 | 8958 |
+| 1.0 | 200 | 5 | 0.277949 | 6572 | 0.194787 | 510 | 0.420091 | 6583 |
+| 1.0 | 300 | 5 | 0.0404357 | 500 | 0.00780451 | 26 | 0.0633285 | 500 |
 
 Second, we look at the objective values, sparsity, and orthogonality of the solutions found by each algorithm.
 
 | **μ** | **n** | **p** | **NCRPG_const_obj** | **NCRPG_const_spar** | **NCRPG_const_orth** | **NCRPG_bt_obj** | **NCRPG_bt_spar** | **NCRPG_bt_orth** | **RPG_obj** | **RPG_spar** | **RPG_orth** |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.1 | 100 | 5 | 3.22058 | 0.4718 | 0.15632 | 3.22006 | 0.4752 | 0.155214 | 3.22058 | 0.4718 | 0.156319 |
-| 0.1 | 200 | 5 | 4.39565 | 0.5177 | 0.116374 | 4.39581 | 0.5171 | 0.118228 | 4.39565 | 0.5177 | 0.116374 |
-| 0.1 | 300 | 5 | 5.24113 | 0.552267 | 0.101485 | 5.242 | 0.5516 | 0.100302 | 5.24113 | 0.552267 | 0.101485 |
-| 0.5 | 100 | 5 | 13.0595 | 0.7348 | 0.123164 | 13.0992 | 0.7344 | 0.117375 | 13.0595 | 0.7348 | 0.123164 |
-| 0.5 | 200 | 5 | 16.8825 | 0.813 | 0.0732099 | 16.8633 | 0.8117 | 0.0775427 | 16.8825 | 0.813 | 0.0732099 |
-| 0.5 | 300 | 5 | 19.159 | 0.872133 | 0.0559839 | 19.1961 | 0.873333 | 0.0595898 | 19.159 | 0.872133 | 0.0559839 |
-| 1.0 | 100 | 5 | 22.1209 | 0.8722 | 0.0602495 | 22.0776 | 0.8728 | 0.0722475 | 22.1209 | 0.8722 | 0.0602495 |
-| 1.0 | 200 | 5 | 25.5964 | 0.9794 | 2.33716e-16 | 25.6114 | 0.9824 | 0.0429794 | 25.5964 | 0.9794 | 2.43844e-16 |
-| 1.0 | 300 | 5 | 24.7444 | 0.996667 | 0.0 | 24.7457 | 0.996667 | 0.0 | 24.7444 | 0.996667 | 0.0 |
+| 0.1 | 100 | 5 | 3.22671 | 0.4668 | 0.161146 | 3.22624 | 0.4662 | 0.167034 | 3.22671 | 0.4668 | 0.161146 |
+| 0.1 | 200 | 5 | 4.3604 | 0.5253 | 0.115807 | 4.38201 | 0.5265 | 0.116072 | 4.3604 | 0.5253 | 0.115807 |
+| 0.1 | 300 | 5 | 5.22596 | 0.5534 | 0.0950749 | 5.22159 | 0.553867 | 0.0956675 | 5.22596 | 0.5534 | 0.0950749 |
+| 0.5 | 100 | 5 | 13.0358 | 0.7348 | 0.129335 | 13.1202 | 0.7326 | 0.127941 | 13.0358 | 0.7348 | 0.129335 |
+| 0.5 | 200 | 5 | 16.7412 | 0.8128 | 0.0864384 | 16.7758 | 0.8136 | 0.0813886 | 16.7412 | 0.8128 | 0.0864384 |
+| 0.5 | 300 | 5 | 19.1849 | 0.874333 | 0.0720433 | 19.2195 | 0.873733 | 0.0657896 | 19.1849 | 0.874333 | 0.0720433 |
+| 1.0 | 100 | 5 | 22.031 | 0.8754 | 0.0519277 | 22.1683 | 0.8828 | 0.0416069 | 22.031 | 0.8754 | 0.0519277 |
+| 1.0 | 200 | 5 | 25.4411 | 0.9791 | 0.0407826 | 25.5277 | 0.9852 | 0.0395372 | 25.4411 | 0.9791 | 0.0407826 |
+| 1.0 | 300 | 5 | 24.8276 | 0.996667 | 0.0 | 24.8266 | 0.996667 | 0.0 | 24.8276 | 0.996667 | 0.0 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
-
-<details class="code-fold">
-<summary>Code</summary>
 
 ``` julia
 using Pkg
 Pkg.status()
 ```
 
-</details>
-
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
-      [6e4b80f9] BenchmarkTools v1.6.0
+      [6e4b80f9] BenchmarkTools v1.6.3
       [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.15.6
+      [13f3f980] CairoMakie v0.15.8
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
-      [a93c6f00] DataFrames v1.8.0
-      [31c24e10] Distributions v0.25.122
-    ⌅ [682c06a0] JSON v0.21.4
+      [a93c6f00] DataFrames v1.8.1
+      [31c24e10] Distributions v0.25.123
+      [e9467ef8] GLMakie v0.13.8
+      [4d00f742] GeometryTypes v0.8.5
+      [7073ff75] IJulia v1.34.0
+      [682c06a0] JSON v1.4.0
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
-      [d3d80556] LineSearches v7.4.0
-      [ee78f7c6] Makie v0.24.6
+      [d3d80556] LineSearches v7.6.0
+      [ee78f7c6] Makie v0.24.8
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.0
-      [3362f125] ManifoldsBase v2.0.0
-      [0fc0a36d] Manopt v0.5.25
-      [5b8d5e80] ManoptExamples v0.1.16 `..`
+      [1cead3c2] Manifolds v0.11.10
+      [3362f125] ManifoldsBase v2.3.0
+      [0fc0a36d] Manopt v0.5.32
+      [5b8d5e80] ManoptExamples v0.1.18 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [91a5bcdd] Plots v1.41.1
-      [08abe8d2] PrettyTables v3.1.0
-      [6099a3de] PythonCall v0.9.28
+      [6fe1bfb0] OffsetArrays v1.17.0
+      [91a5bcdd] Plots v1.41.4
+      [08abe8d2] PrettyTables v3.1.2
+      [6099a3de] PythonCall v0.9.31
       [f468eda6] QuadraticModels v0.9.14
+      [731186ca] RecursiveArrayTools v3.44.0
       [1e40b3f8] RipQP v0.7.0
-    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 15, 2025, 19:20:36.
+This tutorial was last rendered January 19, 2026, 12:52:17.
 
 ## Literature
 
