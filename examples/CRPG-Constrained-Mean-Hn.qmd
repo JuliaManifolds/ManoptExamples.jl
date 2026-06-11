@@ -2,7 +2,6 @@
 title: "The Constrained mean on high-dimensional Hyperbolic space."
 author: "Hajg Jasa, Ronny Bergmann"
 date: 16/06/2025
-engine: julia
 ---
 
 ## Introduction
@@ -27,7 +26,7 @@ import ColorSchemes.tol_vibrant
 ```
 
 Consider the constrained Riemannian center of mass
-for a given set of points ``q_i \in \mathcal M$ $i=1,\ldots,N$
+for a given set of points $q_i \in \mathcal M$, $i=1,\ldots,N$
 given by
 
 ```math
@@ -53,7 +52,7 @@ and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around 
 ```{julia}
 #| output: false
 n_range = Vector(2:200)
-radius_range = [1 / sqrt(n) for n in n_range]
+radius_range = [1 / sqrt(n) for n ∈ n_range]
 N_range = [400 for n ∈ n_range]
 M_range = [Hyperbolic(n) for n ∈ n_range]
 σ_range = [ 1.5/sqrt(sqrt(n-1)) for n ∈ n_range]
@@ -292,12 +291,40 @@ function bench_aep(Manifold, center, radius, data)
 end
 ```
 
-and run these
+and average these over $10$ runs
+
+```{julia}
+function average_benchmarks(Manifold, center, radius, data; N=10)
+  local_bench = Any[]
+  for i in 1:N
+    # Perturb the center 
+    n = length(center)
+    starting_point = center + rand(n)
+    push!(local_bench, bench_aep(Manifold, starting_point, radius, data))
+  end
+
+  stats = Dict(:CRPG_CN => Dict(), :CRPG_BT => Dict(), :PGA => Dict())
+
+  stats[:CRPG_CN][:Iter] = mean(local_bench[:CRPG_CN][:Iter])
+  stats[:CRPG_CN][:Cost] = mean(local_bench[:CRPG_CN][:Cost])
+  stats[:CRPG_CN][:time] = mean(local_bench[:CRPG_CN][:time])
+
+  stats[:CRPG_BT][:Iter] = mean(local_bench[:CRPG_BT][:Iter])
+  stats[:CRPG_BT][:Cost] = mean(local_bench[:CRPG_BT][:Cost])
+  stats[:CRPG_BT][:time] = mean(local_bench[:CRPG_BT][:time])
+
+  stats[:PGA][:Iter] = mean(local_bench[:PGA][:Iter])
+  stats[:PGA][:Cost] = mean(local_bench[:PGA][:Cost])
+  stats[:PGA][:time] = mean(local_bench[:PGA][:time])
+  
+  return stats
+end
+```
 
 ```{julia}
 #| output: false
 #| echo: false
-b = [bench_aep(M, c, r, d) for (M, c, r, d) in zip(M_range, centers, radius_range, data)]
+b = [average_benchmarks(M, c, r, d) for (M, c, r, d) in zip(M_range, centers, radius_range, data)]
 ```
 
 The resulting plot of runtime is
@@ -312,6 +339,11 @@ axis.xlabel = "Manifold dimension d"
 axis.ylabel = "runtime (sec.)"
 axislegend(axis; position=:lt)
 fig
+```
+
+```{julia}
+#| code-fold: true
+display(fig)
 ```
 
 ```{julia}
@@ -340,6 +372,11 @@ axis2.xlabel = "Manifold dimension d"
 axis2.ylabel = "# Iterations"
 axislegend(axis2; position=:rt)
 fig2
+```
+
+```{julia}
+#| code-fold: true
+display(fig2)
 ```
 
 ```{julia}

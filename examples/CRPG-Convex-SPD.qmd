@@ -2,7 +2,6 @@
 title: "A Geodesically Convex Example on SPDs"
 author: "Hajg Jasa"
 date: 04/16/2025
-engine: julia
 ---
 
 ## Introduction
@@ -75,7 +74,7 @@ random_seed = 42
 atol = 1e-7
 max_iters = 20000
 τ = 1/2 # weight for the component h
-spd_dims = [2, 3, 4, 5]
+spd_dims = [2, 5, 10, 100]
 ```
 
 ```{julia}
@@ -322,6 +321,7 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 # | echo: false
 # | code-fold: true
+# | output: asis
 benchmarking && pretty_table(A1_SPD; backend = :markdown, column_labels = col_names_1)
 ```
 

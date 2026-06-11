@@ -2,7 +2,6 @@
 title: "Sparse PCA"
 author: "Paula John, Hajg Jasa"
 date: 10/01/2025
-engine: julia
 ---
 
 ## Introduction
@@ -470,7 +469,7 @@ First, we look at the time and number of iterations for each algorithm.
 #| echo: false
 #| code-fold: true
 #| output: asis
-header_1 = ["μ", "n", "p", "NCRPG_const_time", "NCRPG_const_iter", "NCRPG_bt_time", "NCRPG_bt_iter", "RPG_time", "RPG_iter"]
+header_1 = ["μ", "n", "p", "NCRPGconst_time", "NCRPGconst_iter", "NCRPGbt_time", "NCRPGbt_iter", "RPG_time", "RPG_iter"]
 benchmarking && pretty_table(df_results_time_iter; backend = :markdown, column_labels = header_1)
 ```
 
@@ -479,7 +478,7 @@ Second, we look at the objective values, sparsity, and orthogonality of the solu
 #| echo: false
 #| code-fold: true
 #| output: asis
-header_2 = ["μ", "n", "p", "NCRPG_const_obj", "NCRPG_const_spar", "NCRPG_const_orth", "NCRPG_bt_obj", "NCRPG_bt_spar", "NCRPG_bt_orth", "RPG_obj", "RPG_spar", "RPG_orth"]
+header_2 = ["μ", "n", "p", "NCRPGconst_obj", "NCRPGconst_spar", "NCRPGconst_orth", "NCRPGbt_obj", "NCRPGbt_spar", "NCRPGbt_orth", "RPG_obj", "RPG_spar", "RPG_orth"]
 benchmarking && pretty_table(df_results_obj_spar_orth; backend = :markdown, column_labels = header_2)
 ```
 
