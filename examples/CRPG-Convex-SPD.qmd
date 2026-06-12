@@ -74,7 +74,7 @@ random_seed = 42
 atol = 1e-7
 max_iters = 20000
 τ = 1/2 # weight for the component h
-spd_dims = [2, 5, 10, 100]
+spd_dims = [2, 3, 4, 5]
 ```
 
 ```{julia}

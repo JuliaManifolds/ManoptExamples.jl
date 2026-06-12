@@ -298,8 +298,7 @@ function average_benchmarks(Manifold, center, radius, data; N=10)
   local_bench = Any[]
   for i in 1:N
     # Perturb the center 
-    n = length(center)
-    starting_point = center + rand(n)
+    starting_point = exp(Manifold, center, rand(Manifold, vector_at = center))
     push!(local_bench, bench_aep(Manifold, starting_point, radius, data))
   end
 
