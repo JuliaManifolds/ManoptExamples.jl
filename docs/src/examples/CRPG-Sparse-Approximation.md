@@ -52,7 +52,7 @@ n_tests = 10 # number of tests for each parameter setting
 atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-dims = [2, 10, 100]
+dims = [2, 10, 100, 500]
 μs = [0.1, 0.5, 1.0]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```
@@ -213,7 +213,7 @@ for n in dims
             constant_stepsize = 1/L_g
             initial_stepsize = 3/2 * constant_stepsize
             contraction_factor = 0.9
-            warm_start_factor = 2.0
+            warm_start_factor = 10.0
             #
             # Optimization
             # Constant stepsize
@@ -320,9 +320,6 @@ end
 
 We export the results to CSV files
 
-<details class="code-fold">
-<summary>Code</summary>
-
 ``` julia
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
@@ -353,69 +350,77 @@ CSV.write(joinpath(results_folder, "results-Hn-time-iter-$(n_tests)-$(dims[end])
 CSV.write(joinpath(results_folder, "results-Hn-obj-spar-$(n_tests)-$(dims[end]).csv"), df_results_obj_spar)
 ```
 
-</details>
-
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
 
 | **μ** | **n** | **CRPG_const_iter** | **CRPG_const_time** | **CRPG_bt_iter** | **CRPG_bt_time** | **CPPA_iter** | **CPPA_time** |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.1 | 2 | 167 | 0.049181 | 1561 | 1.4581 | 5000 | 3.9519 |
-| 0.1 | 10 | 111 | 0.0443115 | 2033 | 3.18836 | 5000 | 7.17354 |
-| 0.1 | 100 | 48 | 0.0358821 | 2928 | 12.569 | 5000 | 7.73864 |
-| 0.5 | 2 | 121 | 0.0317396 | 567 | 0.86611 | 4004 | 3.2404 |
-| 0.5 | 10 | 81 | 0.0267678 | 1117 | 2.01164 | 4502 | 5.1665 |
-| 0.5 | 100 | 45 | 0.0335185 | 1021 | 3.32761 | 5000 | 6.23522 |
-| 1.0 | 2 | 69 | 0.0185704 | 73 | 0.0460234 | 2511 | 2.28915 |
-| 1.0 | 10 | 67 | 0.0204594 | 1098 | 1.9168 | 3507 | 3.39929 |
-| 1.0 | 100 | 45 | 0.0336094 | 3069 | 13.005 | 4502 | 5.83509 |
+| 0.1 | 2 | 187 | 0.0412868 | 1585 | 0.971092 | 5000 | 3.00536 |
+| 0.1 | 10 | 72 | 0.0199021 | 48 | 0.019421 | 5000 | 3.39725 |
+| 0.1 | 100 | 37 | 0.0325996 | 566 | 3.10543 | 5000 | 7.57286 |
+| 0.1 | 500 | 32 | 0.124239 | 4242 | 302.299 | 5000 | 26.5391 |
+| 0.5 | 2 | 123 | 0.0247647 | 142 | 0.07429 | 4502 | 2.70889 |
+| 0.5 | 10 | 50 | 0.0114526 | 34 | 0.0123029 | 4004 | 2.80571 |
+| 0.5 | 100 | 34 | 0.0284071 | 361 | 2.36567 | 4502 | 6.77644 |
+| 0.5 | 500 | 18 | 0.0736324 | 1398 | 217.205 | 1018 | 5.4643 |
+| 1.0 | 2 | 64 | 0.0132351 | 80 | 0.0513453 | 2511 | 1.5178 |
+| 1.0 | 10 | 24 | 0.00590168 | 16 | 0.00623312 | 2013 | 1.47139 |
+| 1.0 | 100 | 16 | 0.0135461 | 542 | 5.22651 | 1018 | 1.54356 |
+| 1.0 | 500 | 3 | 0.0120196 | 2 | 0.0132871 | 22 | 0.113782 |
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 
 | **μ** | **n** | **CRPG_const_obj** | **CRPG_const_spar** | **CRPG_bt_obj** | **CRPG_bt_spar** | **CPPA_obj** | **CPPA_spar** |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.1 | 2 | 3.17406 | 0.05 | 3.17406 | 0.05 | 3.17406 | 0.05 |
-| 0.1 | 10 | 8.32265 | 0.15 | 8.32265 | 0.15 | 8.32265 | 0.15 |
-| 0.1 | 100 | 52.938 | 0.088 | 52.938 | 0.088 | 52.938 | 0.088 |
-| 0.5 | 2 | 3.89857 | 0.4 | 3.89857 | 0.4 | 3.89857 | 0.4 |
-| 0.5 | 10 | 9.47638 | 0.51 | 9.47638 | 0.51 | 9.47638 | 0.51 |
-| 0.5 | 100 | 55.593 | 0.442 | 55.593 | 0.442 | 55.593 | 0.442 |
-| 1.0 | 2 | 4.51909 | 0.6 | 4.51909 | 0.6 | 4.51909 | 0.6 |
-| 1.0 | 10 | 10.357 | 0.73 | 10.357 | 0.73 | 10.357 | 0.73 |
-| 1.0 | 100 | 57.1667 | 0.76 | 57.1667 | 0.76 | 57.167 | 0.763 |
+| 0.1 | 2 | 3.04196 | 0.0 | 3.04196 | 0.0 | 3.04196 | 0.0 |
+| 0.1 | 10 | 5.70847 | 0.15 | 5.70847 | 0.15 | 5.70847 | 0.15 |
+| 0.1 | 100 | 50.5466 | 0.256 | 50.5466 | 0.256 | 50.5466 | 0.256 |
+| 0.1 | 500 | 250.208 | 0.443 | 250.208 | 0.443 | 250.208 | 0.444 |
+| 0.5 | 2 | 3.78239 | 0.3 | 3.78239 | 0.3 | 3.78239 | 0.3 |
+| 0.5 | 10 | 6.41538 | 0.62 | 6.41538 | 0.62 | 6.41538 | 0.62 |
+| 0.5 | 100 | 51.3719 | 0.811 | 51.3719 | 0.811 | 51.3719 | 0.812 |
+| 0.5 | 500 | 250.771 | 0.9828 | 250.771 | 0.9828 | 250.772 | 0.9898 |
+| 1.0 | 2 | 4.39331 | 0.75 | 4.39331 | 0.75 | 4.39331 | 0.75 |
+| 1.0 | 10 | 6.99343 | 0.95 | 6.99343 | 0.95 | 6.99343 | 0.95 |
+| 1.0 | 100 | 51.927 | 0.993 | 51.927 | 0.993 | 51.927 | 0.996 |
+| 1.0 | 500 | 251.273 | 1.0 | 251.273 | 1.0 | 251.273 | 1.0 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
-      [6e4b80f9] BenchmarkTools v1.6.0
-      [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.15.6
+      [6e4b80f9] BenchmarkTools v1.8.0
+      [336ed68f] CSV v0.10.16
+      [13f3f980] CairoMakie v0.15.11
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
-      [a93c6f00] DataFrames v1.8.0
-      [31c24e10] Distributions v0.25.122
-    ⌅ [682c06a0] JSON v0.21.4
+      [a93c6f00] DataFrames v1.8.2
+      [31c24e10] Distributions v0.25.126
+      [e9467ef8] GLMakie v0.13.11
+      [4d00f742] GeometryTypes v0.8.5
+      [7073ff75] IJulia v1.34.4
+      [682c06a0] JSON v1.6.1
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
-      [d3d80556] LineSearches v7.4.0
-      [ee78f7c6] Makie v0.24.6
+      [d3d80556] LineSearches v7.7.1
+      [ee78f7c6] Makie v0.24.11
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.0
-      [3362f125] ManifoldsBase v2.0.0
-      [0fc0a36d] Manopt v0.5.25
-      [5b8d5e80] ManoptExamples v0.1.16 `..`
+      [1cead3c2] Manifolds v0.11.27
+      [3362f125] ManifoldsBase v2.4.0
+      [0fc0a36d] Manopt v0.5.39
+      [5b8d5e80] ManoptExamples v0.1.18 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [91a5bcdd] Plots v1.41.1
-      [08abe8d2] PrettyTables v3.1.0
-      [6099a3de] PythonCall v0.9.28
-      [f468eda6] QuadraticModels v0.9.14
+      [6fe1bfb0] OffsetArrays v1.17.0
+      [91a5bcdd] Plots v1.41.6
+      [08abe8d2] PrettyTables v3.3.2
+      [6099a3de] PythonCall v0.9.35
+      [f468eda6] QuadraticModels v0.9.16
+      [731186ca] RecursiveArrayTools v4.3.1
       [1e40b3f8] RipQP v0.7.0
-    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 15, 2025, 15:29:44.
+This tutorial was last rendered June 13, 2026, 18:46:45.
 
 ## Literature
 

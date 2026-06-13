@@ -292,12 +292,12 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to CRPG with a constant stepsize, while columns 5 to 7 refer to the backtracked case…
 
-    | **Dimension** | **Iterations\_1** | **Time\_1** | **Cost\_1** | **Iterations\_2** | **Time\_2** | **Cost\_2** |
-    |--------------:|------------------:|------------:|------------:|------------------:|------------:|------------:|
-    |             3 |               367 |  0.00453621 |     0.18593 |               249 |  0.00818665 |     0.18593 |
-    |             6 |              1944 |   0.0414022 |     0.27078 |              1341 |    0.094039 |     0.27078 |
-    |            10 |              8640 |    0.280774 |    0.371274 |              6027 |    0.578688 |    0.371274 |
-    |            15 |             15535 |    0.645499 |    0.449625 |             12544 |     3.05128 |    0.449625 |
+| **Dimension** | **Iterations_1** | **Time_1** | **Cost_1** | **Iterations_2** | **Time_2** | **Cost_2** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 3 | 367 | 0.00434125 | 0.18593 | 249 | 0.00705408 | 0.18593 |
+| 6 | 1944 | 0.041469 | 0.27078 | 1341 | 0.0818578 | 0.27078 |
+| 10 | 8640 | 0.263846 | 0.371274 | 6027 | 0.527204 | 0.371274 |
+| 15 | 15535 | 0.613913 | 0.449625 | 12544 | 2.69701 | 0.449625 |
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 
@@ -409,18 +409,13 @@ end
 figs = plot_convergence(stats)
 ```
 
-<details class="code-fold">
-<summary>Code</summary>
-
 ``` julia
 for fig in figs
     display(fig)
 end
 ```
 
-</details>
-
-<img src="CRPG-Convex-SPD_files/figure-commonmark/cell-13-output-1.png" width="672" height="480" />
+![](CRPG-Convex-SPD_files/figure-commonmark/cell-13-output-1.png)
 
 This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.7.
 
@@ -429,33 +424,37 @@ This is in line with the convergence rates of the CRPG method in the geodesicall
 This tutorial is cached. It was last run on the following package versions.
 
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
-      [6e4b80f9] BenchmarkTools v1.6.0
-      [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.15.6
+      [6e4b80f9] BenchmarkTools v1.8.0
+      [336ed68f] CSV v0.10.16
+      [13f3f980] CairoMakie v0.15.11
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
-      [a93c6f00] DataFrames v1.8.0
-      [31c24e10] Distributions v0.25.122
-    ⌅ [682c06a0] JSON v0.21.4
+      [a93c6f00] DataFrames v1.8.2
+      [31c24e10] Distributions v0.25.126
+      [e9467ef8] GLMakie v0.13.11
+      [4d00f742] GeometryTypes v0.8.5
+      [7073ff75] IJulia v1.34.4
+      [682c06a0] JSON v1.6.1
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
-      [d3d80556] LineSearches v7.4.0
-      [ee78f7c6] Makie v0.24.6
+      [d3d80556] LineSearches v7.7.1
+      [ee78f7c6] Makie v0.24.11
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.0
-      [3362f125] ManifoldsBase v2.0.0
-      [0fc0a36d] Manopt v0.5.25
-      [5b8d5e80] ManoptExamples v0.1.16 `..`
+      [1cead3c2] Manifolds v0.11.27
+      [3362f125] ManifoldsBase v2.4.0
+      [0fc0a36d] Manopt v0.5.39
+      [5b8d5e80] ManoptExamples v0.1.18 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [91a5bcdd] Plots v1.41.1
-      [08abe8d2] PrettyTables v3.1.0
-      [6099a3de] PythonCall v0.9.28
-      [f468eda6] QuadraticModels v0.9.14
+      [6fe1bfb0] OffsetArrays v1.17.0
+      [91a5bcdd] Plots v1.41.6
+      [08abe8d2] PrettyTables v3.3.2
+      [6099a3de] PythonCall v0.9.35
+      [f468eda6] QuadraticModels v0.9.16
+      [731186ca] RecursiveArrayTools v4.3.1
       [1e40b3f8] RipQP v0.7.0
-    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 15, 2025, 13:40:45.
+This tutorial was last rendered June 11, 2026, 15:15:51.
 
 ## Literature
 

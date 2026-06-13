@@ -75,7 +75,7 @@ n_tests = 10 # number of tests for each parameter setting
 atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-dims = [2, 10, 100, 1000]
+dims = [2, 10, 100, 500]
 μs = [0.1, 0.5, 1.0]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```

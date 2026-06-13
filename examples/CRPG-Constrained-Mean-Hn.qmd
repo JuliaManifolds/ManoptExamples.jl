@@ -302,20 +302,14 @@ function average_benchmarks(Manifold, center, radius, data; N=10)
     push!(local_bench, bench_aep(Manifold, starting_point, radius, data))
   end
 
-  stats = Dict(:CRPG_CN => Dict(), :CRPG_BT => Dict(), :PGA => Dict())
+  stats = Dict(
+    method => Dict(
+      :Iter => mean([l[method][:Iter] for l in local_bench]),
+      :Cost => [l[method][:Cost] for l in local_bench],
+      :time => mean([l[method][:time] for l in local_bench])
+    ) for method in [:CRPG_CN, :CRPG_BT, :PGA]
+  )
 
-  stats[:CRPG_CN][:Iter] = mean(local_bench[:CRPG_CN][:Iter])
-  stats[:CRPG_CN][:Cost] = mean(local_bench[:CRPG_CN][:Cost])
-  stats[:CRPG_CN][:time] = mean(local_bench[:CRPG_CN][:time])
-
-  stats[:CRPG_BT][:Iter] = mean(local_bench[:CRPG_BT][:Iter])
-  stats[:CRPG_BT][:Cost] = mean(local_bench[:CRPG_BT][:Cost])
-  stats[:CRPG_BT][:time] = mean(local_bench[:CRPG_BT][:time])
-
-  stats[:PGA][:Iter] = mean(local_bench[:PGA][:Iter])
-  stats[:PGA][:Cost] = mean(local_bench[:PGA][:Cost])
-  stats[:PGA][:time] = mean(local_bench[:PGA][:time])
-  
   return stats
 end
 ```
