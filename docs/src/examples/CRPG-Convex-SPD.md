@@ -1,11 +1,12 @@
 # A Geodesically Convex Example on SPDs
+
 Hajg Jasa
 2025-04-16
 
 ## Introduction
 
 In this example we compare the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025:2](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the space of symmetric positive definite matrices.
-This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 5.3.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.1.
 
 ``` julia
 using PrettyTables

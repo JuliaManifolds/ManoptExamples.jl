@@ -1,4 +1,5 @@
-# The Constrained mean on high-dimensional Hyperbolic space.
+# The Constrained mean on high-dimensional Hyperbolic space
+
 Hajg Jasa, Ronny Bergmann
 2026-04-06
 
@@ -6,6 +7,7 @@ Hajg Jasa, Ronny Bergmann
 
 This example is to be thought of as a continuation of the [Constrained Mean on Hyperbolic Space](https://juliamanifolds.github.io/ManoptExamples.jl/stable/examples/Constrained-Mean-Hn/), where we compare the Intrinsic Convex Riemannian Proximal Gradient Method (CRPG) from [BergmannJasaJohnPfeffer:2025:2](@cite) with the Projected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite).
 For CRPG, we test performances of both constant and backtracked stepsize strategies.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.4.
 
 ``` julia
 using Chairmarks, CSV, DataFrames, Manifolds, Manopt, CairoMakie, Random

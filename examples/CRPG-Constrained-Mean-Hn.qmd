@@ -8,6 +8,7 @@ date: 16/06/2025
 
 This example is to be thought of as a continuation of the [Constrained Mean on Hyperbolic Space](https://juliamanifolds.github.io/ManoptExamples.jl/stable/examples/Constrained-Mean-Hn/), where we compare the Intrinsic Convex Riemannian Proximal Gradient Method (CRPG) from [BergmannJasaJohnPfeffer:2025:2](@cite) with the Projected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite).
 For CRPG, we test performances of both constant and backtracked stepsize strategies.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.4.
 
 ```{julia}
 #| echo: false
@@ -66,7 +67,7 @@ The data consists of $N=200$ points, where we skew the data a bit to force the m
 #| echo: false
 #| output: false
 experiment_name = "CRPG-CnBallConstrMean-$(minimum(n_range))-$(maximum(n_range))-"
-folder = (@__DIR__) * "/crpg-projected-gradient-results/"
+folder = (@__DIR__) * "/CRPG-projected-gradient-results/"
 fn = folder * experiment_name
 write_csv = true;
 (!isdir(folder) && write_csv) && mkpath(folder)
