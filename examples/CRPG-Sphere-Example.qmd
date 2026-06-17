@@ -72,91 +72,96 @@ We initialize the experiment parameters, as well as some utility functions.
 #| output: false
 random_seed = 42
 
-atol = 1e-7
-max_iters = 20000
-τ = 1/2 # weight for the component h
-```
+dims = [100, 500, 1000, 5000]
+num_tests = 10
 
+N   = 1000 # Number of points
+τ   = 0.1  # weight parameter
+max_it          = 1000
+stop            = 1e-5
+min_stepsize_bt = 1e-8
+
+contraction_factor = 0.5
+warm_start_factor = 2.0
+# Choose a radius < pi/4
+# The smaller the diameter of our set, the larger we can choose λ 
+radius = pi/6
+```
+First we define the objective and related quantities
 ```{julia}
 #| output: false
 # Objective, gradient, and proxes
-function _g(S,p, qs)
-    g_val = 0.0
-    for q_k in qs 
-        g_val+= distance(S, p, q_k)^2
-    end 
-    g_val /= 2*N
-    return g_val
-end
+_g(S, p, qs) = sum(distance(S, p, qk)^2 for qk in qs) / (2 * length(qs))
 get_g(qs) = (S, p) -> _g(S, p, qs)
-
+#
 get_h(q_bar, τ) = (S, p) -> τ * distance(S, p, q_bar)
-
-
-function _grad_g(S, p, qs) 
-    grad_g_val = zeros(length(p))
-    for q_k in qs
-        grad_g_val -= log(S, p, q_k)
-    end
-    return grad_g_val/N
-end
+#
+_grad_g(S, p, qs) = -sum(log(S, p, qk) for qk in qs) / length(qs)
 get_grad_g(qs) = (S, p) -> _grad_g(S, p, qs)
-
-
+#
 function _prox(S, λ, p, q_bar, τ)
     if distance(S,p,q_bar) <= λ*τ
         return q_bar
     end 
     V = log(S,p,q_bar)
-    return exp(S, p,λ*τ*V/norm(V))
+    return exp(S, p, λ * τ * V/norm(V))
 end 
 get_prox(q_bar, τ) = (S, λ, p) -> _prox(S, λ, p, q_bar, τ)
 #
 f(M, p, q) = g(M, p) + h(M, p, q)
-# Generate points 
+```
+and then generate the problem data 
+```{julia}
+# Generate points and data
 function generate_point(S, anchor, radius)
     X = rand(S; vector_at = anchor)
-    return exp(S, anchor, rand() * radius * X/norm(X))
+    return exp(S, anchor, rand()*radius*X/norm(X))
 end 
-function generate_data(S, radius)
+function generate_data(S, radius; N=1000)
     anchor = rand(S)
     start = generate_point(S, anchor, radius)
     q_bar = generate_point(S, anchor, radius)
     qs    = [generate_point(S, anchor, radius) for i in 1:N]
     return start, q_bar, qs
 end 
-#
+```
+We now define some functions related to the stepsize selection
+```{julia}
 # Stepsize calculation
-get_λ_δ(α_1, α_2, α_g, δ) = (sqrt(4 * (α_2 - α_1)^2 + 1/(2+δ)^2 * α_g^2) - 2 * (α_2 - α_1)) / (2 * α_g^2)
+get_λ_δ(α1, α2, αg, δ) = (sqrt(4*(α2 - α1)^2 + 1/(2 + δ)^2 * αg^2) - 2 * (α2 - α1)) / (2 * αg^2)
 get_ζ_δ(δ) = pi/(2 + δ) * cot(pi/(2 + δ))
 #
 function get_const_stepsize(radius, τ)
-    # α_1 ≤ h(p) ≤ α_2 ∀p ∈ B(anchor, radius)
-    α_1 = 0.0
-    α_2 = τ * 2 * radius
-    # ||grad_g(p)|| ≤ α_g ∀p ∈ B(anchor, radius)
-    α_g = 2 * radius 
-    L_g = 1
-    # Compute optimal δ for constant stepsize
+    # α1 ≤ h(p) ≤ α2 ∀p ∈ B(anchor, radius)
+    α1 = 0.0
+    α2 = τ * 2 * radius
+    # ||grad_g(p)|| ≤ αg ∀p ∈ B(anchor, radius)
+    αg = 2 * radius 
+    Lg = 1.0
+    #calc opt δ for constant stepsize
     δ_grid = 0.0:0.001:0.4
-    vals = [min(get_λ_δ(α_1, α_2, α_g, δ), get_ζ_δ(δ)/L_g) for δ in 0.0:0.001:0.4]
+    vals = [min(get_λ_δ(α1, α2, αg, δ),get_ζ_δ(δ)/Lg) for δ in 0.0:0.001:0.4]
     λ_const, max_idx = findmax(vals)
     return λ_const, δ_grid[max_idx]
 end 
 #
 function get_initial_stepsize(radius, τ, δ = 1e-8)
-    # α_1 ≤ h(p) ≤ α_2 ∀p ∈ B(anchor, radius)
-    α_1 = 0.0
-    α_2 = τ * 2 * radius
-    # ||grad_g(p)|| ≤ α_g ∀p ∈ B(anchor, radius)
-    α_g = 2 * radius 
-    # Compute initial guess s for backtracking: we need s < λ_δ
-    s = get_λ_δ(α_1, α_2, α_g, δ)
+    # α1 ≤ h(p) ≤ α2 ∀p ∈ B(anchor, radius)
+    α1 = 0.0
+    α2 = τ * 2 * radius
+    # ||grad_g(p)|| ≤ αg ∀p ∈ B(anchor, radius)
+    αg = 2 * radius 
+    #calc s for backtracking: we need s < λ_δ
+    s = get_λ_δ(α1, α2, αg, δ)
     return s 
 end 
-
 ```
-
+Since the stepsizes are independent of the dimension, we define them here, in conjunction with the parameter $\delta$ used for the backtracking
+```{julia}
+λ_const, δ = get_const_stepsize(radius, τ)
+δ_bt = 0.2
+λ_init = get_initial_stepsize(radius, τ, δ_bt)
+```
 We introduce some keyword arguments for the solvers we will use in this experiment
 ```{julia}
 #| output: false
@@ -212,6 +217,18 @@ Before running the experiments, we initialize data collection functions that we 
 ```{julia}
 #| output: false
 # Header for the dataframe
+list = [ 
+  "Dim"        => Int64[],
+  "Stepsize"   => Float64[],
+  "Time"       => Float64[],
+  "Iterations" => Int64[], 
+  "Objective"  => Float64[]
+]
+
+df_const = DataFrame(list, makeunique=true) 
+df_bt    = DataFrame(list, makeunique=true)
+
+
 global col_names_1 = [
     :Dimension,
     :Iterations_1,
@@ -288,130 +305,222 @@ end
 
 ```{julia}
 #| output: false
-global A1_SPD = initialize_dataframes(
-    results_folder,
-    experiment_name,
-    named_tuple_1,
-)
-stats = Dict(:CRPG_CN => Dict(), :CRPG_BT => Dict())
-for n in spd_dims
+for dim in dims 
+    S = Sphere(dim)
+    time_bt = 0.0
+    time_const = 0.0
 
-    Random.seed!(random_seed)
+    iterations_bt = 0
+    iterations_const = 0
+    
+    objective_bt = 0.0
+    objective_const = 0.0
 
-    M = SymmetricPositiveDefinite(Int(n))
-    q = rand(M)
-    p0 = rand(M)
+    
+    for i in 1:num_tests
+        Random.seed!(1520+i)
+        start, q_bar, qs = generate_data(S, radius)
 
-    prox_h_spd(M, λ, p) = prox_h(M, λ, p, q)
-    f_spd(M, p) = f(M, p, q)
-
-    D = 4*distance(M, p0, q)
-    # Conseravative estimate of the Lipschitz constant for grad_g
-    L_g = 1.05 * theoretical_lipschitz_constant(M, p0, n, D/2)
-    constant_stepsize = 1/L_g
-    initial_stepsize = 3/2 * constant_stepsize
-    contraction_factor = 0.9
-    warm_start_factor = 2.0
-
-    # Optimization
-    pgm_constant = proximal_gradient_method(M, f_spd, g, grad_g, p0;
-        prox_nonsmooth=prox_h_spd,
-        pgm_bm_kwargs_constant(constant_stepsize)...
-    )
-    pgm_constant_result = get_solver_result(pgm_constant)
-    pgm_constant_record = get_record(pgm_constant)
-    stats[:CRPG_CN][n] = Dict()
-    stats[:CRPG_CN][n][:Iteration] = length(get_record(pgm_constant, :Iteration)) + 1
-    stats[:CRPG_CN][n][:Cost] = get_record(pgm_constant, :Iteration, :Cost)
-    pushfirst!(stats[:CRPG_CN][n][:Cost], f_spd(M, p0))
-
-    # We can also use a backtracked stepsize
-    pgm = proximal_gradient_method(M, f_spd, g, grad_g, p0;
-        prox_nonsmooth=prox_h_spd,
-        pgm_kwargs(contraction_factor, initial_stepsize, warm_start_factor)...
-    )
-    pgm_result = get_solver_result(pgm)
-    pgm_record = get_record(pgm)
-    stats[:CRPG_BT][n] = Dict()
-    stats[:CRPG_BT][n][:Iteration] = length(get_record(pgm, :Iteration)) + 1
-    stats[:CRPG_BT][n][:Cost] = get_record(pgm, :Iteration, :Cost)
-    pushfirst!(stats[:CRPG_BT][n][:Cost], f_spd(M, p0))
-
-    records = [
-        pgm_constant_record,
-        pgm_record,
-    ]
-
-    # Benchmarking
-    if benchmarking
-        pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0;
-            prox_nonsmooth=$prox_h_spd,
-            $pgm_bm_kwargs_constant($constant_stepsize)...
+        g = get_g(qs)
+        h = get_h(q_bar, τ)
+        f(S, p) = g(S, p) + h(S, p)
+        grad_g = get_grad_g(qs)
+        prox = get_prox(q_bar, τ)
+        rec_const = proximal_gradient_method(S, f, g, grad_g, start;
+                            prox_nonsmooth =prox, 
+                            stepsize = ConstantLength(λ_const),
+                            record=[:Iteration, :Iterate],
+                            return_state=true,
+                            stopping_criterion = StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
         )
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_spd, $g, $grad_g, $p0;
-            prox_nonsmooth=$prox_h_spd,
-            $pgm_bm_kwargs($contraction_factor, $initial_stepsize, $warm_start_factor)...
+        bm_const = @benchmark proximal_gradient_method($S, $f, $g, $grad_g, $start;
+                            prox_nonsmooth = $prox, 
+                            stepsize = ConstantLength($λ_const),
+                            stopping_criterion = StopAfterIteration($max_it)| StopWhenGradientMappingNormLess($stop)
+        )
+        rec_CRPG_bt = proximal_gradient_method(S, f, g, grad_g, start;
+                            prox_nonsmooth =prox, 
+                            stepsize = ProximalGradientMethodBacktracking(; 
+                                                        strategy=:convex, 
+                                                        initial_stepsize=λ_init, 
+                                                        stop_when_stepsize_less = min_stepsize_bt,
+                                                        δ=δ_bt,
+                                                        contraction_factor=contraction_factor,
+                                                        warm_start_factor=warm_start_factor,
+                                                        k_max=1.0,),
+                            record=[:Iteration, :Iterate],
+                            return_state=true,
+                            stopping_criterion =    StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+        )
+        bm_bt = @benchmark proximal_gradient_method($S, $f, $g, $grad_g, $start;
+                            prox_nonsmooth = $prox, 
+                            stepsize = ProximalGradientMethodBacktracking(;
+                                strategy=:convex,
+                                initial_stepsize=$λ_init,
+                                stop_when_stepsize_less = $min_stepsize_bt,
+                                δ=$δ_bt,
+                                contraction_factor=$contraction_factor,
+                                warm_start_factor=$warm_start_factor,
+                                k_max=$1.0,
+                            ),
+                            stopping_criterion = StopAfterIteration($max_it)| StopWhenGradientMappingNormLess($stop)
         )
 
-        times = [
-            median(pgm_constant_bm).time * 1e-9,
-            median(pgm_bm).time * 1e-9,
-        ]
-        # Export the results
-        B1 = export_dataframes(
-            M,
-            records,
-            times,
-        )
-        append!(A1_SPD, B1)
-        (export_table) && (write_dataframes(B1, results_folder, experiment_name))
-    end
-end
+        it_const, res_const = get_record(rec_const)[end]
+        it_bt, res_bt       = get_record(rec_CRPG_bt)[end]
+
+        t_const = median(bm_const).time/1e9
+        t_bt    = median(bm_bt).time/1e9
+        
+        println("dim: ", dim, " bt: ", t_bt, " const: ", t_const, " it_bt: ", it_bt, " it_const: ", it_const)
+        objective_bt += f(S, res_bt)
+        objective_const += f(S, res_const)
+        time_bt += t_bt
+        time_const += t_const
+        iterations_bt += it_bt
+        iterations_const += it_const
+    end 
+
+    push!(df_const, [dim, λ_const, time_const/num_tests, iterations_const/num_tests, objective_const/num_tests])
+    push!(df_bt, [dim, λ_init, time_bt/num_tests, iterations_bt/num_tests, objective_bt/num_tests])
+end 
 ```
-
-We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to CRPG with a constant stepsize, while columns 5 to 7 refer to the backtracked case...
+# TODO print correct table 
+We can take a look at how the algorithms compare to each other in their performance with the following tables.
+The first table showcases the algorithm run with a constant stepsize...
 ```{julia}
 # | echo: false
 # | code-fold: true
 # | output: asis
-benchmarking && pretty_table(A1_SPD; backend = :markdown, column_labels = col_names_1)
+benchmarking && pretty_table(df_const; backend = :markdown, column_labels = list)
 ```
-
+... while the second table showcases the algorithm run with a backtracked stepsize
+```{julia}
+# | echo: false
+# | code-fold: true
+# | output: asis
+benchmarking && pretty_table(df_bt; backend = :markdown, column_labels = list)
+```
 ```{julia}
 #| output: false
 #| echo: false
 #| code-fold: true
-for n in spd_dims
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name *
-            "-Constant" *
-            "-$n.csv",
-        ),
-        DataFrame(;
-            Iteration=0:stats[:CRPG_CN][n][:Iteration]-1,
-            Objective=stats[:CRPG_CN][n][:Cost],
-            Diff=stats[:CRPG_CN][n][:Cost] .- stats[:CRPG_CN][n][:Cost][end],
-        ),
-    )
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name *
-            "-Backtracking" *
-            "-$n.csv",
-        ),
-        DataFrame(;
-            Iteration=0:stats[:CRPG_BT][n][:Iteration]-1,
-            Objective=stats[:CRPG_BT][n][:Cost],
-            Diff=stats[:CRPG_BT][n][:Cost] .- stats[:CRPG_BT][n][:Cost][end],
-        ),
-    )
+df_res = DataFrame(
+  "Dim"        => Dims, 
+  "Iter_const" => df_const.Iterations,
+  "Time_const" => df_const.Time,
+  "Obj_const"  => df_const.Objective,
+  "Iter_bt"    => df_bt.Iterations,
+  "Time_bt"    => df_bt.Time,
+  "Obj_bt"     => df_bt.Objective
+)
+
+CSV.write(joinpath(results_folder, experiment_name * "-results.csv"), df_res; delim=",", header=false)
+```
+
+## Test with different parameters
+
+We now test CRPG on the same problem, but with different radii and different values of $\delta$.
+We start by introducing these parameters
+```{julia}
+radii = [pi/5, pi/8]
+# (radius, algorithm, δ) → error vector
+#   algorithm = :CONST for constant stepsize
+#               :BT    for back‑tracking
+#   δ is `missing` for the constant‑stepsize runs
+results = Dict{Tuple{Float64, Symbol, Union{Missing, Float64}}, Vector{Float64}}()
+```
+As well as a function to save the generated data
+```{julia}
+function write_csv(radius::Float64, algo::Symbol, out_path::String)
+    # 5.1  Filter the dictionary for the wanted radius & algorithm = :BT
+    bt_entries = [(δ, vec) for ((r, alg, δ), vec) in results
+                  if r == radius && alg == algo]
+    sort!(bt_entries, by = x -> x[1]) # sort by delta 
+    max_len = maximum(length(v) for (_, v) in bt_entries)
+    df      = DataFrame(Iter = 1:max_len)
+    # Add one column per δ
+    for (δ, vec) in bt_entries
+        δ = round(δ, digits=3)
+        col_name = Symbol("delta$(δ)")                
+        padded   = vcat(vec, fill(missing, max_len - length(vec)))
+        df[!, col_name] = padded
+    end
+    CSV.write(out_path, df; delim=",", writeheader=true)
 end
 ```
 
-Lastly, we showcase the rate of decay of the function values for $n = 2$.
+
+And now we run the different experiments
+```{julia}
+for radius in radii
+    Random.seed!(1520)
+    start, q_bar, qs = generate_data(S, radius; N = N)
+    h = get_h(q_bar, τ)
+    g = get_g(qs)
+    f = (S, p) -> g(S, p) + h(S, p)
+    grad_g = get_grad_g(qs)
+    prox = get_prox(q_bar, τ)
+    # constant stepsize 
+    λ_const, δ_opt = get_const_stepsize(radius, τ)
+    rec_const = proximal_gradient_method(S, f, g, grad_g, start;
+                                prox_nonsmooth =prox, 
+                                stepsize = ConstantLength(λ_const),
+                                record=[:Iteration, :Iterate],
+                                return_state=true,
+                                stopping_criterion =    StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+    )
+    iters_const = get_record(rec_const, :Iteration, :Iterate)
+    prepend!(iters_const, [start])    
+    obj_const = [f(S, it) for it in iters_const]
+    err_const = [obj_const[i] - obj_const[end] for i in 1:length(obj_const)-1]
+    # normalise by the first error
+    err_const ./= err_const[1]
+
+    results[(radius, :CONST, δ_opt)] = err_const
+
+    # backtracking
+    δs_bt = [round(δ_opt, digits=2)-0.01, round(δ_opt, digits=2), round(δ_opt, digits=2)+0.2]
+
+    for δ_bt in δs_bt
+        λ_init = get_initial_stepsize(radius, τ, δ_bt)
+        rec_bt = proximal_gradient_method(S, f, g, grad_g, start;
+                                    prox_nonsmooth =prox, 
+                                    stepsize = ProximalGradientMethodBacktracking(;
+                                        strategy=:convex,
+                                        initial_stepsize=λ_init,
+                                        stop_when_stepsize_less = min_stepsize_bt,
+                                        contraction_factor=contraction_factor,
+                                        warm_start_factor=warm_start_factor,
+                                        δ=δ_bt,
+                                        k_max=1.0,
+                                    ),
+                                    record=[:Iteration, :Iterate],
+                                    return_state=true,
+                                    stopping_criterion =    StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+        )
+        iters_bt = get_record(rec_bt, :Iteration, :Iterate)
+        prepend!(iters_bt, [start])
+        obj_bt = [f(S, it) for it in iters_bt]
+        err_bt = [obj_bt[i] - obj_bt[end] for i in 1:length(obj_bt)-1]
+        err_bt ./= err_bt[1]
+        results[(radius, :BT, δ_bt)] = err_bt
+    end 
+end 
+```
+```{julia}
+#| output: false
+#| echo: false
+#| code-fold: true
+write_csv(radii[1], :BT, joinpath(results_folder, experiment_name * "results-02pi-radius-bt.csv"))
+write_csv(radii[2], :BT, joinpath(results_folder, experiment_name * "results-0125pi-radius-bt.csv"))
+
+write_csv(radii[1], :CONST, joinpath(results_folder, experiment_name * "results-02pi-radius-const.csv"))
+write_csv(radii[2], :CONST, joinpath(results_folder, experiment_name * "results-0125pi-radius-const.csv"))
+```
+
+Lastly, we plot the rate of decay of the function values for these experiments
+<!-- TODO finish plotting -->
 ```{julia}
 #| output: false
 function plot_convergence(
