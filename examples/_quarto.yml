@@ -16,6 +16,7 @@ project:
     - "!H2-Signal-TV.qmd"
     - "!CRPG-Convex-SPD.qmd"
     - "!CRPG-Sparse-Approximation.qmd"
+    # - "!CRPG-Sphere-Example.qmd"
     - "!CRPG-Constrained-Mean-Hn.qmd"
     - "!NCRPG-Grassmann.qmd"
     - "!NCRPG-Sparse-PCA.qmd"

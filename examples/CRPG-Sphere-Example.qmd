@@ -1,6 +1,6 @@
 ---
 title: "A Geodesically Convex Example on the Sphere"
-author: "Paula John, Hajg Jasa"
+author: "Paula John"
 date: 06/15/2026
 ---
 
@@ -75,10 +75,10 @@ random_seed = 42
 dims = [100, 500, 1000, 5000]
 num_tests = 10
 
-N   = 1000 # Number of points
-τ   = 0.1  # weight parameter
-max_it          = 1000
-stop            = 1e-5
+N = 1000 # Number of points
+τ = 0.1  # weight parameter
+max_it = 1000
+stop = 1e-5
 min_stepsize_bt = 1e-8
 
 contraction_factor = 0.5
@@ -121,7 +121,7 @@ function generate_data(S, radius; N=1000)
     anchor = rand(S)
     start = generate_point(S, anchor, radius)
     q_bar = generate_point(S, anchor, radius)
-    qs    = [generate_point(S, anchor, radius) for i in 1:N]
+    qs = [generate_point(S, anchor, radius) for i in 1:N]
     return start, q_bar, qs
 end 
 ```
@@ -138,7 +138,7 @@ function get_const_stepsize(radius, τ)
     # ||grad_g(p)|| ≤ αg ∀p ∈ B(anchor, radius)
     αg = 2 * radius 
     Lg = 1.0
-    #calc opt δ for constant stepsize
+    # Compute optimal δ for constant stepsize
     δ_grid = 0.0:0.001:0.4
     vals = [min(get_λ_δ(α1, α2, αg, δ),get_ζ_δ(δ)/Lg) for δ in 0.0:0.001:0.4]
     λ_const, max_idx = findmax(vals)
@@ -151,7 +151,7 @@ function get_initial_stepsize(radius, τ, δ = 1e-8)
     α2 = τ * 2 * radius
     # ||grad_g(p)|| ≤ αg ∀p ∈ B(anchor, radius)
     αg = 2 * radius 
-    #calc s for backtracking: we need s < λ_δ
+    # Compute s for backtracking: we need s < λ_δ
     s = get_λ_δ(α1, α2, αg, δ)
     return s 
 end 
@@ -217,55 +217,15 @@ Before running the experiments, we initialize data collection functions that we 
 ```{julia}
 #| output: false
 # Header for the dataframe
-list = [ 
+column_names = [ 
   "Dim"        => Int64[],
   "Stepsize"   => Float64[],
   "Time"       => Float64[],
   "Iterations" => Int64[], 
   "Objective"  => Float64[]
 ]
-
-df_const = DataFrame(list, makeunique=true) 
-df_bt    = DataFrame(list, makeunique=true)
-
-
-global col_names_1 = [
-    :Dimension,
-    :Iterations_1,
-    :Time_1,
-    :Cost_1,
-    :Iterations_2,
-    :Time_2,
-    :Cost_2,
-]
-col_types_1 = [
-    Int64,
-    Int64,
-    Float64,
-    Float64,
-    Int64,
-    Float64,
-    Float64,
-]
-named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
-# Function for initializing the dataframe
-function initialize_dataframes(
-    results_folder,
-    experiment_name,
-    named_tuple_1,
-)
-    A1 = DataFrame(named_tuple_1)
-    CSV.write(
-        joinpath(
-            results_folder,
-            experiment_name *
-            "-Comparisons.csv",
-        ),
-        A1;
-        header=false,
-    )
-    return A1
-end
+df_const = DataFrame(column_names, makeunique=true) 
+df_bt = DataFrame(column_names, makeunique=true)
 ```
 
 ```{julia}
@@ -306,19 +266,19 @@ end
 ```{julia}
 #| output: false
 for dim in dims 
-    S = Sphere(dim)
+    S = Manifolds.Sphere(dim)
     time_bt = 0.0
     time_const = 0.0
 
     iterations_bt = 0
     iterations_const = 0
-    
+
     objective_bt = 0.0
     objective_const = 0.0
 
-    
     for i in 1:num_tests
-        Random.seed!(1520+i)
+        Random.seed!(1520 + i)
+
         start, q_bar, qs = generate_data(S, radius)
 
         g = get_g(qs)
@@ -327,52 +287,52 @@ for dim in dims
         grad_g = get_grad_g(qs)
         prox = get_prox(q_bar, τ)
         rec_const = proximal_gradient_method(S, f, g, grad_g, start;
-                            prox_nonsmooth =prox, 
-                            stepsize = ConstantLength(λ_const),
-                            record=[:Iteration, :Iterate],
-                            return_state=true,
-                            stopping_criterion = StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+            prox_nonsmooth=prox, 
+            stepsize=ConstantLength(λ_const),
+            record=[:Iteration, :Iterate],
+            return_state=true,
+            stopping_criterion=StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
         )
         bm_const = @benchmark proximal_gradient_method($S, $f, $g, $grad_g, $start;
-                            prox_nonsmooth = $prox, 
-                            stepsize = ConstantLength($λ_const),
-                            stopping_criterion = StopAfterIteration($max_it)| StopWhenGradientMappingNormLess($stop)
+            prox_nonsmooth=$prox, 
+            stepsize=ConstantLength($λ_const),
+            stopping_criterion=StopAfterIteration($max_it)| StopWhenGradientMappingNormLess($stop)
         )
         rec_CRPG_bt = proximal_gradient_method(S, f, g, grad_g, start;
-                            prox_nonsmooth =prox, 
-                            stepsize = ProximalGradientMethodBacktracking(; 
-                                                        strategy=:convex, 
-                                                        initial_stepsize=λ_init, 
-                                                        stop_when_stepsize_less = min_stepsize_bt,
-                                                        δ=δ_bt,
-                                                        contraction_factor=contraction_factor,
-                                                        warm_start_factor=warm_start_factor,
-                                                        k_max=1.0,),
-                            record=[:Iteration, :Iterate],
-                            return_state=true,
-                            stopping_criterion =    StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+            prox_nonsmooth=prox, 
+            stepsize=ProximalGradientMethodBacktracking(; 
+                strategy=:convex, 
+                initial_stepsize=λ_init, 
+                stop_when_stepsize_less=min_stepsize_bt,
+                δ=δ_bt,
+                contraction_factor=contraction_factor,
+                warm_start_factor=warm_start_factor,
+                k_max=1.0,
+            ),
+            record=[:Iteration, :Iterate],
+            return_state=true,
+            stopping_criterion=StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
         )
         bm_bt = @benchmark proximal_gradient_method($S, $f, $g, $grad_g, $start;
-                            prox_nonsmooth = $prox, 
-                            stepsize = ProximalGradientMethodBacktracking(;
-                                strategy=:convex,
-                                initial_stepsize=$λ_init,
-                                stop_when_stepsize_less = $min_stepsize_bt,
-                                δ=$δ_bt,
-                                contraction_factor=$contraction_factor,
-                                warm_start_factor=$warm_start_factor,
-                                k_max=$1.0,
-                            ),
-                            stopping_criterion = StopAfterIteration($max_it)| StopWhenGradientMappingNormLess($stop)
+            prox_nonsmooth=$prox, 
+            stepsize=ProximalGradientMethodBacktracking(;
+                strategy=:convex,
+                initial_stepsize=$λ_init,
+                stop_when_stepsize_less=$min_stepsize_bt,
+                δ=$δ_bt,
+                contraction_factor=$contraction_factor,
+                warm_start_factor=$warm_start_factor,
+                k_max=$(1.0),
+            ),
+            stopping_criterion=StopAfterIteration($max_it)| StopWhenGradientMappingNormLess($stop)
         )
 
         it_const, res_const = get_record(rec_const)[end]
-        it_bt, res_bt       = get_record(rec_CRPG_bt)[end]
+        it_bt, res_bt = get_record(rec_CRPG_bt)[end]
 
         t_const = median(bm_const).time/1e9
         t_bt    = median(bm_bt).time/1e9
         
-        println("dim: ", dim, " bt: ", t_bt, " const: ", t_const, " it_bt: ", it_bt, " it_const: ", it_const)
         objective_bt += f(S, res_bt)
         objective_const += f(S, res_const)
         time_bt += t_bt
@@ -381,25 +341,29 @@ for dim in dims
         iterations_const += it_const
     end 
 
-    push!(df_const, [dim, λ_const, time_const/num_tests, iterations_const/num_tests, objective_const/num_tests])
-    push!(df_bt, [dim, λ_init, time_bt/num_tests, iterations_bt/num_tests, objective_bt/num_tests])
+    push!(df_const, [
+      dim, λ_const, time_const/num_tests, iterations_const/num_tests, objective_const/num_tests
+    ])
+    push!(df_bt, [
+      dim, λ_init, time_bt/num_tests, iterations_bt/num_tests, objective_bt/num_tests
+    ])
 end 
 ```
-# TODO print correct table 
+
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 The first table showcases the algorithm run with a constant stepsize...
 ```{julia}
 # | echo: false
 # | code-fold: true
 # | output: asis
-benchmarking && pretty_table(df_const; backend = :markdown, column_labels = list)
+benchmarking && pretty_table(df_const; backend = :markdown, column_labels = column_names)
 ```
 ... while the second table showcases the algorithm run with a backtracked stepsize
 ```{julia}
 # | echo: false
 # | code-fold: true
 # | output: asis
-benchmarking && pretty_table(df_bt; backend = :markdown, column_labels = list)
+benchmarking && pretty_table(df_bt; backend = :markdown, column_labels = column_names)
 ```
 ```{julia}
 #| output: false
@@ -428,31 +392,35 @@ radii = [pi/5, pi/8]
 #   algorithm = :CONST for constant stepsize
 #               :BT    for back‑tracking
 #   δ is `missing` for the constant‑stepsize runs
-results = Dict{Tuple{Float64, Symbol, Union{Missing, Float64}}, Vector{Float64}}()
+global results = Dict{Tuple{Float64, Symbol, Union{Missing, Float64}}, Vector{Float64}}()
 ```
+
 As well as a function to save the generated data
 ```{julia}
-function write_csv(radius::Float64, algo::Symbol, out_path::String)
-    # 5.1  Filter the dictionary for the wanted radius & algorithm = :BT
+function export_dataframe(radius::Float64, algo::Symbol)
+    # 5.1 Filter the dictionary for the wanted radius & algorithm = :BT
     bt_entries = [(δ, vec) for ((r, alg, δ), vec) in results
                   if r == radius && alg == algo]
     sort!(bt_entries, by = x -> x[1]) # sort by delta 
     max_len = maximum(length(v) for (_, v) in bt_entries)
-    df      = DataFrame(Iter = 1:max_len)
+    df = DataFrame(Iter = 1:max_len)
     # Add one column per δ
     for (δ, vec) in bt_entries
         δ = round(δ, digits=3)
         col_name = Symbol("delta$(δ)")                
-        padded   = vcat(vec, fill(missing, max_len - length(vec)))
+        padded = vcat(vec, fill(missing, max_len - length(vec)))
         df[!, col_name] = padded
     end
+    return df
+end
+function write_csv(df, out_path::String)
     CSV.write(out_path, df; delim=",", writeheader=true)
 end
 ```
 
-
 And now we run the different experiments
 ```{julia}
+S = Manifolds.Sphere(500)
 for radius in radii
     Random.seed!(1520)
     start, q_bar, qs = generate_data(S, radius; N = N)
@@ -464,180 +432,171 @@ for radius in radii
     # constant stepsize 
     λ_const, δ_opt = get_const_stepsize(radius, τ)
     rec_const = proximal_gradient_method(S, f, g, grad_g, start;
-                                prox_nonsmooth =prox, 
-                                stepsize = ConstantLength(λ_const),
-                                record=[:Iteration, :Iterate],
-                                return_state=true,
-                                stopping_criterion =    StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+        prox_nonsmooth=prox, 
+        stepsize=ConstantLength(λ_const),
+        record=[:Iteration, :Iterate],
+        return_state=true,
+        stopping_criterion=StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
     )
     iters_const = get_record(rec_const, :Iteration, :Iterate)
     prepend!(iters_const, [start])    
     obj_const = [f(S, it) for it in iters_const]
     err_const = [obj_const[i] - obj_const[end] for i in 1:length(obj_const)-1]
-    # normalise by the first error
+    # Normalise by the first error
     err_const ./= err_const[1]
 
     results[(radius, :CONST, δ_opt)] = err_const
 
-    # backtracking
-    δs_bt = [round(δ_opt, digits=2)-0.01, round(δ_opt, digits=2), round(δ_opt, digits=2)+0.2]
+    # Backtracking
+    δs_bt = [round(δ_opt, digits=2) - 0.01, round(δ_opt, digits=2), round(δ_opt, digits=2) + 0.2]
 
     for δ_bt in δs_bt
         λ_init = get_initial_stepsize(radius, τ, δ_bt)
         rec_bt = proximal_gradient_method(S, f, g, grad_g, start;
-                                    prox_nonsmooth =prox, 
-                                    stepsize = ProximalGradientMethodBacktracking(;
-                                        strategy=:convex,
-                                        initial_stepsize=λ_init,
-                                        stop_when_stepsize_less = min_stepsize_bt,
-                                        contraction_factor=contraction_factor,
-                                        warm_start_factor=warm_start_factor,
-                                        δ=δ_bt,
-                                        k_max=1.0,
-                                    ),
-                                    record=[:Iteration, :Iterate],
-                                    return_state=true,
-                                    stopping_criterion =    StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+            prox_nonsmooth=prox, 
+            stepsize=ProximalGradientMethodBacktracking(;
+                strategy=:convex,
+                initial_stepsize=λ_init,
+                stop_when_stepsize_less=min_stepsize_bt,
+                contraction_factor=contraction_factor,
+                warm_start_factor=warm_start_factor,
+                δ=δ_bt,
+                k_max=1.0,
+            ),
+            record=[:Iteration, :Iterate],
+            return_state=true,
+            stopping_criterion=StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
         )
         iters_bt = get_record(rec_bt, :Iteration, :Iterate)
         prepend!(iters_bt, [start])
         obj_bt = [f(S, it) for it in iters_bt]
-        err_bt = [obj_bt[i] - obj_bt[end] for i in 1:length(obj_bt)-1]
+        err_bt = [obj_bt[i] - obj_bt[end] for i in 1:length(obj_bt) - 1]
         err_bt ./= err_bt[1]
         results[(radius, :BT, δ_bt)] = err_bt
     end 
 end 
 ```
+
+We now save the results of the experiments
+```{julia}
+df_02_bt = export_dataframe(radii[1], :BT)
+df_0125_bt = export_dataframe(radii[2], :BT)
+df_02_const = export_dataframe(radii[1], :CONST)
+df_0125_const = export_dataframe(radii[2], :CONST)
+```
+
 ```{julia}
 #| output: false
 #| echo: false
 #| code-fold: true
-write_csv(radii[1], :BT, joinpath(results_folder, experiment_name * "results-02pi-radius-bt.csv"))
-write_csv(radii[2], :BT, joinpath(results_folder, experiment_name * "results-0125pi-radius-bt.csv"))
-
-write_csv(radii[1], :CONST, joinpath(results_folder, experiment_name * "results-02pi-radius-const.csv"))
-write_csv(radii[2], :CONST, joinpath(results_folder, experiment_name * "results-0125pi-radius-const.csv"))
+write_csv(df_02_const, joinpath(results_folder, experiment_name, "results-02pi-radius-const"))
+write_csv(df_02_bt, joinpath(results_folder, experiment_name, "results-02pi-radius-bt.csv"))
+write_csv(df_0125_bt, joinpath(results_folder, experiment_name, "results-0125pi-radius-bt.csv"))
+write_csv(df_0125_const, joinpath(results_folder, experiment_name, "results-0125pi-radius-const"))
 ```
 
 Lastly, we plot the rate of decay of the function values for these experiments
-<!-- TODO finish plotting -->
 ```{julia}
 #| output: false
-function plot_convergence(
-    stats,
-    dimensions=[2],
+function plot_sphere_results(
+    df_02_const, df_02_bt,
+    df_0125_const, df_0125_bt,
 )
-    # Extract the results for the specified dimensions
-    crpg_cn = [stats[:CRPG_CN][d] for d in dimensions]
-    crpg_bt = [stats[:CRPG_BT][d] for d in dimensions]
+    tol_blue  = colorant"#4477AA"
+    tol_green = colorant"#228833"
+    tol_cyan  = colorant"#66CCEE"
+    tol_red   = colorant"#EE6677"
 
-    figs = Vector{Figure}()
+    ref_rates  = (0.9,   0.7,   0.5)
+    ref_alphas = (0.5f0, 0.7f0, 0.9f0)
+    bt_markers = (:utriangle, :dtriangle, :circle)
+    bt_lws     = (1.0, 0.6, 1.0)
 
-    for i in 1:length(crpg_cn)
+    configs = [
+        (
+            df_const  = df_02_const,
+            df_bt     = df_02_bt,
+            c_delta   = "delta0.113",
+            bt_deltas = ("delta0.1",  "delta0.11", "delta0.31"),
+            thm_rate  = 0.987,
+            thm_xend  = 150,
+            ref_xends = (150, 60, 30),
+            subtitle  = L"\bar{q}, q_i \in \mathcal{B}(q_0, r),\; r = \pi/5",
+        ),
+        (
+            df_const  = df_0125_const,
+            df_bt     = df_0125_bt,
+            c_delta   = "delta0.184",
+            bt_deltas = ("delta0.17", "delta0.18", "delta0.38"),
+            thm_rate  = 0.963,
+            thm_xend  = 100,
+            ref_xends = (100, 60, 30),
+            subtitle  = L"\bar{q}, q_i \in \mathcal{B}(q_0, r),\; r = \pi/8",
+        ),
+    ]
 
-        # Get the solvers' results and records
-        # crpg_cn_result = crpg_cn[i][:Result]
-        crpg_cn_record = crpg_cn[i][:Cost]
+    fig = Figure(size = (900, 420))
 
-        # crpg_bt_result = crpg_bt[i][:Result]
-        crpg_bt_record = crpg_bt[i][:Cost]
-
-
-        # Calculate the minimum cost for relative error
-        min_cost_crpg_cn = minimum(crpg_cn_record)
-        min_cost_crpg_bt = minimum(crpg_bt_record)
-
-        # Create vectors for plotting
-        iterations_crpg_cn = 1:crpg_cn[i][:Iteration]
-        iterations_crpg_bt = 1:crpg_bt[i][:Iteration]
-
-        # Get initial error for scaling reference lines
-        relative_errors_crpg_cn = max.(crpg_cn_record .- min_cost_crpg_cn, 0)
-        initial_error_crpg_cn = relative_errors_crpg_cn[1]
-
-        relative_errors_crpg_bt = max.(crpg_bt_record .- min_cost_crpg_bt, 0)
-        initial_error_crpg_bt = relative_errors_crpg_bt[1]
-
-        initial_error = max(
-            initial_error_crpg_cn,
-            initial_error_crpg_bt,
-        )
-
-        iterations = max(
-            iterations_crpg_cn,
-            iterations_crpg_bt,
-        )
-
-        # Create reference trajectories
-        # O(1/k)
-        ref_rate_1 = [initial_error/k for k in iterations]
-        # O(1/2^k)
-        ref_rate_2k = [initial_error/2^k for k in iterations]
-
-        # Create the convergence plot
-        fig = Figure()
-        ax = Axis(fig[1, 1],
-            title =L"\mathcal{P}(%$(dimensions[i]))",
-            xlabel =L"\text{Iterations }(k)",
-            ylabel =L"f(p_k) - f_*",
-            # xscale=log10,
-            yscale=log10,
+    for (col, cfg) in enumerate(configs)
+        ax = Axis(fig[1, col];
+            title  = cfg.subtitle,
+            xlabel = "iterations",
+            ylabel = col == 1 ? "function value error" : "",
+            yscale = log10,
             yminorticksvisible = true,
-            yminorgridvisible = true,
-            yminorticks = IntervalsBetween(8),
+            yminorgridvisible  = true,
+            yminorticks        = IntervalsBetween(8),
         )
-        lines!(
-            ax,
-            iterations_crpg_cn,
-            abs.(relative_errors_crpg_cn);
-            label="CRPG, constant step",
-            linewidth=2,
-            color=tol_vibrant[1],
-        )
-        lines!(
-            ax,
-            iterations_crpg_bt,
-            abs.(relative_errors_crpg_bt);
-            label="CRPG, backtracked step",
-            linewidth=2,
-            color=tol_vibrant[5],
-        )
-        lines!(
-            ax,
-            iterations,
-            abs.(ref_rate_1);
-            linestyle=:dash,
-            linewidth=1.5,
-            color=:blue,
-            label=L"\mathcal O\left(k^{-1}\right)"
-        )
-        lines!(
-            ax,
-            iterations,
-            abs.(ref_rate_2k);
-            linestyle=:dot,
-            linewidth=1.5,
-            color=:black,
-            label=L"\mathcal O\left(2^{-k}\right)"
-        )
-        fig[1, 2] = Legend(fig, ax, framevisible = true)
-        fig
 
-        push!(figs, fig)
+        iters_c = cfg.df_const[!, "Iter"]
+        δ_c = split(cfg.c_delta, "delta")[2]
+
+        scatterlines!(ax, iters_c, cfg.df_const[!, cfg.c_delta];
+            color = tol_blue, linewidth = 1.0,
+            marker = :star4, markersize = 6,
+            label  = L"\text{Constant},\;\delta\!=\!$(δ_c)",
+        )
+        lines!(ax, 1:cfg.thm_xend, cfg.thm_rate .^ (1:cfg.thm_xend);
+            color = tol_green, linewidth = 1.0, linestyle = :dash,
+            label = L"\mathcal{O}($(cfg.thm_rate)^k)\;\text{(Thm.)}",
+        )
+
+        iters_bt = cfg.df_bt[!, "Iter"]
+        for (delta, mk, rr, x_end, alpha, lw) in zip(
+            cfg.bt_deltas, bt_markers, ref_rates, cfg.ref_xends, ref_alphas, bt_lws
+        )
+            δ_v = split(delta, "delta")[2]
+            scatterlines!(ax, iters_bt, cfg.df_bt[!, delta];
+                color = tol_cyan, linewidth = lw,
+                marker = mk, markersize = 6,
+                label  = L"\text{Backtracked},\;\delta\!=\!$(δ_v)",
+            )
+            lines!(ax, 1:x_end, rr .^ (1:x_end);
+                color = (tol_red, alpha), linewidth = 1.0, linestyle = :dash,
+                label = L"\mathcal{O}($(rr)^k)",
+            )
+        end
+
+        axislegend(ax;
+            position     = :ct,
+            nbanks       = 2,
+            framevisible = false,
+            labelsize    = 8,
+            rowgap       = -3,
+        )
     end
-    return figs
+
+    return fig
 end
-figs = plot_convergence(stats)
+fig = plot_sphere_results(df_02_const, df_02_bt, df_0125_const, df_0125_bt)
 ```
 
 ```{julia}
 #| code-fold: true
-for fig in figs
-    display(fig)
-end
+display(fig)
 ```
 
-This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.7.
+This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.10.
 
 ## Technical details
 
@@ -666,3 +625,10 @@ Pages = ["CRPG-Convex-SPD.md"]
 Canonical=false
 ```
 ````
+
+Dear Russell Luke,
+
+Please find attached a detailed response to the reviewer's comments, as well as a revised version of our manuscript which incorporates the changes described in the response.
+
+We would Thank you for your and best regards,
+Hajg Jasa
