@@ -1,0 +1,391 @@
+---
+title: "Robust Geodesic Regression"
+author: "Ronny Bergmann"
+date: 2026-07-04
+---
+
+```{julia}
+#| echo: false
+#| output: false
+using Pkg;
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+#
+# And the parameters to run this experiment with
+##
+export_asy = false
+if export_asy
+  using ManifoldAsymptote
+end
+## prefix for the files exported
+name = "S2-Robust-Regression"
+```
+
+## Prequel
+
+This notebook reproduces the results and images of Section 6.1 in [BaranBergmann:2026](@cite). We use the following packages and parameters
+
+```{julia}
+#| code-fold: true
+#| output: false
+using Colors, Distributions, GeometryBasics, GLMakie, Makie, ManifoldDiff, Manifolds, Manopt, NamedColors, Random, RecursiveArrayTools
+## Set the interval we sample the points from on the geodesic
+T = 1.0
+## Number of points along the geodesic on [-T,T]
+N = 100
+## Outlier parameters
+### Distance the outliers are moved
+r = π / 4
+### Number of outliers per each segment
+oN = 7
+## And set these slightly asymmetric
+outlier_indices = [4:(4 + oN - 1)..., [(N - 11):-1:(N - 11 - oN + 1)...]...];
+## Plotting colors
+ptc = NamedColors.load_paul_tol()
+orig_color = ptc["mutedcyan"]
+noisy_color = ptc["mutedpurple"]
+lsq_color = ptc["mutedsand"]
+robust_color = ptc["mutedgreen"]
+```
+
+## Introduction
+
+For robust geodesic regression on a Riemannian manifolds $\mathcal M$ consider $m \in \mathbb N$ points $q_1,\ldots,q_m \in \mathcal M$
+thereon associated to scalar values $t_1,\ldots,t_m \in \mathbb R$.
+We further denote the geodesic starting in a point $p \in \mathcal M$ in direction $X \in T_p\mathcal M$ by
+\begin{equation*}
+    \gamma_{p,X}(t) := \exp_p(tX).
+\end{equation*}
+The task of geodesic regression is given as the problem on the tangent bundle $T\mathcal M$ to find the geodesic $\gamma_{p,X}$, i.e. both $p$ and $X$, that “best fits” the data with $\gamma_{p,X}(t_i) \approx q_i$, $i=1,\ldots,m$, where we still have the freedom to choose in what sense we mean to address the approximately equal condition.
+We consider
+```math
+\operatorname*{argmin}_{(p,X) \in T\mathcal M} \sum_{i=1}^m \rho\bigl( d_{\mathcal M}^2( \gamma_{p,X}(t_i), q_i) \bigr),
+```
+where $\rho$ is a ``[robustifier](@extref Manopt :std:label:`Robustifiers`)``{=commonmark} applied to every summand.
+Choosing $\rho(x) = x$ we get the classical (least squares) geodesic regression [Fletcher:2013](@cite). Here we want to consider approximations of the case where $\rho(x) = \sqrt{x}$, where the sum reduces to the sum of distances or the robust geodesic regression. Since that is no longer differentiable, we use ``[a scaled version](@extref `Manopt.ScaledRobustifierFunction`)``{=commonmark} of the ``[Huber robustifier](@extref `Manopt.HuberRobustifier`)``{=commonmark}.
+
+## Setup
+
+We first setup the manifold, the true point, tangent vector, and data
+
+```{julia}
+#| output: false
+S = Manifolds.Sphere(2)
+M = TangentBundle(S)
+```
+
+and the original data as
+
+```{julia}
+#| output: false
+p_true = [0.0, 1.0, 0.0]
+X_true = π / 2 .* [1.0, 0.0, 1.0]
+ts_true = collect(range(; start = -T, stop = T, length = N))
+qs_true = geodesic(S, p_true, X_true, ts_true)
+geo_line = geodesic(S, p_true, X_true, range(-T, T; length = 1000))
+```
+
+which looks like
+
+```{julia}
+#| echo: false
+n = 30; u = range(0, stop = 2 * π, length = n); v = range(0, stop = π, length = n)
+sx = [cos(ui) * sin(vj) for ui in u, vj in v]
+sy = [sin(ui) * sin(vj) for ui in u, vj in v]
+sz = [cos(vj) for ui in u, vj in v]
+
+fig1 = Figure(size = (1400, 900), padding = 0)
+ax1 = Axis3(fig1[1, 1]; aspect = :data, azimuth = 1*π/4, elevation = 0)
+hidedecorations!(ax1)
+hidespines!(ax1)
+mesh!(
+  ax1, GeometryBasics.uv_normal_mesh(Tessellation(Makie.Sphere(Point3f(0), 1.0f0), n));
+  color = :white, alpha = 0.33, transparency = true,
+)
+wireframe!(
+  ax1, sx, sy, sz, color = ptc["paleblue"]; transparency = true, alpha = 0.5
+)
+scatterlines!(
+  ax1, Point3d.(geo_line); markersize = 0, color = orig_color, linewidth = 2,
+)
+scatter!(ax1, Point3d.([p_true]); markersize = 12, color = orig_color)
+scatter!(ax1, Point3d.(qs_true); markersize = 8, color = orig_color)
+arrows3d!(
+  ax1, Point3d.([p_true]), Point3d.([X_true]);
+  color = orig_color, transparency = true, shaftradius = 0.0025, tiplength = 0.075, tipradius = 0.0125,
+)
+fig1
+```
+
+We then generate outliers
+
+```{julia}
+#| output: false
+Random.seed!(42)
+R(α) = [cos(α) -sin(α); sin(α) cos(α)]
+data = [
+  if i ∈ outlier_indices
+    # all are outliers to the left or right
+    α = π / 2
+    c = get_coordinates(S, q, parallel_transport_to(S, p_true, X_true, q), DefaultOrthonormalBasis())
+    X_offset = get_vector(S, q, r / norm(c) .* R(α) * c, DefaultOrthonormalBasis())
+    exp(S, q, X_offset)
+  else
+    q
+  end
+  for (i, q) in enumerate(qs_true)
+]
+```
+
+```{julia}
+#| echo: false
+scatter!(ax1, Point3d.(data); markersize = 12, color = noisy_color)
+fig1
+```
+
+## The Residual and its Jacobian
+
+We first define the overall least squares cost
+as well as its partial gradients w. r. t. `p` and `X` for a single summand
+
+```{julia}
+#| output: false
+function cost1(M::AbstractManifold, p, X, ti::Real, di)
+    return 1 / 2 * distance(M, exp(M, p, ti * X), di)^2
+end
+function cost1_grad_p(M::AbstractManifold, p, X, ti::Real, di)
+    z = exp(M, p, ti * X)
+    gz = ManifoldDiff.grad_distance(M, di, z, 1)
+    return ManifoldDiff.adjoint_differential_exp_basepoint(M, p, ti * X, gz)
+end
+function cost1_grad_X(M::AbstractManifold, p, X, ti::Real, di)
+    z = exp(M, p, ti * X)
+    gz = ManifoldDiff.grad_distance(M, di, z, 1)
+    return ti * ManifoldDiff.adjoint_differential_exp_argument(M, p, ti * X, gz)
+end
+```
+
+This is then used to define the overall residual `F` and its Jacobian `JF`.
+
+```{julia}
+#| output: false
+function F(M, P; t = ts_true, d = data)
+    # Extract manifold and (p,X)
+    S = base_manifold(M); p = P[M, :point]; X = P[M, :vector]
+    return [distance(S, geodesic(S, p, X, ti), di) for (ti, di) in zip(t, d)]
+end
+function JF(M, P; t = ts_true, d = data)
+  # Extract manifold and (p,X)
+  S = base_manifold(M); p = P[M, :point]; X = P[M, :vector]
+  return [
+    ArrayPartition(
+      cost1_grad_p(S, p, X, ti, di), cost1_grad_X(S, p, X, ti, di),
+    )
+    for (ti, di) in zip(t, d)
+  ]
+end
+```
+
+We combine these into a ``[`VectorGradientFunction`](@extref `Manopt.VectorGradientFunction`)``{=commonmark}
+
+```{julia}
+#| output: false
+f = VectorGradientFunction(
+    F, JF, N;
+    evaluation = AllocatingEvaluation(),
+    function_type = FunctionVectorialType(),
+    jacobian_type = FunctionVectorialType(),
+)
+```
+
+And we set a start point `p0`.
+
+```{julia}
+#| output: false
+m = mean(S, data)
+X0 = log(S, m, data[end])
+p0 = ArrayPartition(m, X0)
+```
+
+## Least Squares Geodesic Regression
+```{julia}
+#| output: false
+P_star = LevenbergMarquardt(
+    M, f, p0;
+    damping_increase_factor = 2.0, candidate_acceptance_threshold = 0.2, damping_term_min = 1.0e-5,
+    damping_increase_threshold = 0.2,
+    damping_reduction_threshold = 0.5,
+    scaling_threshold = 1.0e-1, scaling_mode = :Strict,
+    retraction_method = StabilizedRetraction(default_retraction_method(M)),
+    debug = [:Iteration, (:Cost, "f(x): %8.8e "), :damping_term, "\n",
+    10, :Stop],
+)
+```
+
+And we can extract the minimizer parts $P^* = (p^*,X^*)$ as
+```{julia}
+#| output: false
+p_star = P_star[M, :point]
+X_star = P_star[M, :vector]
+qs_star = geodesic(S, p_star, X_star, ts_true)
+geo_line_mean = geodesic(S, p_star, X_star, range(-T, T; length = 1000))
+```
+
+which yields the result
+
+```{julia}
+scatterlines!(
+  ax1, Point3d.(geo_line_mean); markersize = 0, color = lsq_color, linewidth = 2,
+)
+scatter!(ax1, Point3d.([p_star]); markersize = 12, color = lsq_color)
+scatter!(ax1, Point3d.(qs_star); markersize = 8, color = lsq_color)
+arrows3d!(
+  ax1, Point3d.([p_star]), Point3d.([X_star]);
+  color = lsq_color, transparency = true, shaftradius = 0.0025, tiplength = 0.075, tipradius = 0.0125,
+)
+fig1
+```
+
+## Robust Geodesic Regression
+
+```{julia}
+#| output: false
+P_ast = LevenbergMarquardt(
+  M, f, p0;
+  damping_increase_factor = 8.0, candidate_acceptance_threshold = 0.2, damping_term_min = 1.0e-5,
+  scaling_threshold = 1.0e-1, scaling_mode = :Strict,
+  damping_increase_threshold = 0.2,
+  damping_reduction_threshold = 0.5,
+  robustifier = 1.0e-4 ∘ HuberRobustifier(),
+  retraction_method = StabilizedRetraction(default_retraction_method(M)),
+  debug = [:Iteration, (:Cost, "f(x): %8.8e "), :damping_term, "\n", 10, :Stop],
+)
+```
+
+And we again extract the minimizer parts
+
+```{julia}
+p_ast = P_ast[M, :point]
+X_ast = P_ast[M, :vector]
+qs_ast = geodesic(S, p_ast, X_ast, ts_true)
+geo_line_robust = geodesic(S, p_ast, X_ast, range(-T, T; length = 1000))
+```
+
+to add them to the figure
+
+```{julia}
+scatterlines!(
+  ax1, Point3d.(geo_line_robust); markersize = 0, color = robust_color, linewidth = 2,
+)
+scatter!(ax1, Point3d.([p_ast]); markersize = 12, color = robust_color)
+scatter!(ax1, Point3d.(qs_ast); markersize = 8, color = robust_color)
+arrows3d!(
+  ax1, Point3d.([p_ast]), Point3d.([X_ast]);
+  color = robust_color, transparency = true, shaftradius = 0.0025, tiplength = 0.075, tipradius = 0.0125,
+)
+fig1
+```
+
+```{julia}
+#| echo: false
+#| output: false
+if export_asy
+    kwargs = (;
+        camera_position = (0.75, 0.5, 0.125),
+        arrow_head_size = 18.0,
+        dot_sizes = 4 .* [2.5, 2.5, 2.5, 2.5],
+        line_width = 4.0,
+        sphere_line_width = 2.0,
+        size = (1024, 1024),
+    )
+    tvec_scale = 0.5
+    asymptote_export_S2_signals(
+        name * "-orig.asy";
+        curves = [geo_line],
+        points = [data, qs_true],
+        tangent_vectors = [[(p_true, tvec_scale .* X_true)]],
+        colors = Dict(
+            :curves => Colors.RGBA{Float64}.([orig_color]),
+            :tvectors => Colors.RGBA{Float64}.([orig_color]),
+            :points => Colors.RGBA{Float64}.([noisy_color, orig_color]),
+        ),
+        kwargs...
+    )
+    render_asymptote(name * "-orig.asy"; render = 4)
+    asymptote_export_S2_signals(
+        name * ".asy";
+        curves = [geo_line, geo_line_mean, geo_line_robust],
+        points = [data, qs_star, qs_ast, qs_true],
+        tangent_vectors = [[(p_star, tvec_scale .* X_star)], [(p_ast, tvec_scale .* X_ast)], [(p_true, tvec_scale .* X_true)]],
+        colors = Dict(
+            :curves => Colors.RGBA{Float64}.([orig_color, lsq_color, robust_color]),
+            :tvectors => Colors.RGBA{Float64}.([lsq_color, robust_color, orig_color]),
+            :points => Colors.RGBA{Float64}.([noisy_color, lsq_color, robust_color, orig_color]),
+        ),
+        kwargs...
+    )
+    render_asymptote(name * ".asy"; render = 4)
+    asymptote_export_S2_signals(
+        name * "-lsq.asy";
+        curves = [geo_line, geo_line_mean],
+        points = [data, qs_star, qs_true],
+        tangent_vectors = [[(p_star, tvec_scale .* X_star)],[(p_true, tvec_scale .* X_true)]],
+        colors = Dict(
+            :curves => Colors.RGBA{Float64}.([orig_color, lsq_color]),
+            :tvectors => Colors.RGBA{Float64}.([lsq_color, orig_color]),
+            :points => Colors.RGBA{Float64}.([noisy_color, lsq_color, orig_color]),
+        ),
+        kwargs...
+    )
+    render_asymptote(name * "-lsq.asy"; render = 4)
+end
+```
+
+If we measure the (mean) error we get for least squares
+
+```{julia}
+1 / N * norm([distance(S, qi, qmi) for (qi, qmi) in zip(qs_true, qs_star)])
+```
+
+On the other hand for the robust case we get
+
+```{julia}
+1 / N * norm([distance(S, qi, qmi) for (qi, qmi) in zip(qs_true, qs_ast)])
+```
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["LM-Robust-Geodesic-Regression.md"]
+Canonical=false
+```
+````
+
+````{=commonmark}
+```@raw html
+<details>
+  <summary>Technical Details</summary>
+```
+````
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
+
+````{=commonmark}
+```@raw html
+</details>
+```
+````
