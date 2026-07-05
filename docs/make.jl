@@ -123,8 +123,8 @@ examples_menu =
     ],
     "Levenberg-Marquardt" => [
         "Robust Geodesic Regression " => "examples/LM-Robust-Geodesic-Regression.md",
-        raw"Robust Procrustes on $\mathrm{SO}(d)$" => "examples/LM-Robust-Procrustes-Rotations.md",
-        raw"Robust Procrustes on $\mathrm{St}(k,d}$" => "examples/LM-Robust-Procrustes-Stiefel.md",
+        "Robust Procrustes" => "examples/LM-Robust-Procrustes.md",
+        "Robust Subspace Procrustes" => "examples/LM-Robust-Subspace-Procrustes.md",
     ],
     "Projected Gradient Algorithm" => [
         raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",
