@@ -19,7 +19,7 @@ project:
     - "!CRPG-Constrained-Mean-Hn.qmd"
     - "!NCRPG-Grassmann.qmd"
     - "!NCRPG-Sparse-PCA.qmd"
-    - "!LM-Robust-Geodesic-Regression.md"
+    - "!LM-Robust-Geodesic-Regression.qmd"
     - "!LM-Robust-Procrustes.qmd"
     - "!LM-Robust-Subspace-Procrustes.qmd"
 
