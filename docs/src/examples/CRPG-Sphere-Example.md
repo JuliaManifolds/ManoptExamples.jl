@@ -1,36 +1,13 @@
----
-title: "A Geodesically Convex Example on the Sphere"
-author: "Paula John"
-date: 06/15/2026
----
+# A Geodesically Convex Example on the Sphere
+Paula John
+2026-06-15
 
 ## Introduction
 
 In this example we compare the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025:2](@cite) with both a constant and a backtracked step size strategy on the sphere.
 This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.2.
 
-```{julia}
-#| echo: false
-#| code-fold: true
-#| output: false
-using Pkg;
-cd(@__DIR__)
-Pkg.activate("."); # for reproducibility use the local tutorial environment.
-
-Pkg.develop(path="../") # a trick to work on the local dev version
-
-export_orig = true
-export_table = true
-export_result = true
-benchmarking = true
-
-experiment_name = "CRPG-Sphere-Example"
-results_folder = joinpath(@__DIR__, experiment_name)
-!isdir(results_folder) && mkdir(results_folder)
-```
-
-```{julia}
-#| output: false
+``` julia
 using PrettyTables
 using BenchmarkTools
 using CSV, DataFrames
@@ -46,16 +23,17 @@ Let $\mathcal M = \mathbb S^2$ be the $2$-dimensional hyperbolic space.
 
 Let $g \colon \mathcal M \to \mathbb R$ be defined by
 
-```math
+``` math
 g(p) = \frac{1}{2} \sum_{j = 1}^N w_j \, \mathrm{dist}(p, q_j)^2,
 ```
+
 where $w_j$, $j = 1, \ldots, N$ are positive weights such that $\sum_{j = 1}^N w_j = 1$, and $\{q_1,\ldots,q_N\} \in \mathcal M$ denote $N = 1000$ Gaussian random data points.
 
 Observe that the function $g$ is geodesically convex with respect to the Riemannian metric on $\mathcal M$ on balls of radius smaller than $\frac{\pi}{2}$.
 
 Let now $\bar q$ be a given point, and let $h \colon \mathcal M \to \mathbb R$ be defined by
 
-```math
+``` math
 h(p) = \tau \mathrm{dist}(p, \bar q),
 ```
 
@@ -64,12 +42,11 @@ We define our total objective function as $f = g + h$.
 Notice that this objective function is also geodesically convex with respect to the Riemannian metric on $\mathcal M$.
 The goal is to find the minimizer of $f$ on $\mathcal M$.
 
-
 ## Numerical Experiment
 
 We initialize the experiment parameters, as well as some utility functions.
-```{julia}
-#| output: false
+
+``` julia
 random_seed = 42
 
 dims = [100, 500, 1000, 5000]
@@ -87,9 +64,10 @@ warm_start_factor = 2.0
 # The smaller the diameter of our set, the larger we can choose λ 
 radius = pi/6
 ```
+
 First we define the objective and related quantities
-```{julia}
-#| output: false
+
+``` julia
 # Objective, gradient, and proxes
 _g(S, p, qs) = sum(distance(S, p, qk)^2 for qk in qs) / (2 * length(qs))
 get_g(qs) = (S, p) -> _g(S, p, qs)
@@ -109,8 +87,10 @@ end
 get_prox(q_bar, τ) = (S, λ, p) -> _prox(S, λ, p, q_bar, τ)
 #
 ```
-and then generate the problem data 
-```{julia}
+
+and then generate the problem data
+
+``` julia
 # Generate points and data
 function generate_point(S, anchor, radius)
     X = rand(S; vector_at = anchor)
@@ -122,10 +102,14 @@ function generate_data(S, radius; N=1000)
     q_bar = generate_point(S, anchor, radius)
     qs = [generate_point(S, anchor, radius) for i in 1:N]
     return start, q_bar, qs
-end 
+end
 ```
+
+    generate_data (generic function with 1 method)
+
 We now define some functions related to the stepsize selection
-```{julia}
+
+``` julia
 # Stepsize calculation
 get_λ_δ(α1, α2, αg, δ) = (sqrt(4*(α2 - α1)^2 + 1/(2 + δ)^2 * αg^2) - 2 * (α2 - α1)) / (2 * αg^2)
 get_ζ_δ(δ) = pi/(2 + δ) * cot(pi/(2 + δ))
@@ -153,18 +137,24 @@ function get_initial_stepsize(radius, τ, δ = 1e-8)
     # Compute s for backtracking: we need s < λ_δ
     s = get_λ_δ(α1, α2, αg, δ)
     return s 
-end 
+end
 ```
+
+    get_initial_stepsize (generic function with 2 methods)
+
 Since the stepsizes are independent of the dimension, we define them here, in conjunction with the parameter $\delta$ used for the backtracking
-```{julia}
+
+``` julia
 λ_const, δ = get_const_stepsize(radius, τ)
 δ_bt = 0.2
 λ_init = get_initial_stepsize(radius, τ, δ_bt)
 ```
 
+    0.1416160732896968
+
 Before running the experiments, we initialize data collection functions that we will use later
-```{julia}
-#| output: false
+
+``` julia
 # Header for the dataframe
 column_names = [ 
   "Dim"        => Int64[],
@@ -184,8 +174,7 @@ df_const = DataFrame(column_names, makeunique=true)
 df_bt = DataFrame(column_names, makeunique=true)
 ```
 
-```{julia}
-#| output: false
+``` julia
 function export_dataframes(
     M,
     records,
@@ -219,8 +208,7 @@ function write_dataframes(
 end
 ```
 
-```{julia}
-#| output: false
+``` julia
 for dim in dims 
     S = Manifolds.Sphere(dim)
     time_bt = 0.0
@@ -303,46 +291,34 @@ for dim in dims
     push!(df_bt, [
       dim, λ_init, time_bt/num_tests, iterations_bt/num_tests, objective_bt/num_tests
     ])
-end 
+end
 ```
 
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
-The first table showcases the algorithm run with a constant stepsize...
-```{julia}
-# | echo: false
-# | code-fold: true
-# | output: asis
-benchmarking && pretty_table(df_const; backend = :markdown, column_labels = column_labels)
-```
-... while the second table showcases the algorithm run with a backtracked stepsize
-```{julia}
-# | echo: false
-# | code-fold: true
-# | output: asis
-benchmarking && pretty_table(df_bt; backend = :markdown, column_labels = column_labels)
-```
-```{julia}
-#| output: false
-#| echo: false
-#| code-fold: true
-df_res = DataFrame(
-  "Dim"        => dims, 
-  "Iter_const" => df_const.Iterations,
-  "Time_const" => df_const.Time,
-  "Obj_const"  => df_const.Objective,
-  "Iter_bt"    => df_bt.Iterations,
-  "Time_bt"    => df_bt.Time,
-  "Obj_bt"     => df_bt.Objective
-)
+The first table showcases the algorithm run with a constant stepsize…
 
-CSV.write(joinpath(results_folder, experiment_name * "-results.csv"), df_res; delim=",", header=false)
-```
+| **Dimension** | **Stepsize** |  **Time** | **Iterations** | **Objective** |
+|--------------:|-------------:|----------:|---------------:|--------------:|
+|         100.0 |     0.147582 | 0.0218097 |           57.5 |     0.0775637 |
+|         500.0 |     0.147582 | 0.0991153 |           54.7 |     0.0632621 |
+|        1000.0 |     0.147582 |  0.188338 |           61.8 |     0.0754969 |
+|        5000.0 |     0.147582 |  0.525201 |           43.9 |     0.0618121 |
+
+… while the second table showcases the algorithm run with a backtracked stepsize
+
+| **Dimension** | **Stepsize** |  **Time** | **Iterations** | **Objective** |
+|--------------:|-------------:|----------:|---------------:|--------------:|
+|         100.0 |     0.141616 | 0.0302608 |           60.2 |     0.0775637 |
+|         500.0 |     0.141616 |  0.129029 |           57.0 |     0.0632621 |
+|        1000.0 |     0.141616 |   0.25233 |           64.7 |     0.0754969 |
+|        5000.0 |     0.141616 |  0.755547 |           45.8 |     0.0618121 |
 
 ## Test with different parameters
 
 We now test CRPG on the same problem, but with different radii and different values of $\delta$.
 We start by introducing these parameters
-```{julia}
+
+``` julia
 radii = [pi/5, pi/8]
 # (radius, algorithm, δ) → error vector
 #   algorithm = :CONST for constant stepsize
@@ -351,8 +327,11 @@ radii = [pi/5, pi/8]
 global results = Dict{Tuple{Float64, Symbol, Union{Missing, Float64}}, Vector{Float64}}()
 ```
 
+    Dict{Tuple{Float64, Symbol, Union{Missing, Float64}}, Vector{Float64}}()
+
 As well as a function to save the generated data
-```{julia}
+
+``` julia
 function export_dataframe(radius::Float64, algo::Symbol)
     # 5.1 Filter the dictionary for the wanted radius & algorithm = :BT
     bt_entries = [(δ, vec) for ((r, alg, δ), vec) in results
@@ -374,8 +353,11 @@ function write_csv(df, out_path::String)
 end
 ```
 
+    write_csv (generic function with 1 method)
+
 And now we run the different experiments
-```{julia}
+
+``` julia
 S = Manifolds.Sphere(500)
 for radius in radii
     Random.seed!(1520)
@@ -430,32 +412,14 @@ for radius in radii
         err_bt ./= err_bt[1]
         results[(radius, :BT, δ_bt)] = err_bt
     end 
-end 
+end
 ```
 
 We now save the results of the experiments
-```{julia}
-#| output: false
-#| echo: false
-df_02_bt = export_dataframe(radii[1], :BT)
-df_0125_bt = export_dataframe(radii[2], :BT)
-df_02_const = export_dataframe(radii[1], :CONST)
-df_0125_const = export_dataframe(radii[2], :CONST)
-```
-
-```{julia}
-#| output: false
-#| echo: false
-#| code-fold: true
-write_csv(df_02_const, joinpath(results_folder, "results-02pi-radius-const.csv"))
-write_csv(df_02_bt, joinpath(results_folder, "results-02pi-radius-bt.csv"))
-write_csv(df_0125_bt, joinpath(results_folder, "results-0125pi-radius-bt.csv"))
-write_csv(df_0125_const, joinpath(results_folder, "results-0125pi-radius-const.csv"))
-```
 
 Lastly, we plot the rate of decay of the function values for these experiments
-```{julia}
-#| output: false
+
+``` julia
 function plot_sphere_results(
     df_02_const, df_02_bt,
     df_0125_const, df_0125_bt,
@@ -549,10 +513,13 @@ end
 fig = plot_sphere_results(df_02_const, df_02_bt, df_0125_const, df_0125_bt)
 ```
 
-```{julia}
-#| code-fold: true
+``` julia
 display(fig)
 ```
+
+![](CRPG-Sphere-Example_files/figure-commonmark/cell-21-output-1.png)
+
+    CairoMakie.Screen{IMAGE}
 
 This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.10.
 
@@ -560,28 +527,43 @@ This is in line with the convergence rates of the CRPG method in the geodesicall
 
 This tutorial is cached. It was last run on the following package versions.
 
-```{julia}
-#| code-fold: true
-#| code-summary: "Package versions"
-#| echo: false
-using Pkg
-Pkg.status()
-```
+    Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+      [6e4b80f9] BenchmarkTools v1.8.0
+      [336ed68f] CSV v0.10.16
+    ⌃ [13f3f980] CairoMakie v0.15.11
+      [0ca39b1e] Chairmarks v1.3.1
+      [35d6a980] ColorSchemes v3.31.0
+      [5ae59095] Colors v0.13.1
+      [a93c6f00] DataFrames v1.8.2
+    ⌃ [31c24e10] Distributions v0.25.126
+    ⌃ [e9467ef8] GLMakie v0.13.11
+      [4d00f742] GeometryTypes v0.8.5
+      [7073ff75] IJulia v1.34.4
+      [682c06a0] JSON v1.6.1
+      [8ac3fa9e] LRUCache v1.6.2
+      [b964fa9f] LaTeXStrings v1.4.0
+      [d3d80556] LineSearches v7.7.1
+    ⌅ [ee78f7c6] Makie v0.24.11
+      [af67fdf4] ManifoldDiff v0.4.5
+    ⌃ [1cead3c2] Manifolds v0.11.27
+    ⌃ [3362f125] ManifoldsBase v2.4.0
+    ⌃ [0fc0a36d] Manopt v0.5.39
+      [5b8d5e80] ManoptExamples v0.1.18 `..`
+      [51fcb6bd] NamedColors v0.2.3
+      [6fe1bfb0] OffsetArrays v1.17.0
+      [91a5bcdd] Plots v1.41.6
+    ⌃ [08abe8d2] PrettyTables v3.3.2
+      [6099a3de] PythonCall v0.9.35
+      [f468eda6] QuadraticModels v0.9.16
+    ⌃ [731186ca] RecursiveArrayTools v4.3.1
+      [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
 
-```{julia}
-#| echo: false
-#| output: asis
-using Dates
-println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
-```
+This tutorial was last rendered July 10, 2026, 12:3:36.
 
 ## Literature
 
-````{=commonmark}
 ```@bibliography
 Pages = ["CRPG-Convex-SPD.md"]
 Canonical=false
 ```
-````
-
-
