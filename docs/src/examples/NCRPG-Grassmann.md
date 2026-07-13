@@ -325,56 +325,56 @@ end
 
 We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the NCRPG with a constant stepsize, while columns 5 to 7 refer to a backtracked stepsize…
 
-    | **Dimension** | **Time\_1** | **Iterations\_1** | **Objective\_1** | **Time\_2** | **Iterations\_2** | **Objective\_2** |
-    |--------------:|------------:|------------------:|-----------------:|------------:|------------------:|-----------------:|
-    |             6 |     0.37101 |                90 |         0.853678 |   0.0940748 |                12 |         0.853678 |
-    |            24 |    0.542643 |                58 |         0.858344 |    0.168517 |                 9 |         0.858344 |
-    |           400 |     2.30952 |                36 |         0.868749 |    0.697674 |                 6 |         0.868749 |
-    |          1600 |     8.28298 |                35 |         0.871773 |     5.48798 |                 6 |         0.871773 |
-    |          6400 |     36.8967 |                34 |         0.873426 |     10.3206 |                 5 |         0.873426 |
+| **Dimension** | **Time_1** | **Iterations_1** | **Objective_1** | **Time_2** | **Iterations_2** | **Objective_2** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 6 | 0.459697 | 90 | 0.853678 | 0.11785 | 12 | 0.853678 |
+| 24 | 0.701809 | 58 | 0.858344 | 0.221186 | 9 | 0.858344 |
+| 400 | 2.34145 | 36 | 0.868749 | 0.724321 | 6 | 0.868749 |
+| 1600 | 9.23512 | 35 | 0.871773 | 5.8242 | 6 | 0.871773 |
+| 6400 | 33.7284 | 34 | 0.873426 | 9.62356 | 5 | 0.873426 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
-
-<details class="code-fold">
-<summary>Code</summary>
 
 ``` julia
 using Pkg
 Pkg.status()
 ```
 
-</details>
-
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
-      [6e4b80f9] BenchmarkTools v1.6.0
-      [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.15.6
+      [6e4b80f9] BenchmarkTools v1.8.0
+      [336ed68f] CSV v0.10.16
+    ⌃ [13f3f980] CairoMakie v0.15.11
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
-      [a93c6f00] DataFrames v1.8.0
-      [31c24e10] Distributions v0.25.122
-    ⌅ [682c06a0] JSON v0.21.4
+      [a93c6f00] DataFrames v1.8.2
+    ⌃ [31c24e10] Distributions v0.25.126
+    ⌃ [e9467ef8] GLMakie v0.13.11
+      [4d00f742] GeometryTypes v0.8.5
+      [7073ff75] IJulia v1.34.4
+      [682c06a0] JSON v1.6.1
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
-      [d3d80556] LineSearches v7.4.0
-      [ee78f7c6] Makie v0.24.6
+      [d3d80556] LineSearches v7.7.1
+    ⌅ [ee78f7c6] Makie v0.24.11
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.0
-      [3362f125] ManifoldsBase v2.0.0
-      [0fc0a36d] Manopt v0.5.25
-      [5b8d5e80] ManoptExamples v0.1.16 `..`
+    ⌃ [1cead3c2] Manifolds v0.11.27
+    ⌃ [3362f125] ManifoldsBase v2.4.0
+    ⌃ [0fc0a36d] Manopt v0.5.39
+      [5b8d5e80] ManoptExamples v0.1.18 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [91a5bcdd] Plots v1.41.1
-      [08abe8d2] PrettyTables v3.1.0
-      [6099a3de] PythonCall v0.9.28
-      [f468eda6] QuadraticModels v0.9.14
+      [6fe1bfb0] OffsetArrays v1.17.0
+      [91a5bcdd] Plots v1.41.6
+    ⌃ [08abe8d2] PrettyTables v3.3.2
+      [6099a3de] PythonCall v0.9.35
+      [f468eda6] QuadraticModels v0.9.16
+    ⌃ [731186ca] RecursiveArrayTools v4.3.1
       [1e40b3f8] RipQP v0.7.0
-    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
+    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered October 15, 2025, 16:5:25.
+This tutorial was last rendered July 13, 2026, 14:45:15.
 
 ## Literature
 

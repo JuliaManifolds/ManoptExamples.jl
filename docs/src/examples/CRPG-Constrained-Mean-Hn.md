@@ -307,7 +307,6 @@ lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label="PGA", color=tol_vibr
 axis.xlabel = "Manifold dimension d"
 axis.ylabel = "runtime (sec.)"
 axislegend(axis; position=:lt)
-fig
 ```
 
 ![](CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-14-output-1.png)
@@ -331,10 +330,7 @@ lines!(axis2, n_range, [bi[:PGA][:Iter] for bi in b]; label="PGA", color=tol_vib
 axis2.xlabel = "Manifold dimension d"
 axis2.ylabel = "# Iterations"
 axislegend(axis2; position=:rt)
-fig2
 ```
-
-![](CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-17-output-1.png)
 
 ``` julia
 display(fig2)

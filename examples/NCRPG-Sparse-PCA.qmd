@@ -6,7 +6,7 @@ date: 10/01/2025
 
 ## Introduction
 
-In this example we use the Nonconvex Riemannian Proximal Gradient (NCRPG) method [BergmannJasaJohnPfeffer:2025:1](@cite) and compare it to the Riemannian Proximal Gradient (RPG) method [HuangWei:2021:1](@cite).
+In this example we use the Nonconvex Riemannian Proximal Gradient (NCRPG) method [BergmannJasaJohnPfeffer:2025:1](@cite) and compare it to the Riemannian Proximal Gradient (RPG) method [HuangWei:2021:1](@cite) and to the Manifold Proximal Gradient method (ManPG) [ChenMaMan-ChoSoZhan:2020](@cite).
 This example reproduces the results from [BergmannJasaJohnPfeffer:2025:1](@cite), Section 6.1.
 The numbers may vary slightly due to having run this notebook on a different machine.
 
@@ -34,7 +34,7 @@ results_folder = joinpath(@__DIR__, experiment_name)
 #| output: false
 using PrettyTables
 using BenchmarkTools
-using CSV, DataFrames
+using CSV, DataFrames, Dates
 using ColorSchemes, Plots, LaTeXStrings
 using Random, LinearAlgebra, LRUCache, Distributions
 using ManifoldDiff, Manifolds, Manopt, ManoptExamples
@@ -74,9 +74,9 @@ BenchmarkTools.DEFAULT_PARAMETERS.seconds = 2.0
 m_tests = 10 # number of tests for each parameter setting
 means = 20 # number of means to compute
 
-atol = 1e-7
+atol = 1e-4
 max_iters = 100000
-n_p_array = [(100,5), (200,5), (300, 5)]
+n_p_array = [(100, 5), (200, 5), (300, 5)]
 μs = [t for t in [0.1, 0.5, 1.0]]
 ```
 
@@ -236,6 +236,193 @@ function RPG_SPCA_OB(M, H, D, μ, L, start, prox_fun; max_iters  = 1000, stop = 
     end
 end
 ```
+We also introduce an implementation of the ManPG algorithm for the Sparse PCA problem on the oblique manifold, following [ChenMaMan-ChoSoZhan:2020](@cite).
+```{julia}
+function prox_l1norm(B,λ)
+    A = abs.(B) .- λ
+    Act_set = A .> 0  
+    x_prox = Act_set .* sign.(B) .* A
+    Inact_set = (A .<= 0)
+    return x_prox, Act_set, Inact_set
+end
+#
+function Semi_newton_Sphere(n, X, t, B, μt, inner_tol, prox_fun, inner_max_iter, Lam0)
+    Lam = Lam0
+    X_Lam_prod = B+ t * Lam * X 
+    Z, Act_set, Inact_set = prox_fun(X_Lam_prod, μt)
+    ZX = Z'X
+    R_Lam = ZX - 1.0
+    RE = R_Lam
+    r_l = abs(R_Lam)
+    
+    λ = 0.2
+    j = 0
+    
+    while r_l > inner_tol
+        reg = λ * max(min(r_l, 0.1), 1e-11)
+        G = 4 * t * X' * (Act_set.*X)
+        new_d = - RE/(G + reg)
+        t_new = 1.0
+        X_d_prod = t * new_d * X 
+        X_Lam_new_prod = X_Lam_prod + t_new * X_d_prod
+        Z, Act_set, Inact_set = prox_fun(X_Lam_new_prod,μt)
+        ZX = Z'X
+        R_Lam_new =  ZX -1.0
+        
+        r_l_new = abs(R_Lam_new)
+
+        #backtracking of new direction 
+        while r_l_new^2 >= r_l^2 * (1 - 0.001 * t_new) && t_new > 1e-3
+            t_new *= 0.5
+            X_Lam_new_prod = X_Lam_prod + t_new * X_d_prod
+            Z, Act_set, Inact_set = prox_fun(X_Lam_new_prod,μt)
+            ZX = Z'X
+            R_Lam_new = ZX -1.0
+            r_l_new = abs(R_Lam_new)
+        end
+        Lam += t_new * new_d
+        r_l = r_l_new
+        R_Lam = R_Lam_new
+        RE = R_Lam
+        X_Lam_prod = X_Lam_new_prod
+
+        if j > inner_max_iter
+            break
+        end
+        j += 1
+    end
+    return Z, Lam
+end
+#
+function manpg_SPCA_OB(
+    M,
+    H, # AtA
+    D,
+    μ, #sparsity param
+    step_size,
+    start; 
+    max_iters    = Int(1e3), 
+    tol       = 1e-8, 
+    inner_it  = 10,
+    inner_tol = 1e-12,
+    bt_param  = 0.5,
+    α_min     = 1e-8, #minimum stepsize factor 
+    record    = false
+)
+    # Parameters
+    n, p = size(start)
+
+    cost_fun(M,X, HX) =  0.5 * norm(X'HX - D)^2 + μ * norm(X, 1)
+    h(X) = μ * norm(X, 1)
+    prox_fun(b, λ) = prox_l1norm(b, λ)
+    X = start 
+    HX = H * X 
+    F_old = cost_fun(M, X, HX)
+
+    Lam = zeros(p)
+    Desc = Array{Float64}(undef,n,p)
+    it_end = max_iters
+
+    if !record
+        for it in 1:max_iters
+            ngX = -2 * HX * (X'HX - D) # negative Euclidean gradient 
+            for r in 1:p # Semi Newton for each component
+                PY, Lam[r] = Semi_newton_Sphere(
+                    n, 
+                    X[:, r], 
+                    step_size, 
+                    X[:, r] + step_size * ngX[:, r],
+                    μ * step_size, 
+                    inner_tol, 
+                    prox_fun, 
+                    inner_it, 
+                    Lam[r]
+                )
+                Desc[:, r] = PY - X[:, r]
+            end
+            α = 1.0
+            Z = retract(M, X, α * Desc)
+            HZ = H * Z
+            F_trial = cost_fun(M, Z, HZ)
+            normDesc = norm(Desc, 2)
+            normDescsquared = normDesc^2
+            
+            # Linesearch
+            while F_trial >= F_old - 0.5 / step_size * α * normDescsquared
+                α *= bt_param
+                if α < α_min
+                    break
+                end
+
+                Z = retract(M, X, α * Desc)
+                HZ = H * Z 
+                F_trial = cost_fun(M, Z, HZ)
+            end
+
+            X = Z
+            HX = HZ
+            F_old = F_trial
+            
+            if normDesc/step_size * α < tol
+                it_end = it
+                break 
+            end
+
+        end
+        X_manpg = X
+        return X_manpg, it_end
+    #record iterates
+    else 
+        Iterates = []
+        for it in 1:max_iters
+            ngX = -2 * HX * (X'HX - D) # negative Euclidean gradient 
+            for r in 1:p #Semi newton for each component
+                PY, Lam[r] = Semi_newton_Sphere(
+                    n, 
+                    X[:, r], 
+                    step_size, 
+                    X[:, r] + step_size * ngX[:, r],
+                    μ * step_size, 
+                    inner_tol, 
+                    prox_fun, 
+                    inner_it, 
+                    Lam[r]
+                )
+                Desc[:, r] = PY - X[:, r]
+            end
+            α = 1.0
+            Z = retract(M, X, α * Desc)
+            HZ = H * Z
+            F_trial = cost_fun(M, Z, HZ)
+            normDesc = norm(Desc, 2)
+            normDescsquared = normDesc^2
+            
+            # Linesearch
+            while F_trial >= F_old - 0.5 / step_size * α * normDescsquared
+                α *= bt_param
+                if α < α_min
+                    break
+                end
+
+                Z = retract(M, X, α * Desc)
+                HZ = H * Z 
+                F_trial = cost_fun(M, Z, HZ)
+            end
+
+            X = Z
+            HX = HZ
+            F_old = F_trial
+            push!(Iterates, copy(X))
+            if normDesc/step_size < tol
+                it_end = it
+                break 
+            end
+
+        end
+        return Iterates, it_end
+    end
+end
+```
 
 We set up some variables to collect the results of the experiments and initialize the dataframes
 ```{julia}
@@ -245,27 +432,33 @@ list = ["μ", "n", "p", "time", "objective", "sparsity", "iterations", "orthogon
 df_results_RPG      = DataFrame([name => Float64[] for name in list], makeunique=true)
 df_results_NCRPG    = DataFrame([name => Float64[] for name in list], makeunique=true)
 df_results_NCRPG_bt = DataFrame([name => Float64[] for name in list], makeunique=true)
+df_results_ManPG    = DataFrame([name => Float64[] for name in list], makeunique=true)
 #
 # Set data collection variables
 time_RPG_tmp        = zeros(length(μs))
 time_NCRPG_tmp      = zeros(length(μs))
 time_NCRPG_bt_tmp   = zeros(length(μs))
+time_ManPG_tmp      = zeros(length(μs))
 #
 obj_RPG_tmp         = zeros(length(μs))
 obj_NCRPG_tmp       = zeros(length(μs))
 obj_NCRPG_bt_tmp    = zeros(length(μs))
+obj_ManPG_tmp       = zeros(length(μs))
 #
 spar_RPG_tmp        = zeros(length(μs))
 spar_NCRPG_tmp      = zeros(length(μs))
 spar_NCRPG_bt_tmp   = zeros(length(μs))
+spar_ManPG_tmp      = zeros(length(μs))
 #
 it_RPG_tmp          = zeros(length(μs))
 it_NCRPG_tmp        = zeros(length(μs))
 it_NCRPG_bt_tmp     = zeros(length(μs))
+it_ManPG_tmp        = zeros(length(μs))
 #
 orth_RPG_tmp        = zeros(length(μs))
 orth_NCRPG_tmp      = zeros(length(μs))
 orth_NCRPG_bt_tmp   = zeros(length(μs))
+orth_ManPG_tmp      = zeros(length(μs))
 ```
 
 And run the experiments
@@ -323,7 +516,7 @@ for (n, p) in n_p_array
                     initial_stepsize = init_step_size_bt,
                     stop_when_stepsize_less = stop_step_size_bt
                 ),
-                record = [:Iteration, :Iterate],
+                record = [:Iteration, :Iterate, :Time],
                 return_state = true,
                 stopping_criterion = StopAfterIteration(max_iters)| StopWhenGradientMappingNormLess(stop_NCRPG_bt)
             )
@@ -347,51 +540,169 @@ for (n, p) in n_p_array
                 max_iters = $max_iters,
                 stop = $stop_RPG
             )
-            #
+            # ManPG
+            Iterates_ManPG, it_ManPG = manpg_SPCA_OB(OB, H, D, μ, step_size, start;
+                max_iters = max_iters, 
+                tol = stop_NCRPG,
+                record = true
+            )
+            bm_ManPG = @benchmark manpg_SPCA_OB($OB, $H, $D, $μ, $step_size, $start;
+                max_iters = $max_iters, 
+                tol = $stop_NCRPG
+            )
+            # 
             # Collect test results
             Iterates_NCRPG  = get_record(rec_NCRPG, :Iteration, :Iterate)
             res_NCRPG       = Iterates_NCRPG[end]
-            time_NCRPG      = time(median(bm_NCRPG))/1e9
+            time_NCRPG      = time(median(bm_NCRPG)) / 1e9
             obj_NCRPG       = f(OB, res_NCRPG)
-            spar_NCRPG      = sum(abs.(res_NCRPG).< 1e-8)/n/p
+            spar_NCRPG      = sum(abs.(res_NCRPG) .< 1e-8) / n / p
             it_NCRPG        = length(Iterates_NCRPG)
-            orth_NCRPG      = norm(res_NCRPG'*res_NCRPG - I(p))
+            orth_NCRPG      = norm(res_NCRPG' * res_NCRPG - I(p))
             # NCRPG with backtracking
             Iterates_NCRPG_bt  = get_record(rec_NCRPG_bt, :Iteration, :Iterate)
             res_NCRPG_bt       = Iterates_NCRPG_bt[end]
-            time_NCRPG_bt      = time(median(bm_NCRPG_bt))/1e9
+            time_NCRPG_bt      = time(median(bm_NCRPG_bt)) / 1e9
             obj_NCRPG_bt       = f(OB, res_NCRPG_bt)
-            spar_NCRPG_bt      = sum(abs.(res_NCRPG_bt).< 1e-8)/n/p
+            spar_NCRPG_bt      = sum(abs.(res_NCRPG_bt) .< 1e-8) / n / p
             it_NCRPG_bt        = length(Iterates_NCRPG_bt)
-            orth_NCRPG_bt      = norm(res_NCRPG_bt'*res_NCRPG_bt - I(p))
+            orth_NCRPG_bt      = norm(res_NCRPG_bt' * res_NCRPG_bt - I(p))
             # RPG
             res_RPG         = Iterates_RPG[end]
-            time_RPG        = time(median(bm_RPG))/1e9
+            time_RPG        = time(median(bm_RPG)) / 1e9
             obj_RPG         = f(OB, res_RPG)
-            spar_RPG        = sum(abs.(res_RPG).< 1e-8)/n/p
-            orth_RPG        = norm(res_RPG'*res_RPG - I(p))
+            spar_RPG        = sum(abs.(res_RPG) .< 1e-8) / n / p
+            orth_RPG        = norm(res_RPG' * res_RPG - I(p))
+            # ManPG
+            res_ManPG         = Iterates_ManPG[end]
+            time_ManPG        = time(median(bm_ManPG)) / 1e9
+            obj_ManPG         = f(OB, res_ManPG)
+            spar_ManPG        = sum(abs.(res_ManPG) .< 1e-8) / n / p
+            orth_ManPG        = norm(res_ManPG' * res_ManPG - I(p))
+
+            # Save function value errors and gradient mapping norm for one case
+            if c == 2 && n == 100 # i.e. μ = 0.5
+                ###### Optimal Solution ######
+                rec_NCRPG_opt = proximal_gradient_method(OB, f, g, grad_g, start; 
+                    prox_nonsmooth = prox_norm1_NCRPG, 
+                    stepsize = ConstantLength(step_size/2),
+                    record = [:Iteration, :Iterate],
+                    return_state = true,
+                    stopping_criterion = StopAfterIteration(10*max_iters)| StopWhenGradientMappingNormLess(1e-8)
+                )
+                Iterates_OPT = get_record(rec_NCRPG_opt, :Iteration, :Iterate)
+                fs_opt = f.(Ref(OB), Iterates_OPT)
+              
+                ############## Cost function ################
+                fs_RPG      = f.(Ref(OB), Iterates_RPG)
+                fs_ManPG    = f.(Ref(OB), Iterates_ManPG)
+                fs_NCRPG    = f.(Ref(OB), Iterates_NCRPG)
+                fs_NCRPG_bt = f.(Ref(OB), Iterates_NCRPG_bt)
+
+                f_opt_RPG       = f(OB, res_RPG)
+                f_opt_ManPG     = f(OB, res_ManPG)
+                f_opt_NCRPG     = f(OB, res_NCRPG)
+                f_opt_NCRPG_bt  = f(OB, res_NCRPG_bt)
+                f_opt           = minimum(fs_opt)
+
+                diff_fs_RPG      = fs_RPG .- f_opt
+                diff_fs_ManPG    = fs_ManPG .- f_opt
+                diff_fs_NCRPG    = fs_NCRPG .- f_opt
+                diff_fs_NCRPG_bt = fs_NCRPG_bt .- f_opt
+
+                minimum(diff_fs_NCRPG)
+                minimum(diff_fs_NCRPG_bt)
+                minimum(diff_fs_RPG)
+                minimum(diff_fs_ManPG)
+
+                ############### Time ################
+                Times_RPG       = range(0.0, time_RPG,   length=length(Iterates_RPG))
+                Times_ManPG     = range(0.0, time_ManPG, length=length(Iterates_ManPG))
+                Times_NCRPG     = range(0.0, time_NCRPG, length=length(Iterates_NCRPG))
+
+                Times_NCRPG_bt = Dates.value.(get_record(rec_NCRPG_bt, :Iteration, :Time))/1e9
+                Times_NCRPG_bt = Times_NCRPG_bt .- Times_NCRPG_bt[1]
+                Times_NCRPG_bt = Times_NCRPG_bt./Times_NCRPG_bt[end]*time_NCRPG_bt
+
+                ######### Data Frames function value ############
+                indices_NCRPG    = vcat(1:40:it_NCRPG-1, it_NCRPG)
+                indices_RPG      = vcat(1:40:it_RPG-1, it_RPG)
+                indices_ManPG    = vcat(1:40:it_ManPG-1, it_ManPG)
+                indices_NCRPG_bt = vcat(1:3:it_NCRPG_bt-1, it_NCRPG_bt)
+
+                df_diff_fs_NCRPG    = DataFrame(time = Times_NCRPG[indices_NCRPG], diff_fs = diff_fs_NCRPG[indices_NCRPG])
+                df_diff_fs_NCRPG_bt = DataFrame(time = Times_NCRPG_bt[indices_NCRPG_bt], diff_fs = diff_fs_NCRPG_bt[indices_NCRPG_bt])
+                df_diff_fs_RPG      = DataFrame(time = Times_RPG[indices_RPG], diff_fs = diff_fs_RPG[indices_RPG])
+                df_diff_fs_ManPG    = DataFrame(time = Times_ManPG[indices_ManPG], diff_fs = diff_fs_ManPG[indices_ManPG])
+
+                ######### Data Frames gradient mapping ############
+                indices_NCRPG_2    = vcat(2:40:it_NCRPG-1, it_NCRPG)
+                indices_RPG_2      = vcat(2:40:it_RPG-1, it_RPG)
+                indices_ManPG_2    = vcat(2:40:it_ManPG-1, it_ManPG)
+                indices_NCRPG_bt_2 = vcat(2:3:it_NCRPG_bt-2, it_NCRPG_bt)
+
+                grad_maps_NCRPG = 1/step_size * [distance(OB, Iterates_NCRPG[i], Iterates_NCRPG[i-1]) for i in indices_NCRPG_2]
+                grad_maps_RPG   = L * [distance(OB, Iterates_RPG[i],   Iterates_RPG[i-1])   for i in indices_RPG_2  ]
+                grad_maps_ManPG = L * [distance(OB, Iterates_ManPG[i], Iterates_ManPG[i-1]) for i in indices_ManPG_2]
+                # Record gradient mapping for backtracking 
+                grad_maps_NCRPG_bt = []
+                for i in indices_NCRPG_bt_2
+                    rec_NCRPG_bt_i = proximal_gradient_method(OB, f, g, grad_g, start; 
+                        prox_nonsmooth = prox_norm1_NCRPG,
+                        stepsize = ProximalGradientMethodBacktracking(; 
+                            strategy=:nonconvex, 
+                            initial_stepsize=init_step_size_bt,
+                            stop_when_stepsize_less = 1e-7
+                        ),
+                        return_state = true,
+                        stopping_criterion =    StopAfterIteration(i)| StopWhenGradientMappingNormLess(stop_NCRPG_bt)
+                    )
+                    step_size_i = rec_NCRPG_bt_i.last_stepsize
+                    push!(grad_maps_NCRPG_bt, 1/step_size_i*distance(OB, Iterates_NCRPG_bt[i], Iterates_NCRPG_bt[i-1]))
+                end
+
+                df_grad_maps_NCRPG    = DataFrame(time = Times_NCRPG[indices_NCRPG_2], grad_maps = grad_maps_NCRPG)
+                df_grad_maps_NCRPG_bt = DataFrame(time = Times_NCRPG_bt[indices_NCRPG_bt_2], grad_maps = grad_maps_NCRPG_bt)
+                df_grad_maps_RPG      = DataFrame(time = Times_RPG[indices_RPG_2],     grad_maps = grad_maps_RPG)
+                df_grad_maps_ManPG    = DataFrame(time = Times_ManPG[indices_ManPG_2], grad_maps = grad_maps_ManPG)
+                
+                # Write data
+                CSV.write(joinpath(results_folder, "diff_fs_NCRPG.csv"), df_diff_fs_NCRPG; delim=" ", header=false)
+                CSV.write(joinpath(results_folder, "diff_fs_NCRPG_bt.csv"), df_diff_fs_NCRPG_bt; delim=" ", header=false)
+                CSV.write(joinpath(results_folder, "diff_fs_RPG.csv"), df_diff_fs_RPG; delim=" ", header=false)
+                CSV.write(joinpath(results_folder, "diff_fs_ManPG.csv"), df_diff_fs_ManPG; delim=" ", header=false)
+                CSV.write(joinpath(results_folder, "grad_maps_NCRPG.csv"), df_grad_maps_NCRPG; delim=" ", header=false)
+                CSV.write(joinpath(results_folder, "grad_maps_NCRPG_bt.csv"), df_grad_maps_NCRPG_bt; delim=" ", header=false)
+                CSV.write(joinpath(results_folder, "grad_maps_RPG.csv"), df_grad_maps_RPG; delim=" ", header=false)
+                CSV.write(joinpath(results_folder, "grad_maps_ManPG.csv"), df_grad_maps_ManPG; delim=" ", header=false)
+            end
             #
             # Update results
             # Time values
             time_NCRPG_tmp[c]      += time_NCRPG
             time_NCRPG_bt_tmp[c]   += time_NCRPG_bt
             time_RPG_tmp[c]        += time_RPG
+            time_ManPG_tmp[c]      += time_ManPG
             # Objective values
             obj_NCRPG_tmp[c]       += obj_NCRPG
             obj_NCRPG_bt_tmp[c]    += obj_NCRPG_bt
             obj_RPG_tmp[c]         += obj_RPG
+            obj_ManPG_tmp[c]       += obj_ManPG
             # Sparsity values
             spar_NCRPG_tmp[c]      += spar_NCRPG
             spar_NCRPG_bt_tmp[c]   += spar_NCRPG_bt
             spar_RPG_tmp[c]        += spar_RPG
+            spar_ManPG_tmp[c]      += spar_ManPG
             # Orthogonality values
             orth_NCRPG_tmp[c]      += orth_NCRPG
             orth_NCRPG_bt_tmp[c]   += orth_NCRPG_bt
             orth_RPG_tmp[c]        += orth_RPG
+            orth_ManPG_tmp[c]      += orth_ManPG
             # Iteration values
             it_NCRPG_tmp[c]        += it_NCRPG
             it_NCRPG_bt_tmp[c]     += it_NCRPG_bt
             it_RPG_tmp[c]          += it_RPG
+            it_ManPG_tmp[c]        += it_ManPG
         end
     end
     for (c, μ) in enumerate(μs)
@@ -404,24 +715,32 @@ for (n, p) in n_p_array
         push!(df_results_NCRPG_bt,
             [μ, n, p, time_NCRPG_bt_tmp[c]/m_tests, obj_NCRPG_bt_tmp[c]/m_tests, spar_NCRPG_bt_tmp[c]/m_tests, it_NCRPG_bt_tmp[c]/m_tests, orth_NCRPG_bt_tmp[c]/m_tests]
         )
+        push!(df_results_ManPG, 
+            [μ, n, p, time_ManPG_tmp[c]/m_tests, obj_ManPG_tmp[c]/m_tests, spar_ManPG_tmp[c]/m_tests, it_ManPG_tmp[c]/m_tests, orth_ManPG_tmp[c]/m_tests]
+        )
     end
     #
     # Reset data collection variables
     time_RPG_tmp      .= zeros(length(μs))
     time_NCRPG_tmp    .= zeros(length(μs))
     time_NCRPG_bt_tmp .= zeros(length(μs))
+    time_ManPG_tmp    .= zeros(length(μs))
     obj_RPG_tmp       .= zeros(length(μs))
     obj_NCRPG_tmp     .= zeros(length(μs))
     obj_NCRPG_bt_tmp  .= zeros(length(μs))
+    obj_ManPG_tmp     .= zeros(length(μs))
     spar_RPG_tmp      .= zeros(length(μs))
     spar_NCRPG_tmp    .= zeros(length(μs))
     spar_NCRPG_bt_tmp .= zeros(length(μs))
+    spar_ManPG_tmp    .= zeros(length(μs))
     it_RPG_tmp        .= zeros(length(μs))
     it_NCRPG_tmp      .= zeros(length(μs))
     it_NCRPG_bt_tmp   .= zeros(length(μs))
+    it_ManPG_tmp      .= zeros(length(μs))
     orth_RPG_tmp      .= zeros(length(μs))
     orth_NCRPG_tmp    .= zeros(length(μs))
     orth_NCRPG_bt_tmp .= zeros(length(μs))
+    orth_ManPG_tmp    .= zeros(length(μs))
 end
 ```
 
@@ -433,6 +752,7 @@ We export the results to CSV files
 df_results_NCRPG = sort(df_results_NCRPG, :μ)
 df_results_NCRPG_bt = sort(df_results_NCRPG_bt, :μ)
 df_results_RPG = sort(df_results_RPG, :μ)
+df_results_ManPG = sort(df_results_ManPG, :μ)
 df_results_time_iter = DataFrame(
     μ             = df_results_NCRPG.μ,
     n             = Int.(df_results_NCRPG.n),
@@ -443,6 +763,8 @@ df_results_time_iter = DataFrame(
     NCRPG_bt_iter  = Int.(round.(df_results_NCRPG_bt.iterations, digits = 0)),
     RPG_time     = df_results_RPG.time,
     RPG_iter     = Int.(round.(df_results_RPG.iterations, digits = 0)),
+    ManPG_time     = df_results_ManPG.time,
+    ManPG_iter     = Int.(round.(df_results_ManPG.iterations, digits = 0)),
 )
 df_results_obj_spar_orth = DataFrame(
     μ               = df_results_NCRPG.μ,
@@ -457,6 +779,9 @@ df_results_obj_spar_orth = DataFrame(
     RPG_obj         = df_results_RPG.objective,
     RPG_sparsity    = df_results_RPG.sparsity,
     RPG_orth        = df_results_RPG.orthogonality,
+    ManPG_obj       = df_results_ManPG.objective,
+    ManPG_sparsity  = df_results_ManPG.sparsity,
+    ManPG_orth      = df_results_ManPG.orthogonality,
 )
 # Write the results to CSV files
 CSV.write(joinpath(results_folder, "results-OB-time-iter-$(m_tests).csv"), df_results_time_iter)
@@ -469,7 +794,7 @@ First, we look at the time and number of iterations for each algorithm.
 #| echo: false
 #| code-fold: true
 #| output: asis
-header_1 = ["μ", "n", "p", "NCRPGconst_time", "NCRPGconst_iter", "NCRPGbt_time", "NCRPGbt_iter", "RPG_time", "RPG_iter"]
+header_1 = ["μ", "n", "p", "NCRPGconst_time", "NCRPGconst_iter", "NCRPGbt_time", "NCRPGbt_iter", "RPG_time", "RPG_iter", "ManPG_time", "ManPG_iter"]
 benchmarking && pretty_table(df_results_time_iter; backend = :markdown, column_labels = header_1)
 ```
 
@@ -478,7 +803,7 @@ Second, we look at the objective values, sparsity, and orthogonality of the solu
 #| echo: false
 #| code-fold: true
 #| output: asis
-header_2 = ["μ", "n", "p", "NCRPGconst_obj", "NCRPGconst_spar", "NCRPGconst_orth", "NCRPGbt_obj", "NCRPGbt_spar", "NCRPGbt_orth", "RPG_obj", "RPG_spar", "RPG_orth"]
+header_2 = ["μ", "n", "p", "NCRPGconst_obj", "NCRPGconst_spar", "NCRPGconst_orth", "NCRPGbt_obj", "NCRPGbt_spar", "NCRPGbt_orth", "RPG_obj", "RPG_spar", "RPG_orth", "ManPG_obj", "ManPG_spar", "ManPG_orth"]
 benchmarking && pretty_table(df_results_obj_spar_orth; backend = :markdown, column_labels = header_2)
 ```
 
