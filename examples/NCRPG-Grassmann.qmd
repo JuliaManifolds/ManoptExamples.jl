@@ -148,25 +148,27 @@ end
 We introduce some keyword arguments for the solvers we will use in this experiment
 ```{julia}
 #| output: false
-pgm_kwargs(initial_stepsize) = [
+pgm_kwargs(initial_stepsize, β) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stepsize => ProximalGradientMethodBacktracking(;
         strategy=:nonconvex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
+        sufficient_decrease=β,
         ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
     ),
 ]
-pgm_bm_kwargs(initial_stepsize) = [
+pgm_bm_kwargs(initial_stepsize, β) = [
     :record => [:Iteration, :Cost, :Iterate],
     :return_state => true,
     :stepsize => ProximalGradientMethodBacktracking(;
         strategy=:nonconvex,
         initial_stepsize=initial_stepsize,
         stop_when_stepsize_less=atol,
+        sufficient_decrease=β,
         ),
     :stopping_criterion => StopWhenAny(
         StopWhenGradientMappingNormLess(atol), StopAfterIteration(max_iters)
@@ -309,6 +311,7 @@ for (n, m) in gr_dims
     λ = minimum([λ_δ(δ, M, h_gr, grad_g_gr, anchor, k_max_gr, D, 100) for _ in 1:10]) # estimate λ_δ
     constant_stepsize = max(0, min(λ, ζ(δ)/L_g))
     initial_stepsize = 1.0
+    β = ζ(δ)/3
 
     # Optimization
     pgm_constant = proximal_gradient_method(M, f_gr, g_gr, grad_g_gr, p0; prox_nonsmooth=prox_h_gr, pgm_kwargs_constant(constant_stepsize)...)
@@ -316,7 +319,7 @@ for (n, m) in gr_dims
     pgm_constant_record = get_record(pgm_constant)
 
     # We can also use a backtracked stepsize
-    pgm = proximal_gradient_method(M, f_gr, g_gr, grad_g_gr, p0; prox_nonsmooth=prox_h_gr, pgm_kwargs(initial_stepsize)...)
+    pgm = proximal_gradient_method(M, f_gr, g_gr, grad_g_gr, p0; prox_nonsmooth=prox_h_gr, pgm_kwargs(initial_stepsize, β)...)
     pgm_result = get_solver_result(pgm)
     pgm_record = get_record(pgm)
 
@@ -327,7 +330,7 @@ for (n, m) in gr_dims
 
     if benchmarking
         pgm_constant_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs_constant($constant_stepsize)...)
-        pgm_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs($initial_stepsize)...)
+        pgm_bm = @benchmark proximal_gradient_method($M, $f_gr, $g_gr, $grad_g_gr, $p0; prox_nonsmooth=$prox_h_gr, $pgm_bm_kwargs($initial_stepsize, $β)...)
 
         times = [
             median(pgm_constant_bm).time * 1e-9,

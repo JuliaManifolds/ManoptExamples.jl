@@ -45,7 +45,7 @@ We initialize the experiment parameters, as well as some utility functions.
 
 ``` julia
 # Set random seed for reproducibility
-random_seed = 1520
+random_seed = 1
 BenchmarkTools.DEFAULT_PARAMETERS.seconds = 180.0
 
 atol = 1e-7
@@ -57,6 +57,7 @@ s = 10      # amount of non-zero rows
 r_m_array = [(1, 300), (2, 500), (3, 700)] # (rank, number of measurements)
 step_size = 0.25
 init_step_size_bt = 2 * step_size
+β = 0.1
 stop_NCRPG = atol
 stop_RADMM = stop_NCRPG * step_size
 ```
@@ -298,7 +299,8 @@ for (r, m) in r_m_array
         inverse_retraction_method=OrthographicInverseRetraction(),
         stepsize = ProximalGradientMethodBacktracking(;
             strategy=:nonconvex,
-            initial_stepsize=init_step_size_bt
+            initial_stepsize=init_step_size_bt,
+            sufficient_decrease=β,
         ),
         record=[:Iteration, :Iterate],
         return_state=true,
@@ -316,7 +318,7 @@ for (r, m) in r_m_array
         prox_nonsmooth=$prox_norm12,
         retraction_method=OrthographicRetraction(),
         inverse_retraction_method=OrthographicInverseRetraction(),
-        stepsize = ProximalGradientMethodBacktracking(; strategy=:nonconvex, initial_stepsize=$init_step_size_bt),
+        stepsize = ProximalGradientMethodBacktracking(; strategy=:nonconvex, initial_stepsize=$init_step_size_bt, sufficient_decrease=$β),
         stopping_criterion = StopAfterIteration($max_iters )|  StopWhenGradientMappingNormLess($stop_NCRPG)
     )
     it_NCRPG_bt, res_NCRPG_bt = get_record(rec_NCRPG_bt)[end]
@@ -408,34 +410,34 @@ The first table shows the performance RADMM.
 
 | **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** | **error** | **iterations** | **mean zero row error** |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 0.25 | 9.77645 | 0.00052812 | 1431.0 | 5.37441e-9 |
-| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 0.25 | 14.36 | 0.000725431 | 1354.0 | 6.09862e-9 |
-| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 0.25 | 19.9974 | 0.000772805 | 1414.0 | 7.4266e-9 |
+| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 0.25 | 8.72832 | 0.00060681 | 1249.0 | 5.01248e-9 |
+| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 0.25 | 13.9594 | 0.000743828 | 1307.0 | 6.34457e-9 |
+| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 0.25 | 19.7611 | 0.000894381 | 1400.0 | 6.66346e-9 |
 
 The next table shows the performance of NCRPG with a constant stepsize.
 
 | **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** | **error** | **iterations** | **mean zero row error** |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 0.25 | 6.0552 | 0.000528145 | 1049.0 | 0.0 |
-| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 0.25 | 10.0178 | 0.000725859 | 1047.0 | 1.58429e-21 |
-| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 0.25 | 14.7584 | 0.000775127 | 1120.0 | 6.52608e-21 |
+| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 0.25 | 5.43887 | 0.000607008 | 886.0 | 0.0 |
+| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 0.25 | 9.89338 | 0.000742515 | 1028.0 | 1.5987e-20 |
+| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 0.25 | 14.7345 | 0.000894217 | 1120.0 | 2.87608e-20 |
 
 The next table shows the performance of NCRPG with a backtracked stepsize.
 In this case, the column “stepsize” indicates the initial stepsize for the backtracking procedure.
 
 | **M** | **N** | **m** | **r** | **s** | **stepsize** | **time (s)** | **error** | **iterations** | **mean zero row error** |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 0.5 | 6.99172 | 0.000528144 | 562.0 | 0.0 |
-| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 0.5 | 13.3318 | 0.000725847 | 604.0 | 3.19594e-21 |
-| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 0.5 | 1340.62 | 0.000778709 | 5000.0 | 3.79913e-20 |
+| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 0.5 | 6.61373 | 0.000606994 | 487.0 | 0.0 |
+| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 0.5 | 13.4236 | 0.000742508 | 601.0 | 4.64849e-20 |
+| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 0.5 | 21.209 | 0.000894211 | 681.0 | 2.39688e-20 |
 
 Second, we look at the distances of the solutions found by each algorithm.
 
 | **M** | **N** | **m** | **r** | **s** | **dist_NCRPG_NCRPG_bt** | **dist_NCRPG_RADMM** | **dist_NCRPG_NCRPG_bt** |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 1.08617e-8 | 5.59207e-7 | 5.49924e-7 |
-| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 2.18404e-8 | 7.53362e-7 | 7.33125e-7 |
-| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 1.38496e-5 | 2.39003e-5 | 2.51754e-5 |
+| 500.0 | 100.0 | 300.0 | 1.0 | 10.0 | 4.04779e-8 | 6.13964e-7 | 5.74711e-7 |
+| 500.0 | 100.0 | 500.0 | 2.0 | 10.0 | 2.93691e-8 | 3.32482e-5 | 3.32449e-5 |
+| 500.0 | 100.0 | 700.0 | 3.0 | 10.0 | 4.24236e-8 | 8.69667e-6 | 8.67656e-6 |
 
 ## Technical details
 
@@ -473,7 +475,7 @@ This tutorial is cached. It was last run on the following package versions.
       [1e40b3f8] RipQP v0.7.0
     Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered July 10, 2026, 16:40:27.
+This tutorial was last rendered July 14, 2026, 17:47:9.
 
 ## Literature
 

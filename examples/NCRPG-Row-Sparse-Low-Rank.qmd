@@ -68,7 +68,7 @@ We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
 # Set random seed for reproducibility
-random_seed = 1520
+random_seed = 1
 BenchmarkTools.DEFAULT_PARAMETERS.seconds = 180.0
 
 atol = 1e-7
@@ -80,6 +80,7 @@ s = 10      # amount of non-zero rows
 r_m_array = [(1, 300), (2, 500), (3, 700)] # (rank, number of measurements)
 step_size = 0.25
 init_step_size_bt = 2 * step_size
+β = 0.1
 stop_NCRPG = atol
 stop_RADMM = stop_NCRPG * step_size
 ```
@@ -354,7 +355,8 @@ for (r, m) in r_m_array
         inverse_retraction_method=OrthographicInverseRetraction(),
         stepsize = ProximalGradientMethodBacktracking(;
             strategy=:nonconvex,
-            initial_stepsize=init_step_size_bt
+            initial_stepsize=init_step_size_bt,
+            sufficient_decrease=β,
         ),
         record=[:Iteration, :Iterate],
         return_state=true,
@@ -372,7 +374,7 @@ for (r, m) in r_m_array
         prox_nonsmooth=$prox_norm12,
         retraction_method=OrthographicRetraction(),
         inverse_retraction_method=OrthographicInverseRetraction(),
-        stepsize = ProximalGradientMethodBacktracking(; strategy=:nonconvex, initial_stepsize=$init_step_size_bt),
+        stepsize = ProximalGradientMethodBacktracking(; strategy=:nonconvex, initial_stepsize=$init_step_size_bt, sufficient_decrease=$β),
         stopping_criterion = StopAfterIteration($max_iters )|  StopWhenGradientMappingNormLess($stop_NCRPG)
     )
     it_NCRPG_bt, res_NCRPG_bt = get_record(rec_NCRPG_bt)[end]
