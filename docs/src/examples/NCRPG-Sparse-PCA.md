@@ -1,4 +1,5 @@
 # Sparse PCA
+
 Paula John, Hajg Jasa
 2025-10-01
 
@@ -6,7 +7,7 @@ Paula John, Hajg Jasa
 
 In this example we use the Nonconvex Riemannian Proximal Gradient (NCRPG) method [BergmannJasaJohnPfeffer:2025:1](@cite) and compare it to the Riemannian Proximal Gradient (RPG) method [HuangWei:2021:1](@cite) and to the Manifold Proximal Gradient method (ManPG) [ChenMaMan-ChoSoZhan:2020](@cite).
 This example reproduces the results from [BergmannJasaJohnPfeffer:2025:1](@cite), Section 6.1.
-The numbers may vary slightly due to having run this notebook on a different machine.
+The numbers may vary slightly.
 
 ``` julia
 using PrettyTables
