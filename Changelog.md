@@ -5,26 +5,39 @@ All notable changes to this Julia package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.20] – 15/07/2025
+
+### Added
+
+One example on the sphere for the (convex) [proximal gradient method](https://manoptjl.org/stable/solvers/proximal_gradient_method/) method in [Manopt.jl](https://manoptjl.org/stable/).
+
+### Changed
+
+Reran experiments for the (nonconvex) [proximal gradient method](https://manoptjl.org/stable/solvers/proximal_gradient_method/) for consistency between paper and notebooks in data.
+
 ## [0.1.19] – 06/07/2025
 
 ### Added
+
 Three examples about the (extended) [robust Levenberg-Marquardt](https://manoptjl.org/stable/solvers/LevenbergMarquardt/) method in [Manopt.jl](https://manoptjl.org/stable/).
 
 ## [0.1.18] – 23/10/2025
 
 ### Added
+
 Two examples about elastic geodesics and one about an inextensible rod to illustrate the
 new [vector bundle newton](https://manoptjl.org/stable/solvers/vectorbundle_newton/) method in [Manopt.jl](https://manoptjl.org/stable/). (#38)
-
 
 ## [0.1.17] – 16/10/2025
 
 ### Added
-  * An example comparing spectral and robust Procrustes
+
+* An example comparing spectral and robust Procrustes
 
 ### Changed
-  * update rendering to use the [QuartoNotebookRunner.jl](https://github.com/PumasAI/QuartoNotebookRunner.jl) removing the dependency on Python
-  * switched to [Runic.jl](https://github.com/fredrikekre/Runic.jl) for code formatting
+
+* update rendering to use the [QuartoNotebookRunner.jl](https://github.com/PumasAI/QuartoNotebookRunner.jl) removing the dependency on Python
+* switched to [Runic.jl](https://github.com/fredrikekre/Runic.jl) for code formatting
 
 ## [0.1.16] – 03/10/2025
 
