@@ -27,7 +27,6 @@ end
 
 run_quarto = "--quarto" in ARGS
 run_on_CI = (get(ENV, "CI", nothing) == "true")
-tutorials_in_menu = !("--exclude-tutorials" ∈ ARGS)
 #
 # (a) if docs is not the current active environment, switch to it
 # (from https://github.com/JuliaIO/HDF5.jl/pull/1020/) 
@@ -121,6 +120,11 @@ examples_menu =
     ],
     "LTMADS" => [
         "Spectral & Robust Procrustes" => "examples/Spectral-Procrustes-2D.md",
+    ],
+    "Levenberg-Marquardt" => [
+        "Robust Geodesic Regression " => "examples/LM-Robust-Geodesic-Regression.md",
+        "Robust Procrustes" => "examples/LM-Robust-Procrustes.md",
+        "Robust Subspace Procrustes" => "examples/LM-Robust-Subspace-Procrustes.md",
     ],
     "Projected Gradient Algorithm" => [
         raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",

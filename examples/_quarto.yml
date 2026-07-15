@@ -20,6 +20,9 @@ project:
     - "!NCRPG-Row-Sparse-Low-Rank.qmd"
     - "!NCRPG-Grassmann.qmd"
     - "!NCRPG-Sparse-PCA.qmd"
+    - "!LM-Robust-Geodesic-Regression.qmd"
+    - "!LM-Robust-Procrustes.qmd"
+    - "!LM-Robust-Subspace-Procrustes.qmd"
 
 crossref:
   fig-prefix: Figure
