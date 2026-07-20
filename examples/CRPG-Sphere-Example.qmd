@@ -143,23 +143,12 @@ function get_const_stepsize(radius, τ)
     λ_const, max_idx = findmax(vals)
     return λ_const, δ_grid[max_idx]
 end 
-#
-function get_initial_stepsize(radius, τ, δ = 1e-8)
-    # α1 ≤ h(p) ≤ α2 ∀p ∈ B(anchor, radius)
-    α1 = 0.0
-    α2 = τ * 2 * radius
-    # ||grad_g(p)|| ≤ αg ∀p ∈ B(anchor, radius)
-    αg = 2 * radius 
-    # Compute s for backtracking: we need s < λ_δ
-    s = get_λ_δ(α1, α2, αg, δ)
-    return s 
-end 
 ```
 Since the stepsizes are independent of the dimension, we define them here, in conjunction with the parameter $\delta$ used for the backtracking
 ```{julia}
 λ_const, δ = get_const_stepsize(radius, τ)
-δ_bt = 0.2
-λ_init = get_initial_stepsize(radius, τ, δ_bt)
+δ_bt = 1.0
+λ_init = 10 * λ_const
 ```
 
 Before running the experiments, we initialize data collection functions that we will use later
@@ -387,6 +376,9 @@ for radius in radii
     prox = get_prox(q_bar, τ)
     # constant stepsize 
     λ_const, δ_opt = get_const_stepsize(radius, τ)
+    δs_bt = [0.1, 1.0, 100.0]
+    λ_init = 10*λ_const
+
     rec_const = proximal_gradient_method(S, f, g, grad_g, start;
         prox_nonsmooth=prox, 
         stepsize=ConstantLength(λ_const),
@@ -404,10 +396,8 @@ for radius in radii
     results[(radius, :CONST, δ_opt)] = err_const
 
     # Backtracking
-    δs_bt = [round(δ_opt, digits=2) - 0.01, round(δ_opt, digits=2), round(δ_opt, digits=2) + 0.2]
 
     for δ_bt in δs_bt
-        λ_init = get_initial_stepsize(radius, τ, δ_bt)
         rec_bt = proximal_gradient_method(S, f, g, grad_g, start;
             prox_nonsmooth=prox, 
             stepsize=ProximalGradientMethodBacktracking(;
@@ -475,7 +465,7 @@ function plot_sphere_results(
             df_const  = df_02_const,
             df_bt     = df_02_bt,
             c_delta   = "delta0.113",
-            bt_deltas = ("delta0.1",  "delta0.11", "delta0.31"),
+            bt_deltas = ("delta0.1",  "delta1.0", "delta100.0"),
             thm_rate  = 0.987,
             thm_xend  = 150,
             ref_xends = (150, 60, 30),
@@ -485,7 +475,7 @@ function plot_sphere_results(
             df_const  = df_0125_const,
             df_bt     = df_0125_bt,
             c_delta   = "delta0.184",
-            bt_deltas = ("delta0.17", "delta0.18", "delta0.38"),
+            bt_deltas = ("delta0.1", "delta1.0", "delta100.0"),
             thm_rate  = 0.963,
             thm_xend  = 100,
             ref_xends = (100, 60, 30),
