@@ -257,7 +257,7 @@ for n in spd_dims
     # Conseravative estimate of the Lipschitz constant for grad_g
     L_g = 1.05 * theoretical_lipschitz_constant(M, p0, n, D/2)
     constant_stepsize = 1/L_g
-    initial_stepsize = 3/2 * constant_stepsize
+    initial_stepsize = 1.0
     contraction_factor = 0.9
     warm_start_factor = 2.0
 
