@@ -1,5 +1,4 @@
 # A Geodesically Convex Example on SPDs
-
 Hajg Jasa
 2025-04-16
 
@@ -231,7 +230,7 @@ for n in spd_dims
     # Conseravative estimate of the Lipschitz constant for grad_g
     L_g = 1.05 * theoretical_lipschitz_constant(M, p0, n, D/2)
     constant_stepsize = 1/L_g
-    initial_stepsize = 3/2 * constant_stepsize
+    initial_stepsize = 1.0
     contraction_factor = 0.9
     warm_start_factor = 2.0
 
@@ -295,10 +294,10 @@ We can take a look at how the algorithms compare to each other in their performa
 
 | **Dimension** | **Iterations_1** | **Time_1** | **Cost_1** | **Iterations_2** | **Time_2** | **Cost_2** |
 |---:|---:|---:|---:|---:|---:|---:|
-| 3 | 367 | 0.00434125 | 0.18593 | 249 | 0.00705408 | 0.18593 |
-| 6 | 1944 | 0.041469 | 0.27078 | 1341 | 0.0818578 | 0.27078 |
-| 10 | 8640 | 0.263846 | 0.371274 | 6027 | 0.527204 | 0.371274 |
-| 15 | 15535 | 0.613913 | 0.449625 | 12544 | 2.69701 | 0.449625 |
+| 3 | 367 | 0.00413319 | 0.18593 | 33 | 0.00313963 | 0.18593 |
+| 6 | 1944 | 0.0419539 | 0.27078 | 56 | 0.0092925 | 0.27078 |
+| 10 | 8640 | 0.268461 | 0.371274 | 91 | 0.0211671 | 0.371274 |
+| 15 | 15535 | 0.622467 | 0.449625 | 121 | 0.037345 | 0.449625 |
 
 Lastly, we showcase the rate of decay of the function values for $n = 2$.
 
@@ -418,7 +417,7 @@ end
 
 ![](CRPG-Convex-SPD_files/figure-commonmark/cell-13-output-1.png)
 
-This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.7.
+This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.10.
 
 ## Technical details
 
@@ -427,35 +426,39 @@ This tutorial is cached. It was last run on the following package versions.
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.8.0
       [336ed68f] CSV v0.10.16
-      [13f3f980] CairoMakie v0.15.11
+      [13f3f980] CairoMakie v0.15.13
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.2
-      [31c24e10] Distributions v0.25.126
-      [e9467ef8] GLMakie v0.13.11
+      [31c24e10] Distributions v0.25.129
+      [e9467ef8] GLMakie v0.13.13
+      [5c1252a2] GeometryBasics v0.5.11
       [4d00f742] GeometryTypes v0.8.5
       [7073ff75] IJulia v1.34.4
       [682c06a0] JSON v1.6.1
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
       [d3d80556] LineSearches v7.7.1
-      [ee78f7c6] Makie v0.24.11
+      [ee78f7c6] Makie v0.24.13
+      [7351309b] ManifoldAsymptote v0.1.0
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.27
-      [3362f125] ManifoldsBase v2.4.0
-      [0fc0a36d] Manopt v0.5.39
-      [5b8d5e80] ManoptExamples v0.1.18 `..`
+      [9d80ff41] ManifoldMakie v0.1.2
+      [1cead3c2] Manifolds v0.11.28
+      [3362f125] ManifoldsBase v2.5.0
+    ⌃ [0fc0a36d] Manopt v0.6.2
+      [5b8d5e80] ManoptExamples v0.1.20 `..`
       [51fcb6bd] NamedColors v0.2.3
       [6fe1bfb0] OffsetArrays v1.17.0
       [91a5bcdd] Plots v1.41.6
-      [08abe8d2] PrettyTables v3.3.2
+      [08abe8d2] PrettyTables v3.4.2
       [6099a3de] PythonCall v0.9.35
       [f468eda6] QuadraticModels v0.9.16
-      [731186ca] RecursiveArrayTools v4.3.1
+      [731186ca] RecursiveArrayTools v4.3.4
       [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌃ have new versions available and may be upgradable.
 
-This tutorial was last rendered June 11, 2026, 15:15:51.
+This tutorial was last rendered July 21, 2026, 12:47:32.
 
 ## Literature
 

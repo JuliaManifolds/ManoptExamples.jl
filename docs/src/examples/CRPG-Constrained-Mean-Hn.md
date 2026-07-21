@@ -1,5 +1,4 @@
-# The Constrained mean on high-dimensional Hyperbolic space
-
+# The Constrained mean on high-dimensional Hyperbolic space.
 Hajg Jasa, Ronny Bergmann
 2026-04-06
 
@@ -149,7 +148,7 @@ Proj_means = [
     project_C(M, m; op=c, radius=r) for
     (M, m, c, r) in zip(M_range, means, centers, radius_range)
 ]
-# Samll sanity check, these should all be about zero
+# Small sanity check, these should all be about zero
 ds = [distance(M, m, c) - r for (M, m, c, r) in zip(M_range, Proj_means, centers, radius_range)]
 maximum(abs.(ds))
 ```
@@ -168,12 +167,12 @@ function bench_aep(Manifold, center, radius, data)
     _proj_C!(M, q, p) = project_C!(M, q, p; radius=radius, op=center)
     _F(M, p) = F(M, p; pts=data, radius=radius, op=center)
     _prox_I!(M, q, λ, p) = _proj_C!(M, q, p)
-    # Copmute the Lipschitz constant of the gradient of f for the stepsize
+    # Compute the Lipschitz constant of the gradient of f for the stepsize
     D = 2 * maximum([distance(Manifold, center, pt) for pt in data])
     L_f = Manopt.ζ_1(-1, D)
     constant_stepsize = 1 / L_f
-    initial_stepsize = constant_stepsize
-    contraction_factor = 0.9
+    initial_stepsize = 4*constant_stepsize
+    contraction_factor = 0.8
     warm_start_factor = 10.0
     #
     # returns
@@ -253,6 +252,7 @@ function bench_aep(Manifold, center, radius, data)
             initial_stepsize=initial_stepsize,
             stop_when_stepsize_less=tol,
             contraction_factor=contraction_factor,
+            warm_start_factor=warm_start_factor,
         )),
         stopping_criterion=$(StopWhenGradientMappingNormLess(tol)|StopAfterIteration(5000)),
     ) evals = 1 samples = 10 seconds = 100
@@ -306,10 +306,11 @@ lines!(axis, n_range, [bi[:CRPG_BT][:time] for bi in b]; label="CRPG, backtracke
 lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label="PGA", color=tol_vibrant[2],)
 axis.xlabel = "Manifold dimension d"
 axis.ylabel = "runtime (sec.)"
+axis.yscale = log10
 axislegend(axis; position=:lt)
 ```
 
-![](CRPG-Constrained-Mean-Hn_files/figure-commonmark/cell-14-output-1.png)
+    Makie.Legend()
 
 ``` julia
 display(fig)
@@ -331,6 +332,8 @@ axis2.xlabel = "Manifold dimension d"
 axis2.ylabel = "# Iterations"
 axislegend(axis2; position=:rt)
 ```
+
+    Makie.Legend()
 
 ``` julia
 display(fig2)
@@ -354,32 +357,36 @@ This tutorial is cached. It was last run on the following package versions.
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.8.0
       [336ed68f] CSV v0.10.16
-      [13f3f980] CairoMakie v0.15.11
+      [13f3f980] CairoMakie v0.15.13
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.2
-      [31c24e10] Distributions v0.25.126
-      [e9467ef8] GLMakie v0.13.11
+      [31c24e10] Distributions v0.25.129
+      [e9467ef8] GLMakie v0.13.13
+      [5c1252a2] GeometryBasics v0.5.11
       [4d00f742] GeometryTypes v0.8.5
       [7073ff75] IJulia v1.34.4
       [682c06a0] JSON v1.6.1
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
       [d3d80556] LineSearches v7.7.1
-      [ee78f7c6] Makie v0.24.11
+      [ee78f7c6] Makie v0.24.13
+      [7351309b] ManifoldAsymptote v0.1.0
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.27
-      [3362f125] ManifoldsBase v2.4.0
-      [0fc0a36d] Manopt v0.5.39
-      [5b8d5e80] ManoptExamples v0.1.18 `..`
+      [9d80ff41] ManifoldMakie v0.1.2
+      [1cead3c2] Manifolds v0.11.28
+      [3362f125] ManifoldsBase v2.5.0
+    ⌃ [0fc0a36d] Manopt v0.6.2
+      [5b8d5e80] ManoptExamples v0.1.20 `..`
       [51fcb6bd] NamedColors v0.2.3
       [6fe1bfb0] OffsetArrays v1.17.0
       [91a5bcdd] Plots v1.41.6
-      [08abe8d2] PrettyTables v3.3.2
+      [08abe8d2] PrettyTables v3.4.2
       [6099a3de] PythonCall v0.9.35
       [f468eda6] QuadraticModels v0.9.16
-      [731186ca] RecursiveArrayTools v4.3.1
+      [731186ca] RecursiveArrayTools v4.3.4
       [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌃ have new versions available and may be upgradable.
 
-This tutorial was last rendered June 12, 2026, 11:25:27.
+This tutorial was last rendered July 21, 2026, 12:44:31.
