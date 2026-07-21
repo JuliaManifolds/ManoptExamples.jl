@@ -126,31 +126,20 @@ function get_const_stepsize(radius, τ)
     vals = [min(get_λ_δ(α1, α2, αg, δ),get_ζ_δ(δ)/Lg) for δ in 0.0:0.001:0.4]
     λ_const, max_idx = findmax(vals)
     return λ_const, δ_grid[max_idx]
-end 
-#
-function get_initial_stepsize(radius, τ, δ = 1e-8)
-    # α1 ≤ h(p) ≤ α2 ∀p ∈ B(anchor, radius)
-    α1 = 0.0
-    α2 = τ * 2 * radius
-    # ||grad_g(p)|| ≤ αg ∀p ∈ B(anchor, radius)
-    αg = 2 * radius 
-    # Compute s for backtracking: we need s < λ_δ
-    s = get_λ_δ(α1, α2, αg, δ)
-    return s 
 end
 ```
 
-    get_initial_stepsize (generic function with 2 methods)
+    get_const_stepsize (generic function with 1 method)
 
 Since the stepsizes are independent of the dimension, we define them here, in conjunction with the parameter $\delta$ used for the backtracking
 
 ``` julia
 λ_const, δ = get_const_stepsize(radius, τ)
-δ_bt = 0.2
-λ_init = get_initial_stepsize(radius, τ, δ_bt)
+δ_bt = 1.0
+λ_init = 10 * λ_const
 ```
 
-    0.1416160732896968
+    1.4758225181520177
 
 Before running the experiments, we initialize data collection functions that we will use later
 
@@ -299,19 +288,19 @@ The first table showcases the algorithm run with a constant stepsize…
 
 | **Dimension** | **Stepsize** |  **Time** | **Iterations** | **Objective** |
 |--------------:|-------------:|----------:|---------------:|--------------:|
-|         100.0 |     0.147582 | 0.0218097 |           57.5 |     0.0775637 |
-|         500.0 |     0.147582 | 0.0991153 |           54.7 |     0.0632621 |
-|        1000.0 |     0.147582 |  0.188338 |           61.8 |     0.0754969 |
-|        5000.0 |     0.147582 |  0.525201 |           43.9 |     0.0618121 |
+|         100.0 |     0.147582 | 0.0231786 |           57.5 |     0.0775637 |
+|         500.0 |     0.147582 |  0.102482 |           54.7 |     0.0632621 |
+|        1000.0 |     0.147582 |  0.196127 |           61.8 |     0.0754969 |
+|        5000.0 |     0.147582 |  0.534626 |           43.9 |     0.0618121 |
 
 … while the second table showcases the algorithm run with a backtracked stepsize
 
 | **Dimension** | **Stepsize** |  **Time** | **Iterations** | **Objective** |
 |--------------:|-------------:|----------:|---------------:|--------------:|
-|         100.0 |     0.141616 | 0.0302608 |           60.2 |     0.0775637 |
-|         500.0 |     0.141616 |  0.129029 |           57.0 |     0.0632621 |
-|        1000.0 |     0.141616 |   0.25233 |           64.7 |     0.0754969 |
-|        5000.0 |     0.141616 |  0.755547 |           45.8 |     0.0618121 |
+|         100.0 |      1.47582 | 0.0130627 |           21.1 |     0.0775637 |
+|         500.0 |      1.47582 | 0.0538948 |           19.9 |     0.0632621 |
+|        1000.0 |      1.47582 |  0.109934 |           22.4 |     0.0754969 |
+|        5000.0 |      1.47582 |  0.335534 |           16.4 |     0.0618121 |
 
 ## Test with different parameters
 
@@ -369,6 +358,9 @@ for radius in radii
     prox = get_prox(q_bar, τ)
     # constant stepsize 
     λ_const, δ_opt = get_const_stepsize(radius, τ)
+    δs_bt = [0.1, 1.0, 100.0]
+    λ_init = 10*λ_const
+
     rec_const = proximal_gradient_method(S, f, g, grad_g, start;
         prox_nonsmooth=prox, 
         stepsize=ConstantLength(λ_const),
@@ -386,10 +378,8 @@ for radius in radii
     results[(radius, :CONST, δ_opt)] = err_const
 
     # Backtracking
-    δs_bt = [round(δ_opt, digits=2) - 0.01, round(δ_opt, digits=2), round(δ_opt, digits=2) + 0.2]
 
     for δ_bt in δs_bt
-        λ_init = get_initial_stepsize(radius, τ, δ_bt)
         rec_bt = proximal_gradient_method(S, f, g, grad_g, start;
             prox_nonsmooth=prox, 
             stepsize=ProximalGradientMethodBacktracking(;
@@ -439,7 +429,7 @@ function plot_sphere_results(
             df_const  = df_02_const,
             df_bt     = df_02_bt,
             c_delta   = "delta0.113",
-            bt_deltas = ("delta0.1",  "delta0.11", "delta0.31"),
+            bt_deltas = ("delta0.1",  "delta1.0", "delta100.0"),
             thm_rate  = 0.987,
             thm_xend  = 150,
             ref_xends = (150, 60, 30),
@@ -449,7 +439,7 @@ function plot_sphere_results(
             df_const  = df_0125_const,
             df_bt     = df_0125_bt,
             c_delta   = "delta0.184",
-            bt_deltas = ("delta0.17", "delta0.18", "delta0.38"),
+            bt_deltas = ("delta0.1", "delta1.0", "delta100.0"),
             thm_rate  = 0.963,
             thm_xend  = 100,
             ref_xends = (100, 60, 30),
@@ -530,36 +520,38 @@ This tutorial is cached. It was last run on the following package versions.
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.8.0
       [336ed68f] CSV v0.10.16
-    ⌃ [13f3f980] CairoMakie v0.15.11
+      [13f3f980] CairoMakie v0.15.13
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.2
-    ⌃ [31c24e10] Distributions v0.25.126
-    ⌃ [e9467ef8] GLMakie v0.13.11
+      [31c24e10] Distributions v0.25.129
+      [e9467ef8] GLMakie v0.13.13
+      [5c1252a2] GeometryBasics v0.5.11
       [4d00f742] GeometryTypes v0.8.5
       [7073ff75] IJulia v1.34.4
       [682c06a0] JSON v1.6.1
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
       [d3d80556] LineSearches v7.7.1
-    ⌅ [ee78f7c6] Makie v0.24.11
+      [ee78f7c6] Makie v0.24.13
+      [7351309b] ManifoldAsymptote v0.1.0
       [af67fdf4] ManifoldDiff v0.4.5
-    ⌃ [1cead3c2] Manifolds v0.11.27
-    ⌃ [3362f125] ManifoldsBase v2.4.0
-    ⌃ [0fc0a36d] Manopt v0.5.39
-      [5b8d5e80] ManoptExamples v0.1.18 `..`
+      [9d80ff41] ManifoldMakie v0.1.2
+      [1cead3c2] Manifolds v0.11.28
+      [3362f125] ManifoldsBase v2.5.0
+      [0fc0a36d] Manopt v0.6.2
+      [5b8d5e80] ManoptExamples v0.1.20 `..`
       [51fcb6bd] NamedColors v0.2.3
       [6fe1bfb0] OffsetArrays v1.17.0
       [91a5bcdd] Plots v1.41.6
-    ⌃ [08abe8d2] PrettyTables v3.3.2
+      [08abe8d2] PrettyTables v3.4.2
       [6099a3de] PythonCall v0.9.35
       [f468eda6] QuadraticModels v0.9.16
-    ⌃ [731186ca] RecursiveArrayTools v4.3.1
+      [731186ca] RecursiveArrayTools v4.3.4
       [1e40b3f8] RipQP v0.7.0
-    Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`
 
-This tutorial was last rendered July 10, 2026, 12:3:36.
+This tutorial was last rendered July 20, 2026, 15:28:56.
 
 ## Literature
 
