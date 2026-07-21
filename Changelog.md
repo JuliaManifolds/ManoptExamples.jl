@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-One example on the sphere for the (convex) [proximal gradient method](https://manoptjl.org/stable/solvers/proximal_gradient_method/) method in [Manopt.jl](https://manoptjl.org/stable/).
+One example on the sphere for the (convex) [proximal gradient method](https://manoptjl.org/stable/solvers/proximal_gradient_method/) method in [Manopt.jl](https://manoptjl.org/stable/). (#48)
 
 ### Changed
 
