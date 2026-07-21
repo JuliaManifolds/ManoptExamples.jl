@@ -1,4 +1,5 @@
 # A Geodesically Convex Example on SPDs
+
 Hajg Jasa
 2025-04-16
 
@@ -417,7 +418,7 @@ end
 
 ![](CRPG-Convex-SPD_files/figure-commonmark/cell-13-output-1.png)
 
-This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.10.
+This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.7.
 
 ## Technical details
 
