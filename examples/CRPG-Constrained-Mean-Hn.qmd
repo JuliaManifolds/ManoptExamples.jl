@@ -174,7 +174,7 @@ Proj_means = [
     project_C(M, m; op=c, radius=r) for
     (M, m, c, r) in zip(M_range, means, centers, radius_range)
 ]
-# Samll sanity check, these should all be about zero
+# Small sanity check, these should all be about zero
 ds = [distance(M, m, c) - r for (M, m, c, r) in zip(M_range, Proj_means, centers, radius_range)]
 maximum(abs.(ds))
 ```
@@ -191,12 +191,12 @@ function bench_aep(Manifold, center, radius, data)
     _proj_C!(M, q, p) = project_C!(M, q, p; radius=radius, op=center)
     _F(M, p) = F(M, p; pts=data, radius=radius, op=center)
     _prox_I!(M, q, λ, p) = _proj_C!(M, q, p)
-    # Copmute the Lipschitz constant of the gradient of f for the stepsize
+    # Compute the Lipschitz constant of the gradient of f for the stepsize
     D = 2 * maximum([distance(Manifold, center, pt) for pt in data])
     L_f = Manopt.ζ_1(-1, D)
     constant_stepsize = 1 / L_f
-    initial_stepsize = constant_stepsize
-    contraction_factor = 0.9
+    initial_stepsize = 4*constant_stepsize
+    contraction_factor = 0.8
     warm_start_factor = 10.0
     #
     # returns
@@ -276,6 +276,7 @@ function bench_aep(Manifold, center, radius, data)
             initial_stepsize=initial_stepsize,
             stop_when_stepsize_less=tol,
             contraction_factor=contraction_factor,
+            warm_start_factor=warm_start_factor,
         )),
         stopping_criterion=$(StopWhenGradientMappingNormLess(tol)|StopAfterIteration(5000)),
     ) evals = 1 samples = 10 seconds = 100
@@ -331,6 +332,7 @@ lines!(axis, n_range, [bi[:CRPG_BT][:time] for bi in b]; label="CRPG, backtracke
 lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label="PGA", color=tol_vibrant[2],)
 axis.xlabel = "Manifold dimension d"
 axis.ylabel = "runtime (sec.)"
+axis.yscale = log10
 axislegend(axis; position=:lt)
 ```
 
