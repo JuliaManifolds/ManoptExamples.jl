@@ -2,13 +2,12 @@
 title: "A Geodesically Convex Example on SPDs"
 author: "Hajg Jasa"
 date: 04/16/2025
-engine: julia
 ---
 
 ## Introduction
 
 In this example we compare the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025:2](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the space of symmetric positive definite matrices.
-This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 5.3.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.1.
 
 ```{julia}
 #| echo: false
@@ -258,7 +257,7 @@ for n in spd_dims
     # Conseravative estimate of the Lipschitz constant for grad_g
     L_g = 1.05 * theoretical_lipschitz_constant(M, p0, n, D/2)
     constant_stepsize = 1/L_g
-    initial_stepsize = 3/2 * constant_stepsize
+    initial_stepsize = 1.0
     contraction_factor = 0.9
     warm_start_factor = 2.0
 
@@ -322,6 +321,7 @@ We can take a look at how the algorithms compare to each other in their performa
 ```{julia}
 # | echo: false
 # | code-fold: true
+# | output: asis
 benchmarking && pretty_table(A1_SPD; backend = :markdown, column_labels = col_names_1)
 ```
 
@@ -476,7 +476,7 @@ for fig in figs
 end
 ```
 
-This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.7.
+This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [BergmannJasaJohnPfeffer:2025:2](@cite), Theorem 4.6
 
 ## Technical details
 

@@ -5,7 +5,7 @@ Hajg Jasa, Paula John
 ## Introduction
 
 In this example we use the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025:2](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the hyperbolic space.
-This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.2.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.3.
 
 ``` julia
 using PrettyTables
@@ -46,13 +46,13 @@ The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically
 We initialize the experiment parameters, as well as some utility functions.
 
 ``` julia
-random_seed = 42
+random_seed = 31
 n_tests = 10 # number of tests for each parameter setting
 
 atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-dims = [2, 10, 100]
+dims = [2, 10, 100, 500]
 μs = [0.1, 0.5, 1.0]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```
@@ -211,9 +211,9 @@ for n in dims
             D = 2.05 * maximum([distance(M, p0, di) for di in vcat(data, [anchor])])
             L_g = Manopt.ζ_1(-1.0, D)
             constant_stepsize = 1/L_g
-            initial_stepsize = 3/2 * constant_stepsize
-            contraction_factor = 0.9
-            warm_start_factor = 2.0
+            initial_stepsize = 4 * constant_stepsize
+            contraction_factor = 0.8
+            warm_start_factor = 10.0
             #
             # Optimization
             # Constant stepsize
@@ -320,9 +320,6 @@ end
 
 We export the results to CSV files
 
-<details class="code-fold">
-<summary>Code</summary>
-
 ``` julia
 # Sort the dataframes by the parameter μ and create the final results dataframes
 df_pgm_cn = sort(df_pgm_cn, :μ)
@@ -353,69 +350,81 @@ CSV.write(joinpath(results_folder, "results-Hn-time-iter-$(n_tests)-$(dims[end])
 CSV.write(joinpath(results_folder, "results-Hn-obj-spar-$(n_tests)-$(dims[end]).csv"), df_results_obj_spar)
 ```
 
-</details>
-
 We can take a look at how the algorithms compare to each other in their performance with the following tables.
 First, we look at the time and number of iterations for each algorithm.
 
 | **μ** | **n** | **CRPG_const_iter** | **CRPG_const_time** | **CRPG_bt_iter** | **CRPG_bt_time** | **CPPA_iter** | **CPPA_time** |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.1 | 2 | 167 | 0.049181 | 1561 | 1.4581 | 5000 | 3.9519 |
-| 0.1 | 10 | 111 | 0.0443115 | 2033 | 3.18836 | 5000 | 7.17354 |
-| 0.1 | 100 | 48 | 0.0358821 | 2928 | 12.569 | 5000 | 7.73864 |
-| 0.5 | 2 | 121 | 0.0317396 | 567 | 0.86611 | 4004 | 3.2404 |
-| 0.5 | 10 | 81 | 0.0267678 | 1117 | 2.01164 | 4502 | 5.1665 |
-| 0.5 | 100 | 45 | 0.0335185 | 1021 | 3.32761 | 5000 | 6.23522 |
-| 1.0 | 2 | 69 | 0.0185704 | 73 | 0.0460234 | 2511 | 2.28915 |
-| 1.0 | 10 | 67 | 0.0204594 | 1098 | 1.9168 | 3507 | 3.39929 |
-| 1.0 | 100 | 45 | 0.0336094 | 3069 | 13.005 | 4502 | 5.83509 |
+| 0.1 | 2 | 151 | 0.0310879 | 36 | 0.0109412 | 5000 | 2.79486 |
+| 0.1 | 10 | 71 | 0.0188336 | 16 | 0.00592263 | 5000 | 3.10504 |
+| 0.1 | 100 | 36 | 0.0265803 | 883 | 3.95681 | 5000 | 5.75863 |
+| 0.1 | 500 | 31 | 0.120596 | 4614 | 177.527 | 5000 | 26.0805 |
+| 0.5 | 2 | 114 | 0.0226986 | 28 | 0.00840331 | 5000 | 2.79979 |
+| 0.5 | 10 | 59 | 0.0133695 | 11 | 0.00414099 | 4502 | 2.78999 |
+| 0.5 | 100 | 33 | 0.0230144 | 616 | 2.64535 | 5000 | 5.72404 |
+| 0.5 | 500 | 18 | 0.0729229 | 2588 | 125.64 | 1515 | 7.97267 |
+| 1.0 | 2 | 47 | 0.00961312 | 11 | 0.0035858 | 2013 | 1.13444 |
+| 1.0 | 10 | 32 | 0.00719324 | 8 | 0.00325584 | 2511 | 1.54804 |
+| 1.0 | 100 | 14 | 0.00937349 | 297 | 1.30338 | 1018 | 1.15093 |
+| 1.0 | 500 | 8 | 0.0304811 | 576 | 29.301 | 22 | 0.112924 |
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 
 | **μ** | **n** | **CRPG_const_obj** | **CRPG_const_spar** | **CRPG_bt_obj** | **CRPG_bt_spar** | **CPPA_obj** | **CPPA_spar** |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.1 | 2 | 3.17406 | 0.05 | 3.17406 | 0.05 | 3.17406 | 0.05 |
-| 0.1 | 10 | 8.32265 | 0.15 | 8.32265 | 0.15 | 8.32265 | 0.15 |
-| 0.1 | 100 | 52.938 | 0.088 | 52.938 | 0.088 | 52.938 | 0.088 |
-| 0.5 | 2 | 3.89857 | 0.4 | 3.89857 | 0.4 | 3.89857 | 0.4 |
-| 0.5 | 10 | 9.47638 | 0.51 | 9.47638 | 0.51 | 9.47638 | 0.51 |
-| 0.5 | 100 | 55.593 | 0.442 | 55.593 | 0.442 | 55.593 | 0.442 |
-| 1.0 | 2 | 4.51909 | 0.6 | 4.51909 | 0.6 | 4.51909 | 0.6 |
-| 1.0 | 10 | 10.357 | 0.73 | 10.357 | 0.73 | 10.357 | 0.73 |
-| 1.0 | 100 | 57.1667 | 0.76 | 57.1667 | 0.76 | 57.167 | 0.763 |
+| 0.1 | 2 | 2.57211 | 0.05 | 2.57211 | 0.05 | 2.57211 | 0.05 |
+| 0.1 | 10 | 5.97048 | 0.08 | 5.97048 | 0.08 | 5.97048 | 0.08 |
+| 0.1 | 100 | 50.5157 | 0.257 | 50.5157 | 0.257 | 50.5157 | 0.257 |
+| 0.1 | 500 | 250.668 | 0.4988 | 250.668 | 0.499 | 250.668 | 0.5 |
+| 0.5 | 2 | 3.27837 | 0.15 | 3.27837 | 0.15 | 3.27837 | 0.15 |
+| 0.5 | 10 | 6.75073 | 0.59 | 6.75073 | 0.59 | 6.75074 | 0.6 |
+| 0.5 | 100 | 51.3055 | 0.834 | 51.3055 | 0.834 | 51.3055 | 0.834 |
+| 0.5 | 500 | 251.35 | 0.9544 | 251.35 | 0.9544 | 251.351 | 0.9644 |
+| 1.0 | 2 | 3.86482 | 0.8 | 3.86482 | 0.8 | 3.86482 | 0.8 |
+| 1.0 | 10 | 7.36369 | 0.89 | 7.36369 | 0.89 | 7.36369 | 0.89 |
+| 1.0 | 100 | 51.8631 | 0.986 | 51.8631 | 0.986 | 51.8632 | 0.992 |
+| 1.0 | 500 | 251.866 | 0.9992 | 251.866 | 0.9992 | 251.866 | 1.0 |
 
 ## Technical details
 
 This tutorial is cached. It was last run on the following package versions.
 
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
-      [6e4b80f9] BenchmarkTools v1.6.0
-      [336ed68f] CSV v0.10.15
-      [13f3f980] CairoMakie v0.15.6
+      [6e4b80f9] BenchmarkTools v1.8.0
+      [336ed68f] CSV v0.10.16
+      [13f3f980] CairoMakie v0.15.13
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
-      [a93c6f00] DataFrames v1.8.0
-      [31c24e10] Distributions v0.25.122
-    ⌅ [682c06a0] JSON v0.21.4
+      [a93c6f00] DataFrames v1.8.2
+      [31c24e10] Distributions v0.25.129
+      [e9467ef8] GLMakie v0.13.13
+      [5c1252a2] GeometryBasics v0.5.11
+      [4d00f742] GeometryTypes v0.8.5
+      [7073ff75] IJulia v1.34.4
+      [682c06a0] JSON v1.6.1
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
-      [d3d80556] LineSearches v7.4.0
-      [ee78f7c6] Makie v0.24.6
+      [d3d80556] LineSearches v7.7.1
+      [ee78f7c6] Makie v0.24.13
+      [7351309b] ManifoldAsymptote v0.1.0
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.0
-      [3362f125] ManifoldsBase v2.0.0
-      [0fc0a36d] Manopt v0.5.25
-      [5b8d5e80] ManoptExamples v0.1.16 `..`
+      [9d80ff41] ManifoldMakie v0.1.2
+      [1cead3c2] Manifolds v0.11.28
+      [3362f125] ManifoldsBase v2.5.0
+    ⌃ [0fc0a36d] Manopt v0.6.2
+      [5b8d5e80] ManoptExamples v0.1.20 `..`
       [51fcb6bd] NamedColors v0.2.3
-      [91a5bcdd] Plots v1.41.1
-      [08abe8d2] PrettyTables v3.1.0
-      [6099a3de] PythonCall v0.9.28
-      [f468eda6] QuadraticModels v0.9.14
+      [6fe1bfb0] OffsetArrays v1.17.0
+      [91a5bcdd] Plots v1.41.6
+      [08abe8d2] PrettyTables v3.4.2
+      [6099a3de] PythonCall v0.9.35
+      [f468eda6] QuadraticModels v0.9.16
+      [731186ca] RecursiveArrayTools v4.3.4
       [1e40b3f8] RipQP v0.7.0
-    Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`
+    Info Packages marked with ⌃ have new versions available and may be upgradable.
 
-This tutorial was last rendered October 15, 2025, 15:29:44.
+This tutorial was last rendered July 22, 2026, 1:31:22.
 
 ## Literature
 

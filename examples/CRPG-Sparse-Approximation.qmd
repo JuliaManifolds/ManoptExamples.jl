@@ -2,13 +2,12 @@
 title: "A Sparse Approximation Problem on Hadamard Manifolds"
 author: "Hajg Jasa, Paula John"
 date: 07/02/2025
-engine: julia
 ---
 
 ## Introduction
 
 In this example we use the Convex Riemannian Proximal Gradient (CRPG) method [BergmannJasaJohnPfeffer:2025:2](@cite) with the Cyclic Proximal Point Algorithm, which was introduced in [Bacak:2014](@cite), on the hyperbolic space.
-This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.2.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.3.
 
 ```{julia}
 #| echo: false
@@ -70,13 +69,13 @@ The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-random_seed = 42
+random_seed = 31
 n_tests = 10 # number of tests for each parameter setting
 
 atol = 1e-7
 max_iters = 5000
 N = 1000 # number of data points
-dims = [2, 10, 100]
+dims = [2, 10, 100, 500]
 μs = [0.1, 0.5, 1.0]
 σ = 1.0 # standard deviation for the Gaussian random data points
 ```
@@ -258,9 +257,9 @@ for n in dims
             D = 2.05 * maximum([distance(M, p0, di) for di in vcat(data, [anchor])])
             L_g = Manopt.ζ_1(-1.0, D)
             constant_stepsize = 1/L_g
-            initial_stepsize = 3/2 * constant_stepsize
-            contraction_factor = 0.9
-            warm_start_factor = 2.0
+            initial_stepsize = 4 * constant_stepsize
+            contraction_factor = 0.8
+            warm_start_factor = 10.0
             #
             # Optimization
             # Constant stepsize

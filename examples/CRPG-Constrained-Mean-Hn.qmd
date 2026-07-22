@@ -2,13 +2,13 @@
 title: "The Constrained mean on high-dimensional Hyperbolic space."
 author: "Hajg Jasa, Ronny Bergmann"
 date: 16/06/2025
-engine: julia
 ---
 
 ## Introduction
 
 This example is to be thought of as a continuation of the [Constrained Mean on Hyperbolic Space](https://juliamanifolds.github.io/ManoptExamples.jl/stable/examples/Constrained-Mean-Hn/), where we compare the Intrinsic Convex Riemannian Proximal Gradient Method (CRPG) from [BergmannJasaJohnPfeffer:2025:2](@cite) with the Projected Gradient Algorithm (PGA) as introduced in [BergmannFerreiraNemethZhu:2025](@cite).
 For CRPG, we test performances of both constant and backtracked stepsize strategies.
+This example reproduces the results from [BergmannJasaJohnPfeffer:2025:2](@cite), Section 6.4.
 
 ```{julia}
 #| echo: false
@@ -27,7 +27,7 @@ import ColorSchemes.tol_vibrant
 ```
 
 Consider the constrained Riemannian center of mass
-for a given set of points ``q_i \in \mathcal M$ $i=1,\ldots,N$
+for a given set of points $q_i \in \mathcal M$, $i=1,\ldots,N$
 given by
 
 ```math
@@ -53,7 +53,7 @@ and the constrained set $\mathcal C = C_{c,r}$ as the ball of radius $r$ around 
 ```{julia}
 #| output: false
 n_range = Vector(2:200)
-radius_range = [1 / sqrt(n) for n in n_range]
+radius_range = [1 / sqrt(n) for n ∈ n_range]
 N_range = [400 for n ∈ n_range]
 M_range = [Hyperbolic(n) for n ∈ n_range]
 σ_range = [ 1.5/sqrt(sqrt(n-1)) for n ∈ n_range]
@@ -67,7 +67,7 @@ The data consists of $N=200$ points, where we skew the data a bit to force the m
 #| echo: false
 #| output: false
 experiment_name = "CRPG-CnBallConstrMean-$(minimum(n_range))-$(maximum(n_range))-"
-folder = (@__DIR__) * "/crpg-projected-gradient-results/"
+folder = (@__DIR__) * "/CRPG-projected-gradient-results/"
 fn = folder * experiment_name
 write_csv = true;
 (!isdir(folder) && write_csv) && mkpath(folder)
@@ -174,7 +174,7 @@ Proj_means = [
     project_C(M, m; op=c, radius=r) for
     (M, m, c, r) in zip(M_range, means, centers, radius_range)
 ]
-# Samll sanity check, these should all be about zero
+# Small sanity check, these should all be about zero
 ds = [distance(M, m, c) - r for (M, m, c, r) in zip(M_range, Proj_means, centers, radius_range)]
 maximum(abs.(ds))
 ```
@@ -191,12 +191,12 @@ function bench_aep(Manifold, center, radius, data)
     _proj_C!(M, q, p) = project_C!(M, q, p; radius=radius, op=center)
     _F(M, p) = F(M, p; pts=data, radius=radius, op=center)
     _prox_I!(M, q, λ, p) = _proj_C!(M, q, p)
-    # Copmute the Lipschitz constant of the gradient of f for the stepsize
+    # Compute the Lipschitz constant of the gradient of f for the stepsize
     D = 2 * maximum([distance(Manifold, center, pt) for pt in data])
     L_f = Manopt.ζ_1(-1, D)
     constant_stepsize = 1 / L_f
-    initial_stepsize = constant_stepsize
-    contraction_factor = 0.9
+    initial_stepsize = 4*constant_stepsize
+    contraction_factor = 0.8
     warm_start_factor = 10.0
     #
     # returns
@@ -276,6 +276,7 @@ function bench_aep(Manifold, center, radius, data)
             initial_stepsize=initial_stepsize,
             stop_when_stepsize_less=tol,
             contraction_factor=contraction_factor,
+            warm_start_factor=warm_start_factor,
         )),
         stopping_criterion=$(StopWhenGradientMappingNormLess(tol)|StopAfterIteration(5000)),
     ) evals = 1 samples = 10 seconds = 100
@@ -292,12 +293,33 @@ function bench_aep(Manifold, center, radius, data)
 end
 ```
 
-and run these
+and average these over $10$ runs
+
+```{julia}
+function average_benchmarks(Manifold, center, radius, data; N=10)
+  local_bench = Any[]
+  for i in 1:N
+    # Perturb the center 
+    starting_point = exp(Manifold, center, rand(Manifold, vector_at = center))
+    push!(local_bench, bench_aep(Manifold, starting_point, radius, data))
+  end
+
+  stats = Dict(
+    method => Dict(
+      :Iter => mean([l[method][:Iter] for l in local_bench]),
+      :Cost => [l[method][:Cost] for l in local_bench],
+      :time => mean([l[method][:time] for l in local_bench])
+    ) for method in [:CRPG_CN, :CRPG_BT, :PGA]
+  )
+
+  return stats
+end
+```
 
 ```{julia}
 #| output: false
 #| echo: false
-b = [bench_aep(M, c, r, d) for (M, c, r, d) in zip(M_range, centers, radius_range, data)]
+b = [average_benchmarks(M, c, r, d) for (M, c, r, d) in zip(M_range, centers, radius_range, data)]
 ```
 
 The resulting plot of runtime is
@@ -310,8 +332,13 @@ lines!(axis, n_range, [bi[:CRPG_BT][:time] for bi in b]; label="CRPG, backtracke
 lines!(axis, n_range, [bi[:PGA][:time] for bi in b]; label="PGA", color=tol_vibrant[2],)
 axis.xlabel = "Manifold dimension d"
 axis.ylabel = "runtime (sec.)"
+axis.yscale = log10
 axislegend(axis; position=:lt)
-fig
+```
+
+```{julia}
+#| code-fold: true
+display(fig)
 ```
 
 ```{julia}
@@ -339,7 +366,11 @@ lines!(axis2, n_range, [bi[:PGA][:Iter] for bi in b]; label="PGA", color=tol_vib
 axis2.xlabel = "Manifold dimension d"
 axis2.ylabel = "# Iterations"
 axislegend(axis2; position=:rt)
-fig2
+```
+
+```{julia}
+#| code-fold: true
+display(fig2)
 ```
 
 ```{julia}

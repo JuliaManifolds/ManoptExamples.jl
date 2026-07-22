@@ -138,6 +138,7 @@ examples_menu =
         "Grassmann Experiment" => "examples/NCRPG-Grassmann.md",
         "Row-Sparse Low-Rank Matrix Recovery" => "examples/NCRPG-Row-Sparse-Low-Rank.md",
         "Convex Example on SPDs" => "examples/CRPG-Convex-SPD.md",
+        raw"Convex Example on $\mathbb S^n$" => "examples/CRPG-Sphere-Example.md",
         raw"Sparse Approximation on $\mathbb H^n$" => "examples/CRPG-Sparse-Approximation.md",
         raw"Mean on $\mathbb H^n$" => "examples/CRPG-Constrained-Mean-Hn.md",
     ],
