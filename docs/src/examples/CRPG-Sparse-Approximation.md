@@ -1,5 +1,4 @@
 # A Sparse Approximation Problem on Hadamard Manifolds
-
 Hajg Jasa, Paula John
 2025-07-02
 
@@ -47,7 +46,7 @@ The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically
 We initialize the experiment parameters, as well as some utility functions.
 
 ``` julia
-random_seed = 42
+random_seed = 31
 n_tests = 10 # number of tests for each parameter setting
 
 atol = 1e-7
@@ -212,8 +211,8 @@ for n in dims
             D = 2.05 * maximum([distance(M, p0, di) for di in vcat(data, [anchor])])
             L_g = Manopt.ζ_1(-1.0, D)
             constant_stepsize = 1/L_g
-            initial_stepsize = 3/2 * constant_stepsize
-            contraction_factor = 0.9
+            initial_stepsize = 4 * constant_stepsize
+            contraction_factor = 0.8
             warm_start_factor = 10.0
             #
             # Optimization
@@ -356,35 +355,35 @@ First, we look at the time and number of iterations for each algorithm.
 
 | **μ** | **n** | **CRPG_const_iter** | **CRPG_const_time** | **CRPG_bt_iter** | **CRPG_bt_time** | **CPPA_iter** | **CPPA_time** |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.1 | 2 | 187 | 0.0412868 | 1585 | 0.971092 | 5000 | 3.00536 |
-| 0.1 | 10 | 72 | 0.0199021 | 48 | 0.019421 | 5000 | 3.39725 |
-| 0.1 | 100 | 37 | 0.0325996 | 566 | 3.10543 | 5000 | 7.57286 |
-| 0.1 | 500 | 32 | 0.124239 | 4242 | 302.299 | 5000 | 26.5391 |
-| 0.5 | 2 | 123 | 0.0247647 | 142 | 0.07429 | 4502 | 2.70889 |
-| 0.5 | 10 | 50 | 0.0114526 | 34 | 0.0123029 | 4004 | 2.80571 |
-| 0.5 | 100 | 34 | 0.0284071 | 361 | 2.36567 | 4502 | 6.77644 |
-| 0.5 | 500 | 18 | 0.0736324 | 1398 | 217.205 | 1018 | 5.4643 |
-| 1.0 | 2 | 64 | 0.0132351 | 80 | 0.0513453 | 2511 | 1.5178 |
-| 1.0 | 10 | 24 | 0.00590168 | 16 | 0.00623312 | 2013 | 1.47139 |
-| 1.0 | 100 | 16 | 0.0135461 | 542 | 5.22651 | 1018 | 1.54356 |
-| 1.0 | 500 | 3 | 0.0120196 | 2 | 0.0132871 | 22 | 0.113782 |
+| 0.1 | 2 | 151 | 0.0310879 | 36 | 0.0109412 | 5000 | 2.79486 |
+| 0.1 | 10 | 71 | 0.0188336 | 16 | 0.00592263 | 5000 | 3.10504 |
+| 0.1 | 100 | 36 | 0.0265803 | 883 | 3.95681 | 5000 | 5.75863 |
+| 0.1 | 500 | 31 | 0.120596 | 4614 | 177.527 | 5000 | 26.0805 |
+| 0.5 | 2 | 114 | 0.0226986 | 28 | 0.00840331 | 5000 | 2.79979 |
+| 0.5 | 10 | 59 | 0.0133695 | 11 | 0.00414099 | 4502 | 2.78999 |
+| 0.5 | 100 | 33 | 0.0230144 | 616 | 2.64535 | 5000 | 5.72404 |
+| 0.5 | 500 | 18 | 0.0729229 | 2588 | 125.64 | 1515 | 7.97267 |
+| 1.0 | 2 | 47 | 0.00961312 | 11 | 0.0035858 | 2013 | 1.13444 |
+| 1.0 | 10 | 32 | 0.00719324 | 8 | 0.00325584 | 2511 | 1.54804 |
+| 1.0 | 100 | 14 | 0.00937349 | 297 | 1.30338 | 1018 | 1.15093 |
+| 1.0 | 500 | 8 | 0.0304811 | 576 | 29.301 | 22 | 0.112924 |
 
 Second, we look at the objective values and sparsity of the solutions found by each algorithm.
 
 | **μ** | **n** | **CRPG_const_obj** | **CRPG_const_spar** | **CRPG_bt_obj** | **CRPG_bt_spar** | **CPPA_obj** | **CPPA_spar** |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.1 | 2 | 3.04196 | 0.0 | 3.04196 | 0.0 | 3.04196 | 0.0 |
-| 0.1 | 10 | 5.70847 | 0.15 | 5.70847 | 0.15 | 5.70847 | 0.15 |
-| 0.1 | 100 | 50.5466 | 0.256 | 50.5466 | 0.256 | 50.5466 | 0.256 |
-| 0.1 | 500 | 250.208 | 0.443 | 250.208 | 0.443 | 250.208 | 0.444 |
-| 0.5 | 2 | 3.78239 | 0.3 | 3.78239 | 0.3 | 3.78239 | 0.3 |
-| 0.5 | 10 | 6.41538 | 0.62 | 6.41538 | 0.62 | 6.41538 | 0.62 |
-| 0.5 | 100 | 51.3719 | 0.811 | 51.3719 | 0.811 | 51.3719 | 0.812 |
-| 0.5 | 500 | 250.771 | 0.9828 | 250.771 | 0.9828 | 250.772 | 0.9898 |
-| 1.0 | 2 | 4.39331 | 0.75 | 4.39331 | 0.75 | 4.39331 | 0.75 |
-| 1.0 | 10 | 6.99343 | 0.95 | 6.99343 | 0.95 | 6.99343 | 0.95 |
-| 1.0 | 100 | 51.927 | 0.993 | 51.927 | 0.993 | 51.927 | 0.996 |
-| 1.0 | 500 | 251.273 | 1.0 | 251.273 | 1.0 | 251.273 | 1.0 |
+| 0.1 | 2 | 2.57211 | 0.05 | 2.57211 | 0.05 | 2.57211 | 0.05 |
+| 0.1 | 10 | 5.97048 | 0.08 | 5.97048 | 0.08 | 5.97048 | 0.08 |
+| 0.1 | 100 | 50.5157 | 0.257 | 50.5157 | 0.257 | 50.5157 | 0.257 |
+| 0.1 | 500 | 250.668 | 0.4988 | 250.668 | 0.499 | 250.668 | 0.5 |
+| 0.5 | 2 | 3.27837 | 0.15 | 3.27837 | 0.15 | 3.27837 | 0.15 |
+| 0.5 | 10 | 6.75073 | 0.59 | 6.75073 | 0.59 | 6.75074 | 0.6 |
+| 0.5 | 100 | 51.3055 | 0.834 | 51.3055 | 0.834 | 51.3055 | 0.834 |
+| 0.5 | 500 | 251.35 | 0.9544 | 251.35 | 0.9544 | 251.351 | 0.9644 |
+| 1.0 | 2 | 3.86482 | 0.8 | 3.86482 | 0.8 | 3.86482 | 0.8 |
+| 1.0 | 10 | 7.36369 | 0.89 | 7.36369 | 0.89 | 7.36369 | 0.89 |
+| 1.0 | 100 | 51.8631 | 0.986 | 51.8631 | 0.986 | 51.8632 | 0.992 |
+| 1.0 | 500 | 251.866 | 0.9992 | 251.866 | 0.9992 | 251.866 | 1.0 |
 
 ## Technical details
 
@@ -393,35 +392,39 @@ This tutorial is cached. It was last run on the following package versions.
     Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
       [6e4b80f9] BenchmarkTools v1.8.0
       [336ed68f] CSV v0.10.16
-      [13f3f980] CairoMakie v0.15.11
+      [13f3f980] CairoMakie v0.15.13
       [0ca39b1e] Chairmarks v1.3.1
       [35d6a980] ColorSchemes v3.31.0
       [5ae59095] Colors v0.13.1
       [a93c6f00] DataFrames v1.8.2
-      [31c24e10] Distributions v0.25.126
-      [e9467ef8] GLMakie v0.13.11
+      [31c24e10] Distributions v0.25.129
+      [e9467ef8] GLMakie v0.13.13
+      [5c1252a2] GeometryBasics v0.5.11
       [4d00f742] GeometryTypes v0.8.5
       [7073ff75] IJulia v1.34.4
       [682c06a0] JSON v1.6.1
       [8ac3fa9e] LRUCache v1.6.2
       [b964fa9f] LaTeXStrings v1.4.0
       [d3d80556] LineSearches v7.7.1
-      [ee78f7c6] Makie v0.24.11
+      [ee78f7c6] Makie v0.24.13
+      [7351309b] ManifoldAsymptote v0.1.0
       [af67fdf4] ManifoldDiff v0.4.5
-      [1cead3c2] Manifolds v0.11.27
-      [3362f125] ManifoldsBase v2.4.0
-      [0fc0a36d] Manopt v0.5.39
-      [5b8d5e80] ManoptExamples v0.1.18 `..`
+      [9d80ff41] ManifoldMakie v0.1.2
+      [1cead3c2] Manifolds v0.11.28
+      [3362f125] ManifoldsBase v2.5.0
+    ⌃ [0fc0a36d] Manopt v0.6.2
+      [5b8d5e80] ManoptExamples v0.1.20 `..`
       [51fcb6bd] NamedColors v0.2.3
       [6fe1bfb0] OffsetArrays v1.17.0
       [91a5bcdd] Plots v1.41.6
-      [08abe8d2] PrettyTables v3.3.2
+      [08abe8d2] PrettyTables v3.4.2
       [6099a3de] PythonCall v0.9.35
       [f468eda6] QuadraticModels v0.9.16
-      [731186ca] RecursiveArrayTools v4.3.1
+      [731186ca] RecursiveArrayTools v4.3.4
       [1e40b3f8] RipQP v0.7.0
+    Info Packages marked with ⌃ have new versions available and may be upgradable.
 
-This tutorial was last rendered June 13, 2026, 18:46:45.
+This tutorial was last rendered July 22, 2026, 1:31:22.
 
 ## Literature
 

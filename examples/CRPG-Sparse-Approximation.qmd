@@ -69,7 +69,7 @@ The goal is to find the minimizer of $f$ on $\mathcal M$, which is heuristically
 We initialize the experiment parameters, as well as some utility functions.
 ```{julia}
 #| output: false
-random_seed = 42
+random_seed = 31
 n_tests = 10 # number of tests for each parameter setting
 
 atol = 1e-7
@@ -257,8 +257,8 @@ for n in dims
             D = 2.05 * maximum([distance(M, p0, di) for di in vcat(data, [anchor])])
             L_g = Manopt.ζ_1(-1.0, D)
             constant_stepsize = 1/L_g
-            initial_stepsize = 3/2 * constant_stepsize
-            contraction_factor = 0.9
+            initial_stepsize = 4 * constant_stepsize
+            contraction_factor = 0.8
             warm_start_factor = 10.0
             #
             # Optimization
