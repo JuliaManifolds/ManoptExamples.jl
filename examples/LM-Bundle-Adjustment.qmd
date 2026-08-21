@@ -13,7 +13,8 @@ Pkg.activate("."); # for reproducibility use the local tutorial environment.
 
 ## Preface
 
-This notebook reproduces the results of Section 6.3 in [BaranBergmann:2026](@cite). We use the following packages and parameters
+This notebook reproduces the results of Section 6.3 in [BaranBergmann:2026](@cite). We use the following packages and parameters.
+If you wish to run this file yourself, you need to download the data from https://grail.cs.washington.edu/projects/bal/ , for example https://grail.cs.washington.edu/projects/bal/data/ladybug/problem-49-7776-pre.txt.bz2 , and update the path `data_filename` in the cell below.
 
 ```{julia}
 #| code-fold: true
@@ -37,6 +38,8 @@ export_csv = true
 ptc = NamedColors.load_paul_tol()
 ltmads_color = ptc["mutedsand"]
 robust_color = ptc["mutedgreen"]
+
+data_filename = "/home/mateusz/data/bal/ladybug/problem-49-7776-pre.txt.bz2"
 ```
 
 ## Introduction
@@ -385,11 +388,11 @@ end
 
 function Manopt.allocate_jacobian(
         M::AbstractManifold,
-        vgf::VectorGradientFunction{InplaceEvaluation, FunctionVectorialType{NestedPowerRepresentation}, <:CoefficientVectorialType, <:Fi_block, <:jacFi_block_analytical},
+        vgf::VectorGradientFunction{FunctionVectorialType{NestedPowerRepresentation}, <:CoefficientVectorialType, <:Fi_block, <:jacFi_block_analytical},
         ::AbstractBasis = DefaultOrthonormalBasis();
         T::Type = Float64,
     )
-    fJ = vgf.jacobian!!
+    fJ = vgf.jacobian!
     obs = fJ.dataset.observations[fJ.obs_idx]
 
     M_cam, M_t, M_intr, _ = M.manifolds
@@ -537,10 +540,10 @@ end
 
 ```
 
-If you wish to run this file yourself, you need to download the data from https://grail.cs.washington.edu/projects/bal/ and update the path in the cell below.
+Now we read the data.
 
 ```{julia}
-data1 = read_bal_bz2("/home/mateusz/data/bal/ladybug/problem-49-7776-pre.txt.bz2")
+data1 = read_bal_bz2(data_filename)
 ```
 
 We use a custom solver that can exploit Jacobian sparsity of the problem.
