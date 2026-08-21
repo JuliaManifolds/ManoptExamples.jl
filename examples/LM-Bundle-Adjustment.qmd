@@ -1,0 +1,977 @@
+---
+title: "Bundle adjustment"
+author: "Mateusz Baran"
+date: 2026-08-21
+---
+
+```{julia}
+#| echo: false
+#| output: false
+using Pkg;
+Pkg.activate("."); # for reproducibility use the local tutorial environment.
+```
+
+## Preface
+
+This notebook reproduces the results of Section 6.3 in [BaranBergmann:2026](@cite). We use the following packages and parameters
+
+```{julia}
+#| code-fold: true
+#| output: false
+using Manopt, Manifolds, LinearAlgebra, Test, Chairmarks
+using CodecBzip2
+using StaticArrays, RecursiveArrayTools
+
+using ManifoldDiff, DifferentiationInterface
+using ForwardDiff
+using SparseArrays
+using DelimitedFiles
+using CSV, DataFrames
+using Serialization
+
+using ManoptExamples: BlockNonzeroVector, BlockNonzeroMatrix
+
+using NamedColors
+
+export_csv = true
+ptc = NamedColors.load_paul_tol()
+ltmads_color = ptc["mutedsand"]
+robust_color = ptc["mutedgreen"]
+```
+
+## Introduction
+
+The bundle adjustment problem is a classical problem in computer vision and photogrammetry [Zach:2014](@cite).
+Here we extend the standard formulation with constraints on the camera parameters and point positions [GongMengSeibel:2015](@cite).
+
+In the following part we define basic structures needed for the reading the data, computing the objective and its Jacobian.
+
+```{julia}
+
+struct BALObservation{T <: Real, I <: Integer}
+    camera_index::I
+    point_index::I
+    xy::SVector{2, T}
+end
+
+struct BALCamera{TR <: Real, TT <: Real, TF <: Real, TK1 <: Real, TK2 <: Real}
+    R::SMatrix{3, 3, TR, 9}
+    t::SVector{3, TT}
+    f::TF
+    k1::TK1
+    k2::TK2
+end
+
+const BALPoint{T} = SVector{3, T}
+
+struct BALDataset{T <: Real, I <: Integer}
+    num_cameras::Int
+    num_points::Int
+    num_observations::Int
+    observations::Vector{BALObservation{T, I}}
+    cameras::Vector{BALCamera{T, T, T, T, T}}
+    points::Vector{BALPoint{T}}
+end
+
+function _skew(v::NTuple{3, T}) where {T <: Real}
+    vx, vy, vz = v
+    return @SMatrix T[
+        zero(T) -vz vy
+        vz zero(T) -vx
+        -vy vx zero(T)
+    ]
+end
+
+"""
+	rodrigues_to_rotation_matrix(r)
+
+Convert a Rodrigues vector `r = (r1, r2, r3)` to a 3×3 rotation matrix.
+"""
+function rodrigues_to_rotation_matrix(r::NTuple{3, T}) where {T <: Real}
+    θ2 = r[1]^2 + r[2]^2 + r[3]^2
+    θ = sqrt(θ2)
+
+    A, B = if θ < sqrt(eps(T))
+        (
+            one(T) - θ2 / 6 + θ2^2 / 120,
+            inv(T(2)) - θ2 / 24 + θ2^2 / 720,
+        )
+    else
+        (sin(θ) / θ, (one(T) - cos(θ)) / θ2)
+    end
+
+    K = _skew(r)
+    I3 = one(SMatrix{3, 3, T, 9})
+    return I3 + A * K + B * (K * K)
+end
+
+"""
+	project_point(camera, point)
+
+Project a world-space `BALPoint` into image coordinates using the BAL camera model.
+The model uses Rodrigues rotation `R`, translation `t`, focal length `f`, and radial distortion `(k1, k2)`.
+Returns `SVector{2, T}`.
+"""
+function project_point(camera::BALCamera, point::BALPoint)
+    R = camera.R
+    xc, yc, zc = R * point + camera.t
+
+    abs(zc) > eps() || throw(DomainError(zc, "Point projects to infinity (z≈0 in camera frame)."))
+
+    xn = -xc / zc
+    yn = -yc / zc
+    r2 = xn^2 + yn^2
+    radial = 1 + camera.k1 * r2 + camera.k2 * r2^2
+
+    return SVector{2}(camera.f * radial * xn, camera.f * radial * yn)
+end
+
+"""
+	reprojection_error(camera, point, observation)
+
+Compute the reprojection residual as `SVector{2, T}`:
+`project_point(camera, point) - observation.xy`.
+"""
+function reprojection_error(camera::BALCamera{T}, point::BALPoint{T}, obs_xy::AbstractVector) where {T <: Real}
+    return project_point(camera, point) - obs_xy
+end
+
+function _next_nonempty_line!(state::Base.Iterators.Stateful)
+    while !isempty(state)
+        line = strip(popfirst!(state))
+        if !isempty(line)
+            return line
+        end
+    end
+    throw(EOFError())
+end
+
+"""
+	read_bal_bz2(path; one_based_indices=true, T=Float64, I=Int)
+
+Read a bzip2-compressed BAL dataset from the given `path`.
+Each camera is parsed as 9 parameters `(r, t, f, k1, k2)` from BAL, where `r` is a Rodrigues vector,
+and stored as a 3×3 rotation matrix in `BALCamera.R`.
+Each point is parsed as 3D coordinates `(x, y, z)`.
+Returns a `BALDataset`.
+"""
+function read_bal_bz2(path::AbstractString; one_based_indices::Bool = true, T::Type = Float64, I::Type = Int)
+    return open(path, "r") do raw_io
+        io = Bzip2DecompressorStream(raw_io)
+        try
+            lines = Base.Iterators.Stateful(eachline(io))
+
+            header = split(_next_nonempty_line!(lines))
+            length(header) == 3 || throw(ArgumentError("Header must contain exactly 3 fields"))
+
+            num_cameras = parse(Int, header[1])
+            num_points = parse(Int, header[2])
+            num_observations = parse(Int, header[3])
+
+            observations = Vector{BALObservation{T, I}}(undef, num_observations)
+            idx_shift = one_based_indices ? 1 : 0
+
+            for k in 1:num_observations
+                fields = split(_next_nonempty_line!(lines))
+                length(fields) == 4 || throw(ArgumentError("Observation line $k must have 4 fields"))
+
+                cam_idx = parse(I, fields[1]) + idx_shift
+                pt_idx = parse(I, fields[2]) + idx_shift
+                x = parse(T, fields[3])
+                y = parse(T, fields[4])
+
+                observations[k] = BALObservation{T, I}(cam_idx, pt_idx, SVector{2, T}(x, y))
+            end
+
+            remaining_tokens = String[]
+            while !isempty(lines)
+                line = strip(popfirst!(lines))
+                isempty(line) && continue
+                append!(remaining_tokens, split(line))
+            end
+
+            expected_values = 9 * num_cameras + 3 * num_points
+            length(remaining_tokens) == expected_values || throw(
+                ArgumentError(
+                    "Expected $expected_values camera/point values, got $(length(remaining_tokens))",
+                ),
+            )
+
+            values = parse.(T, remaining_tokens)
+            cursor = 1
+
+            cameras = Vector{BALCamera{T, T, T, T, T}}(undef, num_cameras)
+            for k in 1:num_cameras
+                r = (values[cursor], values[cursor + 1], values[cursor + 2])
+                t = SVector{3, T}(values[cursor + 3], values[cursor + 4], values[cursor + 5])
+                f = values[cursor + 6]
+                k1 = values[cursor + 7]
+                k2 = values[cursor + 8]
+                R = rodrigues_to_rotation_matrix(r)
+                cameras[k] = BALCamera{T, T, T, T, T}(R, t, f, k1, k2)
+                cursor += 9
+            end
+
+            points = Vector{BALPoint{T}}(undef, num_points)
+            for k in 1:num_points
+                points[k] = BALPoint{T}(values[cursor], values[cursor + 1], values[cursor + 2])
+                cursor += 3
+            end
+
+            return BALDataset{T, I}(
+                num_cameras,
+                num_points,
+                num_observations,
+                observations,
+                cameras,
+                points,
+            )
+        catch e
+            rethrow(e)
+        finally
+            close(io)
+        end
+    end
+end
+
+
+struct Fi_block{TD <: BALDataset}
+    dataset::TD
+    obs_idx::Int
+end
+
+
+function (f::Fi_block)(M::AbstractManifold, r, p)
+    p_cam, p_t, p_intr, p_pt = p.x
+    obs = f.dataset.observations[f.obs_idx]
+
+    cam = BALCamera(
+        SMatrix{3, 3}(view(p_cam, :, :, obs.camera_index)),
+        SVector{3}(view(p_t, :, obs.camera_index)),
+        p_intr[1, obs.camera_index],
+        p_intr[2, obs.camera_index],
+        p_intr[3, obs.camera_index],
+    )
+    pt_idx = f.dataset.observations[f.obs_idx].point_index
+    return r .= reprojection_error(cam, SVector{3}(view(p_pt, :, pt_idx)), obs.xy)
+end
+
+struct jacFi_block_ad{TD <: BALDataset}
+    dataset::TD
+    obs_idx::Int
+end
+
+function (f::jacFi_block_ad)(
+        M::AbstractManifold, J, p;
+        basis_arg::AbstractBasis = DefaultOrthonormalBasis(),
+    )
+    fi = Fi_block(f.dataset, f.obs_idx)
+    Rot3 = Rotations(3)
+
+    M_cam, M_t, M_intr, M_pt = M.manifolds
+    p_cam, p_t, p_intr, p_pt = p.x
+    obs = f.dataset.observations[f.obs_idx]
+
+    pt_idx = f.dataset.observations[f.obs_idx].point_index
+
+    ManifoldDiff._jacobian!(J, zeros(manifold_dimension(M)), AutoForwardDiff()) do cY
+        Y = get_vector(M, p, cY, basis_arg)
+        Y_cam, Y_t, Y_intr, Y_pt = Y.x
+        Y_t_proj = project(M_t, p_t, Y_t)
+        Y_intr_proj = project(M_intr, p_intr, Y_intr)
+        Y_pt_proj = project(M_pt, p_pt, Y_pt)
+        cam = BALCamera(
+            SMatrix{3, 3}(exp(Rot3, SMatrix{3, 3}(p_cam[M_cam, obs.camera_index]), Y_cam[M_cam, obs.camera_index])),
+            SVector{3}(p_t[M_t, obs.camera_index] + Y_t_proj[M_t, obs.camera_index]),
+            p_intr[M_intr, obs.camera_index][1] + Y_intr_proj[M_intr, obs.camera_index][1],
+            p_intr[M_intr, obs.camera_index][2] + Y_intr_proj[M_intr, obs.camera_index][2],
+            p_intr[M_intr, obs.camera_index][3] + Y_intr_proj[M_intr, obs.camera_index][3],
+        )
+        return reprojection_error(cam, SVector{3}(p_pt[M_pt, pt_idx]) + Y_pt_proj[M_pt, pt_idx], obs.xy)
+    end
+
+    return J
+end
+
+struct jacFi_block_analytical{TD <: BALDataset}
+    dataset::TD
+    obs_idx::Int
+end
+
+function (f::jacFi_block_analytical)(
+        M::AbstractManifold, J::BlockNonzeroMatrix, p;
+        basis_arg::DefaultOrthonormalBasis = DefaultOrthonormalBasis(),
+    )
+
+    M_cam, M_t, M_intr, M_pt = M.manifolds
+    p_cam, p_t, p_intr, p_pt = p.x
+    obs = f.dataset.observations[f.obs_idx]
+
+    cam_idx = obs.camera_index
+    pt_idx = obs.point_index
+
+    R = SMatrix{3, 3}(view(p_cam, :, :, cam_idx))
+    t = SVector{3}(view(p_t, :, cam_idx))
+    Xw = SVector{3}(view(p_pt, :, pt_idx))
+
+    cam = BALCamera(
+        R,
+        t,
+        p_intr[1, cam_idx],
+        p_intr[2, cam_idx],
+        p_intr[3, cam_idx],
+    )
+
+    xc = R * Xw + t
+    x, y, z = xc
+
+    abs(z) > eps(eltype(xc)) || throw(DomainError(z, "Point projects to infinity (z≈0 in camera frame)."))
+
+    xn = -x / z
+    yn = -y / z
+    r2 = xn^2 + yn^2
+
+    radial = 1 + cam.k1 * r2 + cam.k2 * r2^2
+    radial_prime = cam.k1 + 2 * cam.k2 * r2
+
+    du_dxn = cam.f * (radial + 2 * xn^2 * radial_prime)
+    du_dyn = cam.f * (2 * xn * yn * radial_prime)
+    dv_dxn = du_dyn
+    dv_dyn = cam.f * (radial + 2 * yn^2 * radial_prime)
+
+    J_uv_xy = @SMatrix [du_dxn du_dyn; dv_dxn dv_dyn]
+    J_xy_cam = @SMatrix [
+        -inv(z) 0 x / z^2
+        0 -inv(z) y / z^2
+    ]
+    J_proj_cam = J_uv_xy * J_xy_cam
+
+    rot_lie_jac = (-inv(sqrt(eltype(xc)(2)))) * _skew((Xw[1], Xw[2], Xw[3]))
+    J_rot = J_proj_cam * (R * rot_lie_jac)
+    J_t = J_proj_cam
+    project_jacobian_to_tangent!(J_t, M_t, p_t, cam_idx)
+    J_intr = @MArray [
+        radial * xn cam.f * r2 * xn cam.f * r2^2 * xn
+        radial * yn cam.f * r2 * yn cam.f * r2^2 * yn
+    ]
+    project_jacobian_to_tangent!(J_intr, M_intr, p_intr, cam_idx)
+    J_p = J_proj_cam * R
+
+    d_cam = manifold_dimension(M_cam)
+    d_t = manifold_dimension(M_t)
+    d_intr = manifold_dimension(M_intr)
+
+    col_cam = (cam_idx - 1) * 3 + 1
+    col_t = d_cam + (cam_idx - 1) * 3 + 1
+    col_intr = d_cam + d_t + (cam_idx - 1) * 3 + 1
+    col_p = d_cam + d_t + d_intr + (pt_idx - 1) * 3 + 1
+
+    row_starts = (1, 1, 1, 1)
+    col_starts = (col_cam, col_t, col_intr, col_p)
+    if J.row_starts != row_starts || J.col_starts != col_starts
+        error(
+            "jacFi_block_analytical received BlockNonzeroMatrix with incompatible block layout. " *
+                "Expected row_starts=$(row_starts), col_starts=$(col_starts), got row_starts=$(J.row_starts), col_starts=$(J.col_starts).",
+        )
+    end
+
+    J.blocks[1] .= J_rot
+    J.blocks[2] .= J_t
+    J.blocks[3] .= J_intr
+    J.blocks[4] .= J_p
+
+    return J
+end
+
+function Manopt.allocate_jacobian(
+        M::AbstractManifold,
+        vgf::VectorGradientFunction{InplaceEvaluation, FunctionVectorialType{NestedPowerRepresentation}, <:CoefficientVectorialType, <:Fi_block, <:jacFi_block_analytical},
+        ::AbstractBasis = DefaultOrthonormalBasis();
+        T::Type = Float64,
+    )
+    fJ = vgf.jacobian!!
+    obs = fJ.dataset.observations[fJ.obs_idx]
+
+    M_cam, M_t, M_intr, _ = M.manifolds
+    d_cam = manifold_dimension(M_cam)
+    d_t = manifold_dimension(M_t)
+    d_intr = manifold_dimension(M_intr)
+
+    col_cam = (obs.camera_index - 1) * 3 + 1
+    col_t = d_cam + (obs.camera_index - 1) * 3 + 1
+    col_intr = d_cam + d_t + (obs.camera_index - 1) * 3 + 1
+    col_p = d_cam + d_t + d_intr + (obs.point_index - 1) * 3 + 1
+
+    blocks = (
+        zeros(T, vgf.range_dimension, 3),
+        zeros(T, vgf.range_dimension, 3),
+        zeros(T, vgf.range_dimension, 3),
+        zeros(T, vgf.range_dimension, 3),
+    )
+    return BlockNonzeroMatrix(
+        vgf.range_dimension,
+        manifold_dimension(M),
+        (1, 1, 1, 1),
+        (col_cam, col_t, col_intr, col_p),
+        blocks,
+    )
+end
+
+```
+
+Next, we add a utility to subsample the data to make the example run in a shorter time.
+
+```{julia}
+
+"""
+	subsample_bal_dataset(dataset, num_cameras, num_points)
+
+Create a reduced `BALDataset` containing only the first `num_cameras` cameras and
+the first `num_points` points.
+
+Observations are filtered to those that reference both selected cameras and points,
+and their indices are remapped to the new compact index ranges.
+"""
+function subsample_bal_dataset(dataset::BALDataset{T, I}, num_cameras::Integer, num_points::Integer) where {T <: Real, I <: Integer}
+    1 <= num_cameras <= dataset.num_cameras || throw(
+        ArgumentError("num_cameras must be in 1:$(dataset.num_cameras), got $num_cameras"),
+    )
+    1 <= num_points <= dataset.num_points || throw(
+        ArgumentError("num_points must be in 1:$(dataset.num_points), got $num_points"),
+    )
+
+    return subsample_bal_dataset(dataset, collect(1:num_cameras), collect(1:num_points))
+end
+
+"""
+	subsample_bal_dataset(dataset, camera_indices, point_indices)
+
+Create a reduced `BALDataset` from explicitly selected camera and point indices.
+Observations are kept only when both their camera and point are selected; indices
+in the returned observations are remapped to `1:length(camera_indices)` and
+`1:length(point_indices)`.
+"""
+function subsample_bal_dataset(
+        dataset::BALDataset{T, I},
+        camera_indices::AbstractVector{<:Integer},
+        point_indices::AbstractVector{<:Integer},
+    ) where {T <: Real, I <: Integer}
+    isempty(camera_indices) && throw(ArgumentError("camera_indices cannot be empty"))
+    isempty(point_indices) && throw(ArgumentError("point_indices cannot be empty"))
+
+    allunique(camera_indices) || throw(ArgumentError("camera_indices must be unique"))
+    allunique(point_indices) || throw(ArgumentError("point_indices must be unique"))
+
+    all(1 <= i <= dataset.num_cameras for i in camera_indices) || throw(
+        ArgumentError("camera_indices must be in 1:$(dataset.num_cameras)"),
+    )
+    all(1 <= i <= dataset.num_points for i in point_indices) || throw(
+        ArgumentError("point_indices must be in 1:$(dataset.num_points)"),
+    )
+
+    camera_map = Dict{I, I}(I(old_idx) => I(new_idx) for (new_idx, old_idx) in enumerate(camera_indices))
+    point_map = Dict{I, I}(I(old_idx) => I(new_idx) for (new_idx, old_idx) in enumerate(point_indices))
+
+    observations = BALObservation{T, I}[]
+    for obs in dataset.observations
+        haskey(camera_map, obs.camera_index) || continue
+        haskey(point_map, obs.point_index) || continue
+
+        push!(
+            observations,
+            BALObservation{T, I}(
+                camera_map[obs.camera_index],
+                point_map[obs.point_index],
+                obs.xy,
+            ),
+        )
+    end
+
+    cameras = dataset.cameras[Int.(camera_indices)]
+    points = dataset.points[Int.(point_indices)]
+
+    return BALDataset{T, I}(
+        length(cameras),
+        length(points),
+        length(observations),
+        observations,
+        cameras,
+        points,
+    )
+end
+
+function subsample_bal(dataset::BALDataset, num_cameras::Int)
+    cam_indices = 1:num_cameras
+    pt_indices = points_observed_by_cameras(dataset, cam_indices)
+    return subsample_bal_dataset(dataset, cam_indices, pt_indices)
+end
+
+"""
+	points_observed_by_cameras(dataset, camera_indices)
+
+Return unique point indices observed by any camera listed in `camera_indices`.
+The returned indices follow first-appearance order in `dataset.observations`.
+"""
+function points_observed_by_cameras(
+        dataset::BALDataset{T, I},
+        camera_indices::AbstractVector{<:Integer},
+    ) where {T <: Real, I <: Integer}
+    isempty(camera_indices) && throw(ArgumentError("camera_indices cannot be empty"))
+    all(1 <= i <= dataset.num_cameras for i in camera_indices) || throw(
+        ArgumentError("camera_indices must be in 1:$(dataset.num_cameras)"),
+    )
+
+    selected_cameras = Set{I}(I.(camera_indices))
+    seen_points = Set{I}()
+    points = I[]
+
+    for obs in dataset.observations
+        obs.camera_index in selected_cameras || continue
+        obs.point_index in seen_points && continue
+        push!(points, obs.point_index)
+        push!(seen_points, obs.point_index)
+    end
+
+    return points
+end
+
+```
+
+If you wish to run this file yourself, you need to download the data from https://grail.cs.washington.edu/projects/bal/ and update the path in the cell below.
+
+```{julia}
+data1 = read_bal_bz2("/home/mateusz/data/bal/ladybug/problem-49-7776-pre.txt.bz2")
+```
+
+We use a custom solver that can exploit Jacobian sparsity of the problem.
+
+```{julia}
+"""
+    CachedLMSparseSolver()
+
+Cache for repeated sparse LM linear solves with a fixed sparsity pattern.
+Reuses symbolic factorization and updates only numeric values via `cholesky!`.
+"""
+mutable struct CachedLMSparseSolver
+    factorization::Any
+    rowval_objid::UInt
+    colptr_objid::UInt
+    rowval_len::Int
+    colptr_len::Int
+    CachedLMSparseSolver() = new(nothing, 0, 0, -1, -1)
+end
+
+function _solve_lm_cached!(sk, JJ::SparseMatrixCSC, grad_f_c, solver::CachedLMSparseSolver)
+    pattern_changed =
+        solver.rowval_objid != objectid(JJ.rowval) ||
+        solver.colptr_objid != objectid(JJ.colptr) ||
+        solver.rowval_len != length(JJ.rowval) ||
+        solver.colptr_len != length(JJ.colptr)
+
+    if pattern_changed
+        solver.factorization = nothing
+        solver.rowval_objid = objectid(JJ.rowval)
+        solver.colptr_objid = objectid(JJ.colptr)
+        solver.rowval_len = length(JJ.rowval)
+        solver.colptr_len = length(JJ.colptr)
+    end
+
+    try
+        if isnothing(solver.factorization)
+            solver.factorization = cholesky(Symmetric(JJ))
+        else
+            cholesky!(solver.factorization, Symmetric(JJ))
+        end
+        ldiv!(sk, solver.factorization, grad_f_c)
+    catch e
+        if e isa PosDefException
+            sk .= Symmetric(JJ) \ grad_f_c
+        elseif e isa ArgumentError || e isa DimensionMismatch
+            # Structure or dimensions changed; rebuild the cached factorization.
+            solver.factorization = cholesky(Symmetric(JJ))
+            ldiv!(sk, solver.factorization, grad_f_c)
+        else
+            rethrow()
+        end
+    end
+    return sk
+end
+
+function (solver::CachedLMSparseSolver)(sk, JJ::SparseMatrixCSC, grad_f_c)
+    return _solve_lm_cached!(sk, JJ, grad_f_c, solver)
+end
+
+function (solver::CachedLMSparseSolver)(sk, JJ::AbstractMatrix, grad_f_c)
+    # Dense fallback keeps behavior aligned with Manopt default.
+    return Manopt.default_lm_lin_solve!(sk, JJ, grad_f_c)
+end
+
+```
+
+Now we can construct the problem and solve it using Manopt.jl.
+
+```{julia}
+
+function project_jacobian_to_tangent!(J, M::AbstractManifold, p, idx::Integer)
+    return J
+end
+function project_jacobian_to_tangent!(J, M::Hyperrectangle, p, idx::Integer)
+    lb = M.lb
+    ub = M.ub
+    p_idx = view(p, :, idx)
+    atol = sqrt(eps(eltype(p)))
+    zero_j = zero(eltype(J))
+
+    for j in axes(J, 2)
+        pj = p_idx[j]
+        lbj = lb[j, idx]
+        ubj = ub[j, idx]
+        if pj <= lbj + atol
+            @views J[:, j] .= max.(J[:, j], zero_j)
+        end
+        if pj >= ubj - atol
+            @views J[:, j] .= min.(J[:, j], zero_j)
+        end
+    end
+
+    return J
+end
+
+function construct_bal_problem(data::BALDataset)
+    M_point_pos = Hyperrectangle(fill(-1.0, 3, data.num_points), fill(1.0, 3, data.num_points))
+    intrinsics_bounds_low = reduce(hcat, [SVector(350, 0.0, 0.0) for cam in data.cameras])
+    intrinsics_bounds_upp = reduce(hcat, [SVector(450, 0.1, 0.1) for cam in data.cameras])
+    M = ProductManifold(
+        PowerManifold(Rotations(3), ArrayPowerRepresentation(), data.num_cameras),
+        Euclidean(3, data.num_cameras),
+        Hyperrectangle(intrinsics_bounds_low, intrinsics_bounds_upp),
+        M_point_pos,
+    )
+
+    F = [Fi_block(data, i) for i in 1:data.num_observations]
+    JF = [jacFi_block_analytical(data, i) for i in 1:data.num_observations]
+
+    f = [
+        VectorGradientFunction(
+                F[i], JF[i], 2;
+                evaluation = InplaceEvaluation(),
+                function_type = FunctionVectorialType(),
+                jacobian_type = CoefficientVectorialType(DefaultOrthonormalBasis()),
+            ) for i in 1:data.num_observations
+    ]
+
+    return M, f, F
+end
+
+function point_from_bal_state(
+        cameras::AbstractVector{<:BALCamera},
+        points::AbstractVector{<:BALPoint},
+    )
+    n_cameras = length(cameras)
+    n_points = length(points)
+
+    p_cam = stack([Matrix{Float64}(cam.R) for cam in cameras])
+    p_t = reduce(hcat, [SVector{3, Float64}(cam.t...) for cam in cameras])
+    p_intr = stack([SVector{3, Float64}(cam.f, cam.k1, cam.k2) for cam in cameras])
+    p_pt = reduce(hcat, [SVector{3, Float64}(pt...) for pt in points])
+
+    size(p_cam, 3) == n_cameras || throw(ArgumentError("Invalid camera rotation layout."))
+    size(p_t, 2) == n_cameras || throw(ArgumentError("Invalid camera translation layout."))
+    size(p_intr, 2) == n_cameras || throw(ArgumentError("Invalid camera intrinsics layout."))
+    size(p_pt, 2) == n_points || throw(ArgumentError("Invalid point layout."))
+
+    return ArrayPartition(p_cam, p_t, p_intr, p_pt)
+end
+
+function _count_active_bounds(M::ProductManifold, q; atol::Real = 1.0e-10)
+    active = 0
+    for (Mi, qi) in zip(M.manifolds, q.x)
+        Mi isa Hyperrectangle || continue
+        lb = Mi.lb
+        ub = Mi.ub
+        for idx in eachindex(qi, lb, ub)
+            x = qi[idx]
+            l = lb[idx]
+            u = ub[idx]
+            if (x <= l + atol) || (x >= u - atol)
+                active += 1
+            end
+        end
+    end
+    return active
+end
+
+function save_julia_solution_and_active_bounds(
+        q,
+        M::ProductManifold;
+        output_dir::AbstractString = joinpath(@__DIR__, "bal_csv_solution"),
+        atol::Real = 1.0e-10,
+    )
+    mkpath(output_dir)
+
+    p_cam, p_t, p_intr, p_pt = q.x
+
+    q_serialized = joinpath(output_dir, "julia_solution_q.jls")
+    open(q_serialized, "w") do io
+        Serialization.serialize(io, q)
+    end
+
+    n_cameras = size(p_cam, 3)
+    camera_rot_flat = Matrix{Float64}(undef, n_cameras, 9)
+    for i in 1:n_cameras
+        camera_rot_flat[i, :] .= vec(p_cam[:, :, i])
+    end
+
+    camera_rot_csv = joinpath(output_dir, "julia_solution_camera_rotations.csv")
+    camera_t_csv = joinpath(output_dir, "julia_solution_camera_translations.csv")
+    camera_intr_csv = joinpath(output_dir, "julia_solution_camera_intrinsics.csv")
+    points_csv = joinpath(output_dir, "julia_solution_points_3d.csv")
+
+    writedlm(camera_rot_csv, camera_rot_flat, ',')
+    writedlm(camera_t_csv, Matrix(p_t), ',')
+    writedlm(camera_intr_csv, Matrix(p_intr), ',')
+    writedlm(points_csv, Matrix(p_pt), ',')
+
+    active_bounds_count = _count_active_bounds(M, q; atol = atol)
+    active_bounds_csv = joinpath(output_dir, "julia_solution_active_bounds.csv")
+    open(active_bounds_csv, "w") do io
+        println(io, "metric,value")
+        println(io, "active_bounds_count,$(active_bounds_count)")
+    end
+
+    @info "Saved Julia solution and active-bounds summary" q_serialized = q_serialized active_bounds_count = active_bounds_count active_bounds_csv = active_bounds_csv
+    return (
+        q_serialized = q_serialized,
+        camera_rot_csv = camera_rot_csv,
+        camera_t_csv = camera_t_csv,
+        camera_intr_csv = camera_intr_csv,
+        points_csv = points_csv,
+        active_bounds_csv = active_bounds_csv,
+        active_bounds_count = active_bounds_count,
+    )
+end
+
+function run_bundle_adjustment(data::BALDataset)
+    M, f, F = construct_bal_problem(data)
+
+    p0 = ArrayPartition(
+        stack([Matrix{Float64}(I, 3, 3) for _ in 1:data.num_cameras]), # camera rotations
+        ones(3, data.num_cameras), # camera translations
+        stack([SVector(400.0, 0.0, 0.0) for cam in data.cameras]), # camera intrinsics [f, k1, k2]
+        zeros(3, data.num_points), # 3D point positions
+    )
+
+    hr = fill(HuberRobustifier(), length(F))
+
+    n = manifold_dimension(M)
+    A = spzeros(n, n)
+    sparse_lm_solver = CachedLMSparseSolver()
+
+    # A = Matrix{Float64}(undef, n, n)
+
+    t1 = time()
+
+    lm_state = LevenbergMarquardt(
+        M, f, p0;
+        initial_jacobian_matrices = [Manopt.allocate_jacobian(M, fi) for fi in f],
+        initial_damping_term = 0.1,
+        damping_increase_factor = 8.0, candidate_acceptance_threshold = 0.2, damping_term_min = 1.0e-5, scaling_threshold = 1.0e-1, scaling_mode = :Strict,
+        damping_reduction_factor = 0.2, damping_reduction_threshold = 0.5,
+        robustifier = hr,
+        debug = [:Iteration, (:Cost, "f(x): %8.8e "), :damping_term, "\n", :Stop, 5],
+        record = [:Iteration, :Cost],
+        stopping_criterion = StopAfterIteration(10000) | StopWhenGradientNormLess(1.0e-12) | StopWhenStepsizeLess(1.0e-11),
+        sub_state = CoordinatesNormalSystemState(
+            M;
+            A = A,
+            linsolve = sparse_lm_solver
+        ),
+        use_unified_basis = true,
+        return_state = true,
+    )
+    t2 = time()
+    @info "Finished LM optimization" time = t2 - t1
+
+    records = get_record(lm_state, :Iteration, (:Iteration, :Cost))
+
+    records_csv = joinpath(@__DIR__, "bal_csv_solution", "julia_iteration_cost.csv")
+    mkpath(dirname(records_csv))
+    open(records_csv, "w") do io
+        println(io, "iteration,objective")
+        for (iter, objective) in records
+            println(io, "$(iter),$(objective)")
+        end
+    end
+    @info "Saved Julia iteration/cost history CSV" path = records_csv num_rows = length(records)
+
+    q = get_state(lm_state).p
+    save_julia_solution_and_active_bounds(q, M)
+
+    return q
+end
+
+"""
+    read_python_solution_csv(camera_csv_path, points_csv_path; T = Float64)
+
+Load the CSV files exported by `LM-BAL-ls.py` and return:
+- `camera_params`: matrix with rows `[r1,r2,r3,tx,ty,tz,f,k1,k2]`
+- `points_3d`: matrix with rows `[x,y,z]`
+- `cameras`: `Vector{BALCamera}` converted from Rodrigues vectors
+- `points`: `Vector{BALPoint}`
+"""
+function read_python_solution_csv(camera_csv_path::AbstractString, points_csv_path::AbstractString; T::Type = Float64)
+    camera_params_raw = readdlm(camera_csv_path, ',', T)
+    points_3d_raw = readdlm(points_csv_path, ',', T)
+
+    camera_params = ndims(camera_params_raw) == 1 ? reshape(camera_params_raw, 1, :) : Matrix(camera_params_raw)
+    points_3d = ndims(points_3d_raw) == 1 ? reshape(points_3d_raw, 1, :) : Matrix(points_3d_raw)
+
+    size(camera_params, 2) == 9 || throw(ArgumentError("Expected 9 camera parameters per row, got $(size(camera_params, 2))."))
+    size(points_3d, 2) == 3 || throw(ArgumentError("Expected 3 point coordinates per row, got $(size(points_3d, 2))."))
+
+    cameras = Vector{BALCamera{T, T, T, T, T}}(undef, size(camera_params, 1))
+    for i in axes(camera_params, 1)
+        r = (camera_params[i, 1], camera_params[i, 2], camera_params[i, 3])
+        t = SVector{3, T}(camera_params[i, 4], camera_params[i, 5], camera_params[i, 6])
+        f = camera_params[i, 7]
+        k1 = camera_params[i, 8]
+        k2 = camera_params[i, 9]
+        cameras[i] = BALCamera{T, T, T, T, T}(rodrigues_to_rotation_matrix(r), t, f, k1, k2)
+    end
+
+    points = [BALPoint{T}(points_3d[i, 1], points_3d[i, 2], points_3d[i, 3]) for i in axes(points_3d, 1)]
+
+    return camera_params, points_3d, cameras, points
+end
+
+data1_sub = subsample_bal(data1, 5)
+
+run_bundle_adjustment(data1_sub)
+
+"""
+    plot_python_julia_history_and_export_latex_data(; kwargs...)
+
+Read `python_opt_history.csv` and `julia_iteration_cost.csv`, plot objective values,
+and export subsampled (every `subsample_step` iterations) CSV files for LaTeX.
+
+Keyword arguments:
+- `python_csv`: path to Python history CSV.
+- `julia_csv`: path to Julia history CSV.
+- `output_dir`: directory where plot and LaTeX-ready CSV files are saved.
+- `subsample_step`: iteration stride for subsampling (default: `10`).
+
+Returns a named tuple with output file paths.
+"""
+function plot_python_julia_history_and_export_latex_data(
+        ;
+        python_csv::AbstractString = joinpath(@__DIR__, "bal_csv_solution", "python_opt_history.csv"),
+        julia_csv::AbstractString = joinpath(@__DIR__, "bal_csv_solution", "julia_iteration_cost.csv"),
+        subsample_step::Integer = 10,
+    )
+    subsample_step > 0 || throw(ArgumentError("subsample_step must be > 0"))
+
+    isfile(python_csv) || throw(ArgumentError("CSV file not found: $python_csv"))
+    isfile(julia_csv) || throw(ArgumentError("CSV file not found: $julia_csv"))
+
+    py = CSV.read(python_csv, DataFrame)
+    jl = CSV.read(julia_csv, DataFrame)
+
+    "iteration" in names(py) || throw(ArgumentError("Python CSV must contain column: iteration"))
+    "objective" in names(py) || throw(ArgumentError("Python CSV must contain column: objective"))
+    "iteration" in names(jl) || throw(ArgumentError("Julia CSV must contain column: iteration"))
+    "objective" in names(jl) || throw(ArgumentError("Julia CSV must contain column: objective"))
+
+    py_iter = Int.(round.(Float64.(py.iteration)))
+    py_obj = Float64.(py.objective)
+    jl_iter = Int.(round.(Float64.(jl.iteration)))
+    jl_obj = Float64.(jl.objective)
+
+    isempty(py_iter) && throw(ArgumentError("Python CSV has no data rows"))
+    max_py_iter = maximum(py_iter)
+    jl_keep = jl_iter .<= max_py_iter
+    any(jl_keep) || throw(ArgumentError("No Julia iterations overlap with Python iteration range"))
+    jl_iter = jl_iter[jl_keep]
+    jl_obj = jl_obj[jl_keep]
+
+    py_mask = map(i -> (i <= 100) || (mod(i, subsample_step) == 0), py_iter)
+    jl_mask = map(i -> (i <= 100) || (mod(i, subsample_step) == 0), jl_iter)
+
+    # Ensure non-empty exports even if iterations do not hit the exact stride.
+    any(py_mask) || (py_mask = fill(false, length(py_iter)); !isempty(py_mask) && (py_mask[1] = true))
+    any(jl_mask) || (jl_mask = fill(false, length(jl_iter)); !isempty(jl_mask) && (jl_mask[1] = true))
+
+    py_sub_iter = py_iter[py_mask]
+    py_sub_obj = py_obj[py_mask]
+    jl_sub_iter = jl_iter[jl_mask]
+    jl_sub_obj = jl_obj[jl_mask]
+
+    # Log-scale x-axes require strictly positive values; map iteration 0 to 1 for plotting only.
+    py_plot_iter = max.(py_iter, 1)
+    jl_plot_iter = max.(jl_iter, 1)
+    plt = try
+        Base.eval(Main, :(begin
+            using Plots
+            p = plot(
+                $(py_plot_iter),
+                $(py_obj);
+                label = "Python",
+                xlabel = "Iteration",
+                ylabel = "Objective",
+                xscale = :log10,
+                yscale = :log10,
+                linewidth = 2,
+                legend = :topright,
+                title = "Bundle Adjustment Objective History",
+            )
+            plot!(p, $(jl_plot_iter), $(jl_obj); label = "Julia", linewidth = 2)
+            p
+        end))
+    catch e
+        @warn "Could not generate plot. Install Plots.jl to enable plotting." exception = (e, catch_backtrace())
+        nothing
+    end
+
+    return plt
+end
+plot_python_julia_history_and_export_latex_data()
+```
+
+
+
+## Literature
+
+````{=commonmark}
+```@bibliography
+Pages = ["LM-Bundle-Adjustment.md"]
+Canonical=false
+```
+````
+
+````{=commonmark}
+```@raw html
+<details>
+  <summary>Technical Details</summary>
+```
+````
+This tutorial is cached. It was last run on the following package versions.
+
+```{julia}
+#| code-fold: true
+#| code-summary: "Package versions"
+#| echo: false
+using Pkg
+Pkg.status()
+```
+
+```{julia}
+#| echo: false
+#| output: asis
+using Dates
+println("This tutorial was last rendered $(Dates.format(now(), "U d, Y, H:M:S")).");
+```
+
+````{=commonmark}
+```@raw html
+</details>
+```
+````
