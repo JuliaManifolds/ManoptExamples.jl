@@ -19,6 +19,18 @@ using Test
     @test Vector(bv2) == 2 .* Vector(bv)
     @test Vector(bv) == [0.0, 1.0, 2.0, 0.0, 3.0, 4.0]
 
+    # Scalar broadcasts with a scalar left-hand operand and scalar broadcast styles.
+    bv_left_scaled = copy(bv)
+    bv_left_scaled .= 2 .* bv
+    @test Vector(bv_left_scaled) == 2 .* Vector(bv)
+    for style in (Base.Broadcast.DefaultArrayStyle{0}(), nothing)
+        bv_style_scaled = copy(bv)
+        bc = Base.Broadcast.Broadcasted{typeof(style)}(*, (2.0, bv))
+        copyto!(bv_style_scaled, bc)
+        @test Vector(bv_style_scaled) == 2 .* Vector(bv)
+    end
+    @test_throws MethodError (copy(bv) .= bv .* bv)
+
     Cv = fill(2.0, 6, 6)
     Cv_expected = copy(Cv)
     bv_dense = Vector(bv)
@@ -63,6 +75,20 @@ using Test
         X4_expected .+= reshape(Vector(view(bv_reshape, 2:11)), 2, 5)
         X4 .= Y_view_reshape .+ X4
         @test X4 == X4_expected
+
+        # An indexed view uses the non-range branch when adding reshaped blocks.
+        Y_indexed_reshape = reshape(view(bv_reshape, [2, 4, 6, 11]), 2, 2)
+        X5 = fill(9.0, 2, 2)
+        X5_expected = copy(X5)
+        X5_expected .+= reshape(Vector(view(bv_reshape, [2, 4, 6, 11])), 2, 2)
+        X5 .+= Y_indexed_reshape
+        @test X5 == X5_expected
+
+        # Reversed addition copies a distinct dense right-hand operand first.
+        X6 = zeros(2, 2, 3)
+        source = reshape(collect(-12.0:-1.0), 2, 2, 3)
+        X6 .= Y_reshape .+ source
+        @test X6 == reshape(Vector(bv_reshape), 2, 2, 3) .+ source
     end
 
     B = [1.0 2.0; 3.0 4.0]
@@ -139,6 +165,20 @@ using Test
         0.0 0.0 0.0 0.0 0.0 0.0
         0.0 0.0 0.0 0.0 0.0 0.0
     ]
+
+    J_different_layout = BlockNonzeroMatrix(5, 6, (1,), (1,), (ones(1, 1),))
+    @test J + J_different_layout == Matrix(J) + Matrix(J_different_layout)
+
+    J_left_scaled = copy(J)
+    J_left_scaled .= 2 .* J
+    @test Matrix(J_left_scaled) == 2 .* Matrix(J)
+    for style in (Base.Broadcast.DefaultArrayStyle{0}(), nothing)
+        J_style_scaled = copy(J)
+        bc = Base.Broadcast.Broadcasted{typeof(style)}(*, (2.0, J))
+        copyto!(J_style_scaled, bc)
+        @test Matrix(J_style_scaled) == 2 .* Matrix(J)
+    end
+    @test_throws MethodError (copy(J) .= J .* J)
 
     J3 = BlockNonzeroMatrix(6, 4, (4,), (2,), ([5.0 6.0; 7.0 8.0],))
     @test Matrix(J * J3) == Matrix(J) * Matrix(J3)
@@ -231,5 +271,29 @@ using Test
         @test X == X_expected
         @test Vector(reshape(Y.x[2], :)) == Vector(view(bv_fast, 1:6))
         @test Vector(reshape(Y.x[3], :)) == Vector(view(bv_fast, 7:12))
+
+        X_reversed = deepcopy(X_expected)
+        X_reversed_expected = deepcopy(X_expected)
+        X_reversed_expected.x[1] .+= Y.x[1]
+        X_reversed_expected.x[2] .+= Y.x[2]
+        X_reversed_expected.x[3] .+= Y.x[3]
+        X_reversed .= Y .+ X_reversed
+        @test X_reversed == X_reversed_expected
+
+        # This addition is handled by the general ArrayPartition copy path.
+        X_fallback = deepcopy(X_expected)
+        X_fallback .= Y .+ Y
+        @test X_fallback.x == (2 .* Y.x[1], 2 .* Y.x[2], 2 .* Y.x[3])
+
+        # Broadcast may wrap an argument in `Extruded`; the optimized path unwraps it.
+        X_extruded = deepcopy(X_expected)
+        bc = Base.Broadcast.broadcasted(+, X_extruded, Y)
+        extruded_y = Base.Broadcast.Extruded(Y, (), ())
+        extruded_bc = Base.Broadcast.Broadcasted{typeof(bc).parameters[1]}(
+            +,
+            (X_extruded, extruded_y),
+        )
+        copyto!(X_extruded, extruded_bc)
+        @test X_extruded == X_reversed_expected
     end
 end
