@@ -175,6 +175,10 @@ makedocs(;
         "Home" => "index.md",
         (examples_in_menu ? [examples_menu] : [])...,
         "Objectives" => "objectives/index.md",
+        "Helpers" => [
+            "Error measures" => "helpers/error_measures.md",
+            "Jacobian blocks" => "helpers/jacobian_block.md",
+        ],
         "Data" => "data/index.md",
         "Contributing to ManoptExamples.jl" => "contributing.md",
         "Changelog" => "changelog.md",
