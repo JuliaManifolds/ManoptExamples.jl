@@ -89,6 +89,11 @@ using Test
         source = reshape(collect(-12.0:-1.0), 2, 2, 3)
         X6 .= Y_reshape .+ source
         @test X6 == reshape(Vector(bv_reshape), 2, 2, 3) .+ source
+
+        # Forward addition also copies a distinct dense left-hand operand first.
+        X7 = zeros(2, 2, 3)
+        X7 .= source .+ Y_reshape
+        @test X7 == source .+ reshape(Vector(bv_reshape), 2, 2, 3)
     end
 
     B = [1.0 2.0; 3.0 4.0]
