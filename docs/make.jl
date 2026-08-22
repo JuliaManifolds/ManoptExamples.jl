@@ -7,7 +7,7 @@ if "--help" ∈ ARGS
         """
             docs/make.jl
 
-        Render the `ManoptExamples.jl` documenation.
+        Render the `ManoptExamples.jl` documentation.
 
         Arguments
         * `--exclude-examples` - exclude the examples from the menu of Documenter,
@@ -125,12 +125,13 @@ examples_menu =
         "Robust Geodesic Regression " => "examples/LM-Robust-Geodesic-Regression.md",
         "Robust Procrustes" => "examples/LM-Robust-Procrustes.md",
         "Robust Subspace Procrustes" => "examples/LM-Robust-Subspace-Procrustes.md",
+        "Bundle adjustment" => "examples/LM-Bundle-Adjustment.md",
     ],
     "Projected Gradient Algorithm" => [
         raw"Mean on $\mathbb H^2$" => "examples/Constrained-Mean-H2.md",
         raw"Mean on $\mathbb H^n$" => "examples/Constrained-Mean-Hn.md",
     ],
-    "Hyperparameter optimziation" => "examples/HyperparameterOptimization.md",
+    "Hyperparameter optimization" => "examples/HyperparameterOptimization.md",
     "The Rayleigh Quotient" => "examples/RayleighQuotient.md",
     "Riemannian Mean" => "examples/Riemannian-mean.md",
     "Proximal Gradient Methods" => [
@@ -174,6 +175,10 @@ makedocs(;
         "Home" => "index.md",
         (examples_in_menu ? [examples_menu] : [])...,
         "Objectives" => "objectives/index.md",
+        "Helpers" => [
+            "Error measures" => "helpers/error_measures.md",
+            "Jacobian blocks" => "helpers/jacobian_block.md",
+        ],
         "Data" => "data/index.md",
         "Contributing to ManoptExamples.jl" => "contributing.md",
         "Changelog" => "changelog.md",

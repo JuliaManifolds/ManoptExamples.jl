@@ -20,6 +20,7 @@ project:
     - "!NCRPG-Row-Sparse-Low-Rank.qmd"
     - "!NCRPG-Grassmann.qmd"
     - "!NCRPG-Sparse-PCA.qmd"
+    - "!LM-Bundle-Adjustment.qmd"
     - "!LM-Robust-Geodesic-Regression.qmd"
     - "!LM-Robust-Procrustes.qmd"
     - "!LM-Robust-Subspace-Procrustes.qmd"
