@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Robust Geodesic Regression  · ManoptExamples.jl</title><meta name="title" content="Robust Geodesic Regression  · ManoptExamples.jl"/><meta property="og:title" content="Robust Geodesic Regression  · ManoptExamples.jl"/><meta property="twitter:title" content="Robust Geodesic Regression  · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">LTMADS</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Spectral-Procrustes-2D/">Spectral &amp; Robust Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-5" type="checkbox" checked/><label class="tocitem" for="menuitem-2-5"><span class="docs-label">Levenberg-Marquardt</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Robust Geodesic Regression </a><ul class="internal"><li><a class="tocitem" href="#Prequel"><span>Prequel</span></a></li><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#The-Residual-and-its-Jacobian"><span>The Residual and its Jacobian</span></a></li><li><a class="tocitem" href="#Least-Squares-Geodesic-Regression"><span>Least Squares Geodesic Regression</span></a></li><li><a class="tocitem" href="#Robust-Geodesic-Regression-2"><span>Robust Geodesic Regression</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../LM-Robust-Procrustes/">Robust Procrustes</a></li><li><a class="tocitem" href="../LM-Robust-Subspace-Procrustes/">Robust Subspace Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-6" type="checkbox"/><label class="tocitem" for="menuitem-2-6"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-10" type="checkbox"/><label class="tocitem" for="menuitem-2-10"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NCRPG-Sparse-PCA/">Sparse PCA</a></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li><a class="tocitem" href="../NCRPG-Row-Sparse-Low-Rank/">Row-Sparse Low-Rank Matrix Recovery</a></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li><a class="tocitem" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span></a></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li><li><input class="collapse-toggle" id="menuitem-2-14" type="checkbox"/><label class="tocitem" for="menuitem-2-14"><span class="docs-label">Vector bundle Newton</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Elastic-Geodesic-under-forcefield/">Elastic Geodesic under force field</a></li><li><a class="tocitem" href="../Elastic-Geodesic-Obstacle/">Elastic Geodesic Obstacle</a></li><li><a class="tocitem" href="../Inextensible-Rod/">Inextensible Rod</a></li></ul></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Levenberg-Marquardt</a></li><li class="is-active"><a href>Robust Geodesic Regression </a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Robust Geodesic Regression </a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/LM-Robust-Geodesic-Regression.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Robust-Geodesic-Regression"><a class="docs-heading-anchor" href="#Robust-Geodesic-Regression">Robust Geodesic Regression</a><a id="Robust-Geodesic-Regression-1"></a><a class="docs-heading-anchor-permalink" href="#Robust-Geodesic-Regression" title="Permalink"></a></h1><p>Ronny Bergmann 2026-07-04</p><h2 id="Prequel"><a class="docs-heading-anchor" href="#Prequel">Prequel</a><a id="Prequel-1"></a><a class="docs-heading-anchor-permalink" href="#Prequel" title="Permalink"></a></h2><p>This notebook reproduces the results and images of Section 6.1 in [<a href="../../references/#BaranBergmann_2026">BB26</a>]. We use the following packages and parameters</p><pre><code class="language-julia hljs">using Colors, Distributions, GeometryBasics, GLMakie, Makie, ManifoldDiff, Manifolds, Manopt, NamedColors, Random, RecursiveArrayTools
+## Set the interval we sample the points from on the geodesic
+T = 1.0
+## Number of points along the geodesic on [-T,T]
+N = 100
+## Outlier parameters
+### Distance the outliers are moved
+r = π / 4
+### Number of outliers per each segment
+oN = 7
+## And set these slightly asymmetric
+outlier_indices = [4:(4 + oN - 1)..., [(N - 11):-1:(N - 11 - oN + 1)...]...];
+## Plotting colors
+ptc = NamedColors.load_paul_tol()
+orig_color = ptc[&quot;mutedcyan&quot;]
+noisy_color = ptc[&quot;mutedpurple&quot;]
+lsq_color = ptc[&quot;mutedsand&quot;]
+robust_color = ptc[&quot;mutedgreen&quot;]</code></pre><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>For robust geodesic regression on a Riemannian manifolds <span>$\mathcal M$</span> consider <span>$m \in \mathbb N$</span> points <span>$q_1,\ldots,q_m \in \mathcal M$</span> thereon associated to scalar values <span>$t_1,\ldots,t_m \in \mathbb R$</span>. We further denote the geodesic starting in a point <span>$p \in \mathcal M$</span> in direction <span>$X \in T_p\mathcal M$</span> by The task of geodesic regression is given as the problem on the tangent bundle <span>$T\mathcal M$</span> to find the geodesic <span>$\gamma_{p,X}$</span>, i.e. both <span>$p$</span> and <span>$X$</span>, that “best fits” the data with <span>$\gamma_{p,X}(t_i) \approx q_i$</span>, <span>$i=1,\ldots,m$</span>, where we still have the freedom to choose in what sense we mean to address the approximately equal condition. We consider</p><p class="math-container">\[\operatorname*{argmin}_{(p,X) \in T\mathcal M} \sum_{i=1}^m \rho\bigl( d_{\mathcal M}^2( \gamma_{p,X}(t_i), q_i) \bigr),\]</p><p>where <span>$\rho$</span> is a <a href="https://juliamanifolds.github.io/Manopt.jl/stable/plans/objectives/first_order/#Robustifiers">robustifier</a> applied to every summand. Choosing <span>$\rho(x) = x$</span> we get the classical (least squares) geodesic regression [<a href="../../references/#Fletcher_2013">Fle13</a>]. Here we want to consider approximations of the case where <span>$\rho(x) = \sqrt{x}$</span>, where the sum reduces to the sum of distances or the robust geodesic regression. Since that is no longer differentiable, we use <a href="https://juliamanifolds.github.io/Manopt.jl/stable/plans/objectives/first_order/#Manopt.ScaledRobustifierFunction">a scaled version</a> of the <a href="https://juliamanifolds.github.io/Manopt.jl/stable/plans/objectives/first_order/#Manopt.HuberRobustifier">Huber robustifier</a>.</p><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><p>We first setup the manifold, the true point, tangent vector, and data</p><pre><code class="language-julia hljs">S = Manifolds.Sphere(2)
+M = TangentBundle(S)</code></pre><p>and the original data as</p><pre><code class="language-julia hljs">p_true = [0.0, 1.0, 0.0]
+X_true = π / 2 .* [1.0, 0.0, 1.0]
+ts_true = collect(range(; start = -T, stop = T, length = N))
+qs_true = geodesic(S, p_true, X_true, ts_true)
+geo_line = geodesic(S, p_true, X_true, range(-T, T; length = 1000))</code></pre><p>which looks like</p><p><img src="../LM-Robust-Geodesic-Regression_files/figure-commonmark/cell-6-output-1.png" alt/></p><p>We then generate outliers</p><pre><code class="language-julia hljs">Random.seed!(42)
+R(α) = [cos(α) -sin(α); sin(α) cos(α)]
+data = [
+  if i ∈ outlier_indices
+    # all are outliers to the left or right
+    α = π / 2
+    c = get_coordinates(S, q, parallel_transport_to(S, p_true, X_true, q), DefaultOrthonormalBasis())
+    X_offset = get_vector(S, q, r / norm(c) .* R(α) * c, DefaultOrthonormalBasis())
+    exp(S, q, X_offset)
+  else
+    q
+  end
+  for (i, q) in enumerate(qs_true)
+]</code></pre><p><img src="../LM-Robust-Geodesic-Regression_files/figure-commonmark/cell-8-output-1.png" alt/></p><h2 id="The-Residual-and-its-Jacobian"><a class="docs-heading-anchor" href="#The-Residual-and-its-Jacobian">The Residual and its Jacobian</a><a id="The-Residual-and-its-Jacobian-1"></a><a class="docs-heading-anchor-permalink" href="#The-Residual-and-its-Jacobian" title="Permalink"></a></h2><p>We first define the overall least squares cost as well as its partial gradients w. r. t. <code>p</code> and <code>X</code> for a single summand</p><pre><code class="language-julia hljs">function cost1(M::AbstractManifold, p, X, ti::Real, di)
+    return 1 / 2 * distance(M, exp(M, p, ti * X), di)^2
+end
+function cost1_grad_p(M::AbstractManifold, p, X, ti::Real, di)
+    z = exp(M, p, ti * X)
+    gz = ManifoldDiff.grad_distance(M, di, z, 1)
+    return ManifoldDiff.adjoint_differential_exp_basepoint(M, p, ti * X, gz)
+end
+function cost1_grad_X(M::AbstractManifold, p, X, ti::Real, di)
+    z = exp(M, p, ti * X)
+    gz = ManifoldDiff.grad_distance(M, di, z, 1)
+    return ti * ManifoldDiff.adjoint_differential_exp_argument(M, p, ti * X, gz)
+end</code></pre><p>This is then used to define the overall residual <code>F</code> and its Jacobian <code>JF</code>.</p><pre><code class="language-julia hljs">function F(M, P; t = ts_true, d = data)
+    # Extract manifold and (p,X)
+    S = base_manifold(M); p = P[M, :point]; X = P[M, :vector]
+    return [distance(S, geodesic(S, p, X, ti), di) for (ti, di) in zip(t, d)]
+end
+function JF(M, P; t = ts_true, d = data)
+  # Extract manifold and (p,X)
+  S = base_manifold(M); p = P[M, :point]; X = P[M, :vector]
+  return [
+    ArrayPartition(
+      cost1_grad_p(S, p, X, ti, di), cost1_grad_X(S, p, X, ti, di),
+    )
+    for (ti, di) in zip(t, d)
+  ]
+end</code></pre><p>We combine these into a <a href="https://juliamanifolds.github.io/Manopt.jl/stable/plans/objectives/vectorial/#Manopt.VectorGradientFunction"><code>VectorGradientFunction</code></a></p><pre><code class="language-julia hljs">f = VectorGradientFunction(
+    F, JF, N;
+    evaluation = AllocatingEvaluation(),
+    function_type = FunctionVectorialType(),
+    jacobian_type = FunctionVectorialType(),
+)</code></pre><p>And we set a start point <code>p0</code>.</p><pre><code class="language-julia hljs">m = mean(S, data)
+X0 = log(S, m, data[end])
+p0 = ArrayPartition(m, X0)</code></pre><h2 id="Least-Squares-Geodesic-Regression"><a class="docs-heading-anchor" href="#Least-Squares-Geodesic-Regression">Least Squares Geodesic Regression</a><a id="Least-Squares-Geodesic-Regression-1"></a><a class="docs-heading-anchor-permalink" href="#Least-Squares-Geodesic-Regression" title="Permalink"></a></h2><p>We first run the <a href="https://juliamanifolds.github.io/Manopt.jl/stable/solvers/LevenbergMarquardt/#Manopt.LevenbergMarquardt">LevenbergMarquardt</a> solver without a robustifier, which means we solver the least squares problem, or in other words set <span>$\rho(x) = x$</span></p><pre><code class="language-julia hljs">P_star = LevenbergMarquardt(
+    M, f, p0;
+    damping_increase_factor = 2.0, candidate_acceptance_threshold = 0.2, damping_term_min = 1.0e-5,
+    damping_increase_threshold = 0.2,
+    damping_reduction_threshold = 0.5,
+    scaling_threshold = 1.0e-1, scaling_mode = :Strict,
+    retraction_method = StabilizedRetraction(default_retraction_method(M)),
+    debug = [:Iteration, (:Cost, &quot;f(x): %8.8e &quot;), :damping_term, &quot;\n&quot;,
+    10, :Stop],
+)</code></pre><p>And we can extract the minimizer parts <span>$P^* = (p^*,X^*)$</span> as</p><pre><code class="language-julia hljs">p_star = P_star[M, :point]
+X_star = P_star[M, :vector]
+qs_star = geodesic(S, p_star, X_star, ts_true)
+geo_line_mean = geodesic(S, p_star, X_star, range(-T, T; length = 1000))</code></pre><p>which yields the result</p><pre><code class="language-julia hljs">scatterlines!(
+  ax1, Point3d.(geo_line_mean); markersize = 0, color = lsq_color, linewidth = 2,
+)
+scatter!(ax1, Point3d.([p_star]); markersize = 12, color = lsq_color)
+scatter!(ax1, Point3d.(qs_star); markersize = 8, color = lsq_color)
+arrows3d!(
+  ax1, Point3d.([p_star]), Point3d.([X_star]);
+  color = lsq_color, transparency = true, shaftradius = 0.0025, tiplength = 0.075, tipradius = 0.0125,
+)
+fig1</code></pre><p><img src="../LM-Robust-Geodesic-Regression_files/figure-commonmark/cell-15-output-1.png" alt/></p><p>One can see, that the outliers yield that the least squares result is slightly “skewed” to one side.</p><h2 id="Robust-Geodesic-Regression-2"><a class="docs-heading-anchor" href="#Robust-Geodesic-Regression-2">Robust Geodesic Regression</a><a class="docs-heading-anchor-permalink" href="#Robust-Geodesic-Regression-2" title="Permalink"></a></h2><p>As comparison we take a scaled version of the <a href="https://juliamanifolds.github.io/Manopt.jl/stable/plans/objectives/first_order/#Manopt.HuberRobustifier"><code>HuberRobustifier</code></a> by <a href="https://juliamanifolds.github.io/Manopt.jl/stable/plans/objectives/first_order/#Manopt.ComposedRobustifierFunction">concatenting</a> it with a scaling, so that we move the “cutoff” to a value <code>1.0e-4</code>, see <a href="https://juliamanifolds.github.io/Manopt.jl/stable/plans/objectives/first_order/#Manopt.ScaledRobustifierFunction"><code>ScaledRobustifierFunction</code></a>.</p><p>The solver call uses the same variables for the remaining setup than the previous run.</p><pre><code class="language-julia hljs">P_ast = LevenbergMarquardt(
+  M, f, p0;
+  damping_increase_factor = 8.0, candidate_acceptance_threshold = 0.2, damping_term_min = 1.0e-5,
+  scaling_threshold = 1.0e-1, scaling_mode = :Strict,
+  damping_increase_threshold = 0.2,
+  damping_reduction_threshold = 0.5,
+  robustifier = 1.0e-4 ∘ HuberRobustifier(),
+  retraction_method = StabilizedRetraction(default_retraction_method(M)),
+  debug = [:Iteration, (:Cost, &quot;f(x): %8.8e &quot;), :damping_term, &quot;\n&quot;, 10, :Stop],
+)</code></pre><p>And we again extract the minimizer parts</p><pre><code class="language-julia hljs">p_ast = P_ast[M, :point]
+X_ast = P_ast[M, :vector]
+qs_ast = geodesic(S, p_ast, X_ast, ts_true)
+geo_line_robust = geodesic(S, p_ast, X_ast, range(-T, T; length = 1000))</code></pre><p>to add them to the figure</p><pre><code class="language-julia hljs">scatterlines!(
+  ax1, Point3d.(geo_line_robust); markersize = 0, color = robust_color, linewidth = 2,
+)
+scatter!(ax1, Point3d.([p_ast]); markersize = 12, color = robust_color)
+scatter!(ax1, Point3d.(qs_ast); markersize = 8, color = robust_color)
+arrows3d!(
+  ax1, Point3d.([p_ast]), Point3d.([X_ast]);
+  color = robust_color, transparency = true, shaftradius = 0.0025, tiplength = 0.075, tipradius = 0.0125,
+)
+fig1</code></pre><p><img src="../LM-Robust-Geodesic-Regression_files/figure-commonmark/cell-18-output-1.png" alt/></p><p>Here the new (green) dots and the tangent vector lie exactly on the original geodesic visually.</p><p>If we measure the (mean) error we get for least squares</p><pre><code class="language-julia hljs">1 / N * norm([distance(S, qi, qmi) for (qi, qmi) in zip(qs_true, qs_star)])</code></pre><pre><code class="nohighlight hljs">0.013904282413539831</code></pre><p>On the other hand for the robust case we get</p><pre><code class="language-julia hljs">1 / N * norm([distance(S, qi, qmi) for (qi, qmi) in zip(qs_true, qs_ast)])</code></pre><pre><code class="nohighlight hljs">2.2737844213842437e-6</code></pre><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BB26]</dt><dd><div>M. Baran and R. Bergmann. <a href="https://doi.org/10.48550/arXiv.2606.23560"><em>A modified Riemannian Levenberg-Marquardt algorithm for robust and constraint optimization on manifolds</em></a> (2026), arXiv:2606.23560 [math.OC].</div></dd><dt>[Fle13]</dt><dd><div>P. T. Fletcher. <em>Geodesic regression and the theory of least squares on Riemannian manifolds</em>. <a href="https://doi.org/10.1007/s11263-012-0591-y">International Journal of Computer Vision <strong>105</strong>, 171–185</a> (2013).</div></dd></dl></div><details>
+  <summary>Technical Details</summary><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.8.0
+  [336ed68f] CSV v0.10.16
+  [13f3f980] CairoMakie v0.15.12
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.31.0
+  [5ae59095] Colors v0.13.1
+  [a93c6f00] DataFrames v1.8.2
+  [31c24e10] Distributions v0.25.129
+  [e9467ef8] GLMakie v0.13.12
+  [5c1252a2] GeometryBasics v0.5.11
+  [4d00f742] GeometryTypes v0.8.5
+  [7073ff75] IJulia v1.34.4
+  [682c06a0] JSON v1.6.1
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+  [d3d80556] LineSearches v7.7.1
+  [ee78f7c6] Makie v0.24.12
+  [7351309b] ManifoldAsymptote v0.1.0
+  [af67fdf4] ManifoldDiff v0.4.5
+  [9d80ff41] ManifoldMakie v0.1.2
+  [1cead3c2] Manifolds v0.11.28
+  [3362f125] ManifoldsBase v2.4.0
+⌃ [0fc0a36d] Manopt v0.6.0
+  [5b8d5e80] ManoptExamples v0.1.18 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [6fe1bfb0] OffsetArrays v1.17.0
+  [91a5bcdd] Plots v1.41.6
+⌃ [08abe8d2] PrettyTables v3.3.2
+  [6099a3de] PythonCall v0.9.35
+  [f468eda6] QuadraticModels v0.9.16
+  [731186ca] RecursiveArrayTools v4.3.2
+  [1e40b3f8] RipQP v0.7.0
+Info Packages marked with ⌃ have new versions available and may be upgradable.</code></pre><p>This tutorial was last rendered July 5, 2026, 17:27:3.</p></details></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Spectral-Procrustes-2D/">« Spectral &amp; Robust Procrustes</a><a class="docs-footer-nextpage" href="../LM-Robust-Procrustes/">Robust Procrustes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 7 July 2026 12:49">Tuesday 7 July 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

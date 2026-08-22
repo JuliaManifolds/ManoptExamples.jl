@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Robust Procrustes · ManoptExamples.jl</title><meta name="title" content="Robust Procrustes · ManoptExamples.jl"/><meta property="og:title" content="Robust Procrustes · ManoptExamples.jl"/><meta property="twitter:title" content="Robust Procrustes · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">LTMADS</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Spectral-Procrustes-2D/">Spectral &amp; Robust Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-5" type="checkbox" checked/><label class="tocitem" for="menuitem-2-5"><span class="docs-label">Levenberg-Marquardt</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../LM-Robust-Geodesic-Regression/">Robust Geodesic Regression </a></li><li class="is-active"><a class="tocitem" href>Robust Procrustes</a><ul class="internal"><li><a class="tocitem" href="#Prequel"><span>Prequel</span></a></li><li><a class="tocitem" href="#Setup-data"><span>Setup data</span></a></li><li><a class="tocitem" href="#Experiment-setup"><span>Experiment setup</span></a></li><li><a class="tocitem" href="#Run-experiments"><span>Run experiments</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../LM-Robust-Subspace-Procrustes/">Robust Subspace Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-6" type="checkbox"/><label class="tocitem" for="menuitem-2-6"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-10" type="checkbox"/><label class="tocitem" for="menuitem-2-10"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NCRPG-Sparse-PCA/">Sparse PCA</a></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li><a class="tocitem" href="../NCRPG-Row-Sparse-Low-Rank/">Row-Sparse Low-Rank Matrix Recovery</a></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li><a class="tocitem" href="../CRPG-Sphere-Example/">Convex Example on <span>$\mathbb S^n$</span></a></li><li><a class="tocitem" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span></a></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li><li><input class="collapse-toggle" id="menuitem-2-14" type="checkbox"/><label class="tocitem" for="menuitem-2-14"><span class="docs-label">Vector bundle Newton</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Elastic-Geodesic-under-forcefield/">Elastic Geodesic under force field</a></li><li><a class="tocitem" href="../Elastic-Geodesic-Obstacle/">Elastic Geodesic Obstacle</a></li><li><a class="tocitem" href="../Inextensible-Rod/">Inextensible Rod</a></li></ul></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Levenberg-Marquardt</a></li><li class="is-active"><a href>Robust Procrustes</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Robust Procrustes</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/LM-Robust-Procrustes.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Robust-Procrustes-on-the-Special-Orthogonal-group"><a class="docs-heading-anchor" href="#Robust-Procrustes-on-the-Special-Orthogonal-group">Robust Procrustes on the Special Orthogonal group</a><a id="Robust-Procrustes-on-the-Special-Orthogonal-group-1"></a><a class="docs-heading-anchor-permalink" href="#Robust-Procrustes-on-the-Special-Orthogonal-group" title="Permalink"></a></h1><p>Ronny Bergmann 2026-07-04</p><h2 id="Prequel"><a class="docs-heading-anchor" href="#Prequel">Prequel</a><a id="Prequel-1"></a><a class="docs-heading-anchor-permalink" href="#Prequel" title="Permalink"></a></h2><p>This notebook reproduces the results and images of Section 6.2 in [<a href="../../references/#BaranBergmann_2026">BB26</a>]. We use the following packages and parameters</p><pre><code class="language-julia hljs">using CairoMakie, Chairmarks, Colors, CSV, DataFrames, NamedColors, LinearAlgebra, Manopt, Manifolds, PrettyTables, Random
+export_csv = true
+ptc = NamedColors.load_paul_tol()
+ltmads_color = ptc[&quot;mutedsand&quot;]
+robust_color = ptc[&quot;mutedgreen&quot;]</code></pre><p>Let two data sets <span>$A \in \mathbb{R}^{d\times n}$</span>, <span>$A = (a_1,\ldots,a_n)$</span>, and <span>$B \in \mathbb R^{d\times n}$</span>, <span>$B = (b_1,\ldots,b_n)$</span>, of measured data be given, where we obtain a set of columns of values <span>$a_i \in \mathbb R^d$</span>, <span>$b_j \in \mathbb R^d$</span> each.</p><p>The Procrustes Problem aims to find the best rotation <span>$p \in \mathrm{SO}(d)$</span>, <span>$\mathrm{SO}(d) := \{ p \in \mathbb R^{d\times d} \,\mid\, p^{\mathrm{T}}p = I_d, \det(p) = 1\}$</span>, such that <span>$A \approx pB$</span>, where we here use a robust norm and obtain the robust Procrustes problem</p><p class="math-container">\[\operatorname*{argmin}_{p \in \mathrm{SO}(d)}\ \lVert A - pB \rVert_{\mathrm{R}},
+\qquad
+\lVert C \rVert_{\mathrm{R}} := \sum_{i=1}^{n} \lVert c_i \rVert_2,\]</p><p>where <span>$c_i$</span>, <span>$i=1,\ldots,n$</span> again denote the columns of the matrix <span>$C = (c_1,\ldots,c_n) \in \mathbb R^{d\times n}$</span>.</p><h2 id="Setup-data"><a class="docs-heading-anchor" href="#Setup-data">Setup data</a><a id="Setup-data-1"></a><a class="docs-heading-anchor-permalink" href="#Setup-data" title="Permalink"></a></h2><pre><code class="language-julia hljs">raw&quot;&quot;&quot;
+    generate_data(d)
+
+Generate a data matrix ``A ∈ ℝ^{d× n}`` in a deterministic way,
+here by using ``n = \frac{d(d-1)}{2}`` columns.
+&quot;&quot;&quot;
+function generate_data(d)
+    # (1) push the first unit vector scaled by 1/2
+    n = Int(d * (d + 1) / 2)
+    A = zeros(d, n)
+    A[1, 1] = 1.0
+    k = 2
+    dir = zeros(d)
+    for i in 2:d # for each following dimension, set point on the diagonal of the preceding dimensions
+        dir[1:i] .= 1 / sqrt(i)
+        dir[(i + 1):end] .= 0
+        v = range(0.0, 1.0, i + 2)[2:(end - 1)]
+        for vi in v
+            A[:, k] .= vi * dir
+            k = k + 1
+        end
+    end
+    return A
+end
+
+skew(A) = 0.5 .* (A - A&#39;)</code></pre><p>And the cost, differential and adjoint differential</p><pre><code class="language-julia hljs">&quot;&quot;&quot;
+    f(M, p; A, B)
+
+For given matrices ``A, B ∈ ℝ^{d,n}`` compute the robust Procrustes cost
+
+```math
+F_i(p) = (A - pB)_i = a_i - pb_i
+```
+&quot;&quot;&quot;
+f(M, p; A, B) = sum(norm(A[:, i] - p * B[:, i]) for i in 1:size(A, 2))
+
+&quot;&quot;&quot;
+    Fi(M, p; i, A, B)
+    Fi!(M, v, p; i, A, B)
+
+For given matrices ``A, B ∈ ℝ^{d,n}`` compute the residual of the ith column
+
+```math
+F_i(p) = (A - pB)_i = a_i - pb_i
+```
+
+This can be computed in-place of `v`
+&quot;&quot;&quot;
+Fi(M, p; i, A, B) = A[:, i] - p * B[:, i]
+Fi!(M, v, p; i, A, B) = (v .= A[:, i] .- p * B[:, i])
+
+&quot;&quot;&quot;
+    DFi(M, p, X; i, A, B)
+    DFi!(M, y, p, X; i, A, B)
+
+For given matrices ``A, B ∈ ℝ^{d,n}`` compute the differential of the residual of the ith column
+with respect to the rotation ``p`` that is, ``X ∈ 𝔰𝔬(d)`` which reads
+
+```math
+\\mathcal J_{F_i}(p)[X] = DF_i(p)[X] = -pXb_i
+```
+
+This is computed in-place of `y`
+
+&quot;&quot;&quot;
+DFi(M, p, X; i, A, B) = - p * X * B[:, i]
+DFi!(M, y, p, X; i, A, B) = (y .= - p * X * B[:, i])
+
+raw&quot;&quot;&quot;
+    adjointDFi(M, p, y; i, A, B)
+    adjointDFi!(M, X, p, y; i, A, B)
+
+For given matrices ``A, B ∈ ℝ^{d,n}`` compute the adjoint differential of the residual of the ith column
+with respect to the rotation ``p`` that is, ``y ∈ ℝn`` but mapping into the Lie algebra ``𝔰𝔬(d)``.
+This is also referred to as the Jacobian
+
+```math
+D*{F_i}(p)[y] = -\mathrm{skew}(p^{\mathrm{T}}yb_i^{\mathrm{T}})
+```
+
+This is computed in-place of `X`.
+&quot;&quot;&quot;
+adjointDFi(M, p, y; i, A, B) = - skew(p&#39; * y * B[:, i]&#39;)
+adjointDFi!(M, a, p, y; i, A, B) = (a .= - skew(p&#39; * y * B[:, i]&#39;))</code></pre><h2 id="Experiment-setup"><a class="docs-heading-anchor" href="#Experiment-setup">Experiment setup</a><a id="Experiment-setup-1"></a><a class="docs-heading-anchor-permalink" href="#Experiment-setup" title="Permalink"></a></h2><p>We test matrix dimensions <span>$d=3,...,15$</span> and setup a collection of statistics</p><pre><code class="language-julia hljs"># Statistics:
+matrix_sizes = collect(3:15)
+num_experiments = length(matrix_sizes)
+num_columns = zeros(Int, num_experiments)
+manifold_dimensions = zeros(Int, num_experiments)
+mean_time_rLM = zeros(Float64, num_experiments)
+mean_time_LTMADS = zeros(Float64, num_experiments)
+final_cost_rLM = zeros(Float64, num_experiments)
+final_cost_LTMADS = zeros(Float64, num_experiments)
+iterations_rLM = zeros(Int, num_experiments)
+iterations_LTMADS = zeros(Int, num_experiments)</code></pre><h2 id="Run-experiments"><a class="docs-heading-anchor" href="#Run-experiments">Run experiments</a><a id="Run-experiments-1"></a><a class="docs-heading-anchor-permalink" href="#Run-experiments" title="Permalink"></a></h2><pre><code class="language-julia hljs">for (i, d) in enumerate(matrix_sizes)
+    A = generate_data(d)
+    n = size(A, 2) # number of summands in the vectorial cost sum
+    M = Rotations(d)
+    Random.seed!(42)
+    e = Matrix{Float64}(I, d, d)
+    p_star = exp(M, e, rand(M; vector_at=e, σ = 0.5/d))
+    B = copy(A)
+    # and generate a few outliers in [3,6] so it also works already for d=3
+    B[2, 4] += 0.1;  B[3, 1] += 0.1; B[3, 2] += 0.1; B[1, 6] += 0.1
+    mask = B .== A
+    # then rotate
+    B = p_star&#39; * B
+    # Seting cost and vectorial block function
+    F(M, p) = [Fi(M, p; i = i, A = A, B = B) for i in 1:n]
+    vgfs = [
+        VectorDifferentialFunction(
+                (M, c, p) -&gt; Fi!(M, c, p; i = i, A = A, B = B),
+                (M, y, p, X) -&gt; DFi!(M, y, p, X; i = i, A = A, B = B),
+                (M, X, p, y) -&gt; adjointDFi!(M, X, p, y; i = i, A = A, B = B),
+                d;
+                function_type = FunctionVectorialType(), jacobian_type = FunctionVectorialType(),
+                adjoint_jacobian_type = FunctionVectorialType(), evaluation = InplaceEvaluation(),
+            ) for i in 1:n
+    ]
+    rs = [ 1.0e-5 ∘ HuberRobustifier() for _ in 1:n ]
+
+    # Start with the identity
+    p0 = Matrix{Float64}(I, d, d)
+    @info &quot; &quot;
+    @info &quot;d=$d (n=$n) dim=$(manifold_dimension(M)), distance=$(distance(M, p0, p_star))&quot;
+    #
+    # Solver runs. Both (a) an individual run to obtain stats like maxiter
+    #
+    # Least Squares Hubertized
+    state1 = LevenbergMarquardt(
+        M, vgfs, p0; candidate_acceptance_threshold = 0.2,
+        damping_increase_factor = 4.0, damping_term_min = 1.0e-7,
+        return_state = true, robustifier = rs,
+        scaling_mode = :Strict, scaling_threshold = 1.0e-4,
+    )
+    iter1 = get_count(state1, :Iterations)
+    p1 = get_solver_result(state1)
+    time1 = @be LevenbergMarquardt(
+        $M, $vgfs, $p0; robustifier = $rs, scaling_mode = :Strict, scaling_threshold = 1.0e-4,
+        damping_increase_factor = 4.0, candidate_acceptance_threshold = 0.2, damping_term_min = 1.0e-7,
+    ) samples = 5 evals = 3
+    state2 = mesh_adaptive_direct_search(
+        M, (M, p) -&gt; f(M, p; A = A, B = B), p0;
+        stopping_criterion = StoppingCriterion = StopAfterIteration(20000) | StopWhenPollSizeLess(1.0e-10),
+        return_state = true
+    )
+    time2 = @be mesh_adaptive_direct_search(
+        $M, $((M, p) -&gt; f(M, p; A = A, B = B)), $p0;
+        stopping_criterion = $(StoppingCriterion = StopAfterIteration(20000) | StopWhenPollSizeLess(1.0e-10))
+    ) samples = 5 evals = 3
+    iter2 = get_count(get_state(state2), :Iterations)
+    p2 = get_solver_result(state2)
+    # Collect stats
+    num_columns[i] = n
+    manifold_dimensions[i] = manifold_dimension(M)
+    mean_time_rLM[i] = mean(time1).time
+    mean_time_LTMADS[i] = mean(time2).time
+    final_cost_rLM[i] = f(M, p1; A = A, B = B)
+    final_cost_LTMADS[i] = f(M, p2; A = A, B = B)
+    iterations_rLM[i] = iter1
+    iterations_LTMADS[i] = iter2
+end</code></pre><p><img src="../LM-Robust-Procrustes_files/figure-commonmark/cell-9-output-1.png" alt/></p><p>as well as the resulting cost</p><p><img src="../LM-Robust-Procrustes_files/figure-commonmark/cell-10-output-1.png" alt/></p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BB26]</dt><dd><div>M. Baran and R. Bergmann. <a href="https://doi.org/10.48550/arXiv.2606.23560"><em>A modified Riemannian Levenberg-Marquardt algorithm for robust and constraint optimization on manifolds</em></a> (2026), arXiv:2606.23560 [math.OC].</div></dd></dl></div><details>
+  <summary>Technical Details</summary><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.8.0
+  [336ed68f] CSV v0.10.16
+  [13f3f980] CairoMakie v0.15.12
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.31.0
+  [5ae59095] Colors v0.13.1
+  [a93c6f00] DataFrames v1.8.2
+  [31c24e10] Distributions v0.25.129
+  [e9467ef8] GLMakie v0.13.12
+  [5c1252a2] GeometryBasics v0.5.11
+  [4d00f742] GeometryTypes v0.8.5
+  [7073ff75] IJulia v1.34.4
+  [682c06a0] JSON v1.6.1
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+  [d3d80556] LineSearches v7.7.1
+  [ee78f7c6] Makie v0.24.12
+  [7351309b] ManifoldAsymptote v0.1.0
+  [af67fdf4] ManifoldDiff v0.4.5
+  [9d80ff41] ManifoldMakie v0.1.2
+  [1cead3c2] Manifolds v0.11.28
+  [3362f125] ManifoldsBase v2.4.0
+⌃ [0fc0a36d] Manopt v0.6.0
+  [5b8d5e80] ManoptExamples v0.1.18 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [6fe1bfb0] OffsetArrays v1.17.0
+  [91a5bcdd] Plots v1.41.6
+⌃ [08abe8d2] PrettyTables v3.3.2
+  [6099a3de] PythonCall v0.9.35
+  [f468eda6] QuadraticModels v0.9.16
+  [731186ca] RecursiveArrayTools v4.3.2
+  [1e40b3f8] RipQP v0.7.0
+Info Packages marked with ⌃ have new versions available and may be upgradable.</code></pre><p>This tutorial was last rendered July 5, 2026, 20:18:54.</p></details></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../LM-Robust-Geodesic-Regression/">« Robust Geodesic Regression </a><a class="docs-footer-nextpage" href="../LM-Robust-Subspace-Procrustes/">Robust Subspace Procrustes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 22 July 2026 18:27">Wednesday 22 July 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

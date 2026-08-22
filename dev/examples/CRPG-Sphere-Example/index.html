@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Convex Example on mathbb S^n · ManoptExamples.jl</title><meta name="title" content="Convex Example on mathbb S^n · ManoptExamples.jl"/><meta property="og:title" content="Convex Example on mathbb S^n · ManoptExamples.jl"/><meta property="twitter:title" content="Convex Example on mathbb S^n · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../RCBM-Median/">Riemannian Median</a></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">LTMADS</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Spectral-Procrustes-2D/">Spectral &amp; Robust Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-5" type="checkbox"/><label class="tocitem" for="menuitem-2-5"><span class="docs-label">Levenberg-Marquardt</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../LM-Robust-Geodesic-Regression/">Robust Geodesic Regression </a></li><li><a class="tocitem" href="../LM-Robust-Procrustes/">Robust Procrustes</a></li><li><a class="tocitem" href="../LM-Robust-Subspace-Procrustes/">Robust Subspace Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-6" type="checkbox"/><label class="tocitem" for="menuitem-2-6"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><input class="collapse-toggle" id="menuitem-2-10" type="checkbox" checked/><label class="tocitem" for="menuitem-2-10"><span class="docs-label">Proximal Gradient Methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NCRPG-Sparse-PCA/">Sparse PCA</a></li><li><a class="tocitem" href="../NCRPG-Grassmann/">Grassmann Experiment</a></li><li><a class="tocitem" href="../NCRPG-Row-Sparse-Low-Rank/">Row-Sparse Low-Rank Matrix Recovery</a></li><li><a class="tocitem" href="../CRPG-Convex-SPD/">Convex Example on SPDs</a></li><li class="is-active"><a class="tocitem" href>Convex Example on <span>$\mathbb S^n$</span></a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#The-Problem"><span>The Problem</span></a></li><li><a class="tocitem" href="#Numerical-Experiment"><span>Numerical Experiment</span></a></li><li><a class="tocitem" href="#Test-with-different-parameters"><span>Test with different parameters</span></a></li><li><a class="tocitem" href="#Technical-details"><span>Technical details</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span></a></li><li><a class="tocitem" href="../CRPG-Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li><li><input class="collapse-toggle" id="menuitem-2-14" type="checkbox"/><label class="tocitem" for="menuitem-2-14"><span class="docs-label">Vector bundle Newton</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Elastic-Geodesic-under-forcefield/">Elastic Geodesic under force field</a></li><li><a class="tocitem" href="../Elastic-Geodesic-Obstacle/">Elastic Geodesic Obstacle</a></li><li><a class="tocitem" href="../Inextensible-Rod/">Inextensible Rod</a></li></ul></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Proximal Gradient Methods</a></li><li class="is-active"><a href>Convex Example on <span>$\mathbb S^n$</span></a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Convex Example on <span>$\mathbb S^n$</span></a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/CRPG-Sphere-Example.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="A-Geodesically-Convex-Example-on-the-Sphere"><a class="docs-heading-anchor" href="#A-Geodesically-Convex-Example-on-the-Sphere">A Geodesically Convex Example on the Sphere</a><a id="A-Geodesically-Convex-Example-on-the-Sphere-1"></a><a class="docs-heading-anchor-permalink" href="#A-Geodesically-Convex-Example-on-the-Sphere" title="Permalink"></a></h1><p>Paula John 2026-06-15</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In this example we compare the Convex Riemannian Proximal Gradient (CRPG) method [<a href="../../references/#BergmannJasaJohnPfeffer_2025_2">BJJP25a</a>] with both a constant and a backtracked step size strategy on the sphere. This example reproduces the results from [<a href="../../references/#BergmannJasaJohnPfeffer_2025_2">BJJP25a</a>], Section 6.2.</p><pre><code class="language-julia hljs">using PrettyTables
+using BenchmarkTools
+using CSV, DataFrames
+using ColorSchemes, Plots, LaTeXStrings, CairoMakie, Chairmarks
+using Random, LinearAlgebra, LRUCache
+using ManifoldDiff, Manifolds, Manopt, ManoptExamples
+import ColorSchemes.tol_vibrant</code></pre><h2 id="The-Problem"><a class="docs-heading-anchor" href="#The-Problem">The Problem</a><a id="The-Problem-1"></a><a class="docs-heading-anchor-permalink" href="#The-Problem" title="Permalink"></a></h2><p>Let <span>$\mathcal M = \mathbb S^2$</span> be the <span>$2$</span>-dimensional hyperbolic space.</p><p>Let <span>$g \colon \mathcal M \to \mathbb R$</span> be defined by</p><p class="math-container">\[g(p) = \frac{1}{2} \sum_{j = 1}^N w_j \, \mathrm{dist}(p, q_j)^2,\]</p><p>where <span>$w_j$</span>, <span>$j = 1, \ldots, N$</span> are positive weights such that <span>$\sum_{j = 1}^N w_j = 1$</span>, and <span>$\{q_1,\ldots,q_N\} \in \mathcal M$</span> denote <span>$N = 1000$</span> Gaussian random data points.</p><p>Observe that the function <span>$g$</span> is geodesically convex with respect to the Riemannian metric on <span>$\mathcal M$</span> on balls of radius smaller than <span>$\frac{\pi}{2}$</span>.</p><p>Let now <span>$\bar q$</span> be a given point, and let <span>$h \colon \mathcal M \to \mathbb R$</span> be defined by</p><p class="math-container">\[h(p) = \tau \mathrm{dist}(p, \bar q),\]</p><p>for some <span>$\tau &gt; 0$</span>. We define our total objective function as <span>$f = g + h$</span>. Notice that this objective function is also geodesically convex with respect to the Riemannian metric on <span>$\mathcal M$</span>. The goal is to find the minimizer of <span>$f$</span> on <span>$\mathcal M$</span>.</p><h2 id="Numerical-Experiment"><a class="docs-heading-anchor" href="#Numerical-Experiment">Numerical Experiment</a><a id="Numerical-Experiment-1"></a><a class="docs-heading-anchor-permalink" href="#Numerical-Experiment" title="Permalink"></a></h2><p>We initialize the experiment parameters, as well as some utility functions.</p><pre><code class="language-julia hljs">random_seed = 42
+
+dims = [100, 500, 1000, 5000]
+num_tests = 10
+
+N = 1000 # Number of points
+τ = 0.1  # weight parameter
+max_it = 1000
+stop = 1e-5
+min_stepsize_bt = 1e-8
+
+contraction_factor = 0.5
+warm_start_factor = 2.0
+# Choose a radius &lt; pi/4
+# The smaller the diameter of our set, the larger we can choose λ 
+radius = pi/6</code></pre><p>First we define the objective and related quantities</p><pre><code class="language-julia hljs"># Objective, gradient, and proxes
+_g(S, p, qs) = sum(distance(S, p, qk)^2 for qk in qs) / (2 * length(qs))
+get_g(qs) = (S, p) -&gt; _g(S, p, qs)
+#
+get_h(q_bar, τ) = (S, p) -&gt; τ * distance(S, p, q_bar)
+#
+_grad_g(S, p, qs) = -sum(log(S, p, qk) for qk in qs) / length(qs)
+get_grad_g(qs) = (S, p) -&gt; _grad_g(S, p, qs)
+#
+function _prox(S, λ, p, q_bar, τ)
+    if distance(S,p,q_bar) &lt;= λ*τ
+        return q_bar
+    end 
+    V = log(S,p,q_bar)
+    return exp(S, p, λ * τ * V/norm(V))
+end 
+get_prox(q_bar, τ) = (S, λ, p) -&gt; _prox(S, λ, p, q_bar, τ)
+#</code></pre><p>and then generate the problem data</p><pre><code class="language-julia hljs"># Generate points and data
+function generate_point(S, anchor, radius)
+    X = rand(S; vector_at = anchor)
+    return exp(S, anchor, rand()*radius*X/norm(X))
+end 
+function generate_data(S, radius; N=1000)
+    anchor = rand(S)
+    start = generate_point(S, anchor, radius)
+    q_bar = generate_point(S, anchor, radius)
+    qs = [generate_point(S, anchor, radius) for i in 1:N]
+    return start, q_bar, qs
+end</code></pre><pre><code class="nohighlight hljs">generate_data (generic function with 1 method)</code></pre><p>We now define some functions related to the stepsize selection</p><pre><code class="language-julia hljs"># Stepsize calculation
+get_λ_δ(α1, α2, αg, δ) = (sqrt(4*(α2 - α1)^2 + 1/(2 + δ)^2 * αg^2) - 2 * (α2 - α1)) / (2 * αg^2)
+get_ζ_δ(δ) = pi/(2 + δ) * cot(pi/(2 + δ))
+#
+function get_const_stepsize(radius, τ)
+    # α1 ≤ h(p) ≤ α2 ∀p ∈ B(anchor, radius)
+    α1 = 0.0
+    α2 = τ * 2 * radius
+    # ||grad_g(p)|| ≤ αg ∀p ∈ B(anchor, radius)
+    αg = 2 * radius 
+    Lg = 1.0
+    # Compute optimal δ for constant stepsize
+    δ_grid = 0.0:0.001:0.4
+    vals = [min(get_λ_δ(α1, α2, αg, δ),get_ζ_δ(δ)/Lg) for δ in 0.0:0.001:0.4]
+    λ_const, max_idx = findmax(vals)
+    return λ_const, δ_grid[max_idx]
+end</code></pre><pre><code class="nohighlight hljs">get_const_stepsize (generic function with 1 method)</code></pre><p>Since the stepsizes are independent of the dimension, we define them here, in conjunction with the parameter <span>$\delta$</span> used for the backtracking</p><pre><code class="language-julia hljs">λ_const, δ = get_const_stepsize(radius, τ)
+δ_bt = 1.0
+λ_init = 10 * λ_const</code></pre><pre><code class="nohighlight hljs">1.4758225181520177</code></pre><p>Before running the experiments, we initialize data collection functions that we will use later</p><pre><code class="language-julia hljs"># Header for the dataframe
+column_names = [ 
+  &quot;Dim&quot;        =&gt; Int64[],
+  &quot;Stepsize&quot;   =&gt; Float64[],
+  &quot;Time&quot;       =&gt; Float64[],
+  &quot;Iterations&quot; =&gt; Int64[], 
+  &quot;Objective&quot;  =&gt; Float64[]
+]
+column_labels = [
+  :Dimension,
+  :Stepsize,
+  :Time,
+  :Iterations,
+  :Objective,
+]
+df_const = DataFrame(column_names, makeunique=true) 
+df_bt = DataFrame(column_names, makeunique=true)</code></pre><pre><code class="language-julia hljs">function export_dataframes(
+    M,
+    records,
+    times,
+)
+    B1 = DataFrame(;
+        Dimension=manifold_dimension(M),
+        Iterations_1=maximum(first.(records[1])),
+        Time_1=times[1],
+        Cost_1=minimum([r[2] for r in records[1]]),
+        Iterations_2=maximum(first.(records[2])),
+        Time_2=times[2],
+        Cost_2=minimum([r[2] for r in records[2]]),
+    )
+    return B1
+end
+function write_dataframes(
+    B1,
+    results_folder,
+    experiment_name,
+)
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name *
+            &quot;-Comparisons.csv&quot;,
+        ),
+        B1;
+        append=true,
+    )
+end</code></pre><pre><code class="language-julia hljs">for dim in dims 
+    S = Manifolds.Sphere(dim)
+    time_bt = 0.0
+    time_const = 0.0
+
+    iterations_bt = 0
+    iterations_const = 0
+
+    objective_bt = 0.0
+    objective_const = 0.0
+
+    for i in 1:num_tests
+        Random.seed!(1520 + i)
+
+        start, q_bar, qs = generate_data(S, radius)
+
+        g = get_g(qs)
+        h = get_h(q_bar, τ)
+        f(S, p) = g(S, p) + h(S, p)
+        grad_g = get_grad_g(qs)
+        prox = get_prox(q_bar, τ)
+        rec_const = proximal_gradient_method(S, f, g, grad_g, start;
+            prox_nonsmooth=prox, 
+            stepsize=ConstantLength(λ_const),
+            record=[:Iteration, :Iterate],
+            return_state=true,
+            stopping_criterion=StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+        )
+        bm_const = @benchmark proximal_gradient_method($S, $f, $g, $grad_g, $start;
+            prox_nonsmooth=$prox, 
+            stepsize=ConstantLength($λ_const),
+            stopping_criterion=StopAfterIteration($max_it)| StopWhenGradientMappingNormLess($stop)
+        )
+        rec_CRPG_bt = proximal_gradient_method(S, f, g, grad_g, start;
+            prox_nonsmooth=prox, 
+            stepsize=ProximalGradientMethodBacktracking(; 
+                strategy=:convex, 
+                initial_stepsize=λ_init, 
+                stop_when_stepsize_less=min_stepsize_bt,
+                δ=δ_bt,
+                contraction_factor=contraction_factor,
+                warm_start_factor=warm_start_factor,
+                k_max=1.0,
+            ),
+            record=[:Iteration, :Iterate],
+            return_state=true,
+            stopping_criterion=StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+        )
+        bm_bt = @benchmark proximal_gradient_method($S, $f, $g, $grad_g, $start;
+            prox_nonsmooth=$prox, 
+            stepsize=ProximalGradientMethodBacktracking(;
+                strategy=:convex,
+                initial_stepsize=$λ_init,
+                stop_when_stepsize_less=$min_stepsize_bt,
+                δ=$δ_bt,
+                contraction_factor=$contraction_factor,
+                warm_start_factor=$warm_start_factor,
+                k_max=$(1.0),
+            ),
+            stopping_criterion=StopAfterIteration($max_it)| StopWhenGradientMappingNormLess($stop)
+        )
+
+        it_const, res_const = get_record(rec_const)[end]
+        it_bt, res_bt = get_record(rec_CRPG_bt)[end]
+
+        t_const = median(bm_const).time/1e9
+        t_bt    = median(bm_bt).time/1e9
+        
+        objective_bt += f(S, res_bt)
+        objective_const += f(S, res_const)
+        time_bt += t_bt
+        time_const += t_const
+        iterations_bt += it_bt
+        iterations_const += it_const
+    end 
+
+    push!(df_const, [
+      dim, λ_const, time_const/num_tests, iterations_const/num_tests, objective_const/num_tests
+    ])
+    push!(df_bt, [
+      dim, λ_init, time_bt/num_tests, iterations_bt/num_tests, objective_bt/num_tests
+    ])
+end</code></pre><p>We can take a look at how the algorithms compare to each other in their performance with the following tables. The first table showcases the algorithm run with a constant stepsize…</p><table><tr><th style="text-align: right"><strong>Dimension</strong></th><th style="text-align: right"><strong>Stepsize</strong></th><th style="text-align: right"><strong>Time</strong></th><th style="text-align: right"><strong>Iterations</strong></th><th style="text-align: right"><strong>Objective</strong></th></tr><tr><td style="text-align: right">100.0</td><td style="text-align: right">0.147582</td><td style="text-align: right">0.0231786</td><td style="text-align: right">57.5</td><td style="text-align: right">0.0775637</td></tr><tr><td style="text-align: right">500.0</td><td style="text-align: right">0.147582</td><td style="text-align: right">0.102482</td><td style="text-align: right">54.7</td><td style="text-align: right">0.0632621</td></tr><tr><td style="text-align: right">1000.0</td><td style="text-align: right">0.147582</td><td style="text-align: right">0.196127</td><td style="text-align: right">61.8</td><td style="text-align: right">0.0754969</td></tr><tr><td style="text-align: right">5000.0</td><td style="text-align: right">0.147582</td><td style="text-align: right">0.534626</td><td style="text-align: right">43.9</td><td style="text-align: right">0.0618121</td></tr></table><p>… while the second table showcases the algorithm run with a backtracked stepsize</p><table><tr><th style="text-align: right"><strong>Dimension</strong></th><th style="text-align: right"><strong>Stepsize</strong></th><th style="text-align: right"><strong>Time</strong></th><th style="text-align: right"><strong>Iterations</strong></th><th style="text-align: right"><strong>Objective</strong></th></tr><tr><td style="text-align: right">100.0</td><td style="text-align: right">1.47582</td><td style="text-align: right">0.0130627</td><td style="text-align: right">21.1</td><td style="text-align: right">0.0775637</td></tr><tr><td style="text-align: right">500.0</td><td style="text-align: right">1.47582</td><td style="text-align: right">0.0538948</td><td style="text-align: right">19.9</td><td style="text-align: right">0.0632621</td></tr><tr><td style="text-align: right">1000.0</td><td style="text-align: right">1.47582</td><td style="text-align: right">0.109934</td><td style="text-align: right">22.4</td><td style="text-align: right">0.0754969</td></tr><tr><td style="text-align: right">5000.0</td><td style="text-align: right">1.47582</td><td style="text-align: right">0.335534</td><td style="text-align: right">16.4</td><td style="text-align: right">0.0618121</td></tr></table><h2 id="Test-with-different-parameters"><a class="docs-heading-anchor" href="#Test-with-different-parameters">Test with different parameters</a><a id="Test-with-different-parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Test-with-different-parameters" title="Permalink"></a></h2><p>We now test CRPG on the same problem, but with different radii and different values of <span>$\delta$</span>. We start by introducing these parameters</p><pre><code class="language-julia hljs">radii = [pi/5, pi/8]
+# (radius, algorithm, δ) → error vector
+#   algorithm = :CONST for constant stepsize
+#               :BT    for back‑tracking
+#   δ is `missing` for the constant‑stepsize runs
+global results = Dict{Tuple{Float64, Symbol, Union{Missing, Float64}}, Vector{Float64}}()</code></pre><pre><code class="nohighlight hljs">Dict{Tuple{Float64, Symbol, Union{Missing, Float64}}, Vector{Float64}}()</code></pre><p>As well as a function to save the generated data</p><pre><code class="language-julia hljs">function export_dataframe(radius::Float64, algo::Symbol)
+    # 5.1 Filter the dictionary for the wanted radius &amp; algorithm = :BT
+    bt_entries = [(δ, vec) for ((r, alg, δ), vec) in results
+                  if r == radius &amp;&amp; alg == algo]
+    sort!(bt_entries, by = x -&gt; x[1]) # sort by delta 
+    max_len = maximum(length(v) for (_, v) in bt_entries)
+    df = DataFrame(Iter = 1:max_len)
+    # Add one column per δ
+    for (δ, vec) in bt_entries
+        δ = round(δ, digits=3)
+        col_name = Symbol(&quot;delta$(δ)&quot;)                
+        padded = vcat(vec, fill(NaN, max_len - length(vec)))
+        df[!, col_name] = padded
+    end
+    return df
+end
+function write_csv(df, out_path::String)
+    CSV.write(out_path, df; delim=&quot;,&quot;, writeheader=true)
+end</code></pre><pre><code class="nohighlight hljs">write_csv (generic function with 1 method)</code></pre><p>And now we run the different experiments</p><pre><code class="language-julia hljs">S = Manifolds.Sphere(500)
+for radius in radii
+    Random.seed!(1520)
+    start, q_bar, qs = generate_data(S, radius; N = N)
+    h = get_h(q_bar, τ)
+    g = get_g(qs)
+    f = (S, p) -&gt; g(S, p) + h(S, p)
+    grad_g = get_grad_g(qs)
+    prox = get_prox(q_bar, τ)
+    # constant stepsize 
+    λ_const, δ_opt = get_const_stepsize(radius, τ)
+    δs_bt = [0.1, 1.0, 100.0]
+    λ_init = 10*λ_const
+
+    rec_const = proximal_gradient_method(S, f, g, grad_g, start;
+        prox_nonsmooth=prox, 
+        stepsize=ConstantLength(λ_const),
+        record=[:Iteration, :Iterate],
+        return_state=true,
+        stopping_criterion=StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+    )
+    iters_const = get_record(rec_const, :Iteration, :Iterate)
+    prepend!(iters_const, [start])    
+    obj_const = [f(S, it) for it in iters_const]
+    err_const = [obj_const[i] - obj_const[end] for i in 1:length(obj_const)-1]
+    # Normalise by the first error
+    err_const ./= err_const[1]
+
+    results[(radius, :CONST, δ_opt)] = err_const
+
+    # Backtracking
+
+    for δ_bt in δs_bt
+        rec_bt = proximal_gradient_method(S, f, g, grad_g, start;
+            prox_nonsmooth=prox, 
+            stepsize=ProximalGradientMethodBacktracking(;
+                strategy=:convex,
+                initial_stepsize=λ_init,
+                stop_when_stepsize_less=min_stepsize_bt,
+                contraction_factor=contraction_factor,
+                warm_start_factor=warm_start_factor,
+                δ=δ_bt,
+                k_max=1.0,
+            ),
+            record=[:Iteration, :Iterate],
+            return_state=true,
+            stopping_criterion=StopAfterIteration(max_it)| StopWhenGradientMappingNormLess(stop)
+        )
+        iters_bt = get_record(rec_bt, :Iteration, :Iterate)
+        prepend!(iters_bt, [start])
+        obj_bt = [f(S, it) for it in iters_bt]
+        err_bt = [obj_bt[i] - obj_bt[end] for i in 1:length(obj_bt) - 1]
+        err_bt ./= err_bt[1]
+        results[(radius, :BT, δ_bt)] = err_bt
+    end 
+end</code></pre><p>We now save the results of the experiments</p><p>Lastly, we plot the rate of decay of the function values for these experiments</p><pre><code class="language-julia hljs">function plot_sphere_results(
+    df_02_const, df_02_bt,
+    df_0125_const, df_0125_bt,
+)
+    tol_blue  = colorant&quot;#4477AA&quot;
+    tol_green = colorant&quot;#228833&quot;
+    tol_cyan  = colorant&quot;#66CCEE&quot;
+    tol_red   = colorant&quot;#EE6677&quot;
+
+    ref_rates  = (0.9,   0.7,   0.5)
+    ref_alphas = (0.5f0, 0.7f0, 0.9f0)
+    bt_markers = (:utriangle, :dtriangle, :circle)
+    bt_lws     = (1.0, 0.6, 1.0)
+
+    configs = [
+        (
+            df_const  = df_02_const,
+            df_bt     = df_02_bt,
+            c_delta   = &quot;delta0.113&quot;,
+            bt_deltas = (&quot;delta0.1&quot;,  &quot;delta1.0&quot;, &quot;delta100.0&quot;),
+            thm_rate  = 0.987,
+            thm_xend  = 150,
+            ref_xends = (150, 60, 30),
+            subtitle  = L&quot;\bar{q}, q_i \in \mathcal{B}(q_0, r),\; r = \pi/5&quot;,
+        ),
+        (
+            df_const  = df_0125_const,
+            df_bt     = df_0125_bt,
+            c_delta   = &quot;delta0.184&quot;,
+            bt_deltas = (&quot;delta0.1&quot;, &quot;delta1.0&quot;, &quot;delta100.0&quot;),
+            thm_rate  = 0.963,
+            thm_xend  = 100,
+            ref_xends = (100, 60, 30),
+            subtitle  = L&quot;\bar{q}, q_i \in \mathcal{B}(q_0, r),\; r = \pi/8&quot;,
+        ),
+    ]
+
+    fig = Figure()#size = (1280, 720))
+
+    for (col, cfg) in enumerate(configs)
+        ax = Axis(fig[1, col];
+            title  = cfg.subtitle,
+            xlabel = &quot;iterations&quot;,
+            ylabel = col == 1 ? &quot;function value error&quot; : &quot;&quot;,
+            yscale = log10,
+            yminorticksvisible = true,
+            yminorgridvisible  = true,
+            yminorticks        = IntervalsBetween(8),
+        )
+
+        iters_c = cfg.df_const[!, &quot;Iter&quot;]
+        δ_c = split(cfg.c_delta, &quot;delta&quot;)[2]
+
+        scatterlines!(ax, iters_c, cfg.df_const[!, cfg.c_delta];
+            color = tol_blue, linewidth = 1.0,
+            marker = :star4, markersize = 6,
+            label  = latexstring(&quot;\\text{Constant},\\;\\delta\\!=\\!$(δ_c)&quot;), #L&quot;\text{Constant},\;\delta\!=\!$(δ_c)&quot;,
+        )
+        lines!(ax, 1:cfg.thm_xend, cfg.thm_rate .^ (1:cfg.thm_xend);
+            color = tol_green, linewidth = 1.0, linestyle = :dash,
+            label = latexstring(&quot;\\mathcal{O}($(cfg.thm_rate)^k)\\;\\text{(Thm.)}&quot;), # L&quot;\mathcal{O}($(cfg.thm_rate)^k)\;\text{(Thm.)}&quot;,
+        )
+
+        iters_bt = cfg.df_bt[!, &quot;Iter&quot;]
+        for (delta, mk, rr, x_end, alpha, lw) in zip(
+            cfg.bt_deltas, bt_markers, ref_rates, cfg.ref_xends, ref_alphas, bt_lws
+        )
+            δ_v = split(delta, &quot;delta&quot;)[2]
+            scatterlines!(ax, iters_bt, cfg.df_bt[!, delta];
+                color = tol_cyan, linewidth = lw,
+                marker = mk, markersize = 6,
+                label  = latexstring(&quot;\\text{Backtracked},\\;\\delta\\!=\\!$(δ_v)&quot;), # L&quot;\text{Backtracked},\;\delta\!=\!$(δ_v)&quot;,
+            )
+            lines!(ax, 1:x_end, rr .^ (1:x_end);
+                color = (tol_red, alpha), linewidth = 1.0, linestyle = :dash,
+                label = latexstring(&quot;\\mathcal{O}($(rr)^k)&quot;), # L&quot;\mathcal{O}($(rr)^k)&quot;,
+            )
+        end
+
+        axislegend(ax;
+            position     = :ct,
+            nbanks       = 2,
+            framevisible = false,
+            labelsize    = 8,
+            rowgap       = -3,
+        )
+    end
+
+    return fig
+end
+fig = plot_sphere_results(df_02_const, df_02_bt, df_0125_const, df_0125_bt)</code></pre><pre><code class="language-julia hljs">display(fig)</code></pre><p><img src="../CRPG-Sphere-Example_files/figure-commonmark/cell-21-output-1.png" alt/></p><pre><code class="nohighlight hljs">CairoMakie.Screen{IMAGE}</code></pre><p>This is in line with the convergence rates of the CRPG method in the geodesically convex setting, as shown in [<a href="../../references/#BergmannJasaJohnPfeffer_2025_2">BJJP25a</a>], Theorem 4.10.</p><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.8.0
+  [336ed68f] CSV v0.10.16
+  [13f3f980] CairoMakie v0.15.13
+  [0ca39b1e] Chairmarks v1.3.1
+  [35d6a980] ColorSchemes v3.31.0
+  [5ae59095] Colors v0.13.1
+  [a93c6f00] DataFrames v1.8.2
+  [31c24e10] Distributions v0.25.129
+  [e9467ef8] GLMakie v0.13.13
+  [5c1252a2] GeometryBasics v0.5.11
+  [4d00f742] GeometryTypes v0.8.5
+  [7073ff75] IJulia v1.34.4
+  [682c06a0] JSON v1.6.1
+  [8ac3fa9e] LRUCache v1.6.2
+  [b964fa9f] LaTeXStrings v1.4.0
+  [d3d80556] LineSearches v7.7.1
+  [ee78f7c6] Makie v0.24.13
+  [7351309b] ManifoldAsymptote v0.1.0
+  [af67fdf4] ManifoldDiff v0.4.5
+  [9d80ff41] ManifoldMakie v0.1.2
+  [1cead3c2] Manifolds v0.11.28
+  [3362f125] ManifoldsBase v2.5.0
+  [0fc0a36d] Manopt v0.6.2
+  [5b8d5e80] ManoptExamples v0.1.20 `..`
+  [51fcb6bd] NamedColors v0.2.3
+  [6fe1bfb0] OffsetArrays v1.17.0
+  [91a5bcdd] Plots v1.41.6
+  [08abe8d2] PrettyTables v3.4.2
+  [6099a3de] PythonCall v0.9.35
+  [f468eda6] QuadraticModels v0.9.16
+  [731186ca] RecursiveArrayTools v4.3.4
+  [1e40b3f8] RipQP v0.7.0</code></pre><p>This tutorial was last rendered July 20, 2026, 15:28:56.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[Bac14]</dt><dd><div>M. Bačák. <em>Computing medians and means in Hadamard spaces</em>. <a href="https://doi.org/10.1137/140953393">SIAM Journal on Optimization <strong>24</strong>, 1542–1566</a> (2014), <a href="https://arxiv.org/abs/1210.2145">arXiv:1210.2145</a>.</div></dd><dt>[BJJP25a]</dt><dd><div>R. Bergmann, H. Jasa, P. J. John and M. Pfeffer. <em>The Intrinsic Riemannian Proximal Gradient Method for Convex            Optimization</em>, preprint (2025), <a href="https://arxiv.org/abs/2507.16055">arXiv:2507.16055</a>.</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../CRPG-Convex-SPD/">« Convex Example on SPDs</a><a class="docs-footer-nextpage" href="../CRPG-Sparse-Approximation/">Sparse Approximation on <span>$\mathbb H^n$</span> »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 22 July 2026 18:00">Wednesday 22 July 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

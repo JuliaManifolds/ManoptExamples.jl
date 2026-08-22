@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Riemannian Median · ManoptExamples.jl</title><meta name="title" content="Riemannian Median · ManoptExamples.jl"/><meta property="og:title" content="Riemannian Median · ManoptExamples.jl"/><meta property="twitter:title" content="Riemannian Median · ManoptExamples.jl"/><meta name="description" content="Documentation for ManoptExamples.jl."/><meta property="og:description" content="Documentation for ManoptExamples.jl."/><meta property="twitter:description" content="Documentation for ManoptExamples.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ManoptExamples.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Difference of Convex</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Difference-of-Convex-Benchmark/">A Benchmark</a></li><li><a class="tocitem" href="../Difference-of-Convex-Rosenbrock/">Rosenbrock Metric</a></li><li><a class="tocitem" href="../Difference-of-Convex-Frank-Wolfe/">Frank Wolfe comparison</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox" checked/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Convex Bundle Method</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Riemannian Median</a><ul class="internal"><li><a class="tocitem" href="#Introduction"><span>Introduction</span></a></li><li><a class="tocitem" href="#The-Median-on-the-Hyperboloid-Model"><span>The Median on the Hyperboloid Model</span></a></li><li><a class="tocitem" href="#The-Median-on-the-Symmetric-Positive-Definite-Matrix-Space"><span>The Median on the Symmetric Positive Definite Matrix Space</span></a></li><li><a class="tocitem" href="#The-Median-on-the-Sphere"><span>The Median on the Sphere</span></a></li><li><a class="tocitem" href="#Technical-details"><span>Technical details</span></a></li><li><a class="tocitem" href="#Literature"><span>Literature</span></a></li></ul></li><li><a class="tocitem" href="../H2-Signal-TV/">Hyperbolic Signal Denoising</a></li><li><a class="tocitem" href="../Spectral-Procrustes/">Spectral Procrustes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-4" type="checkbox"/><label class="tocitem" for="menuitem-2-4"><span class="docs-label">Projected Gradient Algorithm</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Constrained-Mean-H2/">Mean on <span>$\mathbb H^2$</span></a></li><li><a class="tocitem" href="../Constrained-Mean-Hn/">Mean on <span>$\mathbb H^n$</span></a></li></ul></li><li><a class="tocitem" href="../HyperparameterOptimization/">Hyperparameter optimziation</a></li><li><a class="tocitem" href="../RayleighQuotient/">The Rayleigh Quotient</a></li><li><a class="tocitem" href="../Riemannian-mean/">Riemannian Mean</a></li><li><a class="tocitem" href="../Robust-PCA/">Robust PCA</a></li><li><a class="tocitem" href="../Rosenbrock/">Rosenbrock</a></li><li><a class="tocitem" href="../Total-Variation/">Total Variation</a></li></ul></li><li><a class="tocitem" href="../../objectives/">Objectives</a></li><li><a class="tocitem" href="../../data/">Data</a></li><li><a class="tocitem" href="../../contributing/">Contributing to ManoptExamples.jl</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Convex Bundle Method</a></li><li class="is-active"><a href>Riemannian Median</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Riemannian Median</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaManifolds/ManoptExamples.jl/blob/main/docs/src/examples/RCBM-Median.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="A-comparison-of-the-RCBM-with-the-PBA-and-the-SGM-for-the-Riemannian-median"><a class="docs-heading-anchor" href="#A-comparison-of-the-RCBM-with-the-PBA-and-the-SGM-for-the-Riemannian-median">A comparison of the RCBM with the PBA and the SGM for the Riemannian median</a><a id="A-comparison-of-the-RCBM-with-the-PBA-and-the-SGM-for-the-Riemannian-median-1"></a><a class="docs-heading-anchor-permalink" href="#A-comparison-of-the-RCBM-with-the-PBA-and-the-SGM-for-the-Riemannian-median" title="Permalink"></a></h1><p>Hajg Jasa 2024-06-27</p><h2 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h2><p>In this example we compare the Riemannian Convex Bundle Method (RCBM) [<a href="../../references/#BergmannHerzogJasa:2024">BHJ24</a>] with the Proximal Bundle Algorithm, which was introduced in [<a href="../../references/#HoseiniMonjeziNobakhtianPouryayevali:2021">HNP23</a>], and with the Subgradient Method (SGM), introduced in [FerreiraOliveira:1998:1], to find the Riemannian median. This example reproduces the results from [<a href="../../references/#BergmannHerzogJasa:2024">BHJ24</a>], Section 5. The runtimes reported in the tables are measured in seconds.</p><pre><code class="language-julia hljs">using PrettyTables
+using BenchmarkTools
+using CSV, DataFrames
+using ColorSchemes, Plots
+using QuadraticModels, RipQP
+using LinearAlgebra, LRUCache, Random
+using ManifoldDiff, Manifolds, Manopt, ManoptExamples</code></pre><p>Let <span>$\mathcal M$</span> be a Hadamard manifold and <span>$\{q_1,\ldots,q_N\} \in \mathcal M$</span> denote <span>$N = 1000$</span> Gaussian random data points. Let <span>$f \colon \mathcal M \to \mathbb R$</span> be defined by</p><p class="math-container">\[f(p) = \sum_{j = 1}^N w_j \, \mathrm{dist}(p, q_j),\]</p><p>where <span>$w_j$</span>, <span>$j = 1, \ldots, N$</span> are positive weights such that <span>$\sum_{j = 1}^N w_j = 1$</span>.</p><p>The Riemannian geometric median <span>$p^*$</span> of the dataset</p><p class="math-container">\[\mathcal D = \{
+    q_1,\ldots,q_N \, \vert \, q_j \in \mathcal M\text{ for all } j = 1,\ldots,N
+\}\]</p><p>is then defined as</p><p class="math-container">\[    p^* \coloneqq \operatorname*{arg\,min}_{p \in \mathcal M} f(p),\]</p><p>where equality is justified since <span>$p^*$</span> is uniquely determined on Hadamard manifolds. In our experiments, we choose the weights <span>$w_j = \frac{1}{N}$</span>.</p><p>We initialize the experiment parameters, as well as utility functions.</p><pre><code class="language-julia hljs">experiment_name = &quot;RCBM-Median&quot;
+results_folder = joinpath(@__DIR__, experiment_name)
+!isdir(results_folder) &amp;&amp; mkdir(results_folder)
+seed_argument = 57
+
+atol = 1e-8
+N = 1000 # number of data points
+spd_dims = [2, 5, 10, 15]
+hn_sn_dims = [1, 2, 5, 10, 15]
+
+# Generate a point that is at most `tol` close to the point `p` on `M`
+function close_point(M, p, tol; retraction_method=Manifolds.default_retraction_method(M, typeof(p)))
+    X = rand(M; vector_at = p)
+    X .= tol * rand() * X / norm(M, p, X)
+    return retract(M, p, X, retraction_method)
+end</code></pre><pre><code class="language-julia hljs"># Objective and subdifferential
+f(M, p, data) = sum(1 / length(data) * distance.(Ref(M), Ref(p), data))
+domf(M, p, centroid, diameter) = distance(M, p, centroid) &lt; diameter / 2 ? true : false
+function ∂f(M, p, data, atol=atol)
+    return sum(
+        1 / length(data) *
+        ManifoldDiff.subgrad_distance.(Ref(M), data, Ref(p), 1; atol=atol),
+    )
+end</code></pre><pre><code class="language-julia hljs">maxiter = 5000
+rcbm_kwargs(diameter, domf, k_max, k_min) = [
+    :cache =&gt; (:LRU, [:Cost, :SubGradient], 50),
+    :count =&gt; [:Cost, :SubGradient],
+    :domain =&gt; domf,
+    :debug =&gt; [
+        :Iteration,
+        (:Cost, &quot;F(p): %1.16f &quot;),
+        (:ξ, &quot;ξ: %1.8f &quot;),
+        (:last_stepsize, &quot;step size: %1.8f&quot;),
+        :Stop,
+        1000,
+        &quot;\n&quot;,
+    ],
+    :diameter =&gt; diameter,
+    :k_max =&gt; k_max,
+    :k_min =&gt; k_min,
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+]
+rcbm_bm_kwargs(diameter, domf, k_max, k_min) = [
+    :cache =&gt; (:LRU, [:Cost, :SubGradient], 50),
+    :diameter =&gt; diameter,
+    :domain =&gt; domf,
+    :k_max =&gt; k_max,
+    :k_min =&gt; k_min,
+]
+pba_kwargs = [
+    :cache =&gt; (:LRU, [:Cost, :SubGradient], 50),
+    :count =&gt; [:Cost, :SubGradient],
+    :debug =&gt; [
+        :Iteration,
+        :Stop,
+        (:Cost, &quot;F(p): %1.16f &quot;),
+        (:ν, &quot;ν: %1.16f &quot;),
+        (:c, &quot;c: %1.16f &quot;),
+        (:μ, &quot;μ: %1.8f &quot;),
+        :Stop,
+        1000,
+        &quot;\n&quot;,
+    ],
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+    :stopping_criterion =&gt; StopWhenLagrangeMultiplierLess(atol) | StopAfterIteration(maxiter),
+]
+pba_bm_kwargs = [:cache =&gt; (:LRU, [:Cost, :SubGradient], 50),]
+sgm_kwargs = [
+    :cache =&gt; (:LRU, [:Cost, :SubGradient], 50),
+    :count =&gt; [:Cost, :SubGradient],
+    :debug =&gt; [:Iteration, (:Cost, &quot;F(p): %1.16f &quot;), :Stop, 1000, &quot;\n&quot;],
+    :record =&gt; [:Iteration, :Cost, :Iterate],
+    :return_state =&gt; true,
+    :stepsize =&gt; DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion =&gt; StopWhenSubgradientNormLess(√atol) | StopAfterIteration(maxiter),
+]
+sgm_bm_kwargs = [
+    :cache =&gt; (:LRU, [:Cost, :SubGradient], 50),
+    :stepsize =&gt; DecreasingLength(; exponent=1, factor=1, subtrahend=0, length=1, shift=0, type=:absolute),
+    :stopping_criterion =&gt; StopWhenSubgradientNormLess(√atol) | StopAfterIteration(maxiter),
+]</code></pre><p>Before running the experiments, we initialize data collection functions that we will use later</p><pre><code class="language-julia hljs">global col_names_1 = [
+    :Dimension,
+    :Iterations_1,
+    :Time_1,
+    :Objective_1,
+    :Iterations_2,
+    :Time_2,
+    :Objective_2,
+]
+col_types_1 = [
+    Int64,
+    Int64,
+    Float64,
+    Float64,
+    Int64,
+    Float64,
+    Float64,
+]
+named_tuple_1 = (; zip(col_names_1, type[] for type in col_types_1 )...)
+global col_names_2 = [
+    :Dimension,
+    :Iterations,
+    :Time,
+    :Objective,
+]
+col_types_2 = [
+    Int64,
+    Int64,
+    Float64,
+    Float64,
+]
+named_tuple_2 = (; zip(col_names_2, type[] for type in col_types_2 )...)
+function initialize_dataframes(results_folder, experiment_name, subexperiment_name, named_tuple_1, named_tuple_2)
+    A1 = DataFrame(named_tuple_1)
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name * &quot;_$subexperiment_name&quot; * &quot;-Comparisons-Convex-Prox.csv&quot;,
+        ),
+        A1;
+        header=false,
+    )
+    A2 = DataFrame(named_tuple_2)
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name * &quot;_$subexperiment_name&quot; * &quot;-Comparisons-Subgrad.csv&quot;,
+        ),
+        A2;
+        header=false,
+    )
+    return A1, A2
+end</code></pre><pre><code class="language-julia hljs">function export_dataframes(M, records, times, results_folder, experiment_name, subexperiment_name, col_names_1, col_names_2)
+    B1 = DataFrame(;
+        Dimension=manifold_dimension(M),
+        Iterations_1=maximum(first.(records[1])),
+        Time_1=times[1],
+        Objective_1=minimum([r[2] for r in records[1]]),
+        Iterations_2=maximum(first.(records[2])),
+        Time_2=times[2],
+        Objective_2=minimum([r[2] for r in records[2]]),
+    )
+    B2 = DataFrame(;
+        Dimension=manifold_dimension(M),
+        Iterations=maximum(first.(records[3])),
+        Time=times[3],
+        Objective=minimum([r[2] for r in records[3]]),
+    )
+    return B1, B2
+end
+function write_dataframes(B1, B2, results_folder, experiment_name, subexperiment_name)
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name *
+            &quot;_$subexperiment_name&quot; *
+            &quot;-Comparisons-Convex-Prox.csv&quot;,
+        ),
+        B1;
+        append=true,
+    )
+    CSV.write(
+        joinpath(
+            results_folder,
+            experiment_name *
+            &quot;_$subexperiment_name&quot; *
+            &quot;-Comparisons-Subgrad.csv&quot;,
+        ),
+        B2;
+        append=true,
+    )
+end</code></pre><h2 id="The-Median-on-the-Hyperboloid-Model"><a class="docs-heading-anchor" href="#The-Median-on-the-Hyperboloid-Model">The Median on the Hyperboloid Model</a><a id="The-Median-on-the-Hyperboloid-Model-1"></a><a class="docs-heading-anchor-permalink" href="#The-Median-on-the-Hyperboloid-Model" title="Permalink"></a></h2><pre><code class="language-julia hljs">subexperiment_name = &quot;Hn&quot;
+k_max_hn = -1.0
+k_min_hn = -1.0
+
+global A1, A2 = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    subexperiment_name,
+    named_tuple_1,
+    named_tuple_2
+)
+
+for n in hn_sn_dims
+    Random.seed!(seed_argument)
+
+    M = Hyperbolic(Int(2^n))
+    data_hn = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data_hn, y in data_hn]
+    diameter_hn = 2 * maximum(dists)
+    p0 = data_hn[minimum(Tuple(findmax(dists)[2]))]
+
+    f_hn(M, p) = f(M, p, data_hn)
+    domf_hn(M, p) = domf(M, p, p0, diameter_hn)
+    ∂f_hn(M, p) = ∂f(M, p, data_hn, atol)
+
+    # Optimization
+    rcbm = convex_bundle_method(M, f_hn, ∂f_hn, p0; rcbm_kwargs(diameter_hn, domf_hn, k_max_hn, k_min_hn)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
+
+    pba = proximal_bundle_method(M, f_hn, ∂f_hn, p0; pba_kwargs...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
+
+    sgm = subgradient_method(M, f_hn, ∂f_hn, p0; sgm_kwargs...)
+    sgm_result = get_solver_result(sgm)
+    sgm_record = get_record(sgm)
+
+    records = [
+        rcbm_record,
+        pba_record,
+        sgm_record,
+    ]
+
+    if benchmarking
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_hn, $∂f_hn, $p0; rcbm_bm_kwargs($diameter_hn, $domf_hn, $k_max_hn, $k_min_hn)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_hn, $∂f_hn, $p0; $pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_hn, $∂f_hn, $p0; $sgm_bm_kwargs...)
+        
+        times = [
+            median(rcbm_bm).time * 1e-9,
+            median(pba_bm).time * 1e-9,
+            median(sgm_bm).time * 1e-9,
+        ]
+
+        B1, B2 = export_dataframes(
+            M,
+            records,
+            times,
+            results_folder,
+            experiment_name,
+            subexperiment_name,
+            col_names_1,
+            col_names_2,
+        )
+
+        append!(A1, B1)
+        append!(A2, B2)
+        (export_table) &amp;&amp; (write_dataframes(B1, B2, results_folder, experiment_name, subexperiment_name))
+    end
+end</code></pre><p>We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…</p><table><tr><th style="text-align: right">Dimension</th><th style="text-align: right">Iterations_1</th><th style="text-align: right">Time_1</th><th style="text-align: right">Objective_1</th><th style="text-align: right">Iterations_2</th><th style="text-align: right">Time_2</th><th style="text-align: right">Objective_2</th></tr><tr><td style="text-align: right">2</td><td style="text-align: right">9</td><td style="text-align: right">0.00523775</td><td style="text-align: right">1.05192</td><td style="text-align: right">251</td><td style="text-align: right">0.132011</td><td style="text-align: right">1.05192</td></tr><tr><td style="text-align: right">4</td><td style="text-align: right">8</td><td style="text-align: right">0.00469981</td><td style="text-align: right">1.07516</td><td style="text-align: right">230</td><td style="text-align: right">0.132091</td><td style="text-align: right">1.07516</td></tr><tr><td style="text-align: right">32</td><td style="text-align: right">15</td><td style="text-align: right">0.0151958</td><td style="text-align: right">1.08559</td><td style="text-align: right">234</td><td style="text-align: right">0.180374</td><td style="text-align: right">1.08559</td></tr><tr><td style="text-align: right">1024</td><td style="text-align: right">16</td><td style="text-align: right">0.284984</td><td style="text-align: right">1.09706</td><td style="text-align: right">234</td><td style="text-align: right">4.00771</td><td style="text-align: right">1.09706</td></tr><tr><td style="text-align: right">32768</td><td style="text-align: right">16</td><td style="text-align: right">7.34017</td><td style="text-align: right">1.0681</td><td style="text-align: right">229</td><td style="text-align: right">91.2803</td><td style="text-align: right">1.0681</td></tr></table><p>… Whereas the following table refers to the SGM</p><table><tr><th style="text-align: right">Dimension</th><th style="text-align: right">Iterations</th><th style="text-align: right">Time</th><th style="text-align: right">Objective</th></tr><tr><td style="text-align: right">2</td><td style="text-align: right">18</td><td style="text-align: right">0.00811254</td><td style="text-align: right">1.04748</td></tr><tr><td style="text-align: right">4</td><td style="text-align: right">19</td><td style="text-align: right">0.00953129</td><td style="text-align: right">1.05518</td></tr><tr><td style="text-align: right">32</td><td style="text-align: right">25</td><td style="text-align: right">0.0208788</td><td style="text-align: right">1.08559</td></tr><tr><td style="text-align: right">1024</td><td style="text-align: right">23</td><td style="text-align: right">0.400038</td><td style="text-align: right">1.09706</td></tr><tr><td style="text-align: right">32768</td><td style="text-align: right">21</td><td style="text-align: right">8.81869</td><td style="text-align: right">1.06488</td></tr></table><h2 id="The-Median-on-the-Symmetric-Positive-Definite-Matrix-Space"><a class="docs-heading-anchor" href="#The-Median-on-the-Symmetric-Positive-Definite-Matrix-Space">The Median on the Symmetric Positive Definite Matrix Space</a><a id="The-Median-on-the-Symmetric-Positive-Definite-Matrix-Space-1"></a><a class="docs-heading-anchor-permalink" href="#The-Median-on-the-Symmetric-Positive-Definite-Matrix-Space" title="Permalink"></a></h2><pre><code class="language-julia hljs">subexperiment_name = &quot;SPD&quot;
+k_max_spd = 0.0
+k_min_spd = -1/2
+
+global A1_SPD, A2_SPD = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    subexperiment_name,
+    named_tuple_1,
+    named_tuple_2
+)
+
+for n in spd_dims
+    Random.seed!(seed_argument)
+
+    M = SymmetricPositiveDefinite(Int(n))
+    data_spd = [rand(M) for _ in 1:N]
+    dists = [distance(M, z, y) for z in data_spd, y in data_spd]
+    diameter_spd = 2 * maximum(dists)
+    p0 = data_spd[minimum(Tuple(findmax(dists)[2]))]
+    
+    f_spd(M, p) = f(M, p, data_spd)
+    domf_spd(M, p) = domf(M, p, p0, diameter_spd)
+    ∂f_spd(M, p) = ∂f(M, p, data_spd, atol)
+
+    # Optimization
+    rcbm = convex_bundle_method(M, f_spd, ∂f_spd, p0; rcbm_kwargs(diameter_spd, domf_spd, k_max_spd, k_min_spd)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
+
+    pba = proximal_bundle_method(M, f_spd, ∂f_spd, p0; pba_kwargs...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
+
+    sgm = subgradient_method(M, f_spd, ∂f_spd, p0; sgm_kwargs...)
+    sgm_result = get_solver_result(sgm)
+    sgm_record = get_record(sgm)
+
+    records = [
+        rcbm_record,
+        pba_record,
+        sgm_record,
+    ]
+
+    if benchmarking
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_spd, $∂f_spd, $p0; rcbm_bm_kwargs($diameter_spd, $domf_spd, $k_max_spd, $k_min_spd)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_spd, $∂f_spd, $p0; $pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_spd, $∂f_spd, $p0; $sgm_bm_kwargs...)
+
+        times = [
+            median(rcbm_bm).time * 1e-9,
+            median(pba_bm).time * 1e-9,
+            median(sgm_bm).time * 1e-9,
+        ]
+
+        B1_SPD, B2_SPD = export_dataframes(
+            M,
+            records,
+            times,
+            results_folder,
+            experiment_name,
+            subexperiment_name,
+            col_names_1,
+            col_names_2,
+        )
+
+        append!(A1_SPD, B1_SPD)
+        append!(A2_SPD, B2_SPD)
+        (export_table) &amp;&amp; (write_dataframes(B1_SPD, B2_SPD, results_folder, experiment_name, subexperiment_name))
+    end
+end</code></pre><p>We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…</p><table><tr><th style="text-align: right">Dimension</th><th style="text-align: right">Iterations_1</th><th style="text-align: right">Time_1</th><th style="text-align: right">Objective_1</th><th style="text-align: right">Iterations_2</th><th style="text-align: right">Time_2</th><th style="text-align: right">Objective_2</th></tr><tr><td style="text-align: right">3</td><td style="text-align: right">43</td><td style="text-align: right">0.303751</td><td style="text-align: right">0.260846</td><td style="text-align: right">57</td><td style="text-align: right">0.441796</td><td style="text-align: right">0.260846</td></tr><tr><td style="text-align: right">15</td><td style="text-align: right">49</td><td style="text-align: right">2.01407</td><td style="text-align: right">0.436536</td><td style="text-align: right">75</td><td style="text-align: right">1.74885</td><td style="text-align: right">0.436536</td></tr><tr><td style="text-align: right">55</td><td style="text-align: right">15</td><td style="text-align: right">1.30749</td><td style="text-align: right">0.618059</td><td style="text-align: right">89</td><td style="text-align: right">6.15426</td><td style="text-align: right">0.618059</td></tr><tr><td style="text-align: right">120</td><td style="text-align: right">6</td><td style="text-align: right">1.20377</td><td style="text-align: right">0.764031</td><td style="text-align: right">123</td><td style="text-align: right">15.4064</td><td style="text-align: right">0.764031</td></tr></table><p>… Whereas the following table refers to the SGM</p><table><tr><th style="text-align: right">Dimension</th><th style="text-align: right">Iterations</th><th style="text-align: right">Time</th><th style="text-align: right">Objective</th></tr><tr><td style="text-align: right">3</td><td style="text-align: right">4629</td><td style="text-align: right">46.5469</td><td style="text-align: right">0.260846</td></tr><tr><td style="text-align: right">15</td><td style="text-align: right">1727</td><td style="text-align: right">40.4873</td><td style="text-align: right">0.436536</td></tr><tr><td style="text-align: right">55</td><td style="text-align: right">776</td><td style="text-align: right">53.3628</td><td style="text-align: right">0.618059</td></tr><tr><td style="text-align: right">120</td><td style="text-align: right">438</td><td style="text-align: right">53.5932</td><td style="text-align: right">0.764031</td></tr></table><h2 id="The-Median-on-the-Sphere"><a class="docs-heading-anchor" href="#The-Median-on-the-Sphere">The Median on the Sphere</a><a id="The-Median-on-the-Sphere-1"></a><a class="docs-heading-anchor-permalink" href="#The-Median-on-the-Sphere" title="Permalink"></a></h2><p>For the last experiment, note that a major difference here is that the sphere has constant positive sectional curvature equal to <span>$1$</span>. In this case, we lose the global convexity of the Riemannian distance and thus of the objective. Minimizers still exist, but they may, in general, be non-unique.</p><pre><code class="language-julia hljs">subexperiment_name = &quot;Sn&quot;
+k_max_sn = 1.0
+k_min_sn = 1.0
+diameter_sn = π / 3
+
+global A1_Sn, A2_Sn = initialize_dataframes(
+    results_folder,
+    experiment_name,
+    subexperiment_name,
+    named_tuple_1,
+    named_tuple_2
+)
+
+for n in hn_sn_dims
+    Random.seed!(seed_argument)
+
+    M = Sphere(Int(2^n))
+    north = [0.0 for _ in 1:manifold_dimension(M)]
+    push!(north, 1.0)
+    data_sn = [close_point(M, north, diameter_sn / 2)]
+    distance(M, data_sn[1], north) &lt; diameter_sn / 2 ? pop!(data_sn) : nothing
+    while length(data_sn) &lt; N
+        q = close_point(M, north, diameter_sn / 2)
+        distance(M, q, north) &lt; diameter_sn / 2 ? push!(data_sn, q) : nothing 
+    end
+    dists = [distance(M, z, y) for z in data_sn, y in data_sn]
+    p0 = data_sn[minimum(Tuple(findmax(dists)[2]))]
+
+    f_sn(M, p) = f(M, p, data_sn)
+    domf_sn(M, p) = domf(M, p, north, diameter_sn)
+    ∂f_sn(M, p) = ∂f(M, p, data_sn, atol)
+
+    # Optimization
+    rcbm = convex_bundle_method(M, f_sn, ∂f_sn, p0; rcbm_kwargs(diameter_sn, domf_sn, k_max_sn, k_min_sn)...)
+    rcbm_result = get_solver_result(rcbm)
+    rcbm_record = get_record(rcbm)
+
+    pba = proximal_bundle_method(M, f_sn, ∂f_sn, p0; pba_kwargs...)
+    pba_result = get_solver_result(pba)
+    pba_record = get_record(pba)
+
+    sgm = subgradient_method(M, f_sn, ∂f_sn, p0; sgm_kwargs...)
+    sgm_result = get_solver_result(sgm)
+    sgm_record = get_record(sgm)
+
+    records = [
+        rcbm_record,
+        pba_record,
+        sgm_record,
+    ]
+
+    if benchmarking
+        rcbm_bm = @benchmark convex_bundle_method($M, $f_sn, $∂f_sn, $p0; rcbm_bm_kwargs($diameter_sn, $domf_sn, $k_max_sn, $k_min_sn)...)
+        pba_bm = @benchmark proximal_bundle_method($M, $f_sn, $∂f_sn, $p0; $pba_bm_kwargs...)
+        sgm_bm = @benchmark subgradient_method($M, $f_sn, $∂f_sn, $p0; $sgm_bm_kwargs...)
+
+        times = [
+            median(rcbm_bm).time * 1e-9,
+            median(pba_bm).time * 1e-9,
+            median(sgm_bm).time * 1e-9,
+        ]
+
+        B1_Sn, B2_Sn = export_dataframes(
+            M,
+            records,
+            times,
+            results_folder,
+            experiment_name,
+            subexperiment_name,
+            col_names_1,
+            col_names_2,
+        )
+
+        append!(A1_Sn, B1_Sn)
+        append!(A2_Sn, B2_Sn)
+        (export_table) &amp;&amp; (write_dataframes(B1_Sn, B2_Sn, results_folder, experiment_name, subexperiment_name))
+    end
+end</code></pre><p>We can take a look at how the algorithms compare to each other in their performance with the following table, where columns 2 to 4 relate to the RCBM, while columns 5 to 7 refer to the PBA…</p><table><tr><th style="text-align: right">Dimension</th><th style="text-align: right">Iterations_1</th><th style="text-align: right">Time_1</th><th style="text-align: right">Objective_1</th><th style="text-align: right">Iterations_2</th><th style="text-align: right">Time_2</th><th style="text-align: right">Objective_2</th></tr><tr><td style="text-align: right">2</td><td style="text-align: right">43</td><td style="text-align: right">0.0158139</td><td style="text-align: right">0.258898</td><td style="text-align: right">71</td><td style="text-align: right">0.0184203</td><td style="text-align: right">0.258898</td></tr><tr><td style="text-align: right">4</td><td style="text-align: right">74</td><td style="text-align: right">0.0230197</td><td style="text-align: right">0.253525</td><td style="text-align: right">62</td><td style="text-align: right">0.0168082</td><td style="text-align: right">0.253525</td></tr><tr><td style="text-align: right">32</td><td style="text-align: right">102</td><td style="text-align: right">0.043011</td><td style="text-align: right">0.259886</td><td style="text-align: right">64</td><td style="text-align: right">0.0272739</td><td style="text-align: right">0.259886</td></tr><tr><td style="text-align: right">1024</td><td style="text-align: right">103</td><td style="text-align: right">0.890434</td><td style="text-align: right">0.266993</td><td style="text-align: right">68</td><td style="text-align: right">0.622527</td><td style="text-align: right">0.266993</td></tr><tr><td style="text-align: right">32768</td><td style="text-align: right">80</td><td style="text-align: right">27.1998</td><td style="text-align: right">0.259302</td><td style="text-align: right">65</td><td style="text-align: right">29.1502</td><td style="text-align: right">0.259302</td></tr></table><p>… Whereas the following table refers to the SGM</p><table><tr><th style="text-align: right">Dimension</th><th style="text-align: right">Iterations</th><th style="text-align: right">Time</th><th style="text-align: right">Objective</th></tr><tr><td style="text-align: right">2</td><td style="text-align: right">401</td><td style="text-align: right">0.0970337</td><td style="text-align: right">0.258898</td></tr><tr><td style="text-align: right">4</td><td style="text-align: right">5000</td><td style="text-align: right">1.33258</td><td style="text-align: right">0.253525</td></tr><tr><td style="text-align: right">32</td><td style="text-align: right">231</td><td style="text-align: right">0.0963392</td><td style="text-align: right">0.259886</td></tr><tr><td style="text-align: right">1024</td><td style="text-align: right">185</td><td style="text-align: right">1.98786</td><td style="text-align: right">0.266993</td></tr><tr><td style="text-align: right">32768</td><td style="text-align: right">157</td><td style="text-align: right">205.02</td><td style="text-align: right">0.259302</td></tr></table><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="language-julia hljs">using Pkg
+Pkg.status()</code></pre><pre><code class="nohighlight hljs">Status `~/Repositories/Julia/ManoptExamples.jl/examples/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.5.0
+  [336ed68f] CSV v0.10.15
+  [35d6a980] ColorSchemes v3.27.1
+⌅ [5ae59095] Colors v0.12.11
+  [a93c6f00] DataFrames v1.7.0
+  [7073ff75] IJulia v1.26.0
+  [682c06a0] JSON v0.21.4
+  [8ac3fa9e] LRUCache v1.6.1
+  [d3d80556] LineSearches v7.3.0
+  [af67fdf4] ManifoldDiff v0.3.13
+  [1cead3c2] Manifolds v0.10.7
+  [3362f125] ManifoldsBase v0.15.22
+  [0fc0a36d] Manopt v0.5.3 `../../Manopt.jl`
+  [5b8d5e80] ManoptExamples v0.1.10 `..`
+  [51fcb6bd] NamedColors v0.2.2
+  [91a5bcdd] Plots v1.40.9
+⌃ [08abe8d2] PrettyTables v2.3.2
+  [6099a3de] PythonCall v0.9.23
+  [f468eda6] QuadraticModels v0.9.7
+  [1e40b3f8] RipQP v0.6.4
+Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading. To see why use `status --outdated`</code></pre><pre><code class="language-julia hljs">using Dates
+now()</code></pre><pre><code class="nohighlight hljs">2024-11-28T00:40:27.330</code></pre><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[BHJ24]</dt><dd><div>R. Bergmann, R. Herzog and H. Jasa. <em>The Riemannian Convex Bundle Method</em>, preprint (2024), <a href="https://arxiv.org/abs/2402.13670">arXiv:2402.13670</a>.</div></dd><dt>[HNP23]</dt><dd><div>N. Hoseini Monjezi, S. Nobakhtian and M. R. Pouryayevali. <em>A proximal bundle algorithm for nonsmooth optimization on Riemannian manifolds</em>. <a href="https://doi.org/10.1093/imanum/drab091">IMA Journal of Numerical Analysis <strong>43</strong>, 293–325</a> (2023).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Difference-of-Convex-Frank-Wolfe/">« Frank Wolfe comparison</a><a class="docs-footer-nextpage" href="../H2-Signal-TV/">Hyperbolic Signal Denoising »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Sunday 13 April 2025 14:22">Sunday 13 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
