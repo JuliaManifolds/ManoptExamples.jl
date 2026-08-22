@@ -7,7 +7,7 @@ if "--help" ∈ ARGS
         """
             docs/make.jl
 
-        Render the `ManoptExamples.jl` documenation.
+        Render the `ManoptExamples.jl` documentation.
 
         Arguments
         * `--exclude-examples` - exclude the examples from the menu of Documenter,
