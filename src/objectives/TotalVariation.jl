@@ -594,9 +594,9 @@ function grad_second_order_Total_Variation!(M::PowerManifold, X, q, p::Int = 1)
                         M.manifold, (q[jB], q[i], q[jF]), p
                     ) # Compute TV2 on these
                 end
-                X[M, jB.I...] = g[1]
-                X[M, i.I...] = g[2]
-                X[M, jF.I...] = g[3]
+                X[M, jB.I...] += g[1]
+                X[M, i.I...] += g[2]
+                X[M, jF.I...] += g[3]
             end
         end # directions
     end # i in R

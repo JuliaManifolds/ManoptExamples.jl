@@ -5,6 +5,16 @@ All notable changes to this Julia package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.22] – unreleased
+
+### Changed
+
+* The lower bound for `Manifolds.jl` is 0.11.33, whose corrected adjoint Jacobi field on the `Circle` the gradient of the second-order total variation relies on.
+
+### Fixed
+
+* `grad_second_order_Total_Variation` on a `PowerManifold` sums the contributions of all triples a point belongs to.
+
 ## [0.1.21] – 22/08/2026
 
 ### Added
@@ -13,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Updated code to `Manopt.jl` v0.4.6.
+* Updated code to `Manopt.jl` v0.6.4.
 
 ## [0.1.20] – 15/07/2026
 
