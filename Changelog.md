@@ -5,7 +5,17 @@ All notable changes to this Julia package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.20] – 15/07/2025
+## [0.1.21] – 22/08/2026
+
+### Added
+
+* Bundle adjustment example for the Levenberg-Marquardt method.
+
+### Changed
+
+* Updated code to `Manopt.jl` v0.4.6.
+
+## [0.1.20] – 15/07/2026
 
 ### Added
 
@@ -15,7 +25,7 @@ One example on the sphere for the (convex) [proximal gradient method](https://ma
 
 Reran experiments for the (nonconvex) [proximal gradient method](https://manoptjl.org/stable/solvers/proximal_gradient_method/) for consistency between paper and notebooks in data.
 
-## [0.1.19] – 06/07/2025
+## [0.1.19] – 06/07/2026
 
 ### Added
 

@@ -244,7 +244,7 @@ E_doc_state = difference_of_convex_algorithm(
     evaluation=InplaceEvaluation(),
     record=[:Iteration, :Cost],
     stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M, 1e-16),
-    sub_hess=nothing, # Use gradient descent
+    sub_hess=missing, # Use gradient descent
     sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
     return_state=true,
 )
@@ -372,7 +372,7 @@ R_doc_state = difference_of_convex_algorithm(
     record=[:Iteration, :Cost],
     stopping_criterion=StopAfterIteration(10^7) | StopWhenChangeLess(M_rb, 1e-16),
     sub_grad=docR_sub_grad,
-    sub_hess = nothing, # Use gradient descent
+    sub_hess = missing, # Use gradient descent
     sub_stopping_criterion=StopAfterIteration(2000) | StopWhenGradientNormLess(1e-16),
     return_state=true,
 )

@@ -7,7 +7,7 @@
 * 🎯 Issues: [github.com/JuliaManifolds/ManoptExamples.jl/issues](https://github.com/JuliaManifolds/ManoptExamples.jl/issues)
 """
 module ManoptExamples
-using LinearAlgebra: dot, Symmetric, Diagonal, I
+using LinearAlgebra: dot, mul!, Adjoint, Symmetric, Diagonal, I, LinearAlgebra
 using ManifoldsBase, Manifolds, ManifoldDiff
 using ManifoldsBase: TypeParameter
 using OffsetArrays
@@ -55,6 +55,7 @@ include("data/artificial_signals.jl")
 include("data/artificial_images.jl")
 
 include("ErrorMeasures.jl")
+include("jacobian_block.jl")
 
 export exp!, exp, inner, log, log!
 export change_representer, change_representer!, local_metric, inverse_local_metric
