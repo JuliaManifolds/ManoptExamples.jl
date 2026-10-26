@@ -320,16 +320,16 @@ function get_Bezier_segments(
         BezierSegment(c[startindices[1]:endindices[1]]),
         [
             BezierSegment(
-                    [
+                [
+                    c[endindices[i - 1]],
+                    exp(
+                        M,
                         c[endindices[i - 1]],
-                        exp(
-                            M,
-                            c[endindices[i - 1]],
-                            -log(M, c[endindices[i - 1]], c[endindices[i - 1] - 1]),
-                        ),
-                        c[startindices[i]:endindices[i]]...,
-                    ]
-                ) for i in 2:length(startindices)
+                        -log(M, c[endindices[i - 1]], c[endindices[i - 1] - 1]),
+                    ),
+                    c[startindices[i]:endindices[i]]...,
+                ]
+            ) for i in 2:length(startindices)
         ]..., # despite for the last
     ]
 end

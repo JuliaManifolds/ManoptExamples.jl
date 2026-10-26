@@ -492,7 +492,7 @@ and ``\mathcal I_i`` denotes the forward neighbors of ``i``.
 * `M` – a `PowerManifold` manifold
 * `p` – a point.
 
-# Ouput
+# Output
 * X – resulting tangent vector in ``T_p\mathcal M``. The computation can also be done in place.
 """
 function subgrad_Total_Variation(M::PowerManifold, p, k::Int = 1; atol = 0)
@@ -594,9 +594,9 @@ function grad_second_order_Total_Variation!(M::PowerManifold, X, q, p::Int = 1)
                         M.manifold, (q[jB], q[i], q[jF]), p
                     ) # Compute TV2 on these
                 end
-                X[M, jB.I...] = g[1]
-                X[M, i.I...] = g[2]
-                X[M, jF.I...] = g[3]
+                X[M, jB.I...] += g[1]
+                X[M, i.I...] += g[2]
+                X[M, jF.I...] += g[3]
             end
         end # directions
     end # i in R

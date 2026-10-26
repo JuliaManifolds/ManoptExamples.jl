@@ -1,4 +1,4 @@
-using Manifolds, Test, ManoptExamples, Manopt
+using ManifoldDiff, Manifolds, Test, ManoptExamples, Manopt
 using ManoptExamples:
     adjoint_differential_forward_logs,
     adjoint_differential_forward_logs!,
@@ -256,7 +256,7 @@ end
         W = similar.(V)
         forward_logs!(N, W, x)
         @test isapprox(N, x, W, [X, log(M, q, p), zero_vector(M, p)])
-        Y = Manopt.differential_log_argument(M, p, q, -X)
+        Y = ManifoldDiff.differential_log_argument(M, p, q, -X)
         W = similar.(V)
         @test norm(
             N,
@@ -266,8 +266,8 @@ end
         differential_forward_logs!(N, W, x, V)
         @test norm(N, x, W - [-X, [π / 2, 0.0, 0.0], zero_vector(M, p)]) ≈ 0 atol =
             8 * 10.0^(-16)
-        @test isapprox(N, x, Manopt.differential_log_argument(N, x, y, V), [V[1], V[2], Y])
-        Manopt.differential_log_argument!(N, W, x, y, V)
+        @test isapprox(N, x, ManifoldDiff.differential_log_argument(N, x, y, V), [V[1], V[2], Y])
+        ManifoldDiff.differential_log_argument!(N, W, x, y, V)
         @test isapprox(N, x, W, [V[1], V[2], Y])
     end
     @testset "forward logs on a multivariate power manifold" begin
@@ -294,15 +294,15 @@ end
         X[1, 1] .= [0.0, 0.5, 0.5]
         t2 = differential_forward_logs(M, p, X)
         a =
-            Manopt.differential_log_basepoint(S, p[1, 1], p[2, 1], X[1, 1]) +
-            Manopt.differential_log_argument(S, p[1, 1], p[2, 1], X[2, 1])
+            ManifoldDiff.differential_log_basepoint(S, p[1, 1], p[2, 1], X[1, 1]) +
+            ManifoldDiff.differential_log_argument(S, p[1, 1], p[2, 1], X[2, 1])
         @test t2[1, 1, 1] ≈ a
         @test t2[1, 2, 1] ≈ zero_vector(S, p[1, 2]) atol = 1.0e-17
         @test t2[2, 1, 1] ≈ zero_vector(S, p[2, 1]) atol = 1.0e-17
         @test t2[2, 2, 1] ≈ zero_vector(S, p[2, 2]) atol = 1.0e-17
         b =
-            Manopt.differential_log_basepoint(S, p[1, 1], p[1, 2], X[1, 1]) +
-            Manopt.differential_log_argument(S, p[1, 1], p[1, 2], X[1, 2])
+            ManifoldDiff.differential_log_basepoint(S, p[1, 1], p[1, 2], X[1, 1]) +
+            ManifoldDiff.differential_log_argument(S, p[1, 1], p[1, 2], X[1, 2])
         @test t2[1, 1, 2] ≈ b
         @test t2[1, 2, 2] ≈ zero_vector(S, p[1, 2]) atol = 1.0e-17
         @test t2[2, 1, 2] ≈ zero_vector(S, p[2, 1]) atol = 1.0e-17
@@ -341,20 +341,17 @@ end
         x = [0.1, 0.2, 0.3, 0.5]
         tvTestξ = [-1.0, 0.0, 0.0, 1.0]
         @test grad_Total_Variation(N, x) == tvTestξ
-        @test grad_Total_Variation(M, (x[1], x[1])) ==
-            (zero_vector(M, x[1]), zero_vector(M, x[1]))
+        @test grad_Total_Variation(M, (x[1], x[1])) == (zero_vector(M, x[1]), zero_vector(M, x[1]))
         @test norm(N, x, grad_Total_Variation(N, x, 2) - tvTestξ) ≈ 0
-        tv2Testξ = [0.0, 1.0, -1.0, 1.0]
+        tv2Testξ = [0.0, 0.5, -1.0, 0.5]
         @test grad_second_order_Total_Variation(N, x) == tv2Testξ
+        # both inner points belong to two triples and collect two contributions
+        @test grad_second_order_Total_Variation(N, [0.1, 0.2, 0.4, 0.5]) == [0.5, -1.5, 1.5, -0.5]
         @test norm(N, x, forward_logs(N, x) - [0.1, 0.1, 0.2, 0.0]) ≈ 0 atol = 10^(-16)
         @test norm(
-            N,
-            x,
-            grad_intrinsic_infimal_convolution_TV12(N, x, x, x, 1.0, 1.0)[1] -
-                [-1.0, 0.0, 0.0, 1.0],
+            N, x, grad_intrinsic_infimal_convolution_TV12(N, x, x, x, 1.0, 1.0)[1] - [-1.0, 0.0, 0.0, 1.0],
         ) ≈ 0
-        @test norm(N, x, grad_intrinsic_infimal_convolution_TV12(N, x, x, x, 1.0, 1.0)[2]) ≈
-            0
+        @test norm(N, x, grad_intrinsic_infimal_convolution_TV12(N, x, x, x, 1.0, 1.0)[2]) ≈ 0
         x2 = [0.1, 0.2, 0.3]
         N2 = PowerManifold(M, size(x2)...)
         @test grad_second_order_Total_Variation(N2, x2) == zeros(3)
@@ -415,8 +412,7 @@ end
             Z2 = -1.110720734539 .* [[0.0, 1.0, 0.0], [1.0, 0.0, 1.0], [0.0, 1.0, 0.0]]
             @test Y2 ≈ Z2
             s2 = [p, shortest_geodesic(M, p, q, 0.5), q]
-            @test grad_second_order_Total_Variation(M, s2) ==
-                [zero_vector(M, se) for se in s2]
+            @test grad_second_order_Total_Variation(M, s2) == [zero_vector(M, se) for se in s2]
         end
     end
 end
