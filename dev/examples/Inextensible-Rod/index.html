@@ -195,44 +195,46 @@ end</code></pre><p>We compute the Newton direction <span>$δx$</span> by solving
 end;</code></pre><p>We adjust the norms for computation of damping factors and stopping criterion</p><pre><code class="language-julia hljs">pr_inv = Manifolds.InverseProductRetraction(LogarithmicInverseRetraction(), ProjectionInverseRetraction(), LogarithmicInverseRetraction())
 rec = RecordChange(product;
     inverse_retraction_method=pr_inv);</code></pre><pre><code class="language-julia hljs">y_0 = copy(product, disc_point)
-
+    
 NE = NewtonEquation(product, integrand_yλ, integrand_vv, integrand_λv, test_spaces, ansatz_spaces, transport, discrete_time)
-
-st_res = vectorbundle_newton(
-    product, TangentBundle(product), NE, y_0;
-    sub_problem=solve_in_basis_repr,
-    stopping_criterion=(StopAfterIteration(100)|StopWhenChangeLess(product,1e-12; outer_norm=Inf, inverse_retraction_method=pr_inv)),
+        
+st_res = vectorbundle_newton(product, TangentBundle(product), NE, y_0; sub_problem=solve_in_basis_repr,
     retraction_method=ProductRetraction(ExponentialRetraction(), ProjectionRetraction(), ExponentialRetraction()),
-    stepsize=Manopt.AffineCovariantStepsize(product, θ_des=0.5, outer_norm=Inf),
+    stop_when_newton_direction_norm_less=1e-6,
+    stepsize=Manopt.AffineCovariantStepsize(product, θ_des=0.25, outer_norm=Inf),
     debug=[:Iteration, (:Change, &quot;Change: %1.8e&quot;), &quot;\n&quot;, :Stop, (:Stepsize, &quot;Stepsize: %1.8e&quot;), &quot;\n&quot;,],
     record=[:Iterate, rec =&gt; :Change, :Stepsize],
     return_state=true
 )</code></pre><pre><code class="nohighlight hljs">Initial 
 Stepsize: 1.00000000e+00
-# 1     Change: 1.06797546e+02
-Stepsize: 1.72923918e-01
-# 2     Change: 3.21446177e+01
-Stepsize: 1.69978030e-01
-# 3     Change: 2.92351417e+01
-Stepsize: 3.21335053e-01
-# 4     Change: 1.25895910e+01
-Stepsize: 4.69488627e-01
-# 5     Change: 1.18292841e+01
+# 1     Change: 5.25979898e+01
+Stepsize: 8.51652339e-02
+# 2     Change: 2.91435354e+01
+Stepsize: 8.07023451e-02
+# 3     Change: 2.99158654e+01
+Stepsize: 1.21652735e-01
+# 4     Change: 2.29633523e+01
+Stepsize: 1.55346871e-01
+# 5     Change: 1.77752068e+01
+Stepsize: 2.07803100e-01
+# 6     Change: 1.39492594e+01
+Stepsize: 2.95084610e-01
+# 7     Change: 1.36689723e+01
+Stepsize: 5.26689008e-01
+# 8     Change: 1.36946800e+01
 Stepsize: 1.00000000e+00
-# 6     Change: 6.73475029e+00
+# 9     Change: 5.09189542e+00
 Stepsize: 1.00000000e+00
-# 7     Change: 7.03597934e-01
+# 10    Change: 4.33497285e-01
 Stepsize: 1.00000000e+00
-# 8     Change: 1.44469671e-02
+# 11    Change: 5.10720289e-03
 Stepsize: 1.00000000e+00
-# 9     Change: 5.82861344e-06
+# 12    Change: 7.27585436e-07
 Stepsize: 1.00000000e+00
-# 10    Change: 9.80789522e-13
-Stepsize: 1.00000000e+00
-At iteration 10 the algorithm performed a step with a change (9.795721663222512e-13) less than 1.0e-12.
+After iteration (12) the step length of the Newton direction is (7.266666793133711e-7) and thus less than the threshold (1.0e-6, and the convergence monitor of the affine covariant damping strategy is less than 0.25).
 
 # Solver state for `Manopt.jl`s Vector bundle Newton method
-After 10 iterations
+After 12 iterations
 
 ## Parameters
 * retraction method: ProductRetraction(ManifoldsBase.ExponentialRetraction(), ManifoldsBase.ProjectionRetraction(), ManifoldsBase.ExponentialRetraction())
@@ -243,17 +245,18 @@ An affine covariant step size
 
 ### Parameters
 * damping factor α:   1.0
-* θ:                  0.0863941767855929
-* desired θ:          0.5
-* acceptable θ:       0.55
+* θ:                  1.536148118486666e-7
+* desired θ:          0.25
+* acceptable θ:       0.275
 
 
 ## Stopping criterion
 Stop when _one_ of the following is fulfilled:
-  *   stopped after 100 iterations:  not reached
-  *   |Δp| &lt; 1.0e-12:  reached
+  *   stopped after 1000 iterations:  not reached
+  *   Stepsize s &lt; 1.0e-6:  not reached
+  *   |X| &lt; 1.0e-6:  reached
 Overall: reached
-The algorithm converged: No
+The algorithm converged: Yes
 
 ## Debug
     :Iteration = A DebugAction consisting of a group with the following elements
@@ -270,7 +273,7 @@ The algorithm converged: No
 * A RecordAction to record the change of the iterate
 * A RecordAction to record the current stepsize (of type Float64)</code></pre><p>We extract the recorded values</p><pre><code class="language-julia hljs">change = get_record(st_res, :Iteration, :Change)[2:end]
 stepsizes = get_record(st_res, :Iteration, :Stepsize)
-p_res = get_solver_result(st_res)</code></pre><pre><code class="nohighlight hljs">([[0.008904276862763037, 0.00037946057958161857, 0.017460500666676], [0.018143286143667323, 0.0015208136839496096, 0.034711648377215354], [0.027840292732882903, 0.0034262792250266366, 0.051639603618151717], [0.03810762837613681, 0.006089979876316306, 0.06812141350303859], [0.04904343359669994, 0.009496546613473638, 0.08402438936510451], [0.0607283242722171, 0.013619615418521991, 0.09920651635805779], [0.07322213462797549, 0.01842037924037603, 0.11351804256682929], [0.08656095961408512, 0.0238463868388443, 0.12680432051762686], [0.10075477648675486, 0.029830792165109286, 0.13890987037390587], [0.11578595401861239, 0.0362922474613571, 0.14968350667501418]  …  [0.623225361158195, 0.04419828798244499, -0.050250685167430705], [0.6413224245134539, 0.037073887262322185, -0.05259926447843332], [0.659665705670604, 0.030235957314212275, -0.05329545421595393], [0.6781434043236693, 0.023814718003770743, -0.05228979957432842], [0.6966274730965324, 0.01793804716725821, -0.0495628873229987], [0.7149792443731721, 0.012727376241392002, -0.045127753322769824], [0.7330559727403079, 0.008293653197246143, -0.039030636153589794], [0.7507178285149068, 0.0047337229772822864, -0.03134989687904509], [0.7678348093519181, 0.0021274440043693595, -0.022193127581862194], [0.7842930393971138, 0.0005357808165138422, -0.011692677489636396]], [[0.4610226445018718, 0.03870497911732509, 0.8865438770010361], [0.4813563021503653, 0.07771303752820999, 0.8730731894739784], [0.5077383699496241, 0.11664444766164679, 0.8535782451015304], [0.5395298656622737, 0.15505301876989944, 0.8275663631569316], [0.5759222668351662, 0.19241678842014853, 0.7945371747737922], [0.6159365820675842, 0.22813622969478345, 0.7540397785074413], [0.6584320742197703, 0.2615416801343282, 0.7057358947872524], [0.7021280743634138, 0.29191109490943595, 0.6494644561941005], [0.745641246648898, 0.31849824836959184, 0.5853016291463567], [0.7875388616005717, 0.34057019184768555, 0.5136092735666933]  …  [0.9153659449496235, -0.3689871160975927, -0.1611015052085631], [0.9305345172867805, -0.3577017573549358, -0.07845358451370457], [0.940480160742526, -0.33976709735227356, 0.0074422312866022355], [0.9442451018701244, -0.31519931231276144, 0.09513454215919931], [0.9411299129619202, -0.284221113011519, 0.1830105074764339], [0.9307507572553287, -0.24726732142683297, 0.26937316054691024], [0.913075536192526, -0.20497242907604618, 0.35253279070945487], [0.8884337528165571, -0.1581404533602665, 0.4309026152941035], [0.8574982925585989, -0.10770000187685154, 0.5030878530185496], [0.8212411720513655, -0.0546496432844118, 0.5679580563884856]], [[-27.135584634063704, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724178, -5.014626735955922], [-27.135584634063708, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724178, -5.014626735955922], [-27.135584634063708, -1.6417144250724178, -5.014626735955922]  …  [-27.135584634063704, -1.6417144250724176, -5.014626735955922], [-27.1355846340637, -1.6417144250724178, -5.014626735955922], [-27.1355846340637, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724176, -5.014626735955922], [-27.1355846340637, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724176, -5.014626735955922], [-27.1355846340637, -1.6417144250724178, -5.014626735955922], [-27.1355846340637, -1.6417144250724178, -5.014626735955922], [-27.135584634063704, -1.6417144250724176, -5.014626735955922], [-27.1355846340637, -1.6417144250724178, -5.014626735955922]])</code></pre><p>and plot the result, where we measure the norms of the Newton direction in each iteration,</p><pre><code class="language-julia hljs">f = Figure(;)
+p_res = get_solver_result(st_res)</code></pre><pre><code class="nohighlight hljs">([[0.008904276862763037, 0.0003794605795816197, 0.017460500666676], [0.018143286143667323, 0.0015208136839496146, 0.034711648377215354], [0.02784029273288291, 0.003426279225026648, 0.051639603618151717], [0.038107628376136814, 0.006089979876316325, 0.06812141350303859], [0.04904343359669996, 0.009496546613473668, 0.08402438936510451], [0.06072832427221712, 0.013619615418522033, 0.09920651635805776], [0.07322213462797551, 0.018420379240376084, 0.11351804256682926], [0.08656095961408516, 0.02384638683884437, 0.12680432051762683], [0.10075477648675489, 0.02983079216510937, 0.1389098703739058], [0.11578595401861243, 0.036292247461357195, 0.14968350667501412]  …  [0.6232253611581952, 0.04419828798244505, -0.050250685167430795], [0.6413224245134539, 0.03707388726232224, -0.0525992644784334], [0.659665705670604, 0.030235957314212317, -0.053295454215954], [0.6781434043236693, 0.023814718003770774, -0.05228979957432848], [0.6966274730965324, 0.017938047167258234, -0.04956288732299874], [0.7149792443731721, 0.012727376241392018, -0.04512775332276985], [0.7330559727403079, 0.008293653197246153, -0.03903063615358981], [0.7507178285149068, 0.004733722977282292, -0.031349896879045096], [0.7678348093519181, 0.0021274440043693617, -0.022193127581862197], [0.7842930393971138, 0.0005357808165138428, -0.011692677489636398]], [[0.4610226445018719, 0.03870497911732522, 0.8865438770010361], [0.4813563021503655, 0.07771303752821025, 0.8730731894739784], [0.5077383699496243, 0.11664444766164714, 0.8535782451015301], [0.5395298656622739, 0.1550530187698999, 0.8275663631569311], [0.5759222668351666, 0.19241678842014912, 0.7945371747737917], [0.6159365820675846, 0.22813622969478412, 0.7540397785074409], [0.6584320742197706, 0.2615416801343289, 0.7057358947872518], [0.7021280743634142, 0.29191109490943673, 0.6494644561941], [0.7456412466488981, 0.31849824836959256, 0.585301629146356], [0.7875388616005718, 0.3405701918476862, 0.5136092735666925]  …  [0.9153659449496234, -0.3689871160975933, -0.1611015052085624], [0.9305345172867805, -0.3577017573549364, -0.07845358451370392], [0.9404801607425258, -0.33976709735227406, 0.007442231286602891], [0.9442451018701242, -0.3151993123127619, 0.09513454215919995], [0.9411299129619201, -0.2842211130115194, 0.18301050747643458], [0.9307507572553284, -0.24726732142683328, 0.26937316054691074], [0.9130755361925259, -0.20497242907604646, 0.3525327907094553], [0.888433752816557, -0.15814045336026666, 0.43090261529410384], [0.8574982925585988, -0.10770000187685166, 0.5030878530185499], [0.8212411720513654, -0.054649643284411846, 0.5679580563884857]], [[-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.135584634063697, -1.6417144250724167, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.135584634063697, -1.6417144250724167, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917]  …  [-27.1355846340637, -1.6417144250724167, -5.0146267359559165], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.6417144250724167, -5.0146267359559165], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.6417144250724167, -5.0146267359559165], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.641714425072417, -5.014626735955917], [-27.1355846340637, -1.6417144250724167, -5.0146267359559165], [-27.1355846340637, -1.641714425072417, -5.014626735955917]])</code></pre><p>and plot the result, where we measure the norms of the Newton direction in each iteration,</p><pre><code class="language-julia hljs">f = Figure(;)
 
 row, col = fldmod1(1, 2)
 
@@ -294,7 +297,7 @@ scatter!(ax, π1.([y0, y1]), π2.([y0, y1]), π3.([y0, y1]); markersize =8, colo
 scatter!(ax, π1.(discretized_y), π2.(discretized_y), π3.(discretized_y); markersize =8, color=:red)
 fig</code></pre><p><img src="../Inextensible-Rod_files/figure-commonmark/cell-18-output-1.png" alt/></p><h2 id="Technical-details"><a class="docs-heading-anchor" href="#Technical-details">Technical details</a><a id="Technical-details-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-details" title="Permalink"></a></h2><p>This tutorial is cached. It was last run on the following package versions.</p><pre><code class="nohighlight hljs">Status `~/work/ManoptExamples.jl/ManoptExamples.jl/examples/Project.toml`
   [6e4b80f9] BenchmarkTools v1.8.0
-  [336ed68f] CSV v1.1.0
+  [336ed68f] CSV v1.2.0
   [13f3f980] CairoMakie v0.15.16
   [0ca39b1e] Chairmarks v1.3.1
   [523fee87] CodecBzip2 v0.8.5
@@ -308,7 +311,7 @@ fig</code></pre><p><img src="../Inextensible-Rod_files/figure-commonmark/cell-18
   [5c1252a2] GeometryBasics v0.5.13
   [4d00f742] GeometryTypes v0.8.5
   [7073ff75] IJulia v1.34.4
-  [682c06a0] JSON v1.12.2
+  [682c06a0] JSON v1.13.0
   [8ac3fa9e] LRUCache v1.6.2
   [b964fa9f] LaTeXStrings v1.4.1
   [d3d80556] LineSearches v7.8.2
@@ -316,8 +319,8 @@ fig</code></pre><p><img src="../Inextensible-Rod_files/figure-commonmark/cell-18
   [7351309b] ManifoldAsymptote v0.1.0
   [af67fdf4] ManifoldDiff v0.4.5
   [9d80ff41] ManifoldMakie v0.1.3
-  [1cead3c2] Manifolds v0.11.34
-  [3362f125] ManifoldsBase v2.6.2
+  [1cead3c2] Manifolds v0.11.36
+  [3362f125] ManifoldsBase v2.6.5
   [0fc0a36d] Manopt v0.6.10
   [5b8d5e80] ManoptExamples v0.1.22 `..`
   [51fcb6bd] NamedColors v0.2.3
@@ -328,4 +331,4 @@ fig</code></pre><p><img src="../Inextensible-Rod_files/figure-commonmark/cell-18
   [f468eda6] QuadraticModels v0.9.16
   [731186ca] RecursiveArrayTools v4.5.5
   [1e40b3f8] RipQP v0.7.0
-  [90137ffa] StaticArrays v1.9.24</code></pre><p>This tutorial was last rendered October 23, 2026, 15:18:51.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[WBS25]</dt><dd><div>L. Weigl, R. Bergmann and A. Schiela. <em>Newton&#39;s method into vector bundles Part II: : Application to            Variational Problems on Manifolds</em>, <a href="https://doi.org/10.48550/ARXIV.2507.13836">arXiv Preprint</a> (2025).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Elastic-Geodesic-Obstacle/">« Elastic Geodesic Obstacle</a><a class="docs-footer-nextpage" href="../../objectives/">Objectives »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Friday 23 October 2026 15:23">Friday 23 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  [90137ffa] StaticArrays v1.9.24</code></pre><p>This tutorial was last rendered October 27, 2026, 15:2:9.</p><h2 id="Literature"><a class="docs-heading-anchor" href="#Literature">Literature</a><a id="Literature-1"></a><a class="docs-heading-anchor-permalink" href="#Literature" title="Permalink"></a></h2><div class="citation noncanonical"><dl><dt>[WBS25]</dt><dd><div>L. Weigl, R. Bergmann and A. Schiela. <em>Newton&#39;s method into vector bundles Part II: : Application to            Variational Problems on Manifolds</em>, <a href="https://doi.org/10.48550/ARXIV.2507.13836">arXiv Preprint</a> (2025).</div></dd></dl></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Elastic-Geodesic-Obstacle/">« Elastic Geodesic Obstacle</a><a class="docs-footer-nextpage" href="../../objectives/">Objectives »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Tuesday 27 October 2026 15:02">Tuesday 27 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
